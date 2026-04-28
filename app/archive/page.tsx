@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
+import DisclaimerBanner from "../components/DisclaimerBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +40,11 @@ export default async function ArchiveOverview() {
         <h1 className="text-3xl font-bold">GHL Archive</h1>
         <span className="text-xs text-gray-400">Read-only · service-key-protected</span>
       </div>
-      <p className="text-gray-500 text-sm mb-8">
+      <p className="text-gray-500 text-sm mb-4">
         Frozen snapshot of every record that lived in GoHighLevel before decommissioning. Click any tile to browse.
       </p>
+
+      <DisclaimerBanner variant="archive" />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {TABLES.map((t, i) => {

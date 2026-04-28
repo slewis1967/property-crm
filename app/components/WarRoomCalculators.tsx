@@ -628,6 +628,8 @@ function Disclaimer({ children }: { children: React.ReactNode }) {
 
 // ─── Main export ──────────────────────────────────────────────────────────
 
+import DisclaimerBanner from "./DisclaimerBanner";
+
 export default function WarRoomCalculators() {
   return (
     <section className="mt-8">
@@ -635,12 +637,13 @@ export default function WarRoomCalculators() {
         <div>
           <h2 className="text-lg font-semibold">Quick calculators</h2>
           <p className="text-xs text-gray-500 mt-1">
-            PIA-style advisor tools — instant numbers for client calls. Full
-            multi-property analysis with AI is on the roadmap.
+            PIA-style advisor tools — instant numbers for client calls. For deeper analysis use the
+            <a href="/pia" className="text-blue-600 hover:underline mx-1">PIA Modeller</a>.
           </p>
         </div>
-        <span className="text-xs text-gray-400">General advice only</span>
       </div>
+
+      <DisclaimerBanner variant="compact" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <YieldCalculator />
