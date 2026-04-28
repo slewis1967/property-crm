@@ -26,6 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/activity" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>⚡</span> Activity Feed
             </a>
+            <a href="/pia" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📊</span> PIA Modeller
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
             <a href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
