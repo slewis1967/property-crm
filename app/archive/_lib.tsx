@@ -36,6 +36,55 @@ export function truncate(s: string | null | undefined, len = 80): string {
   return s.length > len ? s.slice(0, len) + "…" : s;
 }
 
+/**
+ * Strip HTML from GHL note/message bodies and return clean readable text.
+ *
+ * GHL notes are exported with their full UI scaffolding embedded: tailwind
+ * utility-class inline styles, divider divs, "Created by:" footers,
+ * association badges, associations-popover-container divs, etc. Rendering
+ * raw body text shows all of that as ugly markup-soup.
+ *
+ * This strips:
+ *   - <style> and <script> blocks (full block + content)
+ *   - "Created by: …" / "Reschedule link" GHL UI footer fragments
+ *   - All HTML tags (preserving line breaks at <br>, </p>, </div>)
+ *   - HTML entities (&amp; &lt; &gt; &quot; &apos; &nbsp;)
+ *   - Excess blank lines (collapse 3+ newlines to 2)
+ */
+export function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  let s = html;
+
+  // Drop <script> and <style> blocks entirely (with their content)
+  s = s.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "");
+
+  // Convert structural tags to newlines so paragraphs don't collapse together
+  s = s.replace(/<\s*br\s*\/?\s*>/gi, "\n");
+  s = s.replace(/<\/(p|div|li|h[1-6]|tr)\s*>/gi, "\n");
+
+  // Strip all remaining tags
+  s = s.replace(/<[^>]+>/g, "");
+
+  // Decode common HTML entities
+  s = s
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&[a-zA-Z]+;/g, ""); // drop any remaining named entities we didn't handle
+
+  // Collapse 3+ consecutive newlines to 2 (paragraph break)
+  s = s.replace(/\n{3,}/g, "\n\n");
+
+  // Trim each line + drop empty trailing/leading lines
+  s = s.split("\n").map((line) => line.trim()).join("\n").trim();
+
+  return s;
+}
+
 /** Standard archive-page header. */
 export function ArchiveHeader({
   title,

@@ -1,5 +1,5 @@
 import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate } from "../_lib";
+import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +82,7 @@ export default async function ArchiveNotes({
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{n.body || "(empty note)"}</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{stripHtml(n.body) || "(empty note)"}</p>
                 </div>
                 <div className="text-xs text-gray-400 whitespace-nowrap text-right">
                   {fmtDateTime(n.date_added)}

@@ -1,5 +1,5 @@
 import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate } from "../_lib";
+import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +99,7 @@ export default async function ArchiveConversations({
                         {c.last_message_type ?? c.type ?? "—"}
                       </span>
                     </td>
-                    <td className="py-2 px-4 text-gray-700 max-w-md">{truncate(c.last_message_body, 120)}</td>
+                    <td className="py-2 px-4 text-gray-700 max-w-md">{truncate(stripHtml(c.last_message_body), 120)}</td>
                     <td className="py-2 px-4 text-gray-500 text-xs">{fmtDateTime(c.last_message_date)}</td>
                     <td className="py-2 px-4 text-center">
                       {c.unread_count > 0 ? (

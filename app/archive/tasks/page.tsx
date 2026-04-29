@@ -1,5 +1,5 @@
 import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate } from "../_lib";
+import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +102,7 @@ export default async function ArchiveTasks({
                   <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 px-4">
                       <p className="font-medium">{t.title || "(untitled)"}</p>
-                      {t.body && <p className="text-xs text-gray-500 mt-0.5">{truncate(t.body, 100)}</p>}
+                      {t.body && <p className="text-xs text-gray-500 mt-0.5">{truncate(stripHtml(t.body), 100)}</p>}
                     </td>
                     <td className="py-2 px-4 text-gray-700">{contact?.name || "—"}</td>
                     <td className="py-2 px-4 text-gray-500 text-xs">{fmtDateTime(t.due_date)}</td>
