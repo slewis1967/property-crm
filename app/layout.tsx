@@ -56,6 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/social" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📱</span> Social History
             </a>
+            <a href="/sequences" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📨</span> Sequences
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">GHL Archive</p>
             <a href="/archive" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
