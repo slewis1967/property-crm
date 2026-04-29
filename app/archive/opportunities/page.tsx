@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../../utils/supabase";
 import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDate, fmtCurrency } from "../_lib";
 
@@ -110,7 +111,9 @@ export default async function ArchiveOpportunities({
             <tbody>
               {data.map((o: any) => (
                 <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="py-2 px-4 font-medium">{o.name || "—"}</td>
+                  <td className="py-2 px-4 font-medium">
+                    <Link href={`/archive/opportunities/${o.id}`} className="text-blue-600 hover:underline">{o.name || "—"}</Link>
+                  </td>
                   <td className="py-2 px-4 text-gray-600 text-xs">
                     {pipeName[o.pipeline_id] || "—"}
                     <br />

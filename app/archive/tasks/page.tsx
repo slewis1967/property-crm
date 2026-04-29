@@ -1,4 +1,5 @@
 import { supabase } from "../../../utils/supabase";
+import Link from "next/link";
 import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
 
 export const dynamic = "force-dynamic";
@@ -104,7 +105,13 @@ export default async function ArchiveTasks({
                       <p className="font-medium">{t.title || "(untitled)"}</p>
                       {t.body && <p className="text-xs text-gray-500 mt-0.5">{truncate(stripHtml(t.body), 100)}</p>}
                     </td>
-                    <td className="py-2 px-4 text-gray-700">{contact?.name || "—"}</td>
+                    <td className="py-2 px-4">
+                      {t.contact_id && contact ? (
+                        <Link href={`/archive/contacts/${t.contact_id}`} className="text-blue-600 hover:underline">{contact.name}</Link>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="py-2 px-4 text-gray-500 text-xs">{fmtDateTime(t.due_date)}</td>
                     <td className="py-2 px-4">
                       <span

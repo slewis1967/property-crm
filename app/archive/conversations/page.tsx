@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../../utils/supabase";
 import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
 
@@ -91,7 +92,11 @@ export default async function ArchiveConversations({
                 return (
                   <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 px-4">
-                      <p className="font-medium">{contact?.name || "(no contact)"}</p>
+                      {c.contact_id && contact ? (
+                        <Link href={`/archive/contacts/${c.contact_id}`} className="font-medium text-blue-600 hover:underline">{contact.name}</Link>
+                      ) : (
+                        <p className="font-medium">(no contact)</p>
+                      )}
                       <p className="text-xs text-gray-400">{contact?.email || ""}</p>
                     </td>
                     <td className="py-2 px-4">

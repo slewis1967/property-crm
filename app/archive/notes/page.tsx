@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../../utils/supabase";
 import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml, splitGhlNoteBundle } from "../_lib";
 
@@ -74,7 +75,13 @@ export default async function ArchiveNotes({
                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
               >
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                  <p className="font-medium text-sm">{contact?.name || "(no contact)"}</p>
+                  {n.contact_id && contact ? (
+                    <Link href={`/archive/contacts/${n.contact_id}`} className="font-medium text-sm text-blue-600 hover:underline">
+                      {contact.name}
+                    </Link>
+                  ) : (
+                    <p className="font-medium text-sm">(no contact)</p>
+                  )}
                   {contact?.email && <p className="text-xs text-gray-400">{contact.email}</p>}
                   {n.pinned && (
                     <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">

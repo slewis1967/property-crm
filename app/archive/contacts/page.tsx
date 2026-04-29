@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../../utils/supabase";
 import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDate, truncate } from "../_lib";
 
@@ -71,7 +72,9 @@ export default async function ArchiveContacts({
                 const tags = Array.isArray(c.tags) ? c.tags : [];
                 return (
                   <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="py-2 px-4 font-medium">{name}</td>
+                    <td className="py-2 px-4 font-medium">
+                      <Link href={`/archive/contacts/${c.id}`} className="text-blue-600 hover:underline">{name}</Link>
+                    </td>
                     <td className="py-2 px-4 text-gray-700">{c.email || "—"}</td>
                     <td className="py-2 px-4 text-gray-500">{c.phone || "—"}</td>
                     <td className="py-2 px-4 text-gray-600">{c.state || "—"}</td>
