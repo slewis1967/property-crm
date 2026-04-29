@@ -37,6 +37,71 @@ export function truncate(s: string | null | undefined, len = 80): string {
 }
 
 /**
+ * Split a stripped GHL note body into individual note entries.
+ *
+ * GHL bundles a contact's full note history into a single body field, with
+ * the structure (after stripHtml):
+ *
+ *   <body text 1>
+ *   <date 1>           e.g. "Oct 9, 2025 05:17 PM (AEST)"
+ *   Created by: <author 1>
+ *   <association count, optional digit>
+ *   <body text 2>
+ *   <date 2>
+ *   Created by: <author 2>
+ *   ...
+ *
+ * This function walks the stripped text and returns N entries (one per
+ * "Created by:" line). Single notes with no "Created by:" footer are
+ * returned as a one-element array preserving the whole body.
+ */
+export function splitGhlNoteBundle(stripped: string): Array<{
+  body: string;
+  date?: string;
+  author?: string;
+}> {
+  if (!stripped) return [];
+  const dateRegex =
+    /^[A-Z][a-z]{2,9}\s+\d{1,2},?\s+\d{4}\s+\d{1,2}:\d{2}\s*(?:AM|PM)(?:\s*\([A-Z]+\))?$/;
+  const lines = stripped.split("\n").map((l) => l.trim());
+
+  const entries: Array<{ body: string; date?: string; author?: string }> = [];
+  let buffer: string[] = [];
+  let pendingDate: string | undefined;
+
+  for (const line of lines) {
+    if (!line) continue;
+    if (line.startsWith("Created by:")) {
+      // End of one note
+      const body = buffer
+        .filter((l) => !dateRegex.test(l))
+        .filter((l) => !/^\d+$/.test(l)) // drop standalone association-count digits
+        .join("\n")
+        .trim();
+      const author = line.replace(/^Created by:\s*/, "").trim();
+      if (body || pendingDate || author) {
+        entries.push({ body, date: pendingDate, author });
+      }
+      buffer = [];
+      pendingDate = undefined;
+    } else if (dateRegex.test(line)) {
+      pendingDate = line;
+    } else {
+      buffer.push(line);
+    }
+  }
+
+  // Anything trailing without a Created-by terminator → preserve as last entry
+  const tail = buffer.filter((l) => !/^\d+$/.test(l)).join("\n").trim();
+  if (tail) entries.push({ body: tail, date: pendingDate });
+
+  // If splitting found nothing useful (no Created-by markers, no entries),
+  // fall back to the whole body as a single entry so simple notes still render.
+  if (entries.length === 0) return [{ body: stripped }];
+  return entries;
+}
+
+/**
  * Strip HTML from GHL note/message bodies and return clean readable text.
  *
  * GHL notes are exported with their full UI scaffolding embedded: tailwind

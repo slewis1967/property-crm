@@ -1,5 +1,5 @@
 import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
+import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml, splitGhlNoteBundle } from "../_lib";
 
 export const dynamic = "force-dynamic";
 
@@ -67,25 +67,44 @@ export default async function ArchiveNotes({
         <div className="space-y-3">
           {data.map((n: any) => {
             const contact = n.contact_id ? contactsById[n.contact_id] : null;
+            const entries = splitGhlNoteBundle(stripHtml(n.body));
             return (
               <div
                 key={n.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex gap-4"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-sm">{contact?.name || "(no contact)"}</p>
-                    {contact?.email && <p className="text-xs text-gray-400">{contact.email}</p>}
-                    {n.pinned && (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
-                        📌 pinned
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{stripHtml(n.body) || "(empty note)"}</p>
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                  <p className="font-medium text-sm">{contact?.name || "(no contact)"}</p>
+                  {contact?.email && <p className="text-xs text-gray-400">{contact.email}</p>}
+                  {n.pinned && (
+                    <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                      📌 pinned
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">
+                    Last edit: {fmtDateTime(n.date_added)}
+                  </span>
+                  {entries.length > 1 && (
+                    <span className="text-xs text-gray-400">· {entries.length} entries</span>
+                  )}
                 </div>
-                <div className="text-xs text-gray-400 whitespace-nowrap text-right">
-                  {fmtDateTime(n.date_added)}
+                <div className="space-y-2">
+                  {entries.map((entry, i) => (
+                    <div
+                      key={i}
+                      className="bg-gray-50 rounded-md border border-gray-100 p-3"
+                    >
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {entry.body || "(empty entry)"}
+                      </p>
+                      {(entry.date || entry.author) && (
+                        <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-gray-200 text-[11px] text-gray-500">
+                          {entry.date ? <span>{entry.date}</span> : <span></span>}
+                          {entry.author && <span>by {entry.author}</span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             );
