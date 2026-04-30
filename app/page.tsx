@@ -1,5 +1,6 @@
 import { supabase } from "../utils/supabase";
 import WarRoomCalculators from "./components/WarRoomCalculators";
+import AIDashboardBrief from "./components/AIDashboardBrief";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function Home() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">War Room</h1>
           <p className="text-gray-500 text-sm mt-1">NextKey Property Strategists — Elvis AI Command Centre</p>
@@ -45,6 +46,8 @@ export default async function Home() {
           <span className="text-sm text-gray-500">Elvis Online</span>
         </div>
       </div>
+
+      <AIDashboardBrief />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

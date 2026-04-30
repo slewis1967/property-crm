@@ -4,6 +4,9 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "../../opportunities/NewOpportunityModal";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
+import AIBrief from "../../components/AIBrief";
+import AISuggestedAction from "../../components/AISuggestedAction";
+import AISmartReply from "../../components/AISmartReply";
 
 type Contact = {
   id: string;
@@ -455,6 +458,13 @@ export default function ContactDetail({
             {/* ── OVERVIEW ── */}
             {tab === "Overview" && (
               <div className="space-y-4 max-w-3xl">
+                {/* AI brief + next-action pill */}
+                <AIBrief contactId={contact.id} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <AISuggestedAction contactId={contact.id} />
+                  <AISmartReply contactId={contact.id} />
+                </div>
+
                 {/* Summary card */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <h2 className="text-sm font-semibold text-gray-700 mb-4">Contact Summary</h2>
