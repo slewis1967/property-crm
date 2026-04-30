@@ -40,6 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>👥</span> Contacts
             </a>
+            <a href="/appointments" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📅</span> Appointments
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Stock</p>
             <a href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
