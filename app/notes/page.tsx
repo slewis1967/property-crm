@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml, splitGhlNoteBundle } from "../_lib";
+import { supabase } from "../../utils/supabase";
+import { PageHeader, SearchBar, Pager, EmptyState, fmtDateTime, stripHtml, splitGhlNoteBundle } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
-export default async function ArchiveNotes({
+export default async function NotesPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
@@ -26,7 +26,6 @@ export default async function ArchiveNotes({
   const { data, count, error } = await query;
   const total = count ?? 0;
 
-  // Resolve contact names in one batch
   const contactIds = Array.from(new Set((data ?? []).map((d: any) => d.contact_id).filter(Boolean)));
   let contactsById: Record<string, { name: string; email: string }> = {};
   if (contactIds.length > 0) {
@@ -49,10 +48,10 @@ export default async function ArchiveNotes({
 
   return (
     <div>
-      <ArchiveHeader
-        title="GHL Archive · Notes"
+      <PageHeader
+        title="Notes"
         total={total}
-        description="Every note ever logged against a contact in GHL. Search the body to find by content."
+        description="Every note logged against a contact (sourced from GHL archive). Search the body to find by content."
       />
       <SearchBar q={q} placeholder="Search note body…" />
 
@@ -76,7 +75,7 @@ export default async function ArchiveNotes({
               >
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                   {n.contact_id && contact ? (
-                    <Link href={`/archive/contacts/${n.contact_id}`} className="font-medium text-sm text-blue-600 hover:underline">
+                    <Link href={`/contacts/${n.contact_id}`} className="font-medium text-sm text-blue-600 hover:underline">
                       {contact.name}
                     </Link>
                   ) : (
@@ -119,7 +118,7 @@ export default async function ArchiveNotes({
         </div>
       )}
 
-      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/archive/notes" q={q} />
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/notes" q={q} />
     </div>
   );
 }

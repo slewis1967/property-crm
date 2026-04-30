@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "../../opportunities/NewOpportunityModal";
-import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../archive/_lib";
+import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 
 type Contact = {
   id: string;

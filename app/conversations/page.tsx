@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
+import { supabase } from "../../utils/supabase";
+import { PageHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ const typeColor = (t: string | null) => {
   return "bg-gray-100 text-gray-600";
 };
 
-export default async function ArchiveConversations({
+export default async function ConversationsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
@@ -36,7 +36,6 @@ export default async function ArchiveConversations({
   const { data, count, error } = await query;
   const total = count ?? 0;
 
-  // Fetch contact names in one batch for the visible page
   const contactIds = Array.from(new Set((data ?? []).map((d: any) => d.contact_id).filter(Boolean)));
   let contactsById: Record<string, { name: string; email: string }> = {};
   if (contactIds.length > 0) {
@@ -59,10 +58,10 @@ export default async function ArchiveConversations({
 
   return (
     <div>
-      <ArchiveHeader
-        title="GHL Archive · Conversations"
+      <PageHeader
+        title="Conversations"
         total={total}
-        description="Email and SMS thread metadata. Click into a thread (coming soon) to see every message body."
+        description="Email and SMS thread metadata (sourced from GHL archive)."
       />
       <SearchBar q={q} placeholder="Search last message body…" />
 
@@ -93,7 +92,7 @@ export default async function ArchiveConversations({
                   <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 px-4">
                       {c.contact_id && contact ? (
-                        <Link href={`/archive/contacts/${c.contact_id}`} className="font-medium text-blue-600 hover:underline">{contact.name}</Link>
+                        <Link href={`/contacts/${c.contact_id}`} className="font-medium text-blue-600 hover:underline">{contact.name}</Link>
                       ) : (
                         <p className="font-medium">(no contact)</p>
                       )}
@@ -123,7 +122,7 @@ export default async function ArchiveConversations({
         </div>
       )}
 
-      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/archive/conversations" q={q} />
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/conversations" q={q} />
     </div>
   );
 }

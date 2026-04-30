@@ -1,9 +1,9 @@
-import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, EmptyState, fmtDateTime } from "../_lib";
+import { supabase } from "../../utils/supabase";
+import { PageHeader, EmptyState, fmtDateTime } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 
-export default async function ArchiveForms() {
+export default async function FormsPage() {
   const [{ data: forms, count: formCount }, { data: subs, count: subCount }, { data: funnels }] =
     await Promise.all([
       supabase
@@ -27,17 +27,17 @@ export default async function ArchiveForms() {
 
   return (
     <div>
-      <ArchiveHeader
-        title="GHL Archive · Forms & Funnels"
+      <PageHeader
+        title="Forms & Funnels"
         total={(formCount ?? 0) + (subCount ?? 0) + (funnels?.length ?? 0)}
-        description="Form definitions, their submissions (most recent 100 across all forms), and funnel pages."
+        description="Form definitions, recent submissions (most recent 100 across all forms), and funnel pages (sourced from GHL archive)."
       />
 
       <h2 className="text-lg font-semibold mt-6 mb-3">
         Forms <span className="text-sm text-gray-500 font-normal">({formCount ?? 0})</span>
       </h2>
       {!forms || forms.length === 0 ? (
-        <EmptyState>No forms in the archive.</EmptyState>
+        <EmptyState>No forms yet.</EmptyState>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {forms.map((f: any) => {
@@ -72,7 +72,7 @@ export default async function ArchiveForms() {
         Funnels <span className="text-sm text-gray-500 font-normal">({funnels?.length ?? 0})</span>
       </h2>
       {!funnels || funnels.length === 0 ? (
-        <EmptyState>No funnels in the archive.</EmptyState>
+        <EmptyState>No funnels yet.</EmptyState>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">

@@ -1,12 +1,12 @@
-import { supabase } from "../../../utils/supabase";
+import { supabase } from "../../utils/supabase";
 import Link from "next/link";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../_lib";
+import { PageHeader, SearchBar, Pager, EmptyState, fmtDateTime, truncate, stripHtml } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
-export default async function ArchiveTasks({
+export default async function TasksPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string; status?: string }>;
@@ -48,10 +48,10 @@ export default async function ArchiveTasks({
 
   return (
     <div>
-      <ArchiveHeader
-        title="GHL Archive · Tasks"
+      <PageHeader
+        title="Tasks"
         total={total}
-        description="Tasks logged against contacts. Most accounts have far fewer tasks than notes — that's normal."
+        description="Tasks logged against contacts (sourced from GHL archive)."
       />
 
       <div className="flex gap-2 mb-4">
@@ -82,7 +82,7 @@ export default async function ArchiveTasks({
 
       {!data || data.length === 0 ? (
         <EmptyState>
-          {q || status ? "No tasks match those filters." : "No tasks in the archive."}
+          {q || status ? "No tasks match those filters." : "No tasks yet."}
         </EmptyState>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -107,7 +107,7 @@ export default async function ArchiveTasks({
                     </td>
                     <td className="py-2 px-4">
                       {t.contact_id && contact ? (
-                        <Link href={`/archive/contacts/${t.contact_id}`} className="text-blue-600 hover:underline">{contact.name}</Link>
+                        <Link href={`/contacts/${t.contact_id}`} className="text-blue-600 hover:underline">{contact.name}</Link>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
@@ -131,7 +131,7 @@ export default async function ArchiveTasks({
         </div>
       )}
 
-      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/archive/tasks" q={q} />
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/tasks" q={q} />
     </div>
   );
 }

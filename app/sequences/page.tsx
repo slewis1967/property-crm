@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
-import { fmtDateTime, truncate } from "../archive/_lib";
+import { fmtDateTime, truncate } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 

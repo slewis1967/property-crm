@@ -21,6 +21,25 @@ type AppointmentRow = {
   created_at: string;
 };
 
+type ArchiveAppt = {
+  id: string;
+  calendar_id: string | null;
+  contact_id: string | null;
+  title: string | null;
+  appointment_status: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  date_added: string | null;
+  notes: string | null;
+};
+
+type ArchiveCalendar = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  is_active: boolean | null;
+};
+
 const statusBadge = (s: string, isPast: boolean) => {
   if (s === "cancelled") return "bg-red-100 text-red-700";
   if (s === "rescheduled") return "bg-amber-100 text-amber-700";
@@ -28,48 +47,108 @@ const statusBadge = (s: string, isPast: boolean) => {
   return "bg-green-100 text-green-700";
 };
 
+const archiveStatusBadge = (s: string | null) => {
+  if (!s) return "bg-gray-100 text-gray-600";
+  const k = s.toLowerCase();
+  if (k.includes("confirm") || k.includes("show")) return "bg-green-100 text-green-700";
+  if (k.includes("cancel")) return "bg-red-100 text-red-700";
+  if (k.includes("no")) return "bg-orange-100 text-orange-700";
+  if (k.includes("schedul")) return "bg-blue-100 text-blue-700";
+  return "bg-gray-100 text-gray-600";
+};
+
+const fmtDateTime = (s: string | null | undefined) =>
+  s ? new Date(s).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—";
+
 export default async function AppointmentsPage() {
   const nowIso = new Date().toISOString();
-
-  // Upcoming bookings (start_time >= now, status != cancelled), soonest first
-  const { data: upcoming } = await supabase
-    .from("appointments")
-    .select("*")
-    .gte("start_time", nowIso)
-    .neq("status", "cancelled")
-    .order("start_time", { ascending: true })
-    .limit(100);
-
-  // Recent past bookings (last 30 days), most recent first
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400_000).toISOString();
-  const { data: past } = await supabase
-    .from("appointments")
-    .select("*")
-    .gte("start_time", thirtyDaysAgo)
-    .lt("start_time", nowIso)
-    .order("start_time", { ascending: false })
-    .limit(50);
 
-  // Cancelled in last 30 days, most recent first
-  const { data: cancelled } = await supabase
-    .from("appointments")
-    .select("*")
-    .eq("status", "cancelled")
-    .gte("created_at", thirtyDaysAgo)
-    .order("start_time", { ascending: false })
-    .limit(50);
+  const [
+    { data: upcoming },
+    { data: past },
+    { data: cancelled },
+    { data: archiveCalendars },
+    { data: archiveAppts },
+  ] = await Promise.all([
+    // Upcoming bookings (start_time >= now, status != cancelled), soonest first
+    supabase
+      .from("appointments")
+      .select("*")
+      .gte("start_time", nowIso)
+      .neq("status", "cancelled")
+      .order("start_time", { ascending: true })
+      .limit(100),
+    // Recent past bookings (last 30 days), most recent first
+    supabase
+      .from("appointments")
+      .select("*")
+      .gte("start_time", thirtyDaysAgo)
+      .lt("start_time", nowIso)
+      .order("start_time", { ascending: false })
+      .limit(50),
+    // Cancelled in last 30 days, most recent first
+    supabase
+      .from("appointments")
+      .select("*")
+      .eq("status", "cancelled")
+      .gte("created_at", thirtyDaysAgo)
+      .order("start_time", { ascending: false })
+      .limit(50),
+    // GHL archive calendars overview
+    supabase
+      .from("ghl_archive_calendars")
+      .select("id,name,description,is_active"),
+    // GHL archive appointments — recent 100
+    supabase
+      .from("ghl_archive_appointments")
+      .select("id,calendar_id,contact_id,title,appointment_status,start_time,end_time,date_added,notes")
+      .order("start_time", { ascending: false, nullsFirst: false })
+      .limit(100),
+  ]);
+
+  // Resolve archive contact names in one batch
+  const archContactIds = Array.from(
+    new Set((archiveAppts ?? []).map((a: any) => a.contact_id).filter(Boolean))
+  );
+  let archContactsById: Record<string, { name: string; email: string }> = {};
+  if (archContactIds.length > 0) {
+    const { data: contacts } = await supabase
+      .from("ghl_archive_contacts")
+      .select("id,contact_name,first_name,last_name,email")
+      .in("id", archContactIds);
+    if (contacts) {
+      archContactsById = Object.fromEntries(
+        contacts.map((c: any) => [
+          c.id,
+          {
+            name:
+              c.contact_name ||
+              `${c.first_name || ""} ${c.last_name || ""}`.trim() ||
+              "(unnamed)",
+            email: c.email || "",
+          },
+        ])
+      );
+    }
+  }
+
+  const archCalsById: Record<string, string> = Object.fromEntries(
+    (archiveCalendars ?? []).map((c: any) => [c.id, c.name || "(unnamed)"])
+  );
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Appointments</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Live Cal.com bookings. Updated automatically via the booking webhook.
+        Live Cal.com bookings (updated automatically via the booking webhook) plus the GHL archive of historical calendar bookings.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
         <StatCard label="Upcoming" value={upcoming?.length ?? 0} accent="bg-green-50 text-green-700 border-green-200" />
         <StatCard label="Past (30d)" value={past?.length ?? 0} accent="bg-gray-50 text-gray-700 border-gray-200" />
         <StatCard label="Cancelled (30d)" value={cancelled?.length ?? 0} accent="bg-red-50 text-red-700 border-red-200" />
+        <StatCard label="Archive (recent 100)" value={archiveAppts?.length ?? 0} accent="bg-purple-50 text-purple-700 border-purple-200" />
       </div>
 
       <Section title={`Upcoming (${upcoming?.length ?? 0})`} rows={upcoming as AppointmentRow[] | null} emptyText="No upcoming bookings." />
@@ -78,6 +157,77 @@ export default async function AppointmentsPage() {
 
       {cancelled && cancelled.length > 0 && (
         <Section title={`Cancelled (${cancelled.length})`} rows={cancelled as AppointmentRow[] | null} emptyText="" pastView />
+      )}
+
+      {/* GHL archive calendars + appointments — historical record */}
+      {archiveCalendars && archiveCalendars.length > 0 && (
+        <section className="mt-10 mb-6">
+          <div className="flex items-baseline gap-2 mb-2">
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">GHL Archive · Calendars</h2>
+            <span className="text-xs text-gray-400">{archiveCalendars.length}</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-wrap gap-2">
+              {archiveCalendars.map((c: any) => (
+                <span
+                  key={c.id}
+                  className={`px-3 py-1 rounded-lg text-sm ${
+                    c.is_active ? "bg-blue-50 text-blue-800" : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {c.name || "(unnamed)"} {c.is_active ? "" : "· inactive"}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {archiveAppts && archiveAppts.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-baseline gap-2 mb-2">
+            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">GHL Archive · Appointments</h2>
+            <span className="text-xs text-gray-400">recent {archiveAppts.length}</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left py-2 px-4 text-gray-500 font-medium">When</th>
+                  <th className="text-left py-2 px-4 text-gray-500 font-medium">Title</th>
+                  <th className="text-left py-2 px-4 text-gray-500 font-medium">Contact</th>
+                  <th className="text-left py-2 px-4 text-gray-500 font-medium">Calendar</th>
+                  <th className="text-left py-2 px-4 text-gray-500 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(archiveAppts as ArchiveAppt[]).map((a) => {
+                  const contact = a.contact_id ? archContactsById[a.contact_id] : null;
+                  return (
+                    <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="py-2 px-4 text-xs text-gray-700">{fmtDateTime(a.start_time)}</td>
+                      <td className="py-2 px-4 font-medium">{a.title || "—"}</td>
+                      <td className="py-2 px-4 text-gray-700">
+                        {a.contact_id && contact ? (
+                          <Link href={`/contacts/${a.contact_id}`} className="text-blue-600 hover:underline">{contact.name}</Link>
+                        ) : (
+                          "—"
+                        )}
+                        {contact?.email && <p className="text-xs text-gray-400">{contact.email}</p>}
+                      </td>
+                      <td className="py-2 px-4 text-gray-600 text-xs">{a.calendar_id ? archCalsById[a.calendar_id] || "—" : "—"}</td>
+                      <td className="py-2 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${archiveStatusBadge(a.appointment_status)}`}>
+                          {a.appointment_status || "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );

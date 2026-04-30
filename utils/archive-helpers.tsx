@@ -36,25 +36,6 @@ export function truncate(s: string | null | undefined, len = 80): string {
   return s.length > len ? s.slice(0, len) + "…" : s;
 }
 
-/**
- * Split a stripped GHL note body into individual note entries.
- *
- * GHL bundles a contact's full note history into a single body field, with
- * the structure (after stripHtml):
- *
- *   <body text 1>
- *   <date 1>           e.g. "Oct 9, 2025 05:17 PM (AEST)"
- *   Created by: <author 1>
- *   <association count, optional digit>
- *   <body text 2>
- *   <date 2>
- *   Created by: <author 2>
- *   ...
- *
- * This function walks the stripped text and returns N entries (one per
- * "Created by:" line). Single notes with no "Created by:" footer are
- * returned as a one-element array preserving the whole body.
- */
 export function splitGhlNoteBundle(stripped: string): Array<{
   body: string;
   date?: string;
@@ -72,10 +53,9 @@ export function splitGhlNoteBundle(stripped: string): Array<{
   for (const line of lines) {
     if (!line) continue;
     if (line.startsWith("Created by:")) {
-      // End of one note
       const body = buffer
         .filter((l) => !dateRegex.test(l))
-        .filter((l) => !/^\d+$/.test(l)) // drop standalone association-count digits
+        .filter((l) => !/^\d+$/.test(l))
         .join("\n")
         .trim();
       const author = line.replace(/^Created by:\s*/, "").trim();
@@ -91,46 +71,22 @@ export function splitGhlNoteBundle(stripped: string): Array<{
     }
   }
 
-  // Anything trailing without a Created-by terminator → preserve as last entry
   const tail = buffer.filter((l) => !/^\d+$/.test(l)).join("\n").trim();
   if (tail) entries.push({ body: tail, date: pendingDate });
 
-  // If splitting found nothing useful (no Created-by markers, no entries),
-  // fall back to the whole body as a single entry so simple notes still render.
   if (entries.length === 0) return [{ body: stripped }];
   return entries;
 }
 
-/**
- * Strip HTML from GHL note/message bodies and return clean readable text.
- *
- * GHL notes are exported with their full UI scaffolding embedded: tailwind
- * utility-class inline styles, divider divs, "Created by:" footers,
- * association badges, associations-popover-container divs, etc. Rendering
- * raw body text shows all of that as ugly markup-soup.
- *
- * This strips:
- *   - <style> and <script> blocks (full block + content)
- *   - "Created by: …" / "Reschedule link" GHL UI footer fragments
- *   - All HTML tags (preserving line breaks at <br>, </p>, </div>)
- *   - HTML entities (&amp; &lt; &gt; &quot; &apos; &nbsp;)
- *   - Excess blank lines (collapse 3+ newlines to 2)
- */
 export function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
   let s = html;
 
-  // Drop <script> and <style> blocks entirely (with their content)
   s = s.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "");
-
-  // Convert structural tags to newlines so paragraphs don't collapse together
   s = s.replace(/<\s*br\s*\/?\s*>/gi, "\n");
   s = s.replace(/<\/(p|div|li|h[1-6]|tr)\s*>/gi, "\n");
-
-  // Strip all remaining tags
   s = s.replace(/<[^>]+>/g, "");
 
-  // Decode common HTML entities
   s = s
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -139,19 +95,15 @@ export function stripHtml(html: string | null | undefined): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&apos;/g, "'")
-    .replace(/&[a-zA-Z]+;/g, ""); // drop any remaining named entities we didn't handle
+    .replace(/&[a-zA-Z]+;/g, "");
 
-  // Collapse 3+ consecutive newlines to 2 (paragraph break)
   s = s.replace(/\n{3,}/g, "\n\n");
-
-  // Trim each line + drop empty trailing/leading lines
   s = s.split("\n").map((line) => line.trim()).join("\n").trim();
 
   return s;
 }
 
-/** Standard archive-page header. */
-export function ArchiveHeader({
+export function PageHeader({
   title,
   total,
   description,
@@ -173,7 +125,6 @@ export function ArchiveHeader({
   );
 }
 
-/** Common search bar (uses URL param `q`). */
 export function SearchBar({ q, placeholder }: { q: string; placeholder: string }) {
   return (
     <form method="get" className="mb-4">
@@ -188,7 +139,6 @@ export function SearchBar({ q, placeholder }: { q: string; placeholder: string }
   );
 }
 
-/** Pagination controls — keep simple URL-driven approach. */
 export function Pager({
   page,
   pageSize,

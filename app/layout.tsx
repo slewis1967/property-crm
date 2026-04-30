@@ -43,6 +43,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/appointments" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📅</span> Appointments
             </a>
+            <a href="/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>💬</span> Conversations
+            </a>
+            <a href="/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📝</span> Notes
+            </a>
+            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📌</span> Tasks
+            </a>
+            <a href="/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📋</span> Forms
+            </a>
+            <a href="/media" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🗃️</span> Media Library
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Stock</p>
             <a href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
@@ -63,34 +78,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>📨</span> Sequences
             </a>
 
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">GHL Archive</p>
-            <a href="/archive" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📦</span> Overview
-            </a>
-            <a href="/archive/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>👥</span> Contacts
-            </a>
-            <a href="/archive/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>💬</span> Conversations
-            </a>
-            <a href="/archive/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📝</span> Notes
-            </a>
-            <a href="/archive/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗂️</span> Opportunities
-            </a>
-            <a href="/archive/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📌</span> Tasks
-            </a>
-            <a href="/archive/calendars" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📅</span> Appointments
-            </a>
-            <a href="/archive/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📋</span> Forms
-            </a>
-            <a href="/archive/media" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗃️</span> Media Library
-            </a>
           </nav>
           <div className="p-4 border-t border-gray-800">
             <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>

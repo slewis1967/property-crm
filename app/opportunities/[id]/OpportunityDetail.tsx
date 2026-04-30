@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../archive/_lib";
+import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",

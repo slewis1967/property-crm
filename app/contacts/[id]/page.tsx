@@ -77,13 +77,42 @@ async function getGhlArchive(ghlContactId: string | null) {
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { data: contact, error } = await supabase
+  let contact: any;
+  const { data: liveContact } = await supabase
     .from("contacts")
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
-  if (error || !contact) return notFound();
+  if (liveContact) {
+    contact = liveContact;
+  } else {
+    // Fall back to GHL archive — archive-only contacts (no live counterpart) still
+    // need a detail view. Map archive fields onto the live Contact shape.
+    const { data: archive } = await supabase
+      .from("ghl_archive_contacts")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (!archive) return notFound();
+    contact = {
+      id: archive.id,
+      name: archive.contact_name || `${archive.first_name || ""} ${archive.last_name || ""}`.trim() || null,
+      full_name: archive.contact_name || null,
+      first_name: archive.first_name || null,
+      email: archive.email || null,
+      phone: archive.phone || null,
+      buyer_type: archive.type || null,
+      state: archive.state || null,
+      preferred_state: archive.state || null,
+      ghl_contact_id: archive.id,
+      tags: Array.isArray(archive.tags) ? [...archive.tags, "ghl-archive"] : ["ghl-archive"],
+      created_at: archive.date_added || null,
+      updated_at: archive.date_added || null,
+      source: archive.source || null,
+      _archive_only: true,
+    };
+  }
 
   const [leads, ghlContactId, liveAppointments] = await Promise.all([
     getLeadsForContact(contact.email as string | null),

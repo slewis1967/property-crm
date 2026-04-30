@@ -1,5 +1,5 @@
-import { supabase } from "../../../utils/supabase";
-import { ArchiveHeader, SearchBar, Pager, EmptyState, fmtDate } from "../_lib";
+import { supabase } from "../../utils/supabase";
+import { PageHeader, SearchBar, Pager, EmptyState, fmtDate } from "../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ const statusColor = (s: string | null) => {
   return "text-gray-500 bg-gray-50";
 };
 
-export default async function ArchiveMedia({
+export default async function MediaPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string; status?: string }>;
@@ -48,7 +48,6 @@ export default async function ArchiveMedia({
   const { data, count, error } = await query;
   const total = count ?? 0;
 
-  // Quick stats
   const { data: stats } = await supabase
     .from("ghl_archive_media_files")
     .select("download_status,size");
@@ -62,10 +61,10 @@ export default async function ArchiveMedia({
 
   return (
     <div>
-      <ArchiveHeader
-        title="GHL Archive · Media library"
+      <PageHeader
+        title="Media Library"
         total={total}
-        description="Files uploaded to GHL — contracts, ID docs, marketing assets. Binaries are saved locally to /mnt/c/NEXUS-Memory/ghl_extract/phase3_*/files/. Once GHL closes, the original CDN URLs go dead."
+        description="Files uploaded — contracts, ID docs, marketing assets (sourced from GHL archive). Binaries are saved locally to /mnt/c/NEXUS-Memory/ghl_extract/phase3_*/files/."
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -114,7 +113,7 @@ export default async function ArchiveMedia({
       )}
 
       {!data || data.length === 0 ? (
-        <EmptyState>{q || status ? "No files match those filters." : "No media files in the archive."}</EmptyState>
+        <EmptyState>{q || status ? "No files match those filters." : "No media files yet."}</EmptyState>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -155,7 +154,7 @@ export default async function ArchiveMedia({
         </div>
       )}
 
-      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/archive/media" q={q} />
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} baseHref="/media" q={q} />
     </div>
   );
 }
