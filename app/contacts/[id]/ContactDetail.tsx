@@ -103,16 +103,33 @@ type GhlArchive = {
   opportunities: Array<{ id: string; name: string | null; pipeline_id: string | null; pipeline_stage_id: string | null; status: string | null; monetary_value: number | null; date_added: string | null }>;
 };
 
+type LiveAppointment = {
+  id: string;
+  cal_uid: string | null;
+  event_title: string | null;
+  event_slug: string | null;
+  host_email: string | null;
+  host_name: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  status: string | null;
+  cancel_reason: string | null;
+  additional_notes: string | null;
+};
+
 export default function ContactDetail({
   contact,
   leads,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [], opportunities: [] },
   ghlContactId = null,
+  liveAppointments = [],
 }: {
   contact: Contact;
   leads: Lead[];
   ghlArchive?: GhlArchive;
   ghlContactId?: string | null;
+  liveAppointments?: LiveAppointment[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Overview");
@@ -571,6 +588,52 @@ export default function ContactDetail({
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Cal.com appointments (current — sourced via webhook) */}
+                {liveAppointments.length > 0 && (
+                  <div className="mt-8 space-y-4">
+                    <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">📅 Bookings</span>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-2">
+                      {liveAppointments.map((a) => {
+                        const start = a.start_time ? new Date(a.start_time) : null;
+                        const isPast = start && start.getTime() < Date.now();
+                        const statusBadge =
+                          a.status === "cancelled" ? "bg-red-100 text-red-700"
+                          : a.status === "rescheduled" ? "bg-amber-100 text-amber-700"
+                          : isPast ? "bg-gray-100 text-gray-600"
+                          : "bg-green-100 text-green-700";
+                        return (
+                          <div key={a.id} className="flex items-start justify-between gap-3 py-2 border-b border-gray-50 last:border-0 text-xs">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-gray-900">{a.event_title || "(untitled event)"}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${statusBadge}`}>
+                                  {a.status}{isPast && a.status === "booked" ? " • past" : ""}
+                                </span>
+                              </div>
+                              <p className="text-gray-500 mt-0.5">
+                                {start ? start.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—"}
+                                {a.host_name ? ` · with ${a.host_name}` : a.host_email ? ` · with ${a.host_email}` : ""}
+                              </p>
+                              {a.location && (a.location.startsWith("http") ? (
+                                <a href={a.location} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline mt-0.5 inline-block">
+                                  Join meeting →
+                                </a>
+                              ) : (
+                                <p className="text-gray-500 mt-0.5">{a.location}</p>
+                              ))}
+                              {a.cancel_reason && (
+                                <p className="text-red-600 mt-1 italic">Cancelled: {a.cancel_reason}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

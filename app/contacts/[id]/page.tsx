@@ -85,11 +85,53 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
 
   if (error || !contact) return notFound();
 
-  const [leads, ghlContactId] = await Promise.all([
+  const [leads, ghlContactId, liveAppointments] = await Promise.all([
     getLeadsForContact(contact.email as string | null),
     resolveGhlContactId(contact),
+    getLiveAppointments(contact.id, contact.email as string | null),
   ]);
   const ghlArchive = await getGhlArchive(ghlContactId);
 
-  return <ContactDetail contact={contact} leads={leads} ghlArchive={ghlArchive} ghlContactId={ghlContactId} />;
+  return (
+    <ContactDetail
+      contact={contact}
+      leads={leads}
+      ghlArchive={ghlArchive}
+      ghlContactId={ghlContactId}
+      liveAppointments={liveAppointments}
+    />
+  );
+}
+
+/** Cal.com bookings ingested via the booking webhook (live, current source).
+ * Matches by contact_id first, falls back to email match for any pre-link rows. */
+async function getLiveAppointments(contactId: string, email: string | null) {
+  const out: any[] = [];
+  const seenUids = new Set<string>();
+  const { data: byId } = await supabase
+    .from("appointments")
+    .select("id,cal_uid,event_title,event_slug,host_email,host_name,start_time,end_time,location,status,cancel_reason,additional_notes")
+    .eq("contact_id", contactId)
+    .order("start_time", { ascending: false });
+  for (const r of byId ?? []) {
+    if (r.cal_uid) seenUids.add(r.cal_uid);
+    out.push(r);
+  }
+  if (email) {
+    const { data: byEmail } = await supabase
+      .from("appointments")
+      .select("id,cal_uid,event_title,event_slug,host_email,host_name,start_time,end_time,location,status,cancel_reason,additional_notes")
+      .ilike("contact_email", email)
+      .order("start_time", { ascending: false });
+    for (const r of byEmail ?? []) {
+      if (!r.cal_uid || !seenUids.has(r.cal_uid)) out.push(r);
+    }
+  }
+  // Sort combined list by start_time desc
+  out.sort((a, b) => {
+    const ta = a.start_time ? new Date(a.start_time).getTime() : 0;
+    const tb = b.start_time ? new Date(b.start_time).getTime() : 0;
+    return tb - ta;
+  });
+  return out;
 }
