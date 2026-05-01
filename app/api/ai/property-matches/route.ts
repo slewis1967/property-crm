@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       `price: $${(propPrice || 0).toLocaleString()}`,
       `bedrooms: ${property.bedrooms ?? "—"} · bathrooms: ${property.bathrooms ?? "—"} · car: ${property.car_spaces ?? "—"}`,
       `land: ${property.land_size ?? "—"} · house: ${property.house_size ?? "—"}`,
-      `category: ${property.category || "—"} · builder: ${property.builder_name || "—"}`,
+      `type: ${property.property_type || "—"}${property.sda_category ? ` · sda: ${property.sda_category}` : ""} · builder: ${property.builder_name || "—"}`,
       `status: ${property.status || "—"}`,
       "",
       `CANDIDATES (${filtered.length}):`,

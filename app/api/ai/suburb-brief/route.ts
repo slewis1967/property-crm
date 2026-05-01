@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const { data: stock } = await supabase
       .from("global_stock_pool")
       .select(
-        "id,builder_name,street_address,suburb,state,total_package_price,house_price,bedrooms,bathrooms,land_size,house_size,category,status",
+        "id,builder_name,street_address,suburb,state,total_package_price,house_price,bedrooms,bathrooms,land_size,house_size,property_type,sda_category,status",
       )
       .ilike("suburb", suburb)
       .ilike("state", state)
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
       stockMedian ? `median listing: $${stockMedian.toLocaleString()}` : "",
       ...((stock ?? []).slice(0, 8).map((p: any) => {
         const price = Number(p.total_package_price ?? p.house_price ?? 0);
-        return `- ${p.street_address || "?"} · $${price.toLocaleString()} · ${p.bedrooms ?? "?"}br · ${p.builder_name || "?"} · ${p.category || "?"} · ${p.status || "?"}`;
+        return `- ${p.street_address || "?"} · $${price.toLocaleString()} · ${p.bedrooms ?? "?"}br · ${p.builder_name || "?"} · ${p.property_type || "?"}${p.sda_category ? ` (${p.sda_category})` : ""} · ${p.status || "?"}`;
       })),
       "",
       `INTERESTED CONTACTS in ${state}: ${interestedCount ?? 0}`,

@@ -44,10 +44,17 @@ export async function aiCall({
       messages: [{ role: "user", content: user }],
     });
 
+    if (!response || !Array.isArray((response as any).content)) {
+      throw new Error(
+        `Unexpected Anthropic response shape: ${JSON.stringify(response).slice(0, 400)}`,
+      );
+    }
     for (const block of response.content) {
       if (block.type === "text") return block.text.trim();
     }
-    return "";
+    // No text block — ran out of tokens or model returned thinking-only.
+    const reason = (response as any).stop_reason ?? "unknown";
+    throw new Error(`AI returned no text (stop_reason=${reason}). Try increasing maxTokens.`);
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
       throw new Error("ANTHROPIC_API_KEY is missing or invalid");

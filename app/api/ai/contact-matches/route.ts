@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     let q = supabase
       .from("global_stock_pool")
       .select(
-        "id,builder_name,street_address,suburb,state,total_package_price,house_price,bedrooms,bathrooms,car_spaces,land_size,house_size,status,category,created_at,updated_at",
+        "id,builder_name,street_address,suburb,state,total_package_price,house_price,bedrooms,bathrooms,car_spaces,land_size,house_size,status,property_type,sda_category,created_at,updated_at",
       )
       .order("created_at", { ascending: false })
       .limit(30);
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
           `- id: ${p.id}`,
           `  ${p.street_address || "—"}, ${p.suburb || "—"} ${p.state || "—"}`,
           `  $${price.toLocaleString()} · ${p.bedrooms ?? "—"}br/${p.bathrooms ?? "—"}ba · land ${p.land_size ?? "—"} · house ${p.house_size ?? "—"}`,
-          `  builder: ${p.builder_name || "—"} · category: ${p.category || "—"} · status: ${p.status || "—"}`,
+          `  builder: ${p.builder_name || "—"} · type: ${p.property_type || "—"}${p.sda_category ? ` · sda: ${p.sda_category}` : ""} · status: ${p.status || "—"}`,
         ].join("\n");
       }),
     ]
