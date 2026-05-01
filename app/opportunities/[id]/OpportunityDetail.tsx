@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
+import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
@@ -354,6 +355,9 @@ export default function OpportunityDetail({
 
         {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5 max-w-3xl">
+
+          {/* AI diagnosis — is this opp stuck and why? */}
+          <AIOpportunityDiagnosis opportunityId={lead.lead_id} />
 
           {/* Stage changer */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
+import AIPreMeetingBrief from "../components/AIPreMeetingBrief";
 
 export const dynamic = "force-dynamic";
 
@@ -151,7 +152,7 @@ export default async function AppointmentsPage() {
         <StatCard label="Archive (recent 100)" value={archiveAppts?.length ?? 0} accent="bg-purple-50 text-purple-700 border-purple-200" />
       </div>
 
-      <Section title={`Upcoming (${upcoming?.length ?? 0})`} rows={upcoming as AppointmentRow[] | null} emptyText="No upcoming bookings." />
+      <Section title={`Upcoming (${upcoming?.length ?? 0})`} rows={upcoming as AppointmentRow[] | null} emptyText="No upcoming bookings." showBrief />
 
       <Section title={`Past 30 days (${past?.length ?? 0})`} rows={past as AppointmentRow[] | null} emptyText="No bookings in the last 30 days." pastView />
 
@@ -242,7 +243,7 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function Section({ title, rows, emptyText, pastView = false }: { title: string; rows: AppointmentRow[] | null; emptyText: string; pastView?: boolean }) {
+function Section({ title, rows, emptyText, pastView = false, showBrief = false }: { title: string; rows: AppointmentRow[] | null; emptyText: string; pastView?: boolean; showBrief?: boolean }) {
   return (
     <section className="mb-8">
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">{title}</h2>
@@ -284,6 +285,11 @@ function Section({ title, rows, emptyText, pastView = false }: { title: string; 
                     <p className="text-xs text-gray-500 mt-1">{a.location}</p>
                   ))}
                   {a.cancel_reason && <p className="text-xs text-red-600 italic mt-1">Cancelled: {a.cancel_reason}</p>}
+                  {showBrief && a.status !== "cancelled" && (
+                    <div className="mt-2">
+                      <AIPreMeetingBrief appointmentId={a.id} />
+                    </div>
+                  )}
                 </div>
               </div>
             );

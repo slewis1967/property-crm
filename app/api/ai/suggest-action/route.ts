@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
-import { aiCallEnvelope } from "../../../../utils/ai";
+import { aiCall } from "../../../../utils/ai";
+import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
 export const dynamic = "force-dynamic";
@@ -117,13 +118,34 @@ export async function POST(req: Request) {
         lines.push(`- [${t.completed ? "done" : "open"}] ${t.title || "?"} due ${t.due_date}`);
     }
 
-    const result = await aiCallEnvelope({
-      system: SYSTEM,
-      user: lines.join("\n"),
-      maxTokens: 1000,
-      effort: "medium",
-    });
-    return NextResponse.json(result);
+    const fingerprintInput = {
+      v: 1,
+      updated_at: contact.updated_at ?? null,
+      notes_latest: latestDate(notes, "date_added"),
+      convo_latest: latestDate(conversations, "last_message_date"),
+      tasks_latest: latestDate(tasks, "date_added"),
+    };
+
+    try {
+      const result = await getCachedOrGenerate({
+        kind: "suggest-action",
+        refId: contactId,
+        fingerprintInput,
+        generate: () =>
+          aiCall({
+            system: SYSTEM,
+            user: lines.join("\n"),
+            maxTokens: 1000,
+            effort: "medium",
+          }),
+      });
+      return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
+    } catch (e: any) {
+      return NextResponse.json(
+        { ok: false, error: e?.message ?? "AI request failed" },
+        { status: 500 },
+      );
+    }
   } catch (e: any) {
     return NextResponse.json(
       { ok: false, error: e?.message ?? "Failed to suggest action" },
@@ -135,4 +157,13 @@ export async function POST(req: Request) {
 function truncate(s: string | null | undefined, n: number) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
+}
+function latestDate(rows: any[] | null | undefined, field: string): string | null {
+  if (!rows || rows.length === 0) return null;
+  let max: string | null = null;
+  for (const r of rows) {
+    const v = r?.[field];
+    if (v && (!max || v > max)) max = v;
+  }
+  return max;
 }

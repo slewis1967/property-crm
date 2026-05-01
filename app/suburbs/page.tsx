@@ -1,5 +1,6 @@
 import { nexusApi } from "@/utils/nexus-api";
 import { createClient } from "@supabase/supabase-js";
+import AISuburbBrief from "../components/AISuburbBrief";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,8 @@ export default async function SuburbsPage() {
                   ) : null;
                 } catch { return null; }
               })()}
+
+              <AISuburbBrief suburb={s.suburb} state={s.state} />
             </div>
           ))}
         </div>

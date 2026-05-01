@@ -7,6 +7,8 @@ import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../u
 import AIBrief from "../../components/AIBrief";
 import AISuggestedAction from "../../components/AISuggestedAction";
 import AISmartReply from "../../components/AISmartReply";
+import AIContactMatches from "../../components/AIContactMatches";
+import AIQuickLog from "../../components/AIQuickLog";
 
 type Contact = {
   id: string;
@@ -463,7 +465,11 @@ export default function ContactDetail({
                 <div className="flex flex-wrap items-center gap-2">
                   <AISuggestedAction contactId={contact.id} />
                   <AISmartReply contactId={contact.id} />
+                  <AIQuickLog contactId={contact.id} />
                 </div>
+
+                {/* AI matchmaker — properties that fit this contact */}
+                <AIContactMatches contactId={contact.id} />
 
                 {/* Summary card */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">

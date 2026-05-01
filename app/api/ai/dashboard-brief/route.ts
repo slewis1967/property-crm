@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
-import { aiCallEnvelope } from "../../../../utils/ai";
+import { aiCall } from "../../../../utils/ai";
+import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -101,14 +102,44 @@ export async function POST() {
       .filter(Boolean)
       .join("\n");
 
-    const result = await aiCallEnvelope({
-      system: SYSTEM,
-      user: userPrompt,
-      maxTokens: 2500,
-      effort: "high",
-    });
+    // Cache the dashboard brief for 4 hours by default — fingerprint by the
+    // counts + the date so it auto-invalidates when the day rolls or anything
+    // material changes.
+    const fingerprintInput = {
+      v: 1,
+      date: new Date().toISOString().slice(0, 10),
+      counts: {
+        leads: leadsCount ?? 0,
+        properties: propertiesCount ?? 0,
+        contacts: contactsCount ?? 0,
+        hot: hotContacts?.length ?? 0,
+        recentLeads: recentLeads?.length ?? 0,
+        staleHot: staleHotContacts?.length ?? 0,
+        upcoming: upcomingAppointments?.length ?? 0,
+      },
+    };
 
-    return NextResponse.json(result);
+    try {
+      const result = await getCachedOrGenerate({
+        kind: "dashboard-brief",
+        refId: "global",
+        fingerprintInput,
+        maxAgeMs: 4 * 60 * 60 * 1000, // 4 hours
+        generate: () =>
+          aiCall({
+            system: SYSTEM,
+            user: userPrompt,
+            maxTokens: 2500,
+            effort: "high",
+          }),
+      });
+      return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
+    } catch (e: any) {
+      return NextResponse.json(
+        { ok: false, error: e?.message ?? "AI request failed" },
+        { status: 500 },
+      );
+    }
   } catch (e: any) {
     return NextResponse.json(
       { ok: false, error: e?.message ?? "Failed to build dashboard brief" },
