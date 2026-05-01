@@ -41,6 +41,115 @@ const TEMPLATE_CSV = `first_name,last_name,email,phone,buyer_type,state,budget_m
 Jordan,Blake,jordan@example.com,0412345678,Investor,QLD,650000,3-6 months,warm,referral
 Alex,Smith,alex@example.com,0498765432,First Home Buyer,NSW,550000,ASAP,hot,facebook`;
 
+/**
+ * vCard 3.0/4.0 parser tuned for iCloud / Apple Contacts exports. Returns
+ * rows with stable headers (Name, First, Last, Email, Phone, Org, State,
+ * Country, Notes) so they slot into the existing CSV mapping flow.
+ *
+ * Handles: line folding, basic property params (TYPE=...), quoted-printable
+ * decoding for Latin-1, multiple emails/phones (we keep the first preferred),
+ * structured N + ADR fields. Skips PHOTO/X-APPLE-* and other binary blobs.
+ */
+function parseVCard(text: string): { headers: string[]; rows: RawRow[] } {
+  // Unfold continuation lines (a CRLF followed by space/tab joins to previous)
+  const unfolded = text.replace(/\r?\n[ \t]/g, "");
+  const lines = unfolded.split(/\r?\n/);
+
+  type VCard = Record<string, string[]>;
+  const cards: VCard[] = [];
+  let current: VCard | null = null;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (/^BEGIN:VCARD$/i.test(line)) { current = {}; continue; }
+    if (/^END:VCARD$/i.test(line)) {
+      if (current) cards.push(current);
+      current = null;
+      continue;
+    }
+    if (!current) continue;
+
+    // Parse "PROPERTY[;PARAM=VAL...]:VALUE"
+    const idx = line.indexOf(":");
+    if (idx === -1) continue;
+    const left = line.slice(0, idx);
+    let value = line.slice(idx + 1);
+
+    const segments = left.split(";");
+    const propRaw = segments[0].toUpperCase();
+    const params: Record<string, string> = {};
+    for (let i = 1; i < segments.length; i++) {
+      const eq = segments[i].indexOf("=");
+      if (eq === -1) {
+        // Bare type indicator (older vCard 2.1)
+        params["TYPE"] = (params["TYPE"] || "") + segments[i].toUpperCase();
+      } else {
+        params[segments[i].slice(0, eq).toUpperCase()] = segments[i].slice(eq + 1);
+      }
+    }
+
+    if (params["ENCODING"]?.toUpperCase() === "QUOTED-PRINTABLE") {
+      value = value.replace(/=([0-9A-F]{2})/gi, (_, h) =>
+        String.fromCharCode(parseInt(h, 16))
+      );
+    }
+
+    if (propRaw === "PHOTO" || propRaw.startsWith("X-")) continue;
+
+    const key = `${propRaw}${params["TYPE"] ? `;${params["TYPE"].toUpperCase()}` : ""}`;
+    if (!current[propRaw]) current[propRaw] = [];
+    current[propRaw].push(value);
+    // Also store typed variant so we can prefer e.g. CELL phone
+    if (params["TYPE"]) {
+      if (!current[key]) current[key] = [];
+      current[key].push(value);
+    }
+  }
+
+  const headers = ["Name", "First", "Last", "Email", "Phone", "Org", "State", "Country", "Notes"];
+  const pickFirst = (vc: VCard, ...keys: string[]): string => {
+    for (const k of keys) {
+      const v = vc[k]?.[0];
+      if (v && v.trim()) return v.trim();
+    }
+    return "";
+  };
+
+  const rows: RawRow[] = cards.map((vc) => {
+    const fn = pickFirst(vc, "FN");
+    const n = pickFirst(vc, "N"); // "Last;First;Middle;Prefix;Suffix"
+    const [last = "", first = ""] = n.split(";");
+    const email = pickFirst(vc, "EMAIL;HOME", "EMAIL;WORK", "EMAIL;INTERNET", "EMAIL");
+    // Phone preference: CELL > HOME > WORK > any
+    const phone = pickFirst(
+      vc,
+      "TEL;CELL", "TEL;CELLVOICE", "TEL;IPHONE", "TEL;MOBILE",
+      "TEL;HOME", "TEL;WORK", "TEL"
+    );
+    const org = pickFirst(vc, "ORG").split(";")[0]; // ORG can be "Company;Dept"
+    const adr = pickFirst(vc, "ADR;HOME", "ADR;WORK", "ADR");
+    // ADR = "PO;Extended;Street;City;State;Postal;Country"
+    const [, , , , state = "", , country = ""] = adr.split(";");
+    const notes = pickFirst(vc, "NOTE");
+
+    return {
+      Name: fn || `${first} ${last}`.trim(),
+      First: first.trim(),
+      Last: last.trim(),
+      Email: email,
+      Phone: phone,
+      Org: org.trim(),
+      State: state.trim(),
+      Country: country.trim(),
+      Notes: notes,
+    };
+  });
+
+  // Keep only rows with at least a name
+  return { headers, rows: rows.filter((r) => r.Name) };
+}
+
 function parseCSV(text: string): { headers: string[]; rows: RawRow[] } {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
   if (lines.length < 2) return { headers: [], rows: [] };
@@ -98,6 +207,8 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
   const [progress, setProgress] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [assignType, setAssignType] = useState<string>("");
+  const [tagsInput, setTagsInput] = useState<string>("getahome");
+  const [sourceLabel, setSourceLabel] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
@@ -106,8 +217,19 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
     let h: string[] = [];
     let rows: RawRow[] = [];
 
+    const isVcard = /\.vcf$/i.test(file.name);
     const isExcel = /\.(xlsx|xls)$/i.test(file.name);
-    if (isExcel) {
+    if (isVcard) {
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target!.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsText(file);
+      });
+      ({ headers: h, rows } = parseVCard(text));
+      // Auto-tag the source so it's distinguishable in the CRM
+      if (!sourceLabel) setSourceLabel("icloud");
+    } else if (isExcel) {
       const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = e => resolve(e.target!.result as ArrayBuffer);
@@ -167,7 +289,7 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && /\.(csv|xlsx|xls)$/i.test(file.name)) handleFile(file);
+    if (file && /\.(csv|xlsx|xls|vcf)$/i.test(file.name)) handleFile(file);
   };
 
   const applyAndPreview = () => {
@@ -196,9 +318,14 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
       budget_max:      row.budget_max ? parseInt(String(row.budget_max).replace(/[^0-9]/g, "")) || null : null,
       timeframe:       row.timeframe || null,
       temperature:     row.temperature || "warm",
-      source:          row.source || "csv_import",
+      source:          row.source || sourceLabel || "csv_import",
       status:          "new",
     }));
+
+    const defaultTags = tagsInput
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
 
     for (let i = 0; i < prepared.length; i += BATCH) {
       const batch = prepared.slice(i, i + BATCH);
@@ -206,7 +333,11 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
         const res = await fetch("/api/contacts/bulk-insert", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contacts: batch }),
+          body: JSON.stringify({
+            contacts: batch,
+            default_tags: defaultTags,
+            default_source: sourceLabel || undefined,
+          }),
         });
         const d = await res.json();
         if (!res.ok) {
@@ -270,11 +401,37 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
                 className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition group"
               >
                 <div className="text-4xl mb-3">📂</div>
-                <p className="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Drop your CSV here or click to browse</p>
-                <p className="text-xs text-gray-400 mt-1">Supported: .csv, .xlsx, .xls — any column names, AI will map them</p>
-                <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
+                <p className="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Drop a file here or click to browse</p>
+                <p className="text-xs text-gray-400 mt-1">Supported: .csv, .xlsx, .xls, .vcf — AI maps columns automatically</p>
+                <p className="text-[11px] text-gray-400 mt-1">Export from iCloud Contacts as .vcf for one-click iPhone/Mac import</p>
+                <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.vcf" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
               </div>
+
+              {/* Tags / source overrides applied to every imported contact */}
+              <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  Tag every imported contact with{" "}
+                  <span className="text-gray-400 font-normal">(comma-separated)</span>
+                </p>
+                <input
+                  type="text"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="getahome, imported-from-icloud"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  These tags get applied to every contact on import — useful for grouping (e.g.{" "}
+                  <code>getahome</code>) or marking the source (e.g. <code>imported-from-icloud</code>).
+                </p>
+              </div>
+
+              {sourceLabel && (
+                <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2 text-xs text-purple-800">
+                  <span className="font-semibold">Source:</span> {sourceLabel} (auto-detected)
+                </div>
+              )}
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-3">
                 <span className="text-xl mt-0.5">✨</span>
