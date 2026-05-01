@@ -1,43 +1,107 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type Compliance = {
+  severity: "clean" | "warn" | "block";
+  violations: Array<{ type: string; snippet: string; why: string; fix: string }>;
+  rewrite: string;
+};
 
 export default function AISmartReply({ contactId }: { contactId: string }) {
   const [open, setOpen] = useState(false);
   const [channel, setChannel] = useState<"email" | "sms">("email");
   const [direction, setDirection] = useState("");
+  const [text, setText] = useState("");
   const [state, setState] = useState<
     | { phase: "idle" }
     | { phase: "loading" }
-    | { phase: "ready"; text: string }
+    | { phase: "ready" }
+    | { phase: "error"; error: string }
+  >({ phase: "idle" });
+
+  const [compliance, setCompliance] = useState<
+    | { phase: "idle" }
+    | { phase: "checking" }
+    | { phase: "done"; result: Compliance }
     | { phase: "error"; error: string }
   >({ phase: "idle" });
 
   const generate = async () => {
     setState({ phase: "loading" });
+    setCompliance({ phase: "idle" });
     try {
       const res = await fetch("/api/ai/smart-reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactId, channel, direction: direction.trim() || undefined }),
+        body: JSON.stringify({
+          contactId,
+          channel,
+          direction: direction.trim() || undefined,
+        }),
       });
       const json = await res.json();
-      if (json.ok) setState({ phase: "ready", text: json.text });
-      else setState({ phase: "error", error: json.error || "Failed to draft reply" });
+      if (json.ok) {
+        setText(json.text);
+        setState({ phase: "ready" });
+      } else {
+        setState({ phase: "error", error: json.error || "Failed to draft reply" });
+      }
     } catch (e: any) {
       setState({ phase: "error", error: e?.message ?? "Failed to draft reply" });
     }
   };
 
-  const copy = async () => {
-    if (state.phase === "ready") {
+  // Whenever a draft is ready (or edited), debounce a compliance check
+  useEffect(() => {
+    if (state.phase !== "ready" || !text.trim()) {
+      setCompliance({ phase: "idle" });
+      return;
+    }
+    setCompliance({ phase: "checking" });
+    const handle = setTimeout(async () => {
       try {
-        await navigator.clipboard.writeText(state.text);
-      } catch {
-        /* clipboard unavailable */
+        const res = await fetch("/api/ai/compliance-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, channel }),
+        });
+        const json = await res.json();
+        if (json.ok) {
+          setCompliance({
+            phase: "done",
+            result: {
+              severity: json.severity,
+              violations: json.violations || [],
+              rewrite: json.rewrite || "",
+            },
+          });
+        } else {
+          setCompliance({ phase: "error", error: json.error || "Compliance check failed" });
+        }
+      } catch (e: any) {
+        setCompliance({ phase: "error", error: e?.message ?? "Compliance check failed" });
       }
+    }, 600);
+    return () => clearTimeout(handle);
+  }, [text, channel, state.phase]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      /* clipboard unavailable */
     }
   };
+
+  const useRewrite = () => {
+    if (compliance.phase === "done" && compliance.result.rewrite) {
+      setText(compliance.result.rewrite);
+    }
+  };
+
+  const blocked =
+    compliance.phase === "done" && compliance.result.severity === "block";
 
   if (!open) {
     return (
@@ -115,16 +179,26 @@ export default function AISmartReply({ contactId }: { contactId: string }) {
       {state.phase === "ready" && (
         <div>
           <textarea
-            value={state.text}
-            onChange={(e) => setState({ phase: "ready", text: e.target.value })}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             className="w-full text-sm px-3 py-2 border border-gray-200 rounded resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-            rows={Math.min(20, Math.max(6, state.text.split("\n").length + 2))}
+            rows={Math.min(20, Math.max(6, text.split("\n").length + 2))}
           />
+
+          {/* Compliance banner */}
+          <ComplianceBanner state={compliance} onUseRewrite={useRewrite} />
+
           <div className="flex gap-2 mt-2">
             <button
               type="button"
               onClick={copy}
-              className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded hover:bg-gray-800"
+              disabled={blocked}
+              title={blocked ? "Resolve compliance issues before copying" : "Copy to clipboard"}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition ${
+                blocked
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-900 text-white hover:bg-gray-800"
+              }`}
             >
               📋 Copy
             </button>
@@ -142,6 +216,84 @@ export default function AISmartReply({ contactId }: { contactId: string }) {
       {state.phase === "error" && (
         <p className="text-sm text-red-700">⚠️ {state.error}</p>
       )}
+    </div>
+  );
+}
+
+function ComplianceBanner({
+  state,
+  onUseRewrite,
+}: {
+  state:
+    | { phase: "idle" }
+    | { phase: "checking" }
+    | { phase: "done"; result: Compliance }
+    | { phase: "error"; error: string };
+  onUseRewrite: () => void;
+}) {
+  if (state.phase === "idle") return null;
+
+  if (state.phase === "checking") {
+    return (
+      <p className="text-[11px] text-gray-400 italic mt-2">Checking compliance…</p>
+    );
+  }
+  if (state.phase === "error") {
+    return (
+      <p className="text-[11px] text-amber-700 italic mt-2">
+        Compliance check unavailable ({state.error}). Send carefully.
+      </p>
+    );
+  }
+
+  const { severity, violations, rewrite } = state.result;
+  if (severity === "clean") {
+    return (
+      <p className="text-[11px] text-emerald-700 mt-2 flex items-center gap-1.5">
+        <span>✅</span>
+        <span>Compliance check passed.</span>
+      </p>
+    );
+  }
+
+  const accent =
+    severity === "block"
+      ? "bg-red-50 border-red-200 text-red-900"
+      : "bg-amber-50 border-amber-200 text-amber-900";
+  const headerIcon = severity === "block" ? "⛔" : "⚠️";
+  const headerLabel =
+    severity === "block" ? "Compliance: blocking issues" : "Compliance: review before sending";
+
+  return (
+    <div className={`mt-2 border rounded-lg p-3 text-xs ${accent}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold uppercase tracking-wider text-[10px]">
+          {headerIcon} {headerLabel}
+        </span>
+        {rewrite && (
+          <button
+            type="button"
+            onClick={onUseRewrite}
+            className="text-[11px] underline underline-offset-2 hover:no-underline font-medium"
+          >
+            Use suggested rewrite →
+          </button>
+        )}
+      </div>
+      <ul className="space-y-1.5">
+        {violations.map((v, i) => (
+          <li key={i}>
+            <p className="font-medium">{v.type}</p>
+            {v.snippet && (
+              <p className="text-[11px] italic mt-0.5">"{v.snippet}"</p>
+            )}
+            <p className="text-[11px] mt-0.5 opacity-80">{v.why}</p>
+            {v.fix && (
+              <p className="text-[11px] mt-0.5 opacity-90">→ {v.fix}</p>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
