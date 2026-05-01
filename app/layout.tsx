@@ -66,6 +66,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🏘️</span> Aggregator Feed
             </a>
+            <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🔍</span> Review Queue
+            </a>
+            <a href="/aggregator/runs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📜</span> Ingestion Runs
+            </a>
+            <a href="/aggregator/builders" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🏗️</span> Builders
+            </a>
             <a href="/suburbs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🗺️</span> Suburb Intelligence
             </a>
