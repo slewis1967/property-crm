@@ -77,15 +77,30 @@ function parseVCard(text: string): { headers: string[]; rows: RawRow[] } {
     let value = line.slice(idx + 1);
 
     const segments = left.split(";");
-    const propRaw = segments[0].toUpperCase();
+    // Apple iCloud groups related properties with an "itemN." prefix:
+    //   item1.TEL;type=CELL:+61400000000
+    //   item1.X-ABLabel:_$!<Mobile>!$_
+    // Strip the prefix so TEL/EMAIL/ADR show up under their canonical names.
+    let propRaw = segments[0].toUpperCase().replace(/^ITEM\d+\./, "");
+    const types: string[] = [];
     const params: Record<string, string> = {};
     for (let i = 1; i < segments.length; i++) {
       const eq = segments[i].indexOf("=");
       if (eq === -1) {
-        // Bare type indicator (older vCard 2.1)
-        params["TYPE"] = (params["TYPE"] || "") + segments[i].toUpperCase();
+        // Bare type indicator (vCard 2.1 / older Apple)
+        types.push(segments[i].toUpperCase());
       } else {
-        params[segments[i].slice(0, eq).toUpperCase()] = segments[i].slice(eq + 1);
+        const k = segments[i].slice(0, eq).toUpperCase();
+        const v = segments[i].slice(eq + 1);
+        if (k === "TYPE") {
+          // type=CELL,VOICE,pref or repeated type=CELL;type=VOICE — both land here
+          v.split(",").forEach((t) => {
+            const cleaned = t.replace(/^"|"$/g, "").toUpperCase().trim();
+            if (cleaned) types.push(cleaned);
+          });
+        } else {
+          params[k] = v;
+        }
       }
     }
 
@@ -97,13 +112,14 @@ function parseVCard(text: string): { headers: string[]; rows: RawRow[] } {
 
     if (propRaw === "PHOTO" || propRaw.startsWith("X-")) continue;
 
-    const key = `${propRaw}${params["TYPE"] ? `;${params["TYPE"].toUpperCase()}` : ""}`;
+    // Always store under the bare property name so a no-type fallback works.
     if (!current[propRaw]) current[propRaw] = [];
     current[propRaw].push(value);
-    // Also store typed variant so we can prefer e.g. CELL phone
-    if (params["TYPE"]) {
-      if (!current[key]) current[key] = [];
-      current[key].push(value);
+    // Plus one entry per individual TYPE so pickFirst(vc, "TEL;CELL") works.
+    for (const t of types) {
+      const k = `${propRaw};${t}`;
+      if (!current[k]) current[k] = [];
+      current[k].push(value);
     }
   }
 
