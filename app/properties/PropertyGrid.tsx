@@ -207,6 +207,12 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
                       >
                         🗑️
                       </button>
+                      <a
+                        href={`/properties/${property.id}`}
+                        className="text-gray-500 hover:text-gray-900 text-xs font-semibold underline-offset-2 hover:underline transition"
+                      >
+                        Detail →
+                      </a>
                       <button
                         onClick={() => setSelectedProperty(property)}
                         className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm"
