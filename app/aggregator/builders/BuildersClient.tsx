@@ -11,6 +11,10 @@ type Builder = {
   contact_phone: string | null;
   active: boolean;
   draft: boolean;
+  auto_outreach_enabled?: boolean;
+  last_contact_at?: string | null;
+  consecutive_no_replies?: number | null;
+  outreach_paused_until?: string | null;
   created_at: string;
 };
 
@@ -85,6 +89,29 @@ export default function BuildersClient() {
     }
   };
 
+  const toggleOutreach = async (b: Builder) => {
+    setBusy(b.id);
+    try {
+      await fetch(`/api/aggregator/builders/${b.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auto_outreach_enabled: !b.auto_outreach_enabled }),
+      });
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const fmtRelative = (iso: string | null | undefined) => {
+    if (!iso) return "never";
+    const days = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24);
+    if (days < 1) return "today";
+    if (days < 2) return "yesterday";
+    if (days < 31) return `${Math.floor(days)}d ago`;
+    return `${Math.floor(days / 7)}w ago`;
+  };
+
   if (error) return <div className="text-red-600 p-4">⚠ {error}</div>;
   if (builders === null) return <div className="text-gray-500 p-4 italic">Loading…</div>;
 
@@ -143,6 +170,25 @@ export default function BuildersClient() {
                       <p className="text-xs text-gray-500 uppercase font-semibold">Contact phone</p>
                       <p className="text-gray-700">{b.contact_phone ?? "—"}</p>
                     </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Last stocklist received</p>
+                      <p className="text-gray-700">{fmtRelative(b.last_contact_at)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Auto-outreach</p>
+                      <p className="text-gray-700">
+                        {b.auto_outreach_enabled !== false ? (
+                          <span className="text-emerald-700">enabled</span>
+                        ) : (
+                          <span className="text-gray-500">paused</span>
+                        )}
+                        {(b.consecutive_no_replies ?? 0) > 0 && (
+                          <span className="ml-2 text-xs text-amber-700">
+                            ({b.consecutive_no_replies} unanswered)
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -160,6 +206,15 @@ export default function BuildersClient() {
                     className="px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
                   >
                     {b.active ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleOutreach(b)}
+                    disabled={isBusy || b.draft}
+                    title={b.draft ? "Confirm builder draft first" : ""}
+                    className="px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {b.auto_outreach_enabled !== false ? "Pause auto-emails" : "Resume auto-emails"}
                   </button>
                 </div>
               </div>

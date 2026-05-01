@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 const ALLOWED_FIELDS = [
   "canonical_name", "aliases", "sender_domains",
   "contact_email", "contact_phone", "active", "draft",
+  "auto_outreach_enabled", "outreach_paused_until",
 ];
 
 export async function PATCH(
