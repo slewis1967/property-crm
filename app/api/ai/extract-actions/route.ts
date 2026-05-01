@@ -12,17 +12,22 @@ Output STRICT JSON only — no preamble, no markdown fences, no explanation. For
   "summary": "<one-line cleaned-up summary suitable for a CRM note>",
   "tasks": [{"title":"<short title>","due_date":"<ISO date or null>"}],
   "tags": ["<tag>", ...],
-  "status_change": "<new status or null>",
+  "status_change": "<new pipeline status or null — see allowed values below>",
   "calendar": {"title":"<event title>","when":"<ISO datetime or natural language>","with":"<contact name>"} | null,
   "temperature": "hot|warm|cold|null",
   "follow_up_in_days": <integer or null>
 }
 
+CRITICAL — temperature vs status_change are TWO DIFFERENT THINGS:
+- "temperature" is the contact's HEAT — how warm a lead they are. Allowed values: "hot", "warm", "cold", null. Set only if the note clearly signals heat (e.g. "ready to buy" → hot; "still researching" → warm; "not interested" → cold).
+- "status_change" is the contact's PIPELINE STATUS — where they sit in the workflow. Allowed values: "new", "contacted", "matched", "qualified", "converted", "lost", null. Do NOT put "hot"/"warm"/"cold" here — those are temperature, not status. Only set status_change if the note clearly implies a pipeline stage transition (e.g. "had first call with X" → contacted; "they signed contract" → converted; "decided not to proceed" → lost).
+
+When in doubt: leave both null. Don't guess.
+
 Rules:
 - Only include actions that are clearly implied — don't invent.
 - Tasks are concrete, advisor-facing TODOs (e.g. "Send Carseldine townhouse listing", not "follow up").
 - Tags should be 1-3 short lowercase tags relevant to buyer profile or interest (e.g. "fhb", "townhouse", "qld", "depreciation-question").
-- temperature only set if the note clearly signals it (a verbal "I'm ready to buy" → hot, "still researching" → warm, "not interested" → cold).
 - calendar only if a specific time is mentioned. Convert relative dates (Wednesday, next week) to a date — assume today's date is today.
 - All optional fields default to null/empty array if no clear signal.
 - Don't echo the raw input verbatim — clean and condense.`;

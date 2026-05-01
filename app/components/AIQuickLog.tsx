@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AIComplianceCheck from "./AIComplianceCheck";
 
 type Extraction = {
   summary: string;
@@ -177,6 +178,9 @@ export default function AIQuickLog({ contactId }: { contactId: string }) {
               label="Save cleaned summary as a note"
             >
               <p className="text-sm text-gray-800">{state.extraction.summary}</p>
+              <div className="mt-2">
+                <AIComplianceCheck text={state.extraction.summary} />
+              </div>
             </ApplyRow>
           )}
 

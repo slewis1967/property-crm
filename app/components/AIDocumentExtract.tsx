@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import AIComplianceCheck from "./AIComplianceCheck";
 
 type Extraction = {
   document_type: string;
@@ -321,6 +322,9 @@ export default function AIDocumentExtract({ contactId }: { contactId: string }) 
               <p className="text-sm text-gray-800 whitespace-pre-wrap">
                 {state.extraction.suggested_notes_text}
               </p>
+              <div className="mt-2">
+                <AIComplianceCheck text={state.extraction.suggested_notes_text} />
+              </div>
             </ApplyRow>
           )}
 
