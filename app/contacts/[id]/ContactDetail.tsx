@@ -9,6 +9,7 @@ import AISuggestedAction from "../../components/AISuggestedAction";
 import AISmartReply from "../../components/AISmartReply";
 import AIContactMatches from "../../components/AIContactMatches";
 import AIQuickLog from "../../components/AIQuickLog";
+import AIDocumentExtract from "../../components/AIDocumentExtract";
 
 type Contact = {
   id: string;
@@ -466,6 +467,7 @@ export default function ContactDetail({
                   <AISuggestedAction contactId={contact.id} />
                   <AISmartReply contactId={contact.id} />
                   <AIQuickLog contactId={contact.id} />
+                  <AIDocumentExtract contactId={contact.id} />
                 </div>
 
                 {/* AI matchmaker — properties that fit this contact */}
