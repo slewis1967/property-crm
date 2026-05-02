@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { runPia, DEFAULT_INPUTS, type PiaInputs, type YearRow } from "./_calc";
+import PiaPropertyPicker, { type PiaProperty } from "./PiaPropertyPicker";
+import PiaEmailModal from "./PiaEmailModal";
 
 const fmtCurrency = (n: number) =>
   new Intl.NumberFormat("en-AU", {
@@ -12,18 +14,165 @@ const fmtCurrency = (n: number) =>
 
 const fmtPct = (n: number, dp = 2) => (isFinite(n) ? `${n.toFixed(dp)}%` : "—");
 
+type LinkedOpportunity = { id: string; name: string | null; monetary_value: number | null; status: string | null };
+type LinkedContact = { id: string; name: string | null; email: string | null };
+type LinkedProperty = PiaProperty & { label: string };
+
 export default function PiaClient() {
   const [inputs, setInputs] = useState<PiaInputs>(DEFAULT_INPUTS);
   const result = useMemo(() => runPia(inputs), [inputs]);
   const [activeTab, setActiveTab] = useState<"summary" | "schedule" | "chart">("summary");
 
+  // Linked context (autofilled from URL params)
+  const [opportunity, setOpportunity] = useState<LinkedOpportunity | null>(null);
+  const [contact, setContact] = useState<LinkedContact | null>(null);
+  const [property, setProperty] = useState<LinkedProperty | null>(null);
+
+  // UI state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [savedReportId, setSavedReportId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
   const update = <K extends keyof PiaInputs>(key: K, val: PiaInputs[K]) =>
     setInputs((s) => ({ ...s, [key]: val }));
 
+  // ── Mount: read ?opportunity / ?contact / ?property / ?report from URL ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reportId = params.get("report");
+    const oppId = params.get("opportunity");
+    const contactId = params.get("contact");
+    const propertyId = params.get("property");
+
+    if (reportId) {
+      // Replay a saved report — overrides any context params
+      (async () => {
+        const res = await fetch(`/api/pia/reports/${reportId}`);
+        const json = await res.json();
+        if (json.ok && json.report) {
+          setInputs({ ...DEFAULT_INPUTS, ...json.report.inputs });
+          setSavedReportId(json.report.id);
+          if (json.report.opportunity_id || json.report.contact_id || json.report.property_id) {
+            const ctxParams = new URLSearchParams();
+            if (json.report.opportunity_id) ctxParams.set("opportunity_id", json.report.opportunity_id);
+            if (json.report.contact_id) ctxParams.set("contact_id", json.report.contact_id);
+            if (json.report.property_id) ctxParams.set("property_id", json.report.property_id);
+            const ctx = await fetch(`/api/pia/context?${ctxParams}`).then((r) => r.json()).catch(() => null);
+            if (ctx?.ok) {
+              if (ctx.opportunity) setOpportunity(ctx.opportunity);
+              if (ctx.contact) setContact(ctx.contact);
+              if (ctx.property) setProperty(ctx.property);
+            }
+          }
+        }
+      })();
+      return;
+    }
+
+    if (!oppId && !contactId && !propertyId) return;
+    const ctxParams = new URLSearchParams();
+    if (oppId) ctxParams.set("opportunity_id", oppId);
+    if (contactId) ctxParams.set("contact_id", contactId);
+    if (propertyId) ctxParams.set("property_id", propertyId);
+    fetch(`/api/pia/context?${ctxParams}`)
+      .then((r) => r.json())
+      .then((ctx) => {
+        if (!ctx?.ok) return;
+        if (ctx.opportunity) setOpportunity(ctx.opportunity);
+        if (ctx.contact) setContact(ctx.contact);
+        if (ctx.property) {
+          setProperty(ctx.property);
+          applyPropertyToInputs(ctx.property);
+        } else if (ctx.opportunity?.monetary_value) {
+          // No linked property — fall back to opportunity monetary_value as a price hint
+          setInputs((s) => ({ ...s, purchasePrice: Number(ctx.opportunity.monetary_value) || s.purchasePrice }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function applyPropertyToInputs(p: PiaProperty) {
+    setInputs((s) => ({
+      ...s,
+      purchasePrice: Number(p.total_package_price) || s.purchasePrice,
+      weeklyRent: Number(p.expected_rent_weekly) || s.weeklyRent,
+      stampDuty: estimateStampDuty(Number(p.total_package_price) || 0, p.state ?? null) || s.stampDuty,
+    }));
+  }
+
+  function clearLinks() {
+    setOpportunity(null);
+    setContact(null);
+    setProperty(null);
+    setSavedReportId(null);
+    if (typeof window !== "undefined" && window.location.search) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }
+
+  function buildTitle(): string {
+    if (property) return `PIA — ${property.label}`;
+    if (opportunity?.name) return `PIA — ${opportunity.name}`;
+    if (contact?.name) return `PIA — ${contact.name}`;
+    return `PIA — ${new Date().toLocaleDateString("en-AU")}`;
+  }
+
+  async function saveReport() {
+    setSaving(true);
+    setToast(null);
+    try {
+      const res = await fetch("/api/pia/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: buildTitle(),
+          inputs,
+          results: result,
+          opportunity_id: opportunity?.id ?? null,
+          contact_id: contact?.id ?? null,
+          property_id: property?.id ?? null,
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setSavedReportId(json.report.id);
+        setToast(opportunity ? "Saved + attached to opportunity" : "Saved");
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.set("report", json.report.id);
+          window.history.replaceState({}, "", url.toString());
+        }
+      } else {
+        setToast(`Save failed: ${json.error || "unknown error"}`);
+      }
+    } catch (e) {
+      setToast(`Save failed: ${e instanceof Error ? e.message : "network error"}`);
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToast(null), 4000);
+    }
+  }
+
   return (
-    <div className="grid grid-cols-12 gap-6">
-      {/* ──────── INPUTS COLUMN ──────── */}
-      <div className="col-span-12 lg:col-span-4 space-y-4">
+    <>
+      <PiaToolbar
+        opportunity={opportunity}
+        contact={contact}
+        property={property}
+        savedReportId={savedReportId}
+        saving={saving}
+        toast={toast}
+        onPickProperty={() => setPickerOpen(true)}
+        onSave={saveReport}
+        onPrint={() => window.print()}
+        onEmail={() => setEmailOpen(true)}
+        onClearLinks={clearLinks}
+      />
+      <div id="pia-printable" className="grid grid-cols-12 gap-6">
+      {/* ──────── INPUTS COLUMN (hidden when printing) ──────── */}
+      <div className="col-span-12 lg:col-span-4 space-y-4 pia-inputs">
         <Section title="Property">
           <Money label="Purchase price" value={inputs.purchasePrice} onChange={(v) => update("purchasePrice", v)} step={10000} />
           <Money label="Weekly rent" value={inputs.weeklyRent} onChange={(v) => update("weeklyRent", v)} step={5} />
@@ -73,7 +222,17 @@ export default function PiaClient() {
       </div>
 
       {/* ──────── OUTPUT COLUMN ──────── */}
-      <div className="col-span-12 lg:col-span-8 space-y-4">
+      <div className="col-span-12 lg:col-span-8 space-y-4 pia-output-col">
+        {/* Print-only header — only renders on print, populated from linked context */}
+        <div className="pia-print-header" style={{ marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #ccc" }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>Property Investment Analysis</h1>
+          <p style={{ fontSize: 12, color: "#555", margin: 0 }}>
+            {[contact?.name, opportunity?.name, property?.label].filter(Boolean).join(" · ") || "Standalone scenario"}
+          </p>
+          <p style={{ fontSize: 11, color: "#888", margin: "2px 0 0" }}>
+            Prepared on {new Date().toLocaleDateString("en-AU", { year: "numeric", month: "long", day: "numeric" })}
+          </p>
+        </div>
         {/* KPI tiles */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Kpi label="Gross yield (yr 1)" value={fmtPct(result.grossYield)} />
@@ -100,7 +259,7 @@ export default function PiaClient() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 flex gap-4">
+        <div className="border-b border-gray-200 flex gap-4 pia-tabs">
           {(["summary", "schedule", "chart"] as const).map((t) => (
             <button
               key={t}
@@ -128,6 +287,189 @@ export default function PiaClient() {
           </em>
         </p>
       </div>
+    </div>
+
+    <PiaPropertyPicker
+      open={pickerOpen}
+      onClose={() => setPickerOpen(false)}
+      onSelect={(p) => {
+        const label = [p.street_address, p.estate_name, p.lot_number ? `Lot ${p.lot_number}` : null, p.suburb, p.state]
+          .filter(Boolean)
+          .join(" · ");
+        setProperty({ ...p, label });
+        applyPropertyToInputs(p);
+      }}
+    />
+    <PiaEmailModal
+      open={emailOpen}
+      onClose={() => setEmailOpen(false)}
+      defaultTo={contact?.email ?? ""}
+      defaultSubject={`Property Investment Analysis — ${buildTitle().replace(/^PIA — /, "")}`}
+      reportId={savedReportId}
+      onSent={(to) => setToast(`Emailed to ${to}`)}
+    />
+
+    {/* Print-only styles. Hides nav, inputs column, action toolbar; expands the report column. */}
+    <style>{`
+      @media print {
+        body { background: white !important; }
+        aside, nav, .pia-toolbar, .pia-inputs { display: none !important; }
+        main { padding: 0 !important; overflow: visible !important; }
+        html, body { height: auto !important; overflow: visible !important; }
+        #pia-printable { display: block !important; }
+        #pia-printable > div { display: block !important; }
+        .pia-output-col { width: 100% !important; max-width: 100% !important; }
+        .pia-tabs { display: none !important; }
+        .pia-print-header { display: block !important; }
+      }
+      .pia-print-header { display: none; }
+    `}</style>
+  </>
+  );
+}
+
+// Very rough first-cut Australian stamp duty for residential investor purchase.
+// State-specific brackets — each returns the duty as a flat number. Good enough
+// for a starting figure in the model; the user can override in the input.
+function estimateStampDuty(price: number, state: string | null): number {
+  if (!price || price <= 0) return 0;
+  const s = (state || "").toUpperCase();
+  if (s === "VIC") {
+    if (price <= 25000) return price * 0.014;
+    if (price <= 130000) return 350 + (price - 25000) * 0.024;
+    if (price <= 960000) return 2870 + (price - 130000) * 0.06;
+    return price * 0.055;
+  }
+  if (s === "NSW") {
+    if (price <= 14000) return price * 0.0125;
+    if (price <= 32000) return 175 + (price - 14000) * 0.015;
+    if (price <= 85000) return 445 + (price - 32000) * 0.0175;
+    if (price <= 319000) return 1372 + (price - 85000) * 0.035;
+    if (price <= 1064000) return 9562 + (price - 319000) * 0.045;
+    return 43062 + (price - 1064000) * 0.055;
+  }
+  if (s === "QLD") {
+    if (price <= 5000) return 0;
+    if (price <= 75000) return (price - 5000) * 0.015;
+    if (price <= 540000) return 1050 + (price - 75000) * 0.035;
+    if (price <= 1000000) return 17325 + (price - 540000) * 0.045;
+    return 38025 + (price - 1000000) * 0.0575;
+  }
+  if (s === "WA") {
+    if (price <= 120000) return price * 0.019;
+    if (price <= 150000) return 2280 + (price - 120000) * 0.0285;
+    if (price <= 360000) return 3135 + (price - 150000) * 0.038;
+    if (price <= 725000) return 11115 + (price - 360000) * 0.0475;
+    return 28453 + (price - 725000) * 0.0515;
+  }
+  if (s === "SA") {
+    if (price <= 12000) return price * 0.01;
+    if (price <= 30000) return 120 + (price - 12000) * 0.02;
+    if (price <= 50000) return 480 + (price - 30000) * 0.03;
+    if (price <= 100000) return 1080 + (price - 50000) * 0.035;
+    if (price <= 200000) return 2830 + (price - 100000) * 0.04;
+    if (price <= 250000) return 6830 + (price - 200000) * 0.0425;
+    if (price <= 300000) return 8955 + (price - 250000) * 0.0475;
+    if (price <= 500000) return 11330 + (price - 300000) * 0.05;
+    return 21330 + (price - 500000) * 0.055;
+  }
+  if (s === "TAS") {
+    if (price <= 3000) return 50;
+    if (price <= 25000) return 50 + (price - 3000) * 0.0175;
+    if (price <= 75000) return 435 + (price - 25000) * 0.0225;
+    if (price <= 200000) return 1560 + (price - 75000) * 0.035;
+    if (price <= 375000) return 5935 + (price - 200000) * 0.04;
+    if (price <= 725000) return 12935 + (price - 375000) * 0.0425;
+    return 27810 + (price - 725000) * 0.045;
+  }
+  if (s === "ACT") return price * 0.045;  // simplified flat rate
+  if (s === "NT") {
+    if (price <= 525000) return (0.06571441 * (price / 1000) ** 2 + 15 * (price / 1000));
+    if (price <= 3000000) return price * 0.0495;
+    return price * 0.0575;
+  }
+  return price * 0.045; // fallback
+}
+
+// ─── Toolbar (linked-to banner + action buttons) ────────────────────────────
+
+function PiaToolbar({
+  opportunity, contact, property, savedReportId, saving, toast,
+  onPickProperty, onSave, onPrint, onEmail, onClearLinks,
+}: {
+  opportunity: LinkedOpportunity | null;
+  contact: LinkedContact | null;
+  property: LinkedProperty | null;
+  savedReportId: string | null;
+  saving: boolean;
+  toast: string | null;
+  onPickProperty: () => void;
+  onSave: () => void;
+  onPrint: () => void;
+  onEmail: () => void;
+  onClearLinks: () => void;
+}) {
+  const hasLink = Boolean(opportunity || contact || property);
+  return (
+    <div className="pia-toolbar mb-4 sticky top-0 z-10 bg-gray-50 -mx-8 px-8 py-3 border-b border-gray-200">
+      <div className="flex flex-wrap items-center gap-3">
+        {hasLink ? (
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700 mb-0.5">Linked to</p>
+            <p className="text-sm text-gray-800 truncate">
+              {contact?.name && <span className="font-medium">{contact.name}</span>}
+              {opportunity?.name && <> {contact?.name ? "·" : ""} {opportunity.name}</>}
+              {property?.label && <> {(contact?.name || opportunity?.name) ? "·" : ""} <span className="text-gray-600">{property.label}</span></>}
+            </p>
+          </div>
+        ) : (
+          <div className="flex-1 min-w-0">
+            <p className="text-xs uppercase tracking-wider text-gray-400">Standalone scenario</p>
+            <p className="text-xs text-gray-500">Open from an opportunity or pick a property to attach it.</p>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onPickProperty}
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-white transition"
+          >
+            {property ? "Change property" : "Pick property"}
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
+          >
+            {saving ? "Saving…" : savedReportId ? "Re-save" : "Save report"}
+          </button>
+          <button
+            onClick={onPrint}
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-white"
+          >
+            Print
+          </button>
+          <button
+            onClick={onEmail}
+            disabled={!savedReportId}
+            title={savedReportId ? "" : "Save the report first"}
+            className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Email
+          </button>
+          {hasLink && (
+            <button
+              onClick={onClearLinks}
+              className="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-800"
+              title="Detach all links and start a fresh standalone scenario"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+      {toast && (
+        <p className="text-xs text-green-700 mt-2">{toast}</p>
+      )}
     </div>
   );
 }

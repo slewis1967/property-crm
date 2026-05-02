@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
+import OpportunityPiaReports from "./OpportunityPiaReports";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
@@ -534,6 +535,9 @@ export default function OpportunityDetail({
               </div>
             </div>
           )}
+
+          {/* PIA Reports */}
+          <OpportunityPiaReports leadId={lead.lead_id} />
 
           {/* Notes feed */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

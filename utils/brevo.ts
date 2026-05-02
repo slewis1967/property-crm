@@ -1,0 +1,81 @@
+/**
+ * Brevo (formerly Sendinblue) transactional email helper.
+ *
+ * Uses the v3 SMTP API: POST https://api.brevo.com/v3/smtp/email
+ * Server-only — reads BREVO_API_KEY + BREVO_SENDER_EMAIL from process.env.
+ *
+ * Mirrors the pattern in utils/sms.ts (envelope return type so route handlers
+ * stay flat).
+ */
+
+const BREVO_BASE = "https://api.brevo.com/v3";
+
+export type BrevoSendResult =
+  | { ok: true; messageId: string }
+  | { ok: false; error: string };
+
+export type BrevoSendOptions = {
+  to: { email: string; name?: string }[];
+  subject: string;
+  html: string;
+  /** Plain-text fallback. If omitted, a stripped-HTML version is generated. */
+  text?: string;
+  /** Optional reply-to override (otherwise BREVO_SENDER_EMAIL). */
+  replyTo?: string;
+  tags?: string[];
+};
+
+export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+  const senderName = process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
+
+  if (!apiKey) {
+    return { ok: false, error: "BREVO_API_KEY missing — email feature disabled" };
+  }
+  if (!opts.to?.length) {
+    return { ok: false, error: "No recipients" };
+  }
+  if (!opts.subject || !opts.html) {
+    return { ok: false, error: "subject and html are required" };
+  }
+
+  const text = opts.text ?? stripHtml(opts.html);
+
+  const res = await fetch(`${BREVO_BASE}/smtp/email`, {
+    method: "POST",
+    headers: {
+      "api-key": apiKey,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { email: senderEmail, name: senderName },
+      to: opts.to,
+      subject: opts.subject,
+      htmlContent: opts.html,
+      textContent: text,
+      replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
+      tags: opts.tags,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    return { ok: false, error: `Brevo ${res.status}: ${body.slice(0, 300)}` };
+  }
+  const json = (await res.json().catch(() => ({}))) as { messageId?: string };
+  return { ok: true, messageId: json.messageId ?? "" };
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
