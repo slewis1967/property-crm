@@ -59,9 +59,9 @@ export default async function ConversationsPage({
   return (
     <div>
       <PageHeader
-        title="Conversations"
+        title="Conversations (archive)"
         total={total}
-        description="Email and SMS thread metadata (sourced from GHL archive)."
+        description="Read-only archive of email and SMS thread metadata from GHL. Live SMS goes via /sms/send (replies route to Glenn's phone)."
       />
       <SearchBar q={q} placeholder="Search last message body…" />
 

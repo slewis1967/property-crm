@@ -50,16 +50,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>📅</span> Appointments
             </a>
             <a href="/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>💬</span> Conversations
+              <span>💬</span> Conversations (archive)
             </a>
             <a href="/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📝</span> Notes
+              <span>📝</span> Notes (archive)
             </a>
             <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📌</span> Tasks
-            </a>
-            <a href="/forms" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📋</span> Forms
             </a>
             <a href="/media" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🗃️</span> Media Library

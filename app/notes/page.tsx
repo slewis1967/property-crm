@@ -49,9 +49,9 @@ export default async function NotesPage({
   return (
     <div>
       <PageHeader
-        title="Notes"
+        title="Notes (archive)"
         total={total}
-        description="Every note logged against a contact (sourced from GHL archive). Search the body to find by content."
+        description="Read-only archive of notes from GHL. New notes go via Quick Log on the contact detail page."
       />
       <SearchBar q={q} placeholder="Search note body…" />
 
