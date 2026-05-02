@@ -36,13 +36,17 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
         method: "POST",
         body: form,
       });
-      const json = await res.json();
-      if (!json.ok) {
+      const result = await readJsonOrError(res, "logo upload");
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      const json = result.body as { ok: boolean; url?: string; error?: string };
+      if (!json.ok || !json.url) {
         setError(json.error || "Upload failed");
         return;
       }
       update("logo_url", json.url);
-      // Default height 60px on first upload if not already set
       if (!fields.logo_height) update("logo_height", 60);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
@@ -66,7 +70,12 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fields),
       });
-      const json = await res.json();
+      const result = await readJsonOrError(res, "signature save");
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      const json = result.body as { ok: boolean; error?: string };
       if (!json.ok) {
         setError(json.error || "Save failed");
         return;
@@ -263,4 +272,26 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+/** Reads a fetch response defensively. Tries JSON; if the body is HTML
+ * (e.g. Netlify "Internal Server Error") it returns a clean error message
+ * instead of throwing. */
+async function readJsonOrError(
+  res: Response,
+  context: string,
+): Promise<{ ok: true; body: unknown } | { ok: false; error: string }> {
+  const raw = await res.text().catch(() => "");
+  try {
+    return { ok: true, body: JSON.parse(raw) };
+  } catch {
+    if (!res.ok) {
+      const snippet = raw.slice(0, 120).replace(/\s+/g, " ").trim();
+      return {
+        ok: false,
+        error: `${context} failed: HTTP ${res.status}${snippet ? ` — ${snippet}` : ""}`,
+      };
+    }
+    return { ok: false, error: `${context}: response was not JSON` };
+  }
 }

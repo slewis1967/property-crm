@@ -16,6 +16,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
+  try {
   const body = await req.json().catch(() => ({}));
   const fields: SignatureFields = {
     name: typeof body.name === "string" ? body.name.trim() : "",
@@ -58,4 +59,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
   return NextResponse.json({ ok: true, signature: fields });
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: `Unhandled: ${e instanceof Error ? e.message : String(e)}` },
+      { status: 500 },
+    );
+  }
 }
