@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
   let q = supabase
     .from("email_log")
-    .select("id,direction,to_email,to_name,from_email,from_name,subject,body_html,status,error,sent_by,sent_at,created_at,tags")
+    .select("id,direction,to_email,to_name,from_email,from_name,subject,body_html,status,error,sent_by,sent_at,created_at,tags,message_id,in_reply_to,thread_id")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (contactId) q = q.eq("contact_id", contactId);
@@ -93,9 +93,16 @@ export async function POST(req: Request) {
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
   });
 
-  // 3. Update row with outcome.
+  // 3. Update row with outcome. Brevo's `messageId` IS the RFC822 Message-ID
+  // (e.g. <abc@smtp-relay.brevo.com>), so populate both columns. message_id
+  // is what the inbound poller threads against when replies come in.
   const update: Record<string, unknown> = result.ok
-    ? { status: "sent", brevo_message_id: result.messageId, sent_at: new Date().toISOString() }
+    ? {
+        status: "sent",
+        brevo_message_id: result.messageId,
+        message_id: result.messageId,
+        sent_at: new Date().toISOString(),
+      }
     : { status: "failed", error: result.error };
 
   const { data: updated, error: updateErr } = await supabase
