@@ -119,9 +119,9 @@ export default function PiaClient() {
     return `PIA — ${new Date().toLocaleDateString("en-AU")}`;
   }
 
-  async function saveReport() {
+  async function saveReport(opts?: { silent?: boolean }): Promise<string | null> {
     setSaving(true);
-    setToast(null);
+    if (!opts?.silent) setToast(null);
     try {
       const res = await fetch("/api/pia/reports", {
         method: "POST",
@@ -138,21 +138,35 @@ export default function PiaClient() {
       const json = await res.json();
       if (json.ok) {
         setSavedReportId(json.report.id);
-        setToast(opportunity ? "Saved + attached to opportunity" : "Saved");
+        if (!opts?.silent) {
+          setToast(opportunity ? "Saved + attached to opportunity" : "Saved");
+        }
         if (typeof window !== "undefined") {
           const url = new URL(window.location.href);
           url.searchParams.set("report", json.report.id);
           window.history.replaceState({}, "", url.toString());
         }
-      } else {
-        setToast(`Save failed: ${json.error || "unknown error"}`);
+        return json.report.id as string;
       }
+      setToast(`Save failed: ${json.error || "unknown error"}`);
+      return null;
     } catch (e) {
       setToast(`Save failed: ${e instanceof Error ? e.message : "network error"}`);
+      return null;
     } finally {
       setSaving(false);
-      setTimeout(() => setToast(null), 4000);
+      if (!opts?.silent) setTimeout(() => setToast(null), 4000);
     }
+  }
+
+  // Email flow auto-saves the report first if it hasn't been saved yet, so the
+  // user doesn't have to do a two-step (Save → Email).
+  async function openEmailFlow() {
+    if (!savedReportId) {
+      const id = await saveReport({ silent: true });
+      if (!id) return; // save failed — toast already shown
+    }
+    setEmailOpen(true);
   }
 
   return (
@@ -165,9 +179,9 @@ export default function PiaClient() {
         saving={saving}
         toast={toast}
         onPickProperty={() => setPickerOpen(true)}
-        onSave={saveReport}
+        onSave={() => saveReport()}
         onPrint={() => window.print()}
-        onEmail={() => setEmailOpen(true)}
+        onEmail={openEmailFlow}
         onClearLinks={clearLinks}
       />
       <div id="pia-printable" className="grid grid-cols-12 gap-6">
@@ -450,8 +464,8 @@ function PiaToolbar({
           </button>
           <button
             onClick={onEmail}
-            disabled={!savedReportId}
-            title={savedReportId ? "" : "Save the report first"}
+            disabled={saving}
+            title="Save (if needed) and open the email composer"
             className="px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Email
