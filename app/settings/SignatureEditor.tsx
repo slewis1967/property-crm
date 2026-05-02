@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { supabaseBrowser } from "../../utils/supabase-browser";
 
 type SignatureFields = {
   name: string;
@@ -30,23 +31,43 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
     setUploading(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/settings/signature/logo", {
+      // Step 1: ask the server to sign a one-time upload URL. The file body
+      // never goes through Netlify — only the metadata.
+      const signRes = await fetch("/api/settings/signature/logo", {
         method: "POST",
-        body: form,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mime: file.type, size: file.size }),
       });
-      const result = await readJsonOrError(res, "logo upload");
-      if (!result.ok) {
-        setError(result.error);
+      const signResult = await readJsonOrError(signRes, "logo sign");
+      if (!signResult.ok) {
+        setError(signResult.error);
         return;
       }
-      const json = result.body as { ok: boolean; url?: string; error?: string };
-      if (!json.ok || !json.url) {
-        setError(json.error || "Upload failed");
+      const sign = signResult.body as {
+        ok: boolean;
+        token?: string;
+        path?: string;
+        publicUrl?: string;
+        error?: string;
+      };
+      if (!sign.ok || !sign.token || !sign.path || !sign.publicUrl) {
+        setError(sign.error || "Could not sign upload URL");
         return;
       }
-      update("logo_url", json.url);
+
+      // Step 2: upload the file directly browser → Supabase Storage.
+      const { error: upErr } = await supabaseBrowser.storage
+        .from("property-media")
+        .uploadToSignedUrl(sign.path, sign.token, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+      if (upErr) {
+        setError(`Direct upload failed: ${upErr.message}`);
+        return;
+      }
+
+      update("logo_url", sign.publicUrl);
       if (!fields.logo_height) update("logo_height", 60);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");

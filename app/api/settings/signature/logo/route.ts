@@ -1,12 +1,18 @@
 /**
  * POST /api/settings/signature/logo
- *   multipart/form-data with field "file" (image)
+ *   Body: { mime: string, size: number }
  *
- * Uploads the image to Supabase Storage under property-media/signature/
- * and returns its public URL. Caller (the SignatureEditor) then PUTs the
- * URL into /api/settings/signature.
+ * Creates a signed upload URL on Supabase Storage's property-media bucket.
+ * The browser uses this URL to PUT the file directly — bypassing Netlify's
+ * serverless body-size limit which was returning 500s on multipart uploads.
  *
- * 5MB max. PNG / JPEG / WebP / SVG / GIF accepted.
+ * Response: { ok: true, token, path, publicUrl }
+ *   - token + path → pass to supabaseBrowser.storage.uploadToSignedUrl()
+ *   - publicUrl → store in app_settings.value.logo_url after upload succeeds
+ *
+ * Validation happens here against the metadata; the actual file content
+ * checks (real MIME match, dimensions, etc.) are NOT performed because the
+ * file never touches our server.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
@@ -24,55 +30,54 @@ const ALLOWED_MIME = new Set([
 ]);
 
 export async function POST(req: Request) {
-  // Top-level try/catch — without this, an uncaught exception lets Netlify
-  // serve its default HTML "Internal Server Error" page, which crashes the
-  // client's res.json() with "Unexpected token 'I'...".
   try {
-    let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch (e) {
+    const body = await req.json().catch(() => ({}));
+    const mime: string = typeof body.mime === "string" ? body.mime : "";
+    const size: number = typeof body.size === "number" ? body.size : 0;
+
+    if (!ALLOWED_MIME.has(mime)) {
       return NextResponse.json(
-        { ok: false, error: `Could not parse multipart body: ${e instanceof Error ? e.message : String(e)}` },
+        { ok: false, error: `Unsupported MIME type: ${mime || "(missing)"}` },
+        { status: 400 },
+      );
+    }
+    if (size <= 0) {
+      return NextResponse.json({ ok: false, error: "size must be > 0" }, { status: 400 });
+    }
+    if (size > MAX_BYTES) {
+      return NextResponse.json(
+        { ok: false, error: `File too large (max ${MAX_BYTES / 1024 / 1024}MB)` },
         { status: 400 },
       );
     }
 
-    const file = formData.get("file");
-    if (!file || !(file instanceof Blob)) {
-      return NextResponse.json({ ok: false, error: "No 'file' field in request" }, { status: 400 });
-    }
-    if (file.size === 0) {
-      return NextResponse.json({ ok: false, error: "File is empty" }, { status: 400 });
-    }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json({ ok: false, error: `File too large (max ${MAX_BYTES / 1024 / 1024}MB)` }, { status: 400 });
-    }
-    const mime = file.type || "application/octet-stream";
-    if (!ALLOWED_MIME.has(mime)) {
-      return NextResponse.json({ ok: false, error: `Unsupported MIME type: ${mime}` }, { status: 400 });
-    }
-
     const ext = extFromMime(mime);
     const path = `signature/logo-${Date.now()}.${ext}`;
-    const arrayBuf = await file.arrayBuffer();
 
-    const { error: uploadErr } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from("property-media")
-      .upload(path, new Uint8Array(arrayBuf), {
-        contentType: mime,
-        upsert: false,
-        cacheControl: "31536000",
-      });
-    if (uploadErr) {
-      return NextResponse.json({ ok: false, error: `Storage upload failed: ${uploadErr.message}` }, { status: 500 });
+      .createSignedUploadUrl(path);
+    if (error || !data) {
+      return NextResponse.json(
+        { ok: false, error: `Storage signing failed: ${error?.message || "unknown"}` },
+        { status: 500 },
+      );
     }
 
     const { data: pub } = supabase.storage.from("property-media").getPublicUrl(path);
     if (!pub?.publicUrl) {
-      return NextResponse.json({ ok: false, error: "Upload succeeded but public URL was empty — bucket may not be public" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: "Could not resolve public URL — bucket may not be public" },
+        { status: 500 },
+      );
     }
-    return NextResponse.json({ ok: true, url: pub.publicUrl, path });
+
+    return NextResponse.json({
+      ok: true,
+      token: data.token,
+      path: data.path,
+      publicUrl: pub.publicUrl,
+    });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: `Unhandled: ${e instanceof Error ? e.message : String(e)}` },
