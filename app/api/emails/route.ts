@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   // the audit trail and recipient see the same body. Caller can opt out by
   // passing `skip_signature: true` (e.g. for system notifications that
   // shouldn't carry Sean's personal sig).
-  const sig = defaultSignature();
+  const sig = await defaultSignature();
   const skipSig = body.skip_signature === true;
   const finalHtml = skipSig ? body_html : `${body_html}${sig.html}`;
   const finalText = skipSig

@@ -82,6 +82,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>🗺️</span> Suburb Intelligence
             </a>
 
+            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">System</p>
+            <a href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>⚙️</span> Settings
+            </a>
+
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Elvis</p>
             <a href="/approvals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>✅</span> Approval Queue

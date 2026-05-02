@@ -1,0 +1,24 @@
+import SignatureEditor from "./SignatureEditor";
+import { getSignatureFields } from "../../utils/email-signature";
+
+export const dynamic = "force-dynamic";
+
+export default async function SettingsPage() {
+  const initial = await getSignatureFields();
+  return (
+    <div className="max-w-5xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-gray-500 text-sm mt-1">CRM-wide configuration</p>
+      </div>
+
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold mb-1">Email signature</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Auto-appended to every outbound email sent from the CRM. Live preview on the right reflects exactly what recipients see.
+        </p>
+        <SignatureEditor initial={initial} />
+      </section>
+    </div>
+  );
+}
