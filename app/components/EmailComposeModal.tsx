@@ -189,10 +189,10 @@ export default function EmailComposeModal({
               onChange={(e) => setBody(e.target.value)}
               rows={12}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-sans"
-              placeholder={"Hi Sarah,\n\nFollowing on from our chat earlier…\n\n— Sean"}
+              placeholder={"Hi Sarah,\n\nFollowing on from our chat earlier…"}
             />
             <span className="block text-[11px] text-gray-400 mt-1">
-              Plain text. Paragraph breaks render as paragraphs in the email.
+              Plain text. Paragraph breaks render as paragraphs. Your signature is auto-appended on send — no need to type it.
             </span>
           </label>
           {error && (

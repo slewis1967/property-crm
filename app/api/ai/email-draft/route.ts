@@ -20,11 +20,12 @@ Hard rules:
 - Never reveal specific builder names — NextKey's stock-builder relationships are anonymised by policy.
 - Don't claim to be a financial planner / mortgage broker / solicitor — frame everything as advisory or general information.
 - No emojis. No exclamation points unless the original conversation used them.
+- DO NOT add a signature, sign-off, or "— Sean" line. The system appends a structured signature automatically; if you add one too, the recipient sees it twice.
 
 Output format — STRICT JSON, no markdown fence:
   {"subject": "...", "body": "..."}
 
-The body should be plain text (paragraph breaks via two newlines). Sign off with "— Sean".`;
+The body should be plain text (paragraph breaks via two newlines). End with the last sentence of the message — no closing salutation.`;
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));

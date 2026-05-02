@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import EmailComposeModal from "../components/EmailComposeModal";
 
 export type EmailRow = {
   id: string;
@@ -39,6 +40,13 @@ export default function InboxTable({
   contactNames: Record<string, string>;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [replyContext, setReplyContext] = useState<{ email: EmailRow; thread: Thread } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const openReply = (email: EmailRow, thread: Thread) => {
+    setReplyContext({ email, thread });
+  };
+  const closeReply = () => setReplyContext(null);
 
   if (threads.length === 0) {
     return (
@@ -49,6 +57,7 @@ export default function InboxTable({
   }
 
   return (
+    <>
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-200">
@@ -112,7 +121,11 @@ export default function InboxTable({
                     <td colSpan={5} className="px-6 py-4">
                       <div className="space-y-3">
                         {t.messages.map((e) => (
-                          <MessageCard key={e.id} email={e} />
+                          <MessageCard
+                            key={e.id}
+                            email={e}
+                            onReply={() => openReply(e, t)}
+                          />
                         ))}
                       </div>
                       {t.contact_id && (
@@ -121,7 +134,7 @@ export default function InboxTable({
                             href={`/contacts/${t.contact_id}`}
                             className="text-xs text-blue-600 hover:underline font-semibold"
                           >
-                            Open contact for full context + reply →
+                            Open contact for full context →
                           </Link>
                         </div>
                       )}
@@ -134,14 +147,53 @@ export default function InboxTable({
         </tbody>
       </table>
     </div>
+
+    {replyContext && (
+      <EmailComposeModal
+        key={`inbox-reply-${replyContext.email.id}-${refreshKey}`}
+        open={true}
+        onClose={closeReply}
+        defaultTo={replyContext.email.from_email}
+        defaultToName={replyContext.email.from_name ?? ""}
+        defaultSubject={prefixReply(replyContext.email.subject)}
+        defaultBody={quotedBody(replyContext.email)}
+        contactId={replyContext.thread.contact_id ?? undefined}
+        inReplyTo={replyContext.email.message_id ?? undefined}
+        threadId={replyContext.thread.thread_id}
+        tags={["inbox-reply"]}
+        onSent={() => { setReplyContext(null); setRefreshKey((k) => k + 1); }}
+      />
+    )}
+    </>
   );
+}
+
+function prefixReply(subject: string): string {
+  if (/^(re|fwd|fw):/i.test(subject.trim())) return subject;
+  return `Re: ${subject}`;
+}
+
+function quotedBody(parent: EmailRow): string {
+  const author = parent.from_name || parent.from_email;
+  const when = parent.sent_at ?? parent.created_at;
+  const dateStr = when ? new Date(when).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "earlier";
+  const original = (parent.body_html
+    ? parent.body_html
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/\s+/g, " ")
+        .trim()
+    : "(no body captured)").slice(0, 1500);
+  return `\n\n\nOn ${dateStr}, ${author} wrote:\n> ${original.split("\n").join("\n> ")}`;
 }
 
 function RowGroup({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function MessageCard({ email }: { email: EmailRow }) {
+function MessageCard({ email, onReply }: { email: EmailRow; onReply?: () => void }) {
   const isInbound = email.direction === "inbound";
   return (
     <div className={`px-4 py-3 border rounded-md ${isInbound ? "bg-blue-50 border-blue-200" : "bg-white border-gray-200"}`}>
@@ -151,6 +203,15 @@ function MessageCard({ email }: { email: EmailRow }) {
           {isInbound ? email.from_email : email.to_email}
         </span>
         <span className="ml-auto whitespace-nowrap">{fmtDateTime(email.sent_at ?? email.created_at)}</span>
+        {isInbound && onReply && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onReply(); }}
+            className="ml-2 px-2 py-0.5 text-[11px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700"
+            title="Reply to this message"
+          >
+            ↩ Reply
+          </button>
+        )}
       </div>
       <p className="font-medium text-sm mb-2">{email.subject}</p>
       {email.body_html ? (

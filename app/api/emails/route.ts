@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { sendBrevoEmail } from "../../../utils/brevo";
+import { defaultSignature } from "../../../utils/email-signature";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,17 @@ export async function POST(req: Request) {
     req.headers.get("cf-access-authenticated-user-email") ??
     null;
 
+  // Append the standard signature. Stored on the row exactly as sent so
+  // the audit trail and recipient see the same body. Caller can opt out by
+  // passing `skip_signature: true` (e.g. for system notifications that
+  // shouldn't carry Sean's personal sig).
+  const sig = defaultSignature();
+  const skipSig = body.skip_signature === true;
+  const finalHtml = skipSig ? body_html : `${body_html}${sig.html}`;
+  const finalText = skipSig
+    ? (body_text ?? null)
+    : `${body_text ?? ""}${sig.text}`;
+
   // 1. Insert as queued so we have an audit row even if Brevo errors.
   const { data: row, error: insertErr } = await supabase
     .from("email_log")
@@ -72,8 +84,8 @@ export async function POST(req: Request) {
       cc: Array.isArray(cc) ? cc : [],
       bcc: Array.isArray(bcc) ? bcc : [],
       subject,
-      body_html,
-      body_text: body_text ?? null,
+      body_html: finalHtml,
+      body_text: finalText,
       status: "queued",
       sent_by: sentBy,
       tags: Array.isArray(tags) ? tags : [],
@@ -98,8 +110,8 @@ export async function POST(req: Request) {
   const result = await sendBrevoEmail({
     to: [{ email: to, name: to_name ?? undefined }],
     subject,
-    html: body_html,
-    text: body_text,
+    html: finalHtml,
+    text: finalText ?? undefined,
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
     headers: replyHeaders,
   });
