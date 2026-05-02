@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type EmailRow = {
+export type EmailRow = {
   id: string;
   direction: string;
   to_email: string;
@@ -31,7 +31,15 @@ type Thread = {
   has_outbound: boolean;
 };
 
-export default function ContactEmailHistory({ contactId, refreshKey }: { contactId: string; refreshKey?: number }) {
+export default function ContactEmailHistory({
+  contactId,
+  refreshKey,
+  onReply,
+}: {
+  contactId: string;
+  refreshKey?: number;
+  onReply?: (email: EmailRow) => void;
+}) {
   const [emails, setEmails] = useState<EmailRow[] | null>(null);
   const [expandedThread, setExpandedThread] = useState<string | null>(null);
 
@@ -90,7 +98,7 @@ export default function ContactEmailHistory({ contactId, refreshKey }: { contact
             {expanded && (
               <div className="mt-3 ml-4 mr-2 space-y-3">
                 {t.messages.map((e) => (
-                  <MessageCard key={e.id} email={e} />
+                  <MessageCard key={e.id} email={e} onReply={onReply} />
                 ))}
               </div>
             )}
@@ -101,7 +109,7 @@ export default function ContactEmailHistory({ contactId, refreshKey }: { contact
   );
 }
 
-function MessageCard({ email }: { email: EmailRow }) {
+function MessageCard({ email, onReply }: { email: EmailRow; onReply?: (email: EmailRow) => void }) {
   const isInbound = email.direction === "inbound";
   return (
     <div className={`px-4 py-3 border rounded-md ${isInbound ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
@@ -111,6 +119,15 @@ function MessageCard({ email }: { email: EmailRow }) {
           {isInbound ? email.from_email : email.to_email}
         </span>
         <span className="ml-auto whitespace-nowrap">{fmtDateTime(email.sent_at ?? email.created_at)}</span>
+        {isInbound && onReply && (
+          <button
+            onClick={() => onReply(email)}
+            className="ml-2 px-2 py-0.5 text-[11px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700"
+            title="Reply to this message"
+          >
+            ↩ Reply
+          </button>
+        )}
       </div>
       {email.error && (
         <p className="text-xs text-red-700 italic mb-2">{email.error}</p>

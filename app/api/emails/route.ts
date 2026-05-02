@@ -40,6 +40,7 @@ export async function POST(req: Request) {
   const {
     to, to_name, subject, body_html, body_text,
     cc, bcc, contact_id, opportunity_id, tags,
+    in_reply_to, thread_id,
   } = body;
 
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
       status: "queued",
       sent_by: sentBy,
       tags: Array.isArray(tags) ? tags : [],
+      in_reply_to: in_reply_to ?? null,
+      thread_id: thread_id ?? null,
     })
     .select("*")
     .single();
@@ -85,12 +88,20 @@ export async function POST(req: Request) {
   }
 
   // 2. Send via Brevo.
+  // Set RFC822 In-Reply-To and References when this is a reply, so the
+  // recipient's mail client threads it under the original conversation.
+  const replyHeaders: Record<string, string> = {};
+  if (in_reply_to) {
+    replyHeaders["In-Reply-To"] = in_reply_to;
+    replyHeaders["References"] = in_reply_to;
+  }
   const result = await sendBrevoEmail({
     to: [{ email: to, name: to_name ?? undefined }],
     subject,
     html: body_html,
     text: body_text,
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
+    headers: replyHeaders,
   });
 
   // 3. Update row with outcome. Brevo's `messageId` IS the RFC822 Message-ID

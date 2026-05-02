@@ -23,6 +23,9 @@ export type BrevoSendOptions = {
   /** Optional reply-to override (otherwise BREVO_SENDER_EMAIL). */
   replyTo?: string;
   tags?: string[];
+  /** Custom RFC822 headers — used to set In-Reply-To and References on
+   * replies so recipient mail clients thread the conversation correctly. */
+  headers?: Record<string, string>;
 };
 
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
@@ -57,6 +60,7 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
       textContent: text,
       replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
       tags: opts.tags,
+      headers: opts.headers && Object.keys(opts.headers).length > 0 ? opts.headers : undefined,
     }),
   });
 

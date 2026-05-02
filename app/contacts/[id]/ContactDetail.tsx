@@ -12,7 +12,7 @@ import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
-import ContactEmailHistory from "./ContactEmailHistory";
+import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
 
 type Contact = {
   id: string;
@@ -152,6 +152,16 @@ export default function ContactDetail({
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRefreshKey, setEmailRefreshKey] = useState(0);
+  const [replyContext, setReplyContext] = useState<EmailRow | null>(null);
+
+  const openReply = (email: EmailRow) => {
+    setReplyContext(email);
+    setShowEmailModal(true);
+  };
+  const openCompose = () => {
+    setReplyContext(null);
+    setShowEmailModal(true);
+  };
   const noteRef = useRef(contact.notes || "");
 
   const handleAssignType = async (type: string) => {
@@ -232,7 +242,7 @@ export default function ContactDetail({
         <div className="flex items-center gap-2">
           {contact.email && (
             <button
-              onClick={() => setShowEmailModal(true)}
+              onClick={openCompose}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
               ✉️ Send Email
             </button>
@@ -281,14 +291,20 @@ export default function ContactDetail({
       )}
 
       <EmailComposeModal
+        key={replyContext ? `reply-${replyContext.id}` : `compose-${emailRefreshKey}`}
         open={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
-        defaultTo={contact.email ?? ""}
-        defaultToName={name}
+        onClose={() => { setShowEmailModal(false); setReplyContext(null); }}
+        defaultTo={replyContext ? replyContext.from_email : (contact.email ?? "")}
+        defaultToName={replyContext ? (replyContext.from_name ?? "") : name}
+        defaultSubject={replyContext ? prefixReply(replyContext.subject) : ""}
+        defaultBody={replyContext ? quotedBody(replyContext) : ""}
         contactId={contact.id}
-        tags={["contact-detail"]}
+        tags={replyContext ? ["contact-detail", "reply"] : ["contact-detail"]}
+        inReplyTo={replyContext?.message_id ?? undefined}
+        threadId={replyContext?.thread_id ?? undefined}
         onSent={() => setEmailRefreshKey((k) => k + 1)}
       />
+
 
 
       <div className="flex flex-1 overflow-hidden">
@@ -531,14 +547,14 @@ export default function ContactDetail({
                     <h2 className="text-sm font-semibold text-gray-700">Email History</h2>
                     {contact.email && (
                       <button
-                        onClick={() => setShowEmailModal(true)}
+                        onClick={openCompose}
                         className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
                       >
                         ✉️ Compose
                       </button>
                     )}
                   </div>
-                  <ContactEmailHistory contactId={contact.id} refreshKey={emailRefreshKey} />
+                  <ContactEmailHistory contactId={contact.id} refreshKey={emailRefreshKey} onReply={openReply} />
                 </div>
 
 
@@ -942,4 +958,19 @@ function GhlSectionCard({ title, children }: { title: string; children: React.Re
       {children}
     </div>
   );
+}
+
+/** Add "Re:" prefix unless one is already there. */
+function prefixReply(subject: string): string {
+  if (/^(re|fwd|fw):/i.test(subject.trim())) return subject;
+  return `Re: ${subject}`;
+}
+
+/** Quote the original email body (text or stripped HTML) in reply format. */
+function quotedBody(parent: EmailRow): string {
+  const author = parent.from_name || parent.from_email;
+  const when = parent.sent_at ?? parent.created_at;
+  const dateStr = when ? new Date(when).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "earlier";
+  const original = (parent.body_html ? parent.body_html.replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim() : "(no body captured)").slice(0, 1500);
+  return `\n\n\nOn ${dateStr}, ${author} wrote:\n> ${original.split("\n").join("\n> ")}`;
 }

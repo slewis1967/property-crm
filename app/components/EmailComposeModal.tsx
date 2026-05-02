@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export type EmailComposeProps = {
   open: boolean;
@@ -15,6 +15,10 @@ export type EmailComposeProps = {
   opportunityId?: string | null;
   /** Free-form tags for the email_log.tags column. */
   tags?: string[];
+  /** Threading — when replying, the parent's RFC822 message_id and the
+   * thread_id to inherit. Sets In-Reply-To/References on the outgoing email. */
+  inReplyTo?: string | null;
+  threadId?: string | null;
   /** Called after a successful send. Receives the new email_log row. */
   onSent?: (email: { id: string; to_email: string; subject: string }) => void;
 };
@@ -24,6 +28,7 @@ export default function EmailComposeModal({
   defaultTo = "", defaultToName = "",
   defaultSubject = "", defaultBody = "",
   contactId, opportunityId, tags,
+  inReplyTo, threadId,
   onSent,
 }: EmailComposeProps) {
   const [to, setTo] = useState(defaultTo);
@@ -32,16 +37,46 @@ export default function EmailComposeModal({
   const [body, setBody] = useState(defaultBody);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [drafting, setDrafting] = useState(false);
 
-  // Re-sync defaults when the modal re-opens with different props
-  useEffect(() => {
-    if (!open) return;
-    setTo(defaultTo);
-    setToName(defaultToName);
-    setSubject(defaultSubject);
-    setBody(defaultBody);
+  async function aiDraft() {
+    if (!contactId) {
+      setError("AI draft needs a contact context — open compose from a contact page.");
+      return;
+    }
+    setDrafting(true);
     setError(null);
-  }, [open, defaultTo, defaultToName, defaultSubject, defaultBody]);
+    try {
+      const res = await fetch("/api/ai/email-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact_id: contactId,
+          // Use whatever's in the subject field as the topic hint, else nothing.
+          instruction: subject || undefined,
+          // If we're replying, the in_reply_to is the parent's RFC message_id;
+          // we'd need the parent's email_log id to look up its body. The
+          // EmailComposeModal doesn't currently receive that; AI draft for a
+          // reply works on contact context alone, which is good enough for v1.
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setError(json.error || "AI draft failed");
+        return;
+      }
+      setSubject(json.subject);
+      setBody(json.body);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  // Defaults are picked up via initial useState — parent should pass a
+  // changing `key` prop when context switches (e.g. compose vs reply) to
+  // force a fresh modal instance with the new defaults.
 
   if (!open) return null;
 
@@ -72,6 +107,8 @@ export default function EmailComposeModal({
           contact_id: contactId ?? undefined,
           opportunity_id: opportunityId ?? undefined,
           tags,
+          in_reply_to: inReplyTo ?? undefined,
+          thread_id: threadId ?? undefined,
         }),
       });
       const json = await res.json();
@@ -133,7 +170,20 @@ export default function EmailComposeModal({
             />
           </label>
           <label className="block">
-            <span className="block text-xs text-gray-600 mb-1">Message</span>
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-xs text-gray-600">Message</span>
+              {contactId && (
+                <button
+                  type="button"
+                  onClick={aiDraft}
+                  disabled={drafting}
+                  className="text-[11px] font-semibold px-2 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Generate a draft from contact context (uses subject line as topic hint if filled)"
+                >
+                  {drafting ? "Drafting…" : "✨ AI Draft"}
+                </button>
+              )}
+            </div>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
