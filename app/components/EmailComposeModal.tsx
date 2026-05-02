@@ -1,0 +1,182 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+export type EmailComposeProps = {
+  open: boolean;
+  onClose: () => void;
+  /** Defaults for the composer fields. */
+  defaultTo?: string;
+  defaultToName?: string;
+  defaultSubject?: string;
+  defaultBody?: string;
+  /** Linkage — saved on the email_log row so the email shows up under the contact/opp. */
+  contactId?: string | null;
+  opportunityId?: string | null;
+  /** Free-form tags for the email_log.tags column. */
+  tags?: string[];
+  /** Called after a successful send. Receives the new email_log row. */
+  onSent?: (email: { id: string; to_email: string; subject: string }) => void;
+};
+
+export default function EmailComposeModal({
+  open, onClose,
+  defaultTo = "", defaultToName = "",
+  defaultSubject = "", defaultBody = "",
+  contactId, opportunityId, tags,
+  onSent,
+}: EmailComposeProps) {
+  const [to, setTo] = useState(defaultTo);
+  const [toName, setToName] = useState(defaultToName);
+  const [subject, setSubject] = useState(defaultSubject);
+  const [body, setBody] = useState(defaultBody);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Re-sync defaults when the modal re-opens with different props
+  useEffect(() => {
+    if (!open) return;
+    setTo(defaultTo);
+    setToName(defaultToName);
+    setSubject(defaultSubject);
+    setBody(defaultBody);
+    setError(null);
+  }, [open, defaultTo, defaultToName, defaultSubject, defaultBody]);
+
+  if (!open) return null;
+
+  // Body is rendered as HTML in the email — but the textarea here is plain
+  // text. We wrap in <p> tags and convert paragraph breaks. Caller can pass
+  // pre-formatted HTML via defaultBody if richer markup is needed.
+  function bodyToHtml(text: string): string {
+    return text
+      .split(/\n\n+/)
+      .map((para) => `<p>${escapeHtml(para).replace(/\n/g, "<br />")}</p>`)
+      .join("");
+  }
+
+  async function send() {
+    setSending(true);
+    setError(null);
+    try {
+      const html = bodyToHtml(body);
+      const res = await fetch("/api/emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to,
+          to_name: toName || undefined,
+          subject,
+          body_html: html,
+          body_text: body,
+          contact_id: contactId ?? undefined,
+          opportunity_id: opportunityId ?? undefined,
+          tags,
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setError(json.error || "Send failed");
+        return;
+      }
+      onSent?.(json.email);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h2 className="font-semibold text-lg">Compose Email</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <label className="block md:col-span-2">
+              <span className="block text-xs text-gray-600 mb-1">To</span>
+              <input
+                type="email"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="recipient@example.com"
+              />
+            </label>
+            <label className="block">
+              <span className="block text-xs text-gray-600 mb-1">Recipient name (optional)</span>
+              <input
+                type="text"
+                value={toName}
+                onChange={(e) => setToName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="Sarah"
+              />
+            </label>
+          </div>
+          <label className="block">
+            <span className="block text-xs text-gray-600 mb-1">Subject</span>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              placeholder="Re: your enquiry"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-xs text-gray-600 mb-1">Message</span>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={12}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-sans"
+              placeholder={"Hi Sarah,\n\nFollowing on from our chat earlier…\n\n— Sean"}
+            />
+            <span className="block text-[11px] text-gray-400 mt-1">
+              Plain text. Paragraph breaks render as paragraphs in the email.
+            </span>
+          </label>
+          {error && (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2 p-5 border-t border-gray-100">
+          <p className="text-xs text-gray-400">
+            From: {process.env.NEXT_PUBLIC_BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au"}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={send}
+              disabled={sending || !to || !subject || !body}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sending ? "Sending…" : "Send"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}

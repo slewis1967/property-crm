@@ -11,6 +11,8 @@ import AIContactMatches from "../../components/AIContactMatches";
 import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
+import EmailComposeModal from "../../components/EmailComposeModal";
+import ContactEmailHistory from "./ContactEmailHistory";
 
 type Contact = {
   id: string;
@@ -148,6 +150,8 @@ export default function ContactDetail({
   const [deleting, setDeleting] = useState(false);
   const [buyerType, setBuyerType] = useState(contact.buyer_type || "");
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailRefreshKey, setEmailRefreshKey] = useState(0);
   const noteRef = useRef(contact.notes || "");
 
   const handleAssignType = async (type: string) => {
@@ -227,10 +231,11 @@ export default function ContactDetail({
         </div>
         <div className="flex items-center gap-2">
           {contact.email && (
-            <a href={`mailto:${contact.email}`}
+            <button
+              onClick={() => setShowEmailModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
               ✉️ Send Email
-            </a>
+            </button>
           )}
           {contact.phone && (
             <a href={`tel:${contact.phone}`}
@@ -274,6 +279,17 @@ export default function ContactDetail({
           }}
         />
       )}
+
+      <EmailComposeModal
+        open={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        defaultTo={contact.email ?? ""}
+        defaultToName={name}
+        contactId={contact.id}
+        tags={["contact-detail"]}
+        onSent={() => setEmailRefreshKey((k) => k + 1)}
+      />
+
 
       <div className="flex flex-1 overflow-hidden">
 
@@ -508,6 +524,23 @@ export default function ContactDetail({
                     <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{contact.notes}</p>
                   </div>
                 )}
+
+                {/* Email history */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-gray-700">Email History</h2>
+                    {contact.email && (
+                      <button
+                        onClick={() => setShowEmailModal(true)}
+                        className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                      >
+                        ✉️ Compose
+                      </button>
+                    )}
+                  </div>
+                  <ContactEmailHistory contactId={contact.id} refreshKey={emailRefreshKey} />
+                </div>
+
 
                 {/* Quick lead activity */}
                 {leads.length > 0 && (
