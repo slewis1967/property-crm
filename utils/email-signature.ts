@@ -19,6 +19,8 @@ export type SignatureFields = {
   phone: string;
   web: string;
   disclaimer: string;
+  logo_url?: string;
+  logo_height?: number; // px, defaults to 60 in render
 };
 
 export type SignatureBlock = {
@@ -71,13 +73,20 @@ export async function getSignatureFields(): Promise<SignatureFields> {
     phone: dbFields.phone || env.phone || HARDCODED_DEFAULTS.phone,
     web: dbFields.web || env.web || HARDCODED_DEFAULTS.web,
     disclaimer: dbFields.disclaimer || env.disclaimer || HARDCODED_DEFAULTS.disclaimer,
+    logo_url: dbFields.logo_url || undefined,
+    logo_height: typeof dbFields.logo_height === "number" ? dbFields.logo_height : undefined,
   };
 }
 
 /** Render a SignatureFields into HTML + plain-text bodies. */
 export function renderSignature(f: SignatureFields): SignatureBlock {
+  const logoH = typeof f.logo_height === "number" && f.logo_height > 0 ? f.logo_height : 60;
+  const logoBlock = f.logo_url
+    ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(f.logo_url)}" alt="${escapeHtml(f.name)}" style="height:${logoH}px;width:auto;display:block;" /></div>`
+    : "";
   const html = `
 <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;color:#374151;line-height:1.5;">
+  ${logoBlock}
   <p style="margin:0 0 4px;font-weight:600;color:#111827;">${escapeHtml(f.name)}</p>
   <p style="margin:0 0 6px;color:#6b7280;">${escapeHtml(f.title)}</p>
   <p style="margin:0;color:#6b7280;">

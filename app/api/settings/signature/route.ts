@@ -24,6 +24,8 @@ export async function PUT(req: Request) {
     phone: typeof body.phone === "string" ? body.phone.trim() : "",
     web: typeof body.web === "string" ? body.web.trim() : "",
     disclaimer: typeof body.disclaimer === "string" ? body.disclaimer.trim() : "",
+    logo_url: typeof body.logo_url === "string" && body.logo_url.trim() ? body.logo_url.trim() : undefined,
+    logo_height: typeof body.logo_height === "number" && body.logo_height > 0 ? Math.round(body.logo_height) : undefined,
   };
 
   for (const k of ["name", "title", "email", "phone", "web"] as const) {
