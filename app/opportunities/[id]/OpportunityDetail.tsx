@@ -89,6 +89,45 @@ export default function OpportunityDetail({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Pipeline switcher — load available pipelines, allow moving the
+  // opportunity between them. Stage buttons below now reflect whichever
+  // pipeline is currently selected (falls back to the legacy 8-stage
+  // STAGES list if no pipeline is loaded).
+  type PipelineOption = { id: string; name: string; stages: string[] };
+  const [pipelines, setPipelines] = useState<PipelineOption[]>([]);
+  const [pipelineId, setPipelineId] = useState<string | null>(lead.pipeline_id);
+  const [savingPipeline, setSavingPipeline] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/pipelines", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setPipelines(d.pipelines || []))
+      .catch(() => {});
+  }, []);
+
+  const activePipeline = pipelines.find((p) => p.id === pipelineId);
+  const activeStages = activePipeline?.stages?.length ? activePipeline.stages : STAGES;
+
+  const updatePipeline = async (newPipelineId: string | null) => {
+    const prevPipelineId = pipelineId;
+    setPipelineId(newPipelineId);
+    setSavingPipeline(true);
+    try {
+      const res = await fetch(`/api/opportunities/${lead.lead_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pipeline_id: newPipelineId }),
+      });
+      if (!res.ok) throw new Error();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    } catch {
+      setPipelineId(prevPipelineId);
+    } finally {
+      setSavingPipeline(false);
+    }
+  };
+
   // Notes feed
   type NoteEntry = { text: string; created_at: string };
   const parseNotes = (raw: string | null): NoteEntry[] => {
@@ -360,27 +399,52 @@ export default function OpportunityDetail({
           {/* AI diagnosis — is this opp stuck and why? */}
           <AIOpportunityDiagnosis opportunityId={lead.lead_id} />
 
-          {/* Stage changer */}
+          {/* Pipeline + Stage */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-700">Pipeline Stage</h2>
-              {saving && <span className="text-xs text-gray-400">Saving…</span>}
-              {saved && <span className="text-xs text-green-600 font-medium">✓ Saved</span>}
+              <h2 className="text-sm font-semibold text-gray-700">Pipeline</h2>
+              {(saving || savingPipeline) && <span className="text-xs text-gray-400">Saving…</span>}
+              {saved && !saving && !savingPipeline && <span className="text-xs text-green-600 font-medium">✓ Saved</span>}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">In pipeline</label>
+              <select
+                value={pipelineId ?? ""}
+                onChange={(e) => updatePipeline(e.target.value || null)}
+                disabled={savingPipeline || pipelines.length === 0}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              >
+                <option value="">— Unassigned —</option>
+                {pipelines.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              {pipelines.length === 0 && (
+                <p className="text-[11px] text-gray-400 mt-1">Loading pipelines…</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stage</h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {STAGES.map((s) => (
+              {activeStages.map((s) => (
                 <button
                   key={s}
                   onClick={() => updateStage(s)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
                     stage === s
-                      ? (stageStyle[s] || "bg-gray-100 text-gray-600") + " border-transparent ring-2 ring-offset-1 ring-blue-400"
+                      ? (stageStyle[s] || "bg-blue-100 text-blue-700") + " border-transparent ring-2 ring-offset-1 ring-blue-400"
                       : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
                   }`}
                 >
                   {s}
                 </button>
               ))}
+              {activeStages.length === 0 && (
+                <p className="text-xs text-gray-400">This pipeline has no stages yet — add some from the Opportunities board.</p>
+              )}
             </div>
           </div>
 
