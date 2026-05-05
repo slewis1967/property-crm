@@ -14,6 +14,58 @@ const STAGES = [
   "Proposal Sent", "Negotiating", "Closed Won", "Closed Lost",
 ];
 
+// Google Calendar appointment booking URLs. Each owner has their own
+// schedule on their own Google account; the public URL is the booking
+// page. Add a new entry here to surface them in the dropdown — no env
+// var, no migration, just push.
+const BOOKING_OPTIONS: Array<{ label: string; url: string }> = [
+  { label: "Book with Sean",  url: "https://calendar.app.google/19ocFJGhcTHSFKBg7" },
+  { label: "Book with Glenn", url: "https://calendar.app.google/tyLLhLCA7k686t5L9" },
+];
+
+function BookAppointmentMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+      >
+        📅 Book appointment
+        <span className="text-gray-400 text-[10px]">▾</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1.5 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
+          {BOOKING_OPTIONS.map((opt) => (
+            <a
+              key={opt.url}
+              href={opt.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+            >
+              <span>📅</span>
+              {opt.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const stageStyle: Record<string, string> = {
   "New Lead":      "bg-gray-100 text-gray-600",
   "Qualified":     "bg-blue-100 text-blue-700",
@@ -304,23 +356,8 @@ export default function OpportunityDetail({
           >
             ✏️ Edit
           </button>
-          <a
-            href={(() => {
-              const base = process.env.NEXT_PUBLIC_CAL_BOOKING_URL || "https://book.nextkey.com.au";
-              const params = new URLSearchParams();
-              if (lead.email) params.set("email", lead.email);
-              if (lead.full_name) params.set("name", lead.full_name);
-              const note = [lead.buyer_type, lead.budget, lead.state].filter(Boolean).join(" · ");
-              if (note) params.set("notes", `Lead: ${note}`);
-              const qs = params.toString();
-              return qs ? `${base}?${qs}` : base;
-            })()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
-          >
-            📅 Book appointment
-          </a>
+          <BookAppointmentMenu />
+
           {lead.email && (
             <a href={`mailto:${lead.email}`}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
