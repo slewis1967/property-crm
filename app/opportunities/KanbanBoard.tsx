@@ -126,7 +126,10 @@ export default function KanbanBoard({
   };
 
   const activePipeline = pipelines.find(p => p.id === activePipelineId) || pipelines[0];
-  const stages = activePipeline ? buildStages(activePipeline.stages) : buildStages(["New Lead", "Qualified", "Closed Won", "Closed Lost"]);
+  // No fallback to hardcoded stages — if the pipelines list is empty we render
+  // an explicit empty state below. A phantom column set used to appear here
+  // when the SSR fetch failed silently and dropped us into a fake kanban.
+  const stages = activePipeline ? buildStages(activePipeline.stages) : [];
 
   // Leads
   const normalise = useCallback((leads: Lead[]) =>
@@ -355,6 +358,39 @@ export default function KanbanBoard({
       const n = l.budget?.replace(/[^0-9]/g, "");
       return sum + (n ? parseInt(n) : 0);
     }, 0);
+
+  // Empty state — no pipelines loaded (either API failed, or genuinely no
+  // pipelines yet). Show a CTA instead of the phantom 4-column kanban.
+  if (pipelines.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="bg-white border border-gray-200 rounded-2xl px-8 py-10 shadow-sm max-w-md">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">No pipelines yet</h2>
+          <p className="text-sm text-gray-500 mb-5">
+            Create your first pipeline to start tracking opportunities. The Sales Pipeline auto-creates
+            on first contact with the API — if you're seeing this and the API is up, try a hard refresh.
+          </p>
+          <button
+            onClick={() => setShowNewPipeline(true)}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm"
+          >
+            ＋ New Pipeline
+          </button>
+        </div>
+
+        {showNewPipeline && (
+          <NewPipelineModal
+            onClose={() => setShowNewPipeline(false)}
+            onCreated={(p) => {
+              setPipelines(prev => [...prev, { ...p, created_at: new Date().toISOString() }]);
+              setActivePipelineId(p.id);
+              setShowNewPipeline(false);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">

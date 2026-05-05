@@ -18,20 +18,24 @@ const archiveStatusColor = (s: string | null) => {
   return "bg-purple-100 text-purple-700";
 };
 
-async function getLeads(): Promise<Lead[]> {
+async function getLeads(): Promise<{ leads: Lead[]; error: string | null }> {
   try {
     const res = await nexusApi("/api/leads", { cache: "no-store" });
-    if (res.ok) return (await res.json()).leads || [];
-  } catch {}
-  return [];
+    if (res.ok) return { leads: (await res.json()).leads || [], error: null };
+    return { leads: [], error: `NEXUS API responded ${res.status}` };
+  } catch (e: any) {
+    return { leads: [], error: e?.message || "Couldn't reach NEXUS API" };
+  }
 }
 
-async function getPipelines(): Promise<Pipeline[]> {
+async function getPipelines(): Promise<{ pipelines: Pipeline[]; error: string | null }> {
   try {
     const res = await nexusApi("/api/pipelines", { cache: "no-store" });
-    if (res.ok) return (await res.json()).pipelines || [];
-  } catch {}
-  return [];
+    if (res.ok) return { pipelines: (await res.json()).pipelines || [], error: null };
+    return { pipelines: [], error: `NEXUS API responded ${res.status}` };
+  } catch (e: any) {
+    return { pipelines: [], error: e?.message || "Couldn't reach NEXUS API" };
+  }
 }
 
 async function getArchiveOpps() {
@@ -69,11 +73,15 @@ async function getArchiveOpps() {
 }
 
 export default async function OpportunitiesPage() {
-  const [leads, pipelines, archive] = await Promise.all([
+  const [leadsResult, pipelinesResult, archive] = await Promise.all([
     getLeads(),
     getPipelines(),
     getArchiveOpps(),
   ]);
+
+  const { leads, error: leadsError } = leadsResult;
+  const { pipelines, error: pipelinesError } = pipelinesResult;
+  const apiError = pipelinesError || leadsError;
 
   return (
     <div className="flex flex-col h-full">
@@ -87,9 +95,11 @@ export default async function OpportunitiesPage() {
         <a href="/leads" className="text-sm text-blue-600 hover:underline">Table view →</a>
       </div>
 
-      {leads.length === 0 && pipelines.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 text-sm text-yellow-700">
-          NEXUS API offline — start with <code>bash /mnt/c/NEXUS-Memory/start-nexus.sh</code>
+      {apiError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">
+          <div className="font-semibold mb-1">Couldn't load opportunities from NEXUS API</div>
+          <div className="text-xs text-red-600 font-mono">{apiError}</div>
+          <div className="text-xs text-red-500 mt-2">Reload the page once the API is reachable.</div>
         </div>
       )}
 
