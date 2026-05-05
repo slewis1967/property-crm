@@ -12,7 +12,32 @@
  * Future: a separate full PIA-equivalent page using AI to model multi-
  * property scenarios, depreciation schedules, and tax outcomes.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+// ─── Reusability props ─────────────────────────────────────────────────────
+//
+// Every calculator below accepts an optional `initial` snapshot (to
+// pre-fill its inputs from a saved scenario) and an optional `onChange`
+// callback (fired on every state change with the current inputs +
+// computed outputs). Callers — like the opportunity detail page's
+// "Calculations" section — use those to load + save scenarios.
+
+export type CalcSnapshot = { inputs: Record<string, any>; outputs: Record<string, any> };
+
+export type CalcProps = {
+  initial?: Record<string, any>;
+  onChange?: (snapshot: CalcSnapshot) => void;
+};
+
+// Fire onChange whenever the snapshot changes. JSON.stringify keeps the
+// dep array shallow so we don't infinite-loop on object identity churn.
+function useCalcSync(snapshot: CalcSnapshot, onChange: CalcProps["onChange"]) {
+  const sig = JSON.stringify(snapshot);
+  useEffect(() => {
+    if (onChange) onChange(snapshot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, !!onChange]);
+}
 
 const fmt = (n: number, opts: Intl.NumberFormatOptions = {}) =>
   new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0, ...opts }).format(
@@ -29,15 +54,21 @@ const fmtPct = (n: number, dp = 2) =>
 
 // ─── Calculator 1: Rental Yield ────────────────────────────────────────────
 
-function YieldCalculator() {
-  const [price, setPrice] = useState(750000);
-  const [weekly, setWeekly] = useState(620);
-  const [costsPct, setCostsPct] = useState(25);
+export function YieldCalculator({ initial, onChange }: CalcProps = {}) {
+  const [price, setPrice] = useState<number>(initial?.price ?? 750000);
+  const [weekly, setWeekly] = useState<number>(initial?.weekly ?? 620);
+  const [costsPct, setCostsPct] = useState<number>(initial?.costsPct ?? 25);
 
   const annualRent = weekly * 52;
   const annualCosts = annualRent * (costsPct / 100);
   const grossYield = (annualRent / price) * 100;
   const netYield = ((annualRent - annualCosts) / price) * 100;
+
+  useCalcSync(
+    { inputs: { price, weekly, costsPct },
+      outputs: { grossYield, netYield, annualRent, netAnnual: annualRent - annualCosts } },
+    onChange,
+  );
 
   return (
     <Card title="Rental yield" emoji="🧮">
@@ -184,15 +215,20 @@ function fhbDuty(state: AusState, price: number): number {
   return standard * taper;
 }
 
-function StampDutyCalculator() {
-  const [price, setPrice] = useState(700000);
-  const [state, setState] = useState<AusState>("QLD");
-  const [isFhb, setIsFhb] = useState(true);
+export function StampDutyCalculator({ initial, onChange }: CalcProps = {}) {
+  const [price, setPrice] = useState<number>(initial?.price ?? 700000);
+  const [state, setState] = useState<AusState>(initial?.state ?? "QLD");
+  const [isFhb, setIsFhb] = useState<boolean>(initial?.isFhb ?? true);
 
   const standard = standardDuty(state, price);
   const fhb = fhbDuty(state, price);
   const payable = isFhb ? fhb : standard;
   const saving = isFhb ? standard - fhb : 0;
+
+  useCalcSync(
+    { inputs: { price, state, isFhb }, outputs: { payable, saving, standard } },
+    onChange,
+  );
 
   return (
     <Card title="Stamp duty by state" emoji="📋">
@@ -317,31 +353,31 @@ function pAndIMonthly(balance: number, ratePct: number, years: number): number {
   return (balance * r) / (1 - Math.pow(1 + r, -n));
 }
 
-function BorrowingCalculator() {
+export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   // Income
-  const [income, setIncome] = useState(120000);
-  const [partner, setPartner] = useState(0);
-  const [otherIncome, setOtherIncome] = useState(0); // annual, shaded 80%
-  const [hasHecs, setHasHecs] = useState(false);
-  const [partnerHasHecs, setPartnerHasHecs] = useState(false);
+  const [income, setIncome] = useState<number>(initial?.income ?? 120000);
+  const [partner, setPartner] = useState<number>(initial?.partner ?? 0);
+  const [otherIncome, setOtherIncome] = useState<number>(initial?.otherIncome ?? 0);
+  const [hasHecs, setHasHecs] = useState<boolean>(initial?.hasHecs ?? false);
+  const [partnerHasHecs, setPartnerHasHecs] = useState<boolean>(initial?.partnerHasHecs ?? false);
 
   // Household
-  const [dependents, setDependents] = useState(0);
-  const [declaredExpenses, setDeclaredExpenses] = useState(0); // monthly
+  const [dependents, setDependents] = useState<number>(initial?.dependents ?? 0);
+  const [declaredExpenses, setDeclaredExpenses] = useState<number>(initial?.declaredExpenses ?? 0);
 
   // Existing debts
-  const [creditLimit, setCreditLimit] = useState(0); // total card limit
-  const [existingMortgageBalance, setExistingMortgageBalance] = useState(0);
-  const [existingMortgageRate, setExistingMortgageRate] = useState(6.5);
-  const [existingMortgageTerm, setExistingMortgageTerm] = useState(25);
-  const [personalLoan, setPersonalLoan] = useState(0); // monthly
-  const [carLoan, setCarLoan] = useState(0); // monthly
-  const [otherDebts, setOtherDebts] = useState(0); // monthly
+  const [creditLimit, setCreditLimit] = useState<number>(initial?.creditLimit ?? 0);
+  const [existingMortgageBalance, setExistingMortgageBalance] = useState<number>(initial?.existingMortgageBalance ?? 0);
+  const [existingMortgageRate, setExistingMortgageRate] = useState<number>(initial?.existingMortgageRate ?? 6.5);
+  const [existingMortgageTerm, setExistingMortgageTerm] = useState<number>(initial?.existingMortgageTerm ?? 25);
+  const [personalLoan, setPersonalLoan] = useState<number>(initial?.personalLoan ?? 0);
+  const [carLoan, setCarLoan] = useState<number>(initial?.carLoan ?? 0);
+  const [otherDebts, setOtherDebts] = useState<number>(initial?.otherDebts ?? 0);
 
   // Loan parameters
-  const [rate, setRate] = useState(6.5);
-  const [buffer, setBuffer] = useState(3);
-  const [loanTerm, setLoanTerm] = useState(30);
+  const [rate, setRate] = useState<number>(initial?.rate ?? 6.5);
+  const [buffer, setBuffer] = useState<number>(initial?.buffer ?? 3);
+  const [loanTerm, setLoanTerm] = useState<number>(initial?.loanTerm ?? 30);
 
   const adults = partner > 0 ? 2 : 1;
   const grossHousehold = income + partner + otherIncome;
@@ -382,6 +418,20 @@ function BorrowingCalculator() {
     surplus > 0
       ? (surplus * (1 - Math.pow(1 + r, -months))) / r
       : 0;
+
+  useCalcSync(
+    {
+      inputs: {
+        income, partner, otherIncome, hasHecs, partnerHasHecs,
+        dependents, declaredExpenses,
+        creditLimit, existingMortgageBalance, existingMortgageRate, existingMortgageTerm,
+        personalLoan, carLoan, otherDebts,
+        rate, buffer, loanTerm,
+      },
+      outputs: { maxLoan, monthlyNet, livingExp, totalDebtCommit, surplus, hem },
+    },
+    onChange,
+  );
 
   return (
     <Card title="Borrowing capacity" emoji="💰">
@@ -528,11 +578,17 @@ function BorrowingCalculator() {
 
 // ─── Calculator 4: Capital Growth Projection ───────────────────────────────
 
-function GrowthCalculator() {
-  const [pv, setPv] = useState(700000);
-  const [rate, setRate] = useState(5);
+export function GrowthCalculator({ initial, onChange }: CalcProps = {}) {
+  const [pv, setPv] = useState<number>(initial?.pv ?? 700000);
+  const [rate, setRate] = useState<number>(initial?.rate ?? 5);
 
   const project = (years: number) => pv * Math.pow(1 + rate / 100, years);
+
+  useCalcSync(
+    { inputs: { pv, rate },
+      outputs: { in5: project(5), in10: project(10), in20: project(20) } },
+    onChange,
+  );
 
   return (
     <Card title="Capital growth projection" emoji="📈">
@@ -583,12 +639,12 @@ const FHG_PRICE_CAP: Record<AusState, [number, number]> = {
   NT: [600000, 450000],
 };
 
-function FhgEligibilityCalculator() {
-  const [state, setState] = useState<AusState>("QLD");
-  const [region, setRegion] = useState<"capital" | "regional">("capital");
-  const [income, setIncome] = useState(110000);
-  const [partnerIncome, setPartnerIncome] = useState(0);
-  const [price, setPrice] = useState(680000);
+export function FhgEligibilityCalculator({ initial, onChange }: CalcProps = {}) {
+  const [state, setState] = useState<AusState>(initial?.state ?? "QLD");
+  const [region, setRegion] = useState<"capital" | "regional">(initial?.region ?? "capital");
+  const [income, setIncome] = useState<number>(initial?.income ?? 110000);
+  const [partnerIncome, setPartnerIncome] = useState<number>(initial?.partnerIncome ?? 0);
+  const [price, setPrice] = useState<number>(initial?.price ?? 680000);
 
   const isCouple = partnerIncome > 0;
   const totalIncome = income + partnerIncome;
@@ -601,6 +657,12 @@ function FhgEligibilityCalculator() {
   // LMI saving estimate: typical LMI on 95% LVR is 2-3% of loan amount
   const loanAmount = price * 0.95;
   const lmiEst = loanAmount * 0.025;
+
+  useCalcSync(
+    { inputs: { state, region, income, partnerIncome, price },
+      outputs: { eligible, incomeOk, priceOk, incomeCap, priceCap, lmiEst } },
+    onChange,
+  );
 
   return (
     <Card title="First Home Guarantee check" emoji="🛡️">
@@ -672,16 +734,22 @@ function FhgEligibilityCalculator() {
 
 // ─── Calculator 6: Loan Repayments ─────────────────────────────────────────
 
-function LoanRepaymentCalculator() {
-  const [loan, setLoan] = useState(600000);
-  const [rate, setRate] = useState(6.25);
-  const [years, setYears] = useState(30);
+export function LoanRepaymentCalculator({ initial, onChange }: CalcProps = {}) {
+  const [loan, setLoan] = useState<number>(initial?.loan ?? 600000);
+  const [rate, setRate] = useState<number>(initial?.rate ?? 6.25);
+  const [years, setYears] = useState<number>(initial?.years ?? 30);
 
   const months = years * 12;
   const r = rate / 100 / 12;
   const piMonthly = (loan * r) / (1 - Math.pow(1 + r, -months));
   const ioMonthly = loan * r;
   const totalInterestPi = piMonthly * months - loan;
+
+  useCalcSync(
+    { inputs: { loan, rate, years },
+      outputs: { piMonthly, ioMonthly, totalInterestPi, weeklyEquiv: (piMonthly * 12) / 52 } },
+    onChange,
+  );
 
   return (
     <Card title="Loan repayments" emoji="🏠">
