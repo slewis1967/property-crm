@@ -2,12 +2,11 @@
 
 /**
  * OpportunityAppointments — small read-only list of Cal.com bookings
- * matching this lead's email. Fetched client-side from Supabase via the
- * already-shipped appointments view. Booking new ones is handled by the
- * "📅 Book appointment" button in the top toolbar (opens cal.com).
+ * matching this lead's email. Goes through /api/opportunities/{id}/appointments
+ * (server-side Supabase query) since the supabase util is service-role only
+ * and can't be imported into a "use client" bundle.
  */
 import { useEffect, useState } from "react";
-import { supabase } from "../../../utils/supabase";
 
 type Appointment = {
   id: string;
@@ -30,7 +29,13 @@ const statusBadge = (s: string, isPast: boolean) => {
 const fmtDt = (s: string | null) =>
   s ? new Date(s).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
-export default function OpportunityAppointments({ leadEmail }: { leadEmail: string | null }) {
+export default function OpportunityAppointments({
+  opportunityId,
+  leadEmail,
+}: {
+  opportunityId: string;
+  leadEmail: string | null;
+}) {
   const [rows, setRows] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,19 +43,19 @@ export default function OpportunityAppointments({ leadEmail }: { leadEmail: stri
     if (!leadEmail) { setLoading(false); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("appointments")
-        .select("id,cal_uid,event_title,start_time,end_time,location,status,host_name")
-        .eq("contact_email", leadEmail)
-        .order("start_time", { ascending: false })
-        .limit(8);
-      if (!cancelled) {
-        setRows(data ?? []);
-        setLoading(false);
+      try {
+        const url = `/api/opportunities/${opportunityId}/appointments?email=${encodeURIComponent(leadEmail)}`;
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json();
+        if (!cancelled) setRows(data.appointments ?? []);
+      } catch {
+        // Surface nothing — empty list is a fine fallback for this card.
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [leadEmail]);
+  }, [opportunityId, leadEmail]);
 
   if (!leadEmail) return null;
 

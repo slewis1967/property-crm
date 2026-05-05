@@ -642,7 +642,7 @@ export default function OpportunityDetail({
           )}
 
           {/* Appointments (Cal.com) */}
-          <OpportunityAppointments leadEmail={lead.email} />
+          <OpportunityAppointments opportunityId={lead.lead_id} leadEmail={lead.email} />
 
           {/* PIA Reports */}
           <OpportunityPiaReports leadId={lead.lead_id} />
