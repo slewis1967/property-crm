@@ -156,6 +156,47 @@ export default function KanbanBoard({
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const prevStagesRef = useRef<Record<string, string>>({});
 
+  // Bulk selection
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+
+  const toggleSelect = (leadId: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId); else next.add(leadId);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelected(new Set());
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete ${ids.length} opportunit${ids.length === 1 ? "y" : "ies"}? This can't be undone.`)) return;
+    setBulkDeleting(true);
+    setBulkError(null);
+    setBulkProgress({ done: 0, total: ids.length });
+    const failed: string[] = [];
+    let done = 0;
+    await Promise.all(ids.map(async id => {
+      try {
+        const res = await fetch(`/api/opportunities/${id}`, { method: "DELETE" });
+        if (!res.ok) failed.push(id);
+      } catch { failed.push(id); }
+      done += 1;
+      setBulkProgress({ done, total: ids.length });
+    }));
+    const succeeded = new Set(ids.filter(id => !failed.includes(id)));
+    setLeads(prev => prev.filter(l => !succeeded.has(l.lead_id)));
+    setSelected(new Set(failed));
+    setBulkDeleting(false);
+    setBulkProgress(null);
+    if (failed.length > 0) setBulkError(`${failed.length} of ${ids.length} failed to delete — they're still selected.`);
+  };
+
   useEffect(() => {
     const map: Record<string, string> = {};
     leads.forEach(l => { map[l.lead_id] = l._stage || ""; });
@@ -286,6 +327,46 @@ export default function KanbanBoard({
         </div>
       )}
 
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-20 mb-3 bg-blue-600 text-white rounded-xl px-4 py-2.5 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="font-semibold">
+              {selected.size} selected
+            </span>
+            {bulkProgress && (
+              <span className="text-blue-100 text-xs">
+                Deleting {bulkProgress.done} / {bulkProgress.total}…
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearSelection}
+              disabled={bulkDeleting}
+              className="px-3 py-1 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={bulkDelete}
+              disabled={bulkDeleting}
+              className="px-3 py-1 rounded-lg text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50"
+            >
+              {bulkDeleting ? "Deleting…" : `Delete ${selected.size}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk error toast */}
+      {bulkError && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
+          <span>{bulkError}</span>
+          <button onClick={() => setBulkError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap text-sm text-gray-500">
@@ -391,9 +472,29 @@ export default function KanbanBoard({
                   <span className={`w-2.5 h-2.5 rounded-full ${stage.dot}`} />
                   <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">{stage.label}</span>
                 </div>
-                <span className="text-xs font-semibold text-gray-400 bg-white rounded-full px-2 py-0.5 shadow-sm">
-                  {cards.length}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {cards.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const allIds = cards.map(c => c.lead_id);
+                        const allSelected = allIds.every(id => selected.has(id));
+                        setSelected(prev => {
+                          const next = new Set(prev);
+                          if (allSelected) allIds.forEach(id => next.delete(id));
+                          else allIds.forEach(id => next.add(id));
+                          return next;
+                        });
+                      }}
+                      title={cards.every(c => selected.has(c.lead_id)) ? "Deselect all in stage" : "Select all in stage"}
+                      className="text-[10px] font-medium text-gray-400 hover:text-gray-700 transition px-1.5 py-0.5 rounded hover:bg-white"
+                    >
+                      {cards.every(c => selected.has(c.lead_id)) ? "none" : "all"}
+                    </button>
+                  )}
+                  <span className="text-xs font-semibold text-gray-400 bg-white rounded-full px-2 py-0.5 shadow-sm">
+                    {cards.length}
+                  </span>
+                </div>
               </div>
 
               {/* Cards */}
@@ -404,23 +505,53 @@ export default function KanbanBoard({
                   const isDragging  = dragId === lead.lead_id;
                   const tags        = parseTags(lead.tags);
 
+                  const isSelected = selected.has(lead.lead_id);
                   return (
                     <div
                       key={lead.lead_id}
                       draggable
                       onDragStart={e => onDragStart(e, lead.lead_id)}
                       onDragEnd={onDragEnd}
-                      onClick={() => { if (!dragId) router.push(`/opportunities/${lead.lead_id}`); }}
+                      onClick={(e) => {
+                        if (dragId) return;
+                        // If any cards are selected, treat clicks as toggle selection
+                        // instead of navigation. Lets the user multi-select without
+                        // accidentally opening detail pages.
+                        if (selected.size > 0) {
+                          e.stopPropagation();
+                          toggleSelect(lead.lead_id);
+                          return;
+                        }
+                        router.push(`/opportunities/${lead.lead_id}`);
+                      }}
                       className={`
-                        bg-white rounded-lg border shadow-sm p-3 cursor-pointer select-none
-                        transition-all duration-300
+                        relative bg-white rounded-lg border shadow-sm p-3 cursor-pointer select-none
+                        transition-all duration-300 group
                         ${isDragging ? "opacity-40 scale-95" : "opacity-100"}
                         ${isAutoMoved ? "ring-2 ring-purple-400 ring-offset-1 animate-pulse" : ""}
                         ${isSaving ? "opacity-60" : ""}
+                        ${isSelected ? "ring-2 ring-blue-500 border-blue-300" : ""}
                         hover:shadow-md hover:border-blue-200
                       `}
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleSelect(lead.lead_id); }}
+                        title={isSelected ? "Deselect" : "Select"}
+                        className={`
+                          absolute top-1.5 left-1.5 w-4 h-4 rounded border-2 flex items-center justify-center
+                          transition
+                          ${isSelected
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "bg-white border-gray-300 opacity-0 group-hover:opacity-100 hover:border-blue-400"}
+                        `}
+                      >
+                        {isSelected && (
+                          <svg viewBox="0 0 12 12" className="w-3 h-3 fill-current">
+                            <path d="M4.5 8.5L2 6l1-1 1.5 1.5L8 3l1 1z" />
+                          </svg>
+                        )}
+                      </button>
+                      <div className="flex justify-between items-start mb-2 pl-5">
                         <p className="text-sm font-semibold text-gray-900 leading-tight pr-1">
                           {lead.full_name || "Unknown"}
                         </p>

@@ -36,3 +36,18 @@ export async function PATCH(
     return NextResponse.json({ error: e.message }, { status: 503 });
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const res = await nexusApi(`/api/leads/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(data);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 503 });
+  }
+}
