@@ -32,25 +32,38 @@ const OPP_FIELDS: FieldDef[] = [
   { key: "source",      label: "Source",      type: "text" },
   { key: "segment",     label: "Segment",     type: "text" },
   { key: "message",     label: "Message",     type: "textarea" },
+  // Note: opportunity "notes" is a JSON-encoded entry feed maintained by
+  // the notes section on the page — editing it as a textarea here would
+  // clobber accumulated entries, so it's intentionally excluded.
 ];
 
 const CONTACT_FIELDS: FieldDef[] = [
-  { key: "full_name",       label: "Full name",        type: "text" },
-  { key: "name",            label: "Display name",     type: "text" },
-  { key: "email",           label: "Email",            type: "email" },
-  { key: "phone",           label: "Phone",            type: "tel" },
-  { key: "buyer_type",      label: "Buyer type",       type: "select",
+  { key: "first_name",      label: "First name",         type: "text" },
+  { key: "full_name",       label: "Full name",          type: "text" },
+  { key: "name",            label: "Display name",       type: "text" },
+  { key: "email",           label: "Email",              type: "email" },
+  { key: "phone",           label: "Phone",              type: "tel" },
+  { key: "buyer_type",      label: "Buyer type",         type: "select",
     options: ["", "Owner Occupier", "Investor", "First Home Buyer", "SDA", "SMSF", "Downsizer"] },
-  { key: "preferred_state", label: "Preferred state",  type: "select",
+  { key: "state",           label: "State",              type: "select",
     options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
-  { key: "budget_max",      label: "Budget (max)",     type: "number" },
-  { key: "timeframe",       label: "Timeframe",        type: "text" },
-  { key: "temperature",     label: "Temperature",      type: "select",
+  { key: "preferred_state", label: "Preferred state",    type: "select",
+    options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
+  { key: "budget",          label: "Budget",             type: "number" },
+  { key: "budget_min",      label: "Budget (min)",       type: "number" },
+  { key: "budget_max",      label: "Budget (max)",       type: "number" },
+  { key: "finance_status",  label: "Finance status",     type: "select",
+    options: ["", "Pre-approved", "Conditionally approved", "Not yet applied", "Declined", "Cash buyer"] },
+  { key: "timeframe",       label: "Timeframe",          type: "text" },
+  { key: "temperature",     label: "Temperature",        type: "select",
     options: ["", "hot", "warm", "cold"] },
-  { key: "lead_score",      label: "Lead score",       type: "number" },
-  { key: "segment",         label: "Segment",          type: "text" },
-  { key: "source",          label: "Source",           type: "text" },
-  { key: "message",         label: "Message",          type: "textarea" },
+  { key: "status",          label: "Status",             type: "select",
+    options: ["", "active", "qualified", "matched", "won", "lost", "archived"] },
+  { key: "lead_score",      label: "Lead score",         type: "number" },
+  { key: "segment",         label: "Segment",            type: "text" },
+  { key: "source",          label: "Source",             type: "text" },
+  { key: "message",         label: "Message",            type: "textarea" },
+  { key: "notes",           label: "Notes",              type: "textarea" },
 ];
 
 export default function EditRecordModal({

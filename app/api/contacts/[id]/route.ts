@@ -10,9 +10,11 @@ export async function PATCH(
   const allowed = [
     "notes", "status", "temperature", "tags", "buyer_type",
     // Identity
-    "name", "full_name", "email", "phone",
+    "name", "first_name", "full_name", "email", "phone",
     // Profile
-    "preferred_state", "state", "budget_max", "budget", "timeframe",
+    "preferred_state", "state",
+    "budget", "budget_min", "budget_max",
+    "finance_status", "timeframe",
     "lead_score", "segment", "source", "message",
   ];
   const update: Record<string, any> = {};
