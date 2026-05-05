@@ -186,6 +186,40 @@ export default function KanbanBoard({
     }
   }, [addingStage, activePipelineId, activePipeline?.stages.length]);
 
+  // Delete a stage (column) from the active pipeline. Only allowed when the
+  // column is empty — UI guards on cards.length === 0 below.
+  const [deletingStage, setDeletingStage] = useState<string | null>(null);
+
+  const deleteStage = async (stageName: string) => {
+    if (!activePipeline) return;
+    if (activePipeline.stages.length <= 1) {
+      setStageError("A pipeline needs at least one stage");
+      return;
+    }
+    if (!window.confirm(`Delete the "${stageName}" column from this pipeline?`)) return;
+    const nextStages = activePipeline.stages.filter(s => s !== stageName);
+    const prev = pipelines;
+    setDeletingStage(stageName);
+    setStageError(null);
+    setPipelines(p => p.map(pl => pl.id === activePipeline.id ? { ...pl, stages: nextStages } : pl));
+    try {
+      const res = await fetch(`/api/pipelines/${activePipeline.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stages: nextStages }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete stage");
+      }
+    } catch (e: any) {
+      setPipelines(prev);
+      setStageError(e.message || "Failed to delete stage");
+    } finally {
+      setDeletingStage(null);
+    }
+  };
+
   const addStage = async () => {
     const name = newStageName.trim();
     if (!name || !activePipeline) return;
@@ -416,6 +450,14 @@ export default function KanbanBoard({
         </div>
       )}
 
+      {/* Stage error toast (visible when add form closed, e.g. after a failed delete) */}
+      {stageError && !addingStage && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
+          <span>{stageError}</span>
+          <button onClick={() => setStageError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap text-sm text-gray-500">
@@ -538,6 +580,16 @@ export default function KanbanBoard({
                       className="text-[10px] font-medium text-gray-400 hover:text-gray-700 transition px-1.5 py-0.5 rounded hover:bg-white"
                     >
                       {cards.every(c => selected.has(c.lead_id)) ? "none" : "all"}
+                    </button>
+                  )}
+                  {cards.length === 0 && (activePipeline?.stages.length ?? 0) > 1 && (
+                    <button
+                      onClick={() => deleteStage(stage.id)}
+                      disabled={deletingStage === stage.id}
+                      title="Delete empty column"
+                      className="w-5 h-5 rounded-full text-red-400 hover:bg-red-500 hover:text-white text-[11px] font-bold flex items-center justify-center transition disabled:opacity-50"
+                    >
+                      {deletingStage === stage.id ? "…" : "✕"}
                     </button>
                   )}
                   <span className="text-xs font-semibold text-gray-400 bg-white rounded-full px-2 py-0.5 shadow-sm">
