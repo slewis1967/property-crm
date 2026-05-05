@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import SignatureEditor from "./SignatureEditor";
+import CalendarConnections from "./CalendarConnections";
 import { getSignatureFields } from "../../utils/email-signature";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,17 @@ export default async function SettingsPage() {
           Auto-appended to every outbound email sent from the CRM. Live preview on the right reflects exactly what recipients see.
         </p>
         <SignatureEditor initial={initial} />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold mb-1">Calendar connections</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Connect each user's Google Calendar so the CRM can schedule meetings on their behalf
+          directly from the opportunity page (no more bouncing to Google).
+        </p>
+        <Suspense fallback={<p className="text-xs text-gray-400">Loading…</p>}>
+          <CalendarConnections />
+        </Suspense>
       </section>
     </div>
   );

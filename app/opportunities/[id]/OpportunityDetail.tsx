@@ -8,17 +8,17 @@ import EditRecordModal from "../../components/EditRecordModal";
 import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
+import ScheduleMeetingModal from "./ScheduleMeetingModal";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
   "Proposal Sent", "Negotiating", "Closed Won", "Closed Lost",
 ];
 
-// Hosts who can schedule meetings from the CRM. Each entry's `email` is
-// passed as ?authuser=… to Google Calendar so the event-edit form opens
-// in that owner's calendar (assuming they're signed in to the browser).
-// `bookingPageUrl` is the customer-self-serve link — used for the
-// secondary "Send booking link" entry in the dropdown.
+// Hosts who can schedule meetings from the CRM. Email is the key —
+// the server looks up the corresponding refresh_token in
+// public.calendar_credentials. Add a new entry once that host has
+// connected their calendar via Settings → Calendar connections.
 const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: string }> = [
   {
     label: "Sean",
@@ -31,98 +31,6 @@ const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: st
     bookingPageUrl: "https://calendar.app.google/tyLLhLCA7k686t5L9",
   },
 ];
-
-function buildSchedulingUrl(hostEmail: string, lead: Lead): string {
-  // Google Calendar event-edit deep link. Opens the new-event form
-  // with title, attendees, and notes pre-populated; the host picks the
-  // date/time on Google's side and saves.
-  const params = new URLSearchParams();
-  params.set("authuser", hostEmail);
-  const subject = `Meeting — ${lead.full_name || "NextKey lead"}`;
-  params.set("text", subject);
-  if (lead.email) params.set("add", lead.email);
-  const details = [
-    lead.full_name && `Lead: ${lead.full_name}`,
-    lead.buyer_type && `Buyer type: ${lead.buyer_type}`,
-    lead.state && `State: ${lead.state}`,
-    lead.budget && `Budget: ${lead.budget}`,
-    lead.timeframe && `Timeframe: ${lead.timeframe}`,
-    lead.message && `Message: ${lead.message}`,
-  ].filter(Boolean).join("\n");
-  if (details) params.set("details", details);
-  return `https://calendar.google.com/calendar/r/eventedit?${params.toString()}`;
-}
-
-function BookAppointmentMenu({ lead }: { lead: Lead }) {
-  const [open, setOpen] = useState(false);
-  const [showBookingPages, setShowBookingPages] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
-      >
-        📅 Schedule meeting
-        <span className="text-gray-400 text-[10px]">▾</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
-          <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Schedule in calendar</div>
-          {SCHEDULING_HOSTS.map((host) => (
-            <a
-              key={host.email}
-              href={buildSchedulingUrl(host.email, lead)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-            >
-              <span>📅</span>
-              <span className="flex-1">{host.label}'s calendar</span>
-            </a>
-          ))}
-
-          <div className="border-t border-gray-100 my-1" />
-          <button
-            onClick={() => setShowBookingPages((s) => !s)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition"
-          >
-            <span>📤</span>
-            <span className="flex-1 text-left">Send self-book link</span>
-            <span className="text-[10px]">{showBookingPages ? "▴" : "▾"}</span>
-          </button>
-          {showBookingPages && (
-            <div className="pb-1">
-              {SCHEDULING_HOSTS.map((host) => (
-                <a
-                  key={host.email}
-                  href={host.bookingPageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 pl-7 pr-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition"
-                >
-                  Open {host.label}'s booking page
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 const stageStyle: Record<string, string> = {
   "New Lead":      "bg-gray-100 text-gray-600",
@@ -203,6 +111,19 @@ export default function OpportunityDetail({
   // rest of the file can keep referencing it without changes.
   const [lead, setLead] = useState(initialLead);
   const [showEdit, setShowEdit] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [showBookingLinks, setShowBookingLinks] = useState(false);
+  const bookingLinkRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showBookingLinks) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (bookingLinkRef.current && !bookingLinkRef.current.contains(e.target as Node)) {
+        setShowBookingLinks(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [showBookingLinks]);
   const [stage, setStage] = useState(lead.ghl_stage || "New Lead");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -414,7 +335,38 @@ export default function OpportunityDetail({
           >
             ✏️ Edit
           </button>
-          <BookAppointmentMenu lead={lead} />
+          <button
+            onClick={() => setShowSchedule(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📅 Schedule meeting
+          </button>
+          <div ref={bookingLinkRef} className="relative">
+            <button
+              onClick={() => setShowBookingLinks((s) => !s)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+              title="Send a self-book link to the lead instead"
+            >
+              📤 Self-book link
+              <span className="text-gray-400 text-[10px]">▾</span>
+            </button>
+            {showBookingLinks && (
+              <div className="absolute right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
+                {SCHEDULING_HOSTS.map((host) => (
+                  <a
+                    key={host.email}
+                    href={host.bookingPageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowBookingLinks(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    📅 Book with {host.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
 
           {lead.email && (
             <a href={`mailto:${lead.email}`}
@@ -438,6 +390,14 @@ export default function OpportunityDetail({
           patchUrl={`/api/opportunities/${lead.lead_id}`}
           onClose={() => setShowEdit(false)}
           onSaved={(updated) => setLead(updated as Lead)}
+        />
+      )}
+
+      {showSchedule && (
+        <ScheduleMeetingModal
+          lead={lead}
+          hosts={SCHEDULING_HOSTS}
+          onClose={() => setShowSchedule(false)}
         />
       )}
 
