@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
+import EditRecordModal from "../../components/EditRecordModal";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 
 const STAGES = [
@@ -76,7 +77,7 @@ type GhlArchive = {
 };
 
 export default function OpportunityDetail({
-  lead,
+  lead: initialLead,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [] },
   ghlContactId = null,
 }: {
@@ -85,6 +86,11 @@ export default function OpportunityDetail({
   ghlContactId?: string | null;
 }) {
   const router = useRouter();
+  // Local lead state — used so edits via the modal reflect immediately
+  // without a server roundtrip / page refresh. Aliased to `lead` so the
+  // rest of the file can keep referencing it without changes.
+  const [lead, setLead] = useState(initialLead);
+  const [showEdit, setShowEdit] = useState(false);
   const [stage, setStage] = useState(lead.ghl_stage || "New Lead");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -290,6 +296,12 @@ export default function OpportunityDetail({
           <span className="text-gray-700 font-medium">{name}</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEdit(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            ✏️ Edit
+          </button>
           {lead.email && (
             <a href={`mailto:${lead.email}`}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
@@ -304,6 +316,16 @@ export default function OpportunityDetail({
           )}
         </div>
       </div>
+
+      {showEdit && (
+        <EditRecordModal
+          kind="opportunity"
+          record={lead}
+          patchUrl={`/api/opportunities/${lead.lead_id}`}
+          onClose={() => setShowEdit(false)}
+          onSaved={(updated) => setLead(updated as Lead)}
+        />
+      )}
 
       <div className="flex flex-1 overflow-hidden">
 

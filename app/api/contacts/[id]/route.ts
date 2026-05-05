@@ -7,7 +7,14 @@ export async function PATCH(
 ) {
   const { id: contactId } = await params;
   const body = await req.json();
-  const allowed = ["notes", "status", "temperature", "tags", "buyer_type"];
+  const allowed = [
+    "notes", "status", "temperature", "tags", "buyer_type",
+    // Identity
+    "name", "full_name", "email", "phone",
+    // Profile
+    "preferred_state", "state", "budget_max", "budget", "timeframe",
+    "lead_score", "segment", "source", "message",
+  ];
   const update: Record<string, any> = {};
   for (const key of allowed) {
     if (key in body) update[key] = body[key];

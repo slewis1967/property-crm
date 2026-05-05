@@ -12,6 +12,7 @@ import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
+import EditRecordModal from "../../components/EditRecordModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
 
 type Contact = {
@@ -128,7 +129,7 @@ type LiveAppointment = {
 };
 
 export default function ContactDetail({
-  contact,
+  contact: initialContact,
   leads,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [], opportunities: [] },
   ghlContactId = null,
@@ -141,6 +142,11 @@ export default function ContactDetail({
   liveAppointments?: LiveAppointment[];
 }) {
   const router = useRouter();
+  // Local contact state — edits via the modal land here so the page
+  // updates immediately without a refetch. Aliased to `contact` so the
+  // existing read-side code keeps working unchanged.
+  const [contact, setContact] = useState(initialContact);
+  const [showEdit, setShowEdit] = useState(false);
   const [tab, setTab] = useState<Tab>("Overview");
   const [noteText, setNoteText] = useState(contact.notes || "");
   const [noteSaved, setNoteSaved] = useState(false);
@@ -240,6 +246,11 @@ export default function ContactDetail({
           <span className="text-gray-700 font-medium">{name}</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEdit(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
+            ✏️ Edit
+          </button>
           {contact.email && (
             <button
               onClick={openCompose}
@@ -287,6 +298,16 @@ export default function ContactDetail({
             preferred_state: contact.preferred_state || contact.state,
             budget_max: contact.budget_max || contact.budget,
           }}
+        />
+      )}
+
+      {showEdit && (
+        <EditRecordModal
+          kind="contact"
+          record={contact as unknown as Record<string, any>}
+          patchUrl={`/api/contacts/${contact.id}`}
+          onClose={() => setShowEdit(false)}
+          onSaved={(updated) => setContact(updated as unknown as Contact)}
         />
       )}
 
