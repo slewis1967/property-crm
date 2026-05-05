@@ -172,6 +172,41 @@ export default function KanbanBoard({
 
   const clearSelection = () => setSelected(new Set());
 
+  // Add new stage (column) to the active pipeline
+  const [addingStage, setAddingStage] = useState(false);
+  const [newStageName, setNewStageName] = useState("");
+  const [stageError, setStageError] = useState<string | null>(null);
+
+  const addStage = async () => {
+    const name = newStageName.trim();
+    if (!name || !activePipeline) return;
+    if (activePipeline.stages.includes(name)) {
+      setStageError(`A stage called "${name}" already exists in this pipeline`);
+      return;
+    }
+    const nextStages = [...activePipeline.stages, name];
+    const prev = pipelines;
+    // Optimistic update
+    setPipelines(p => p.map(pl => pl.id === activePipeline.id ? { ...pl, stages: nextStages } : pl));
+    setNewStageName("");
+    setAddingStage(false);
+    setStageError(null);
+    try {
+      const res = await fetch(`/api/pipelines/${activePipeline.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stages: nextStages }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save stage");
+      }
+    } catch (e: any) {
+      setPipelines(prev);
+      setStageError(e.message || "Failed to save stage");
+    }
+  };
+
   const bulkDelete = async () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
@@ -614,6 +649,51 @@ export default function KanbanBoard({
             </div>
           );
         })}
+
+        {/* Add-stage placeholder column */}
+        {activePipeline && (
+          <div className="flex-shrink-0 w-64">
+            {addingStage ? (
+              <div className="rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 p-3">
+                <input
+                  autoFocus
+                  type="text"
+                  value={newStageName}
+                  onChange={(e) => { setNewStageName(e.target.value); setStageError(null); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addStage();
+                    if (e.key === "Escape") { setAddingStage(false); setNewStageName(""); setStageError(null); }
+                  }}
+                  placeholder="Stage name"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                {stageError && <p className="text-xs text-red-600 mt-2">{stageError}</p>}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={addStage}
+                    disabled={!newStageName.trim()}
+                    className="flex-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => { setAddingStage(false); setNewStageName(""); setStageError(null); }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-white transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAddingStage(true)}
+                className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-transparent hover:border-blue-300 hover:bg-blue-50 text-sm text-gray-400 hover:text-blue-600 font-medium py-3 transition"
+              >
+                ＋ Add stage
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
