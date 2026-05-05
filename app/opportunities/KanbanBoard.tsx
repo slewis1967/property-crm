@@ -175,7 +175,16 @@ export default function KanbanBoard({
   // Add new stage (column) to the active pipeline
   const [addingStage, setAddingStage] = useState(false);
   const [newStageName, setNewStageName] = useState("");
+  // Insert position is an index in the resulting stages array — 0 = first column
+  const [newStagePosition, setNewStagePosition] = useState<number | null>(null);
   const [stageError, setStageError] = useState<string | null>(null);
+
+  // Default position to end whenever the form opens or the pipeline changes
+  useEffect(() => {
+    if (addingStage) {
+      setNewStagePosition(activePipeline?.stages.length ?? 0);
+    }
+  }, [addingStage, activePipelineId, activePipeline?.stages.length]);
 
   const addStage = async () => {
     const name = newStageName.trim();
@@ -184,7 +193,12 @@ export default function KanbanBoard({
       setStageError(`A stage called "${name}" already exists in this pipeline`);
       return;
     }
-    const nextStages = [...activePipeline.stages, name];
+    const pos = newStagePosition ?? activePipeline.stages.length;
+    const nextStages = [
+      ...activePipeline.stages.slice(0, pos),
+      name,
+      ...activePipeline.stages.slice(pos),
+    ];
     const prev = pipelines;
     // Optimistic update
     setPipelines(p => p.map(pl => pl.id === activePipeline.id ? { ...pl, stages: nextStages } : pl));
@@ -667,6 +681,19 @@ export default function KanbanBoard({
                   placeholder="Stage name"
                   className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
+                <label className="block mt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Position
+                </label>
+                <select
+                  value={newStagePosition ?? activePipeline.stages.length}
+                  onChange={(e) => setNewStagePosition(Number(e.target.value))}
+                  className="mt-1 w-full px-2 py-1.5 text-sm rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value={0}>At the start</option>
+                  {activePipeline.stages.map((s, i) => (
+                    <option key={s} value={i + 1}>After “{s}”</option>
+                  ))}
+                </select>
                 {stageError && <p className="text-xs text-red-600 mt-2">{stageError}</p>}
                 <div className="flex gap-2 mt-2">
                   <button
