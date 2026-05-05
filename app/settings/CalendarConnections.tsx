@@ -18,7 +18,7 @@ type Connection = {
 };
 
 const HOSTS = [
-  { email: "sean@nextkey.com.au",     label: "Sean Lewis" },
+  { email: "sean.l@nextkey.com.au",     label: "Sean Lewis" },
   { email: "glenn.m@nextkey.com.au",  label: "Glenn Mooney" },
 ];
 

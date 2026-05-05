@@ -22,7 +22,7 @@ const STAGES = [
 const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: string }> = [
   {
     label: "Sean",
-    email: "sean@nextkey.com.au",
+    email: "sean.l@nextkey.com.au",
     bookingPageUrl: "https://calendar.app.google/19ocFJGhcTHSFKBg7",
   },
   {
