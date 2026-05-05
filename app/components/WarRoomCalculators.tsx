@@ -242,77 +242,285 @@ function StampDutyCalculator() {
 }
 
 // ─── Calculator 3: Borrowing Capacity ──────────────────────────────────────
+//
+// Models the four big things Australian lenders actually look at:
+//   1. Net income (PAYG tax + Medicare levy + HELP/HECS deductions, plus
+//      partner and shaded "other" income at 80%)
+//   2. Living expenses — max(declared, HEM benchmark) by household
+//      composition + income tier
+//   3. Existing debts — credit card limits assessed at 3.8%/month per
+//      APG 223, existing home loans P&I-amortised at the current rate,
+//      explicit personal/car loan and other monthly commitments
+//   4. Loan capacity — surplus capitalised into a 30yr P&I loan at the
+//      assessment rate (current rate + APRA's +3% buffer)
+//
+// All numbers indicative — lender DTI caps, postcode policy, FBT-grossed
+// income etc. vary. Disclaimer at the bottom of the card.
+
+// HEM benchmark approximation (monthly, AUD). Real HEM is the Melbourne
+// Institute's quarterly HES survey — this is a simplified table good
+// enough for an advisor sanity check.
+function hemMonthly(adults: 1 | 2, kids: number, grossHousehold: number): number {
+  const tier = grossHousehold >= 200000 ? "high" : grossHousehold >= 100000 ? "mid" : "low";
+  // Base for adults
+  const base =
+    adults === 1
+      ? { low: 1640, mid: 1880, high: 2200 }[tier]
+      : { low: 2700, mid: 3200, high: 3800 }[tier];
+  const perKid =
+    tier === "high" ? 700 : tier === "mid" ? 540 : 420;
+  return base + Math.max(0, kids) * perKid;
+}
+
+// HECS/HELP repayment rate (2024-25 thresholds, applied to repayment
+// income — gross is a close-enough proxy for this use case).
+function hecsRate(income: number): number {
+  if (income < 54435) return 0;
+  if (income < 62851) return 0.01;
+  if (income < 66621) return 0.02;
+  if (income < 70619) return 0.025;
+  if (income < 74856) return 0.03;
+  if (income < 79347) return 0.035;
+  if (income < 84108) return 0.04;
+  if (income < 89155) return 0.045;
+  if (income < 94504) return 0.05;
+  if (income < 100175) return 0.055;
+  if (income < 106186) return 0.06;
+  if (income < 112557) return 0.065;
+  if (income < 119310) return 0.07;
+  if (income < 126468) return 0.075;
+  if (income < 134057) return 0.08;
+  if (income < 142101) return 0.085;
+  if (income < 150627) return 0.09;
+  if (income < 159664) return 0.095;
+  return 0.10;
+}
+
+// PAYG income tax incl. 2% Medicare levy (singles, no LITO modelled).
+function netAfterTax(gross: number): number {
+  const tax =
+    gross <= 18200 ? 0 :
+    gross <= 45000 ? (gross - 18200) * 0.16 :
+    gross <= 135000 ? 4288 + (gross - 45000) * 0.30 :
+    gross <= 190000 ? 31288 + (gross - 135000) * 0.37 :
+                      51638 + (gross - 190000) * 0.45;
+  const medicare = gross > 26000 ? gross * 0.02 : 0;
+  return gross - tax - medicare;
+}
+
+// P&I monthly repayment for a given balance, rate %, term in years.
+function pAndIMonthly(balance: number, ratePct: number, years: number): number {
+  if (balance <= 0) return 0;
+  const r = ratePct / 100 / 12;
+  const n = years * 12;
+  if (r === 0) return balance / n;
+  return (balance * r) / (1 - Math.pow(1 + r, -n));
+}
 
 function BorrowingCalculator() {
+  // Income
   const [income, setIncome] = useState(120000);
   const [partner, setPartner] = useState(0);
+  const [otherIncome, setOtherIncome] = useState(0); // annual, shaded 80%
+  const [hasHecs, setHasHecs] = useState(false);
+  const [partnerHasHecs, setPartnerHasHecs] = useState(false);
+
+  // Household
   const [dependents, setDependents] = useState(0);
-  const [debts, setDebts] = useState(0); // monthly
+  const [declaredExpenses, setDeclaredExpenses] = useState(0); // monthly
+
+  // Existing debts
+  const [creditLimit, setCreditLimit] = useState(0); // total card limit
+  const [existingMortgageBalance, setExistingMortgageBalance] = useState(0);
+  const [existingMortgageRate, setExistingMortgageRate] = useState(6.5);
+  const [existingMortgageTerm, setExistingMortgageTerm] = useState(25);
+  const [personalLoan, setPersonalLoan] = useState(0); // monthly
+  const [carLoan, setCarLoan] = useState(0); // monthly
+  const [otherDebts, setOtherDebts] = useState(0); // monthly
+
+  // Loan parameters
   const [rate, setRate] = useState(6.5);
+  const [buffer, setBuffer] = useState(3);
+  const [loanTerm, setLoanTerm] = useState(30);
 
-  // Approximate net income (PAYG, simple income-tax)
-  const netAnnual = (gross: number) => {
-    if (gross <= 18200) return gross;
-    if (gross <= 45000) return gross - (gross - 18200) * 0.16;
-    if (gross <= 135000) return gross - (4288 + (gross - 45000) * 0.30);
-    if (gross <= 190000) return gross - (31288 + (gross - 135000) * 0.37);
-    return gross - (51638 + (gross - 190000) * 0.45);
-  };
-  const totalNet = netAnnual(income) + netAnnual(partner);
-  const monthlyNet = totalNet / 12;
+  const adults = partner > 0 ? 2 : 1;
+  const grossHousehold = income + partner + otherIncome;
 
-  // HEM-style minimum living expenses
-  const baseHem = partner > 0 ? 3200 : 2000; // single vs couple monthly
-  const hemPerKid = 400;
-  const livingExp = baseHem + dependents * hemPerKid;
+  // Net income (incl. HECS deductions)
+  const hecsApplicant = hasHecs ? income * hecsRate(income) : 0;
+  const hecsPartner = partnerHasHecs ? partner * hecsRate(partner) : 0;
+  const netAnnual =
+    netAfterTax(income) - hecsApplicant +
+    netAfterTax(partner) - hecsPartner +
+    otherIncome * 0.8; // 80% shading on rental/dividend/etc
+  const monthlyNet = netAnnual / 12;
 
-  // Surplus available for repayments
-  const surplus = monthlyNet - livingExp - debts;
-  // Add 3% buffer over current rate (APRA serviceability test)
-  const stressRate = (rate + 3) / 100;
-  // Convert surplus → max loan via standard mortgage formula (30yr P&I)
-  const months = 30 * 12;
+  // Living expenses — max of declared and HEM benchmark
+  const hem = hemMonthly(adults as 1 | 2, dependents, grossHousehold);
+  const livingExp = Math.max(hem, declaredExpenses);
+
+  // Existing debt servicing
+  const creditCardCommit = creditLimit * 0.038; // APG 223 standard
+  const existingMortgageRepayment = pAndIMonthly(
+    existingMortgageBalance,
+    existingMortgageRate + buffer, // assess at stressed rate too
+    existingMortgageTerm,
+  );
+  const totalDebtCommit =
+    creditCardCommit +
+    existingMortgageRepayment +
+    personalLoan +
+    carLoan +
+    otherDebts;
+
+  // Surplus → max new loan at stress rate
+  const surplus = monthlyNet - livingExp - totalDebtCommit;
+  const stressRate = (rate + buffer) / 100;
+  const months = loanTerm * 12;
   const r = stressRate / 12;
-  const maxLoan = surplus > 0 ? (surplus * (1 - Math.pow(1 + r, -months))) / r : 0;
+  const maxLoan =
+    surplus > 0
+      ? (surplus * (1 - Math.pow(1 + r, -months))) / r
+      : 0;
 
   return (
     <Card title="Borrowing capacity" emoji="💰">
+      <SubHeading>Income</SubHeading>
       <Field label="Your gross annual income">
         <NumberInput value={income} onChange={setIncome} prefix="$" step={5000} />
       </Field>
+      <CheckboxRow
+        checked={hasHecs}
+        onChange={setHasHecs}
+        label={`HECS/HELP debt (~${(hecsRate(income) * 100).toFixed(1)}% of income)`}
+      />
       <Field label="Partner gross income (optional)">
         <NumberInput value={partner} onChange={setPartner} prefix="$" step={5000} />
       </Field>
+      {partner > 0 && (
+        <CheckboxRow
+          checked={partnerHasHecs}
+          onChange={setPartnerHasHecs}
+          label={`Partner HECS/HELP (~${(hecsRate(partner) * 100).toFixed(1)}%)`}
+        />
+      )}
+      <Field label="Other annual income (rental, dividends — shaded 80%)">
+        <NumberInput value={otherIncome} onChange={setOtherIncome} prefix="$" step={1000} />
+      </Field>
+
+      <SubHeading>Household</SubHeading>
       <Field label="Dependents">
         <NumberInput value={dependents} onChange={setDependents} step={1} />
       </Field>
-      <Field label="Monthly debt commitments">
-        <NumberInput value={debts} onChange={setDebts} prefix="$" step={50} />
+      <Field label={`Declared monthly living expenses (HEM benchmark: ${fmtCurrency(hem)})`}>
+        <NumberInput value={declaredExpenses} onChange={setDeclaredExpenses} prefix="$" step={50} />
+        <p className="text-[11px] text-gray-500 mt-1">
+          Lenders assess against the higher of declared or HEM.
+        </p>
       </Field>
-      <Field label={`Current rate — ${rate.toFixed(2)}%`}>
+
+      <SubHeading>Existing debts</SubHeading>
+      <Field label="Total credit card limits (assessed at 3.8%/month)">
+        <NumberInput value={creditLimit} onChange={setCreditLimit} prefix="$" step={500} />
+      </Field>
+      <Field label="Existing home loan balance">
+        <NumberInput
+          value={existingMortgageBalance}
+          onChange={setExistingMortgageBalance}
+          prefix="$"
+          step={10000}
+        />
+      </Field>
+      {existingMortgageBalance > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          <Field label={`Rate — ${existingMortgageRate.toFixed(2)}%`}>
+            <input
+              type="range"
+              min={3}
+              max={10}
+              step={0.25}
+              value={existingMortgageRate}
+              onChange={(e) => setExistingMortgageRate(Number(e.target.value))}
+              className="w-full"
+            />
+          </Field>
+          <Field label={`Years remaining — ${existingMortgageTerm}`}>
+            <input
+              type="range"
+              min={1}
+              max={30}
+              step={1}
+              value={existingMortgageTerm}
+              onChange={(e) => setExistingMortgageTerm(Number(e.target.value))}
+              className="w-full"
+            />
+          </Field>
+        </div>
+      )}
+      <Field label="Personal loan repayments (monthly)">
+        <NumberInput value={personalLoan} onChange={setPersonalLoan} prefix="$" step={50} />
+      </Field>
+      <Field label="Car loan / lease (monthly)">
+        <NumberInput value={carLoan} onChange={setCarLoan} prefix="$" step={50} />
+      </Field>
+      <Field label="Other monthly commitments (BNPL, child support, etc)">
+        <NumberInput value={otherDebts} onChange={setOtherDebts} prefix="$" step={50} />
+      </Field>
+
+      <SubHeading>New loan parameters</SubHeading>
+      <Field label={`Interest rate — ${rate.toFixed(2)}%`}>
         <input
           type="range"
-          min={4}
+          min={3}
           max={10}
           step={0.25}
           value={rate}
           onChange={(e) => setRate(Number(e.target.value))}
           className="w-full"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          APRA serviceability test adds a +3% buffer ({(rate + 3).toFixed(2)}%).
-        </p>
       </Field>
+      <Field label={`Assessment buffer — +${buffer.toFixed(1)}% (assess @ ${(rate + buffer).toFixed(2)}%)`}>
+        <input
+          type="range"
+          min={1}
+          max={5}
+          step={0.5}
+          value={buffer}
+          onChange={(e) => setBuffer(Number(e.target.value))}
+          className="w-full"
+        />
+        <p className="text-[11px] text-gray-500 mt-1">APRA mandates +3% minimum.</p>
+      </Field>
+      <Field label={`Loan term — ${loanTerm} years`}>
+        <input
+          type="range"
+          min={10}
+          max={30}
+          step={1}
+          value={loanTerm}
+          onChange={(e) => setLoanTerm(Number(e.target.value))}
+          className="w-full"
+        />
+      </Field>
+
       <Output>
         <Stat label="Estimated max loan" value={fmtCurrency(maxLoan)} highlight />
-        <Stat label="Monthly surplus" value={fmtCurrency(surplus)} />
         <Stat label="Monthly net income" value={fmtCurrency(monthlyNet)} />
+        <Stat label="Living expenses (HEM/declared)" value={fmtCurrency(livingExp)} />
+        <Stat label="Existing debt commitments" value={fmtCurrency(totalDebtCommit)} />
+        <Stat label="Monthly surplus" value={fmtCurrency(surplus)} />
+        {maxLoan > 0 && (
+          <>
+            <Stat label="Indicative deposit @ 80% LVR" value={fmtCurrency(maxLoan * 0.25)} />
+            <Stat label="Indicative deposit @ 90% LVR" value={fmtCurrency(maxLoan * 0.111)} />
+          </>
+        )}
       </Output>
       <Disclaimer>
-        Lender-agnostic estimate using HEM-equivalent expenses and APRA's
-        +3% serviceability buffer. Actual capacity varies by lender, credit
-        history, deposit size, and policy quirks. Always confirm with a
-        licensed broker.
+        Indicative only. Real lender capacity depends on policy quirks
+        (postcode caps, casual income shading, FBT grossing, DTI ceilings,
+        existing IP cash-flow treatment). Always confirm with a licensed
+        broker before relying on this number.
       </Disclaimer>
     </Card>
   );
@@ -623,6 +831,36 @@ function Disclaimer({ children }: { children: React.ReactNode }) {
     <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
       <em>{children}</em>
     </p>
+  );
+}
+
+function SubHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 mb-0.5 first:mt-0">
+      {children}
+    </div>
+  );
+}
+
+function CheckboxRow({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700 -mt-1.5">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      />
+      <span>{label}</span>
+    </label>
   );
 }
 
