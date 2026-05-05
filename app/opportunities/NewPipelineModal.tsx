@@ -21,7 +21,10 @@ type Props = {
 export default function NewPipelineModal({ onClose, onCreated }: Props) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#3b82f6");
-  const [stages, setStages] = useState(["New Lead", "In Progress", "Proposal Sent", "Closed Won", "Closed Lost"]);
+  // New pipelines start empty; the user adds stages from the Kanban board's
+  // "+ Add stage" placeholder column. Stages can also be seeded here if they
+  // want the whole structure up-front, but the default is no stages.
+  const [stages, setStages] = useState<string[]>([]);
   const [newStage, setNewStage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,6 @@ export default function NewPipelineModal({ onClose, onCreated }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError("Pipeline name is required"); return; }
-    if (stages.length < 1) { setError("Add at least one stage"); return; }
     setSaving(true); setError(null);
     try {
       const res = await fetch("/api/pipelines", {
@@ -96,9 +98,14 @@ export default function NewPipelineModal({ onClose, onCreated }: Props) {
             </div>
           </div>
 
-          {/* Stages */}
+          {/* Stages — optional; pipelines can be created blank and stages added from the board */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Stages</label>
+            <div className="flex items-baseline justify-between mb-2">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Stages <span className="text-gray-400 normal-case font-normal">(optional)</span></label>
+              {stages.length === 0 && (
+                <span className="text-[11px] text-gray-400">leave empty to add from the board</span>
+              )}
+            </div>
             <div className="space-y-1.5 mb-3">
               {stages.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
