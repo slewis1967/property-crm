@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 import EditRecordModal from "../../components/EditRecordModal";
+import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 
@@ -303,6 +304,23 @@ export default function OpportunityDetail({
           >
             ✏️ Edit
           </button>
+          <a
+            href={(() => {
+              const base = process.env.NEXT_PUBLIC_CAL_BOOKING_URL || "https://book.nextkey.com.au";
+              const params = new URLSearchParams();
+              if (lead.email) params.set("email", lead.email);
+              if (lead.full_name) params.set("name", lead.full_name);
+              const note = [lead.buyer_type, lead.budget, lead.state].filter(Boolean).join(" · ");
+              if (note) params.set("notes", `Lead: ${note}`);
+              const qs = params.toString();
+              return qs ? `${base}?${qs}` : base;
+            })()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📅 Book appointment
+          </a>
           {lead.email && (
             <a href={`mailto:${lead.email}`}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
@@ -622,6 +640,9 @@ export default function OpportunityDetail({
               </div>
             </div>
           )}
+
+          {/* Appointments (Cal.com) */}
+          <OpportunityAppointments leadEmail={lead.email} />
 
           {/* PIA Reports */}
           <OpportunityPiaReports leadId={lead.lead_id} />
