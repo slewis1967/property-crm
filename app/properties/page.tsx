@@ -4,9 +4,14 @@ import PropertyGrid from "./PropertyGrid";
 // This is the Server Component. It fetches data securely, then hands it to the Client Component.
 export default async function PropertiesPage() {
   
+  // Active stock pool only — hide rows soft-deleted by either the
+  // aggregator's withdraw-not-listed pass or the user-clicked delete
+  // button (both set pipeline_status='withdrawn'). Same filter PIA uses.
   const { data: properties, error } = await supabase
     .from("global_stock_pool")
     .select("*")
+    .neq("pipeline_status", "withdrawn")
+    .neq("pipeline_status", "legacy")
     .order("created_at", { ascending: false });
 
   if (error) {
