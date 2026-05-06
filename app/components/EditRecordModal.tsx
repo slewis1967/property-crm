@@ -24,6 +24,7 @@ const OPP_FIELDS: FieldDef[] = [
     options: ["", "Owner Occupier", "Investor", "First Home Buyer", "SDA", "SMSF", "Downsizer"] },
   { key: "state",       label: "State",       type: "select",
     options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
+  { key: "preferred_location", label: "Preferred buy location", type: "text" },
   { key: "budget",      label: "Budget",      type: "text" },
   { key: "timeframe",   label: "Timeframe",   type: "text" },
   { key: "temperature", label: "Temperature", type: "select",

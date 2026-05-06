@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nexusApi } from "../../../../utils/nexus-api";
 import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
@@ -7,9 +8,13 @@ export const dynamic = "force-dynamic";
 
 const SYSTEM = `You match a property buyer to the available stock that fits them best. Sean is a property advisor at NextKey Property Strategists; you're picking which 5 properties to send this contact.
 
-Input: one contact + a candidate list of pre-filtered properties (already roughly compatible by state and budget).
+Input: one contact + a candidate list of pre-filtered properties (already roughly compatible by state and budget). The contact may also have a preferred_location (a city/suburb/region they want to buy in) and free-text notes that may override default location preferences.
 
-Pick the top 5 properties ordered by best fit first. For each, write a 1-line rationale anchored in specific contact + property facts (don't say "good fit" — say WHY: budget alignment, bedroom count matches needs, builder reputation, NDIS-suitability, etc.).
+LOCATION RULES — apply in this order:
+1. If buyer_type is "Owner Occupier" or "First Home Buyer" they want to LIVE in the property. Default rule: bias strongly toward properties in or geographically near their preferred_location. If preferred_location is blank, use the contact's state. Their notes/message may explicitly contradict this — e.g. "lives in Perth but wants to buy in Adelaide" → in that case suggest properties in Adelaide instead. ALWAYS read the notes for an explicit location override before applying the default.
+2. If buyer_type is "Investor", "SDA", "SMSF" or "Downsizer" — proximity is much less important; apply normal "best fit" logic without strict location bias.
+
+Pick the top 5 properties ordered by best fit first. For each, write a 1-line rationale anchored in specific contact + property facts (don't say "good fit" — say WHY: budget alignment, bedroom count matches needs, builder reputation, NDIS-suitability, location proximity for OO/FHB, etc.).
 
 Output STRICT JSON only — no preamble, no markdown fences. Format:
 {"matches":[{"property_id":"<id>","summary":"<short property descriptor>","rationale":"<one sentence>"}]}
@@ -53,6 +58,38 @@ export async function POST(req: Request) {
     const ceiling = contact.budget_max || contact.budget || null;
     const state = contact.preferred_state || contact.state || null;
 
+    // Pull preferred_location from any opportunity linked to this contact
+    // (most-recent first). Lets the matchmaker know "buy here" overrides
+    // the default state filter for OO/FHB.
+    let preferredLocation: string | null = null;
+    let buyerTypeFromLeads: string | null = null;
+    let leadNotes: string | null = null;
+    try {
+      const r = await nexusApi("/api/leads", { cache: "no-store" });
+      if (r.ok) {
+        const { leads } = await r.json();
+        const linked = (leads || []).filter((l: any) => {
+          if (l.email && contact.email && l.email.toLowerCase() === contact.email.toLowerCase()) return true;
+          if (l.primary_contact_id === contactId) return true;
+          try {
+            const ids = l.linked_contact_ids ? JSON.parse(l.linked_contact_ids) : [];
+            return Array.isArray(ids) && ids.includes(contactId);
+          } catch { return false; }
+        });
+        // Most recent first (already ordered by API but defensive)
+        linked.sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
+        for (const l of linked) {
+          if (l.preferred_location && !preferredLocation) preferredLocation = l.preferred_location;
+          if (l.buyer_type && !buyerTypeFromLeads) buyerTypeFromLeads = l.buyer_type;
+          if (l.message && !leadNotes) leadNotes = l.message;
+          if (preferredLocation && buyerTypeFromLeads && leadNotes) break;
+        }
+      }
+    } catch {
+      // Non-fatal — matchmaker still works without lead context.
+    }
+    const buyerType = contact.buyer_type || buyerTypeFromLeads || null;
+
     // Pre-filter: state + price headroom
     let q = supabase
       .from("global_stock_pool")
@@ -82,12 +119,14 @@ export async function POST(req: Request) {
     const userPrompt = [
       "CONTACT:",
       `name: ${contact.full_name || contact.name || "(unnamed)"}`,
-      `buyer_type: ${contact.buyer_type || "—"}`,
+      `buyer_type: ${buyerType || "—"}`,
       `state pref: ${state || "—"}`,
+      `preferred_location: ${preferredLocation || "—"}`,
       `budget: ${ceiling || "—"}`,
       `finance: ${contact.finance_status || "—"} · timeframe: ${contact.timeframe || "—"}`,
       `temperature: ${contact.temperature || "—"} · status: ${contact.status || "—"}`,
       contact.notes ? `notes: ${truncate(contact.notes, 400)}` : "",
+      leadNotes ? `lead_notes: ${truncate(leadNotes, 400)}` : "",
       "",
       `CANDIDATES (${filtered.length}):`,
       ...filtered.map((p: any) => {
@@ -104,10 +143,12 @@ export async function POST(req: Request) {
       .join("\n");
 
     const fingerprintInput = {
-      v: 1,
+      v: 2,
       contact_updated: contact.updated_at ?? null,
       contact_budget: ceiling,
       contact_state: state,
+      preferred_location: preferredLocation,
+      buyer_type: buyerType,
       candidate_ids: filtered.map((p: any) => p.id).sort(),
       candidate_updates: filtered.map((p: any) => `${p.id}:${p.updated_at ?? p.created_at}`).sort(),
     };

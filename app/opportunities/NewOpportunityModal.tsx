@@ -56,9 +56,15 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
   const [state,       setState]       = useState(prefillContact?.preferred_state || "");
   const [budget,      setBudget]      = useState(prefillContact?.budget_max ? `$${Number(prefillContact.budget_max).toLocaleString()}` : "");
   const [timeframe,   setTimeframe]   = useState("");
+  const [preferredLocation, setPreferredLocation] = useState("");
   const [message,     setMessage]     = useState("");
   const [stage,       setStage]       = useState("New Lead");
   const [temperature, setTemperature] = useState("warm");
+
+  // OO/FHB buyers should live near where they want to buy unless explicitly
+  // stated otherwise. Required so the matchmaker (and Sean himself when
+  // looking at the lead) has somewhere concrete to bias suggestions toward.
+  const requiresPreferredLocation = ["Owner Occupier", "First Home Buyer"].includes(buyerType);
   const [pipelineId,  setPipelineId]  = useState(defaultPipelineId || pipelines[0]?.id || "");
   const [tagInput,    setTagInput]    = useState("");
   const [tags,        setTags]        = useState<string[]>([]);
@@ -151,6 +157,12 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       setError("Name and email are required.");
       return;
     }
+    if (requiresPreferredLocation && !preferredLocation.trim()) {
+      setError(
+        `Preferred buy location is required for ${buyerType} — where do they actually want to buy? (e.g. "Brisbane northside", "Adelaide CBD"). If they're flexible, write that.`,
+      );
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -171,6 +183,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           state,
           budget,
           timeframe,
+          preferred_location: preferredLocation.trim() || null,
           message,
           ghl_stage:   stage,
           temperature,
@@ -381,6 +394,35 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                   {TIMEFRAMES.map((t) => <option key={t}>{t}</option>)}
                 </select>
               </div>
+            </div>
+
+            {/* Preferred buy location — required for OO/FHB so the AI
+                matchmaker doesn't suggest properties in the wrong city. */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Preferred buy location {requiresPreferredLocation && <span className="text-red-500">*</span>}
+                <span className="ml-1.5 text-gray-300 font-normal normal-case">
+                  city / suburb / region they want to buy in
+                </span>
+              </label>
+              <input
+                value={preferredLocation}
+                onChange={(e) => setPreferredLocation(e.target.value)}
+                required={requiresPreferredLocation}
+                className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  requiresPreferredLocation && !preferredLocation.trim()
+                    ? "border-amber-300 bg-amber-50/50"
+                    : "border-gray-200"
+                }`}
+                placeholder='e.g. "Brisbane northside", "Adelaide CBD", "anywhere in QLD"'
+              />
+              {requiresPreferredLocation && (
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  For owner-occupiers and first-home buyers, the matchmaker biases
+                  property suggestions toward this location (or the contact's current
+                  state if blank). Write a city, suburb, region, or "{state || "anywhere"}".
+                </p>
+              )}
             </div>
 
             {/* ── Pipeline selector ── */}
