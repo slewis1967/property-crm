@@ -55,6 +55,7 @@ type Lead = {
   top_match_name: string | null;
   top_match_price: string | null;
   created_at: string | null;
+  pipeline_id?: string | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -128,15 +129,19 @@ type LiveAppointment = {
   additional_notes: string | null;
 };
 
+type PipelineLite = { id: string; name: string; color: string; stages: string[] };
+
 export default function ContactDetail({
   contact: initialContact,
   leads,
+  pipelines = [],
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [], opportunities: [] },
   ghlContactId = null,
   liveAppointments = [],
 }: {
   contact: Contact;
   leads: Lead[];
+  pipelines?: PipelineLite[];
   ghlArchive?: GhlArchive;
   ghlContactId?: string | null;
   liveAppointments?: LiveAppointment[];
@@ -515,6 +520,9 @@ export default function ContactDetail({
             {/* ── OVERVIEW ── */}
             {tab === "Overview" && (
               <div className="space-y-4 max-w-3xl">
+                {/* Pipelines + opportunities this contact is currently in */}
+                <PipelinesAndOpportunitiesPanel leads={leads} pipelines={pipelines} />
+
                 {/* AI brief + next-action pill */}
                 <AIBrief contactId={contact.id} />
                 <div className="flex flex-wrap items-center gap-2">
@@ -972,6 +980,104 @@ export default function ContactDetail({
 }
 
 /** Compact panel used in the Activity tab to surface GHL-archive sub-sections. */
+// ─── Pipelines + opportunities panel ────────────────────────────────────────
+//
+// Surfaces, in one strip near the top of the contact card, every pipeline
+// this contact currently sits in and every opportunity (lead) connected
+// to them. Pipeline name + stage form a header; below it, each
+// opportunity in that pipeline is a clickable chip that jumps to
+// /opportunities/{lead_id}. Leads with no pipeline_id assignment are
+// grouped under "Unassigned".
+
+function stageDot(stageName: string | null) {
+  const s = (stageName || "").toLowerCase();
+  if (s.includes("won"))    return "bg-green-500";
+  if (s.includes("lost"))   return "bg-red-400";
+  if (s.includes("matched"))return "bg-purple-500";
+  if (s.includes("propos") || s.includes("sent")) return "bg-orange-400";
+  if (s.includes("contact"))return "bg-yellow-400";
+  if (s.includes("negotiat"))return "bg-pink-400";
+  if (s.includes("qualif")) return "bg-blue-400";
+  return "bg-gray-400";
+}
+
+function PipelinesAndOpportunitiesPanel({
+  leads,
+  pipelines,
+}: {
+  leads: Lead[];
+  pipelines: PipelineLite[];
+}) {
+  const router = useRouter();
+
+  // Group leads by pipeline_id (or "unassigned")
+  const groups = new Map<string, Lead[]>();
+  for (const l of leads) {
+    const k = l.pipeline_id || "__unassigned__";
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(l);
+  }
+
+  if (groups.size === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">Pipelines &amp; opportunities</h2>
+        <p className="text-xs text-gray-400">
+          This contact isn't in any opportunity yet. Click "+ New Opportunity" above to create one.
+        </p>
+      </div>
+    );
+  }
+
+  const pipelineById = new Map(pipelines.map((p) => [p.id, p]));
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-baseline justify-between mb-3">
+        <h2 className="text-sm font-semibold text-gray-700">Pipelines &amp; opportunities</h2>
+        <span className="text-[11px] text-gray-400">
+          {leads.length} opportunit{leads.length === 1 ? "y" : "ies"}
+        </span>
+      </div>
+      <div className="space-y-3">
+        {Array.from(groups.entries()).map(([pipelineId, group]) => {
+          const pipeline = pipelineId !== "__unassigned__" ? pipelineById.get(pipelineId) : null;
+          const pipelineName = pipeline?.name || (pipelineId === "__unassigned__" ? "Unassigned" : "Unknown pipeline");
+          return (
+            <div key={pipelineId} className="border border-gray-100 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                {pipeline && (
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: pipeline.color }} />
+                )}
+                <span className="text-xs font-bold uppercase tracking-wide text-gray-700">{pipelineName}</span>
+                <span className="text-[10px] text-gray-400 ml-auto">{group.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {group.map((l) => (
+                  <button
+                    key={l.lead_id}
+                    onClick={() => router.push(`/opportunities/${l.lead_id}`)}
+                    title={`${l.full_name || "Opportunity"} · ${l.ghl_stage || "—"}`}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-50 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200 text-xs text-gray-700 transition"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${stageDot(l.ghl_stage)}`} />
+                    <span className="font-medium truncate max-w-[180px]">
+                      {l.full_name || "Opportunity"}
+                    </span>
+                    {l.ghl_stage && (
+                      <span className="text-[10px] text-gray-500">· {l.ghl_stage}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function GhlSectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">

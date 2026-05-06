@@ -5,15 +5,38 @@ import ContactDetail from "./ContactDetail";
 
 export const dynamic = "force-dynamic";
 
-async function getLeadsForContact(email: string | null) {
-  if (!email) return [];
+async function getLeadsForContact(contactId: string, email: string | null) {
+  // A contact can be connected to a lead in three ways:
+  //   1. matching email (the original ad-hoc link)
+  //   2. lead.primary_contact_id == contact.id  (post-CRM, explicit link)
+  //   3. contact.id IN lead.linked_contact_ids (additional linked contacts)
+  // We want all of them to surface as "opportunities for this contact".
   try {
     const res = await nexusApi(`/api/leads`, { cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.leads || []).filter((l: any) =>
-      l.email?.toLowerCase() === email.toLowerCase()
-    );
+    const all = data.leads || [];
+    const e = email?.toLowerCase() || null;
+    return all.filter((l: any) => {
+      if (e && l.email?.toLowerCase() === e) return true;
+      if (l.primary_contact_id === contactId) return true;
+      const linked = (() => {
+        try { return l.linked_contact_ids ? JSON.parse(l.linked_contact_ids) : []; }
+        catch { return []; }
+      })();
+      return Array.isArray(linked) && linked.includes(contactId);
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function getPipelines() {
+  try {
+    const res = await nexusApi(`/api/pipelines`, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.pipelines || [];
   } catch {
     return [];
   }
@@ -114,8 +137,9 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
     };
   }
 
-  const [leads, ghlContactId, liveAppointments] = await Promise.all([
-    getLeadsForContact(contact.email as string | null),
+  const [leads, pipelines, ghlContactId, liveAppointments] = await Promise.all([
+    getLeadsForContact(contact.id, contact.email as string | null),
+    getPipelines(),
     resolveGhlContactId(contact),
     getLiveAppointments(contact.id, contact.email as string | null),
   ]);
@@ -125,6 +149,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
     <ContactDetail
       contact={contact}
       leads={leads}
+      pipelines={pipelines}
       ghlArchive={ghlArchive}
       ghlContactId={ghlContactId}
       liveAppointments={liveAppointments}
