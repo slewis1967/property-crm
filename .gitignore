@@ -44,3 +44,6 @@ next-env.d.ts
 .netlify
 scripts/glenn_getahome.vcf
 scripts/*.vcf
+
+# Deno lockfile (created when supabase CLI runs functions; not source-of-truth)
+deno.lock

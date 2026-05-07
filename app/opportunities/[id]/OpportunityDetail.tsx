@@ -723,7 +723,15 @@ export default function OpportunityDetail({
           <OpportunityPiaReports leadId={lead.lead_id} />
 
           {/* War Room calculator scenarios */}
-          <OpportunityCalculations opportunityId={lead.lead_id} />
+          <OpportunityCalculations
+            opportunityId={lead.lead_id}
+            lead={{
+              annual_income: lead.annual_income,
+              partner_annual_income: lead.partner_annual_income,
+              dependents_count: lead.dependents_count,
+              hecs_balance: lead.hecs_balance,
+            }}
+          />
 
           {/* Notes feed */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

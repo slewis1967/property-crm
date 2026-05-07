@@ -94,7 +94,41 @@ function CalculatorByType({
   }
 }
 
-export default function OpportunityCalculations({ opportunityId }: { opportunityId: string }) {
+/**
+ * Subset of the lead row that the BorrowingCalculator can pre-fill from.
+ * Optional so legacy opportunities (no financial data) just open with the
+ * calculator's static defaults like before.
+ */
+type BorrowingPrefill = {
+  annual_income?: number | null;
+  partner_annual_income?: number | null;
+  dependents_count?: number | null;
+  hecs_balance?: number | null;
+};
+
+function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): Record<string, any> | undefined {
+  if (!lead) return undefined;
+  const has =
+    lead.annual_income != null ||
+    lead.partner_annual_income != null ||
+    lead.dependents_count != null ||
+    lead.hecs_balance != null;
+  if (!has) return undefined;
+  return {
+    income: lead.annual_income ?? 0,
+    partner: lead.partner_annual_income ?? 0,
+    dependents: lead.dependents_count ?? 0,
+    hasHecs: (lead.hecs_balance ?? 0) > 0,
+  };
+}
+
+export default function OpportunityCalculations({
+  opportunityId,
+  lead,
+}: {
+  opportunityId: string;
+  lead?: BorrowingPrefill;
+}) {
   const [calcs, setCalcs] = useState<Calculation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +253,7 @@ export default function OpportunityCalculations({ opportunityId }: { opportunity
           type={openCalc.type}
           existing={openCalc.existing}
           opportunityId={opportunityId}
+          leadPrefill={openCalc.type === "borrowing" ? borrowingInitialFromLead(lead) : undefined}
           onClose={() => setOpenCalc(null)}
           onSaved={(saved) => {
             setCalcs((prev) => {
@@ -237,12 +272,17 @@ function CalculatorEditor({
   type,
   existing,
   opportunityId,
+  leadPrefill,
   onClose,
   onSaved,
 }: {
   type: CalcType;
   existing: Calculation | null;
   opportunityId: string;
+  /** Used as `initial` for a brand-new scenario when the lead row has
+   *  financial data on it. Existing scenarios always use their own
+   *  saved inputs (so a user-edited "what if" isn't blown away). */
+  leadPrefill?: Record<string, any>;
   onClose: () => void;
   onSaved: (saved: Calculation) => void;
 }) {
@@ -300,9 +340,15 @@ function CalculatorEditor({
         </div>
 
         <div className="px-6 py-5">
+          {!existing && leadPrefill && (
+            <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-800">
+              Pre-filled from this opportunity's saved profile (income, partner income,
+              dependents, HECS). Adjust below as needed.
+            </div>
+          )}
           <CalculatorByType
             type={type}
-            initial={existing?.inputs}
+            initial={existing?.inputs ?? leadPrefill}
             onChange={setSnapshot}
           />
           {err && (
