@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 
 // Deterministic gradient palette so cards from the same builder share a
@@ -28,6 +28,75 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // --- FILTERS ---
+  const [search, setSearch] = useState("");
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
+  const [stateFilter, setStateFilter] = useState<string>("");
+  const [builderFilter, setBuilderFilter] = useState<string>("");
+  const [bedsMin, setBedsMin] = useState<number>(0);
+  const [bathsMin, setBathsMin] = useState<number>(0);
+  const [showFilters, setShowFilters] = useState(true);
+
+  // Build filter dropdown options from the loaded data so they match
+  // what's actually in the database.
+  const stateOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of properties) {
+      const s = (p.state || "").toString().trim();
+      if (s) set.add(s);
+    }
+    return Array.from(set).sort();
+  }, [properties]);
+
+  const builderOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of properties) {
+      const b = (p.builder_name || "").toString().trim();
+      if (b) set.add(b);
+    }
+    return Array.from(set).sort();
+  }, [properties]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const minP = priceMin ? Number(priceMin) : null;
+    const maxP = priceMax ? Number(priceMax) : null;
+
+    return properties.filter((p) => {
+      if (q) {
+        const haystack = [
+          p.suburb, p.builder_name, p.estate_name, p.street_address,
+          p.address_street, p.address_suburb, p.lot_number, p.state,
+        ].filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      const price = p.total_package_price ?? p.house_price ?? null;
+      if (minP != null && (price == null || price < minP)) return false;
+      if (maxP != null && (price == null || price > maxP)) return false;
+      if (stateFilter && (p.state || "").toString().trim() !== stateFilter) return false;
+      if (builderFilter && (p.builder_name || "").toString().trim() !== builderFilter) return false;
+      if (bedsMin > 0 && (Number(p.bedrooms) || 0) < bedsMin) return false;
+      if (bathsMin > 0 && (Number(p.bathrooms) || 0) < bathsMin) return false;
+      return true;
+    });
+  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, bedsMin, bathsMin]);
+
+  const activeFilterCount =
+    (search ? 1 : 0) +
+    (priceMin ? 1 : 0) +
+    (priceMax ? 1 : 0) +
+    (stateFilter ? 1 : 0) +
+    (builderFilter ? 1 : 0) +
+    (bedsMin > 0 ? 1 : 0) +
+    (bathsMin > 0 ? 1 : 0);
+
+  const clearFilters = () => {
+    setSearch(""); setPriceMin(""); setPriceMax("");
+    setStateFilter(""); setBuilderFilter("");
+    setBedsMin(0); setBathsMin(0);
+  };
 
   // --- EMPOWER MATH VARIABLES ---
   const [interestRate, setInterestRate] = useState<number>(6.5);
@@ -62,10 +131,18 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
   };
 
   const toggleAll = () => {
-    if (checkedIds.size === properties.length) {
-      setCheckedIds(new Set());
+    // Operates on the currently-visible (filtered) set so "select all"
+    // does what the user expects when they've narrowed by suburb etc.
+    const visibleIds = filtered.map((p) => p.id);
+    const allVisibleChecked = visibleIds.every((id) => checkedIds.has(id));
+    if (allVisibleChecked) {
+      setCheckedIds(prev => {
+        const next = new Set(prev);
+        visibleIds.forEach((id) => next.delete(id));
+        return next;
+      });
     } else {
-      setCheckedIds(new Set(properties.map(p => p.id)));
+      setCheckedIds(prev => new Set([...prev, ...visibleIds]));
     }
   };
 
@@ -120,8 +197,9 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
     doc.save(`Wealth_Report_${(selectedProperty.street_address || selectedProperty.suburb || 'Property').replace(/\s+/g, '_')}.pdf`);
   };
 
-  const allChecked = properties.length > 0 && checkedIds.size === properties.length;
-  const someChecked = checkedIds.size > 0 && checkedIds.size < properties.length;
+  const visibleCheckedCount = filtered.reduce((n, p) => n + (checkedIds.has(p.id) ? 1 : 0), 0);
+  const allChecked = filtered.length > 0 && visibleCheckedCount === filtered.length;
+  const someChecked = visibleCheckedCount > 0 && visibleCheckedCount < filtered.length;
 
   return (
     <>
@@ -146,15 +224,170 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
         </div>
       )}
 
-      {/* Diagnostic banner — confirms data reached the client. Shows the
-          count + first few addresses; tells us whether a "blank page"
-          report is a data problem, a CSS problem, or a hydration crash. */}
-      <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
-        <strong>{properties.length}</strong> properties loaded
-        {properties.length > 0 && (
-          <span className="text-blue-500 ml-2">
-            · first: {(properties[0]?.builder_name || properties[0]?.suburb || properties[0]?.state || properties[0]?.id || "—") + ""}
-          </span>
+      {/* Filter bar */}
+      <div className="mb-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <input
+              type="text"
+              placeholder="🔍  Search suburb, builder, estate, address, lot…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 max-w-md px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition flex items-center gap-1.5"
+            >
+              {showFilters ? "▾" : "▸"} Filters
+              {activeFilterCount > 0 && (
+                <span className="bg-blue-600 text-white px-1.5 rounded-full text-[10px] font-bold">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-gray-500 hover:text-red-600 font-medium transition"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+          <div className="text-xs text-gray-500 ml-3 whitespace-nowrap">
+            <strong className="text-gray-800">{filtered.length}</strong>
+            {filtered.length !== properties.length && (
+              <span className="text-gray-400"> of {properties.length}</span>
+            )}{" "}
+            properties
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="border-t border-gray-100 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Price range */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Price range
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <span className="text-gray-400 text-sm">–</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div className="flex gap-1 mt-1.5 flex-wrap">
+                {[
+                  ["<$500k", "", "500000"],
+                  ["$500-700k", "500000", "700000"],
+                  ["$700-900k", "700000", "900000"],
+                  ["$900k-1.2M", "900000", "1200000"],
+                  ["$1.2M+", "1200000", ""],
+                ].map(([lbl, mn, mx]) => (
+                  <button
+                    key={lbl}
+                    type="button"
+                    onClick={() => { setPriceMin(mn); setPriceMax(mx); }}
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 transition"
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* State */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                State
+              </label>
+              <select
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All states</option>
+                {stateOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Builder */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Builder / estate
+              </label>
+              <select
+                value={builderFilter}
+                onChange={(e) => setBuilderFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All builders</option>
+                {builderOptions.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Bedrooms */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Bedrooms
+              </label>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setBedsMin(n)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-lg border transition ${
+                      bedsMin === n
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n === 0 ? "Any" : `${n}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bathrooms */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Bathrooms
+              </label>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setBathsMin(n)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-lg border transition ${
+                      bathsMin === n
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n === 0 ? "Any" : `${n}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -169,7 +402,7 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
               onChange={toggleAll}
               className="w-4 h-4 rounded border-gray-300 text-blue-600"
             />
-            {checkedIds.size > 0 ? `${checkedIds.size} selected` : "Select all"}
+            {checkedIds.size > 0 ? `${checkedIds.size} selected` : `Select all (${filtered.length})`}
           </label>
         </div>
         {checkedIds.size > 0 && (
@@ -182,9 +415,23 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
         )}
       </div>
 
+      {/* Empty filter result state */}
+      {filtered.length === 0 && properties.length > 0 && (
+        <div className="bg-white border border-dashed border-gray-300 rounded-xl p-10 text-center mb-4">
+          <p className="text-gray-500 font-medium mb-1">No properties match your filters.</p>
+          <p className="text-sm text-gray-400 mb-3">Try widening the price range or clearing builder / state filters.</p>
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+          >
+            Clear filters
+          </button>
+        </div>
+      )}
+
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {properties.map((property) => {
+        {filtered.map((property) => {
           const isChecked = checkedIds.has(property.id);
           return (
             <div key={property.id}
