@@ -3,6 +3,25 @@
 import { useState } from "react";
 import { jsPDF } from "jspdf";
 
+// Deterministic gradient palette so cards from the same builder share a
+// visual identity instead of all looking like the same "No Image" tile.
+const TILE_GRADIENTS = [
+  "from-blue-500 to-indigo-600",
+  "from-emerald-500 to-teal-600",
+  "from-violet-500 to-purple-600",
+  "from-rose-500 to-pink-600",
+  "from-amber-500 to-orange-600",
+  "from-cyan-500 to-sky-600",
+  "from-lime-500 to-green-600",
+  "from-fuchsia-500 to-purple-600",
+];
+function tileGradient(seed: string | null | undefined): string {
+  if (!seed) return TILE_GRADIENTS[0];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  return TILE_GRADIENTS[Math.abs(hash) % TILE_GRADIENTS.length];
+}
+
 export default function PropertyGrid({ properties: initialProperties }: { properties: any[] }) {
   const [properties, setProperties] = useState<any[]>(initialProperties);
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
@@ -171,11 +190,20 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
             <div key={property.id}
               className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition flex flex-col ${isChecked ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-200"}`}
             >
-              <div className="h-48 bg-gray-100 relative flex items-center justify-center">
+              <div className={`h-48 relative flex items-center justify-center overflow-hidden ${
+                property.brochure_url ? "bg-gray-100" : "bg-gradient-to-br " + tileGradient(property.builder_name || property.state)
+              }`}>
                 {property.brochure_url ? (
                   <img src={property.brochure_url} className="object-cover w-full h-full" alt="Thumbnail" />
                 ) : (
-                  <span className="text-gray-400 text-sm font-medium">No Image</span>
+                  <div className="text-center px-4 text-white">
+                    <div className="text-3xl mb-1">🏘️</div>
+                    <div className="text-sm font-bold leading-tight line-clamp-2">{property.builder_name || "Property"}</div>
+                    <div className="text-xs opacity-90 mt-0.5">{[property.suburb, property.state].filter(Boolean).join(", ") || "—"}</div>
+                    {property.lot_number && (
+                      <div className="text-[10px] opacity-75 mt-1">Lot {property.lot_number}</div>
+                    )}
+                  </div>
                 )}
                 <span className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs font-bold rounded shadow-sm capitalize">
                   {property.status || "available"}
