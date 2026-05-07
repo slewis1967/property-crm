@@ -292,7 +292,8 @@ export default function ContactDetail({
       {showOpportunityModal && (
         <NewOpportunityModal
           onClose={() => setShowOpportunityModal(false)}
-          onCreated={() => setShowOpportunityModal(false)}
+          onCreated={() => { setShowOpportunityModal(false); router.refresh(); }}
+          pipelines={pipelines}
           prefillContact={{
             id: contact.id,
             name: contact.name,
