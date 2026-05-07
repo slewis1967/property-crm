@@ -22,7 +22,10 @@ function tileGradient(seed: string | null | undefined): string {
   return TILE_GRADIENTS[Math.abs(hash) % TILE_GRADIENTS.length];
 }
 
-function propertyTypeIcon(t: string | null | undefined): string {
+// Fallback icon lookup — used when a property's type isn't in the
+// settings list (e.g. legacy rows, or freshly-extracted type the user
+// hasn't yet added to settings).
+function fallbackIcon(t: string | null | undefined): string {
   const k = (t || "").toLowerCase();
   if (k.includes("townhouse")) return "🏘️";
   if (k.includes("apartment") || k.includes("unit")) return "🏢";
@@ -33,8 +36,33 @@ function propertyTypeIcon(t: string | null | undefined): string {
   return "🏡"; // house & land / house default
 }
 
-export default function PropertyGrid({ properties: initialProperties }: { properties: any[] }) {
+type SettingsPropertyType = { name: string; icon?: string | null; description?: string | null };
+
+export default function PropertyGrid({
+  properties: initialProperties,
+  propertyTypes = [],
+}: {
+  properties: any[];
+  /** Canonical type list from app_settings — drives the filter dropdown
+   *  so newly-added types show up even before any property has them.
+   *  Falls back to data-derived names when empty. */
+  propertyTypes?: SettingsPropertyType[];
+}) {
   const [properties, setProperties] = useState<any[]>(initialProperties);
+
+  // Lookup map name → icon for fast card rendering
+  const typeIconMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of propertyTypes) {
+      if (t.name) m.set(t.name.toLowerCase(), (t.icon || "").trim());
+    }
+    return m;
+  }, [propertyTypes]);
+
+  const iconFor = (name: string | null | undefined): string => {
+    const fromSettings = name ? typeIconMap.get(name.toLowerCase()) : null;
+    return (fromSettings && fromSettings.length > 0) ? fromSettings : fallbackIcon(name);
+  };
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
@@ -71,14 +99,21 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
     return Array.from(set).sort();
   }, [properties]);
 
+  // Settings list takes precedence so newly-added types are visible
+  // even before any property has been classified as them yet. Fall
+  // back to data-derived names if the settings list is empty for some
+  // reason (e.g. fetch failed).
   const propertyTypeOptions = useMemo(() => {
+    if (propertyTypes && propertyTypes.length > 0) {
+      return propertyTypes.map((t) => t.name).filter(Boolean);
+    }
     const set = new Set<string>();
     for (const p of properties) {
       const t = (p.property_type || "").toString().trim();
       if (t) set.add(t);
     }
     return Array.from(set).sort();
-  }, [properties]);
+  }, [properties, propertyTypes]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -497,7 +532,7 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
                 </span>
                 {property.property_type && (
                   <span className="absolute bottom-2 right-2 bg-white/90 text-gray-800 px-2 py-0.5 text-[10px] font-semibold rounded-full shadow-sm">
-                    {propertyTypeIcon(property.property_type)} {property.property_type}
+                    {iconFor(property.property_type)} {property.property_type}
                   </span>
                 )}
                 {/* Checkbox top-left */}

@@ -1,18 +1,49 @@
 import { supabase } from "../../utils/supabase";
 import PropertyGrid from "./PropertyGrid";
 
+// Default property type list — used as a fallback when the
+// app_settings row is missing. Mirrors the API route's defaults.
+const DEFAULT_PROPERTY_TYPES = [
+  { name: "House & Land", icon: "🏡" },
+  { name: "House",        icon: "🏠" },
+  { name: "Townhouse",    icon: "🏘️" },
+  { name: "Duplex",       icon: "🏠" },
+  { name: "Apartment",    icon: "🏢" },
+  { name: "Land",         icon: "🟩" },
+  { name: "SDA",          icon: "♿" },
+  { name: "Acreage",      icon: "🌳" },
+];
+
+async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string | null }>> {
+  try {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "property_types")
+      .maybeSingle();
+    const list = (data?.value as any)?.types;
+    if (Array.isArray(list) && list.length > 0) return list;
+  } catch {
+    // fall through to defaults
+  }
+  return DEFAULT_PROPERTY_TYPES;
+}
+
 // This is the Server Component. It fetches data securely, then hands it to the Client Component.
 export default async function PropertiesPage() {
-  
+
   // Active stock pool only — hide rows soft-deleted by either the
   // aggregator's withdraw-not-listed pass or the user-clicked delete
   // button (both set pipeline_status='withdrawn'). Same filter PIA uses.
-  const { data: properties, error } = await supabase
-    .from("global_stock_pool")
-    .select("*")
-    .neq("pipeline_status", "withdrawn")
-    .neq("pipeline_status", "legacy")
-    .order("created_at", { ascending: false });
+  const [{ data: properties, error }, propertyTypes] = await Promise.all([
+    supabase
+      .from("global_stock_pool")
+      .select("*")
+      .neq("pipeline_status", "withdrawn")
+      .neq("pipeline_status", "legacy")
+      .order("created_at", { ascending: false }),
+    getPropertyTypes(),
+  ]);
 
   if (error) {
     return <div className="text-red-600 p-4">Error: {error.message}</div>;
@@ -38,7 +69,7 @@ export default async function PropertiesPage() {
       </div>
 
       {/* We pass the data we fetched into our new interactive component */}
-      <PropertyGrid properties={normalised} />
+      <PropertyGrid properties={normalised} propertyTypes={propertyTypes} />
 
       {properties?.length === 0 && (
         <div className="bg-white border border-dashed border-gray-300 rounded-xl p-12 text-center mt-6">
