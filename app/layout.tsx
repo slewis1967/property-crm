@@ -1,12 +1,29 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { supabase } from "../utils/supabase";
 
 export const metadata: Metadata = {
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+// Sidebar shows badges with the count of items needing attention. Single
+// HEAD count(*) per badge — Postgres handles this in milliseconds, and
+// missing the badge isn't worth a layout-fail so we swallow errors.
+async function getSidebarCounts(): Promise<{ pendingReview: number }> {
+  try {
+    const { count } = await supabase
+      .from("property_review_queue")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+    return { pendingReview: count ?? 0 };
+  } catch {
+    return { pendingReview: 0 };
+  }
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const counts = await getSidebarCounts();
   return (
     <html lang="en">
       <body className="bg-gray-50 text-gray-900 flex h-screen overflow-hidden">
@@ -70,7 +87,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span>🏘️</span> Aggregator Feed
             </a>
             <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔍</span> Review Queue
+              <span>🔍</span>
+              <span className="flex-1">Review Queue</span>
+              {counts.pendingReview > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold">
+                  {counts.pendingReview}
+                </span>
+              )}
             </a>
             <a href="/aggregator/runs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📜</span> Ingestion Runs
