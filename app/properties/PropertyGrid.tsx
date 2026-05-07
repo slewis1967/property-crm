@@ -22,6 +22,17 @@ function tileGradient(seed: string | null | undefined): string {
   return TILE_GRADIENTS[Math.abs(hash) % TILE_GRADIENTS.length];
 }
 
+function propertyTypeIcon(t: string | null | undefined): string {
+  const k = (t || "").toLowerCase();
+  if (k.includes("townhouse")) return "🏘️";
+  if (k.includes("apartment") || k.includes("unit")) return "🏢";
+  if (k.includes("duplex")) return "🏠";
+  if (k.includes("land")) return "🟩";
+  if (k.includes("sda")) return "♿";
+  if (k.includes("acreage") || k.includes("rural")) return "🌳";
+  return "🏡"; // house & land / house default
+}
+
 export default function PropertyGrid({ properties: initialProperties }: { properties: any[] }) {
   const [properties, setProperties] = useState<any[]>(initialProperties);
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
@@ -37,6 +48,7 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
   const [builderFilter, setBuilderFilter] = useState<string>("");
   const [bedsMin, setBedsMin] = useState<number>(0);
   const [bathsMin, setBathsMin] = useState<number>(0);
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("");
   const [showFilters, setShowFilters] = useState(true);
 
   // Build filter dropdown options from the loaded data so they match
@@ -59,6 +71,15 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
     return Array.from(set).sort();
   }, [properties]);
 
+  const propertyTypeOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of properties) {
+      const t = (p.property_type || "").toString().trim();
+      if (t) set.add(t);
+    }
+    return Array.from(set).sort();
+  }, [properties]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const minP = priceMin ? Number(priceMin) : null;
@@ -77,11 +98,12 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
       if (maxP != null && (price == null || price > maxP)) return false;
       if (stateFilter && (p.state || "").toString().trim() !== stateFilter) return false;
       if (builderFilter && (p.builder_name || "").toString().trim() !== builderFilter) return false;
+      if (propertyTypeFilter && (p.property_type || "").toString().trim() !== propertyTypeFilter) return false;
       if (bedsMin > 0 && (Number(p.bedrooms) || 0) < bedsMin) return false;
       if (bathsMin > 0 && (Number(p.bathrooms) || 0) < bathsMin) return false;
       return true;
     });
-  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, bedsMin, bathsMin]);
+  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, propertyTypeFilter, bedsMin, bathsMin]);
 
   const activeFilterCount =
     (search ? 1 : 0) +
@@ -89,12 +111,13 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
     (priceMax ? 1 : 0) +
     (stateFilter ? 1 : 0) +
     (builderFilter ? 1 : 0) +
+    (propertyTypeFilter ? 1 : 0) +
     (bedsMin > 0 ? 1 : 0) +
     (bathsMin > 0 ? 1 : 0);
 
   const clearFilters = () => {
     setSearch(""); setPriceMin(""); setPriceMax("");
-    setStateFilter(""); setBuilderFilter("");
+    setStateFilter(""); setBuilderFilter(""); setPropertyTypeFilter("");
     setBedsMin(0); setBathsMin(0);
   };
 
@@ -342,6 +365,23 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
               </select>
             </div>
 
+            {/* Property type */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Property type
+              </label>
+              <select
+                value={propertyTypeFilter}
+                onChange={(e) => setPropertyTypeFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All types</option>
+                {propertyTypeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Bedrooms */}
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -455,6 +495,11 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
                 <span className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs font-bold rounded shadow-sm capitalize">
                   {property.status || "available"}
                 </span>
+                {property.property_type && (
+                  <span className="absolute bottom-2 right-2 bg-white/90 text-gray-800 px-2 py-0.5 text-[10px] font-semibold rounded-full shadow-sm">
+                    {propertyTypeIcon(property.property_type)} {property.property_type}
+                  </span>
+                )}
                 {/* Checkbox top-left */}
                 <div className="absolute top-2 left-2" onClick={e => toggleCheck(property.id, e)}>
                   <input
