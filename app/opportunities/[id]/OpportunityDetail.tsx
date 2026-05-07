@@ -87,6 +87,22 @@ type Lead = {
   notes: string | null;
   tags: string | null;
   pipeline_id: string | null;
+  preferred_location: string | null;
+  // Personal / employment / financial — flow from contact at creation
+  date_of_birth: string | null;
+  marital_status: string | null;
+  dependents_count: number | null;
+  home_address_street: string | null;
+  home_address_suburb: string | null;
+  home_address_state: string | null;
+  home_address_postcode: string | null;
+  employment_type: string | null;
+  employer_name: string | null;
+  occupation: string | null;
+  annual_income: number | null;
+  partner_annual_income: number | null;
+  existing_savings: number | null;
+  hecs_balance: number | null;
 };
 
 type GhlArchive = {
@@ -495,6 +511,10 @@ export default function OpportunityDetail({
           {/* AI diagnosis — is this opp stuck and why? */}
           <AIOpportunityDiagnosis opportunityId={lead.lead_id} />
 
+          {/* Personal / employment / financial — copied from the contact at
+              creation; feeds the borrowing-capacity calculator below. */}
+          <OpportunityPersonalDetails lead={lead} />
+
           {/* Pipeline + Stage */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -891,6 +911,101 @@ export default function OpportunityDetail({
             <p className="text-xs font-mono text-gray-500 break-all">{lead.lead_id}</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Personal / employment / financial details on the opportunity ──────────
+//
+// Mirrors the panel on the contact page. Hidden when nothing's been
+// captured yet so the page stays clean for legacy leads.
+
+function fmtMoneyAU(n: number | null | undefined) {
+  if (n == null) return null;
+  return `$${Number(n).toLocaleString("en-AU")}`;
+}
+
+function fmtDob(s: string | null) {
+  if (!s) return null;
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function joinAddressLead(l: Lead) {
+  const line = [l.home_address_street, l.home_address_suburb, l.home_address_state, l.home_address_postcode]
+    .filter(Boolean)
+    .join(", ");
+  return line || null;
+}
+
+function Row({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between gap-3 py-1">
+      <span className="text-xs text-gray-400">{label}</span>
+      <span className="text-xs font-medium text-gray-800 text-right">{value}</span>
+    </div>
+  );
+}
+
+function OpportunityPersonalDetails({ lead }: { lead: Lead }) {
+  const personal = [
+    { label: "Date of birth",  value: fmtDob(lead.date_of_birth) },
+    { label: "Marital status", value: lead.marital_status },
+    { label: "Dependents",     value: lead.dependents_count != null ? String(lead.dependents_count) : null },
+  ];
+  const address = joinAddressLead(lead);
+  const employment = [
+    { label: "Type",       value: lead.employment_type },
+    { label: "Employer",   value: lead.employer_name },
+    { label: "Occupation", value: lead.occupation },
+  ];
+  const financial = [
+    { label: "Annual income",         value: fmtMoneyAU(lead.annual_income) },
+    { label: "Partner annual income", value: fmtMoneyAU(lead.partner_annual_income) },
+    { label: "Savings / deposit",     value: fmtMoneyAU(lead.existing_savings) },
+    { label: "HECS-HELP balance",     value: fmtMoneyAU(lead.hecs_balance) },
+  ];
+  const hasAny =
+    personal.some((r) => r.value) ||
+    !!address ||
+    employment.some((r) => r.value) ||
+    financial.some((r) => r.value);
+
+  if (!hasAny) return null;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Personal</h3>
+        <dl className="divide-y divide-gray-50">
+          {personal.map((r) => <Row key={r.label} label={r.label} value={r.value} />)}
+        </dl>
+        {address && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-1">Home address</p>
+            <p className="text-sm text-gray-800">{address}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Employment</h3>
+        <dl className="divide-y divide-gray-50">
+          {employment.map((r) => <Row key={r.label} label={r.label} value={r.value} />)}
+        </dl>
+      </div>
+
+      <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-gray-700">Financial</h3>
+          <span className="text-[11px] text-gray-400">feeds borrowing calculator below</span>
+        </div>
+        <dl className="divide-y divide-gray-50">
+          {financial.map((r) => <Row key={r.label} label={r.label} value={r.value} />)}
+        </dl>
       </div>
     </div>
   );

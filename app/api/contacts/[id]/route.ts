@@ -16,6 +16,16 @@ export async function PATCH(
     "budget", "budget_min", "budget_max",
     "finance_status", "timeframe",
     "lead_score", "segment", "source", "message",
+    // Personal
+    "date_of_birth", "marital_status", "dependents_count",
+    // Home address
+    "home_address_street", "home_address_suburb",
+    "home_address_state", "home_address_postcode",
+    // Employment
+    "employment_type", "employer_name", "occupation",
+    // Financial — feeds borrowing calculator
+    "annual_income", "partner_annual_income",
+    "existing_savings", "hecs_balance",
   ];
   const update: Record<string, any> = {};
   for (const key of allowed) {

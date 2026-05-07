@@ -11,6 +11,23 @@ type Contact = {
   buyer_type: string | null;
   preferred_state: string | null;
   budget_max: number | null;
+  // Personal / employment / financial — copied to the new opportunity so
+  // the borrowing calculator + AI matchmaker have real data without
+  // re-typing.
+  date_of_birth?: string | null;
+  marital_status?: string | null;
+  dependents_count?: number | null;
+  home_address_street?: string | null;
+  home_address_suburb?: string | null;
+  home_address_state?: string | null;
+  home_address_postcode?: string | null;
+  employment_type?: string | null;
+  employer_name?: string | null;
+  occupation?: string | null;
+  annual_income?: number | null;
+  partner_annual_income?: number | null;
+  existing_savings?: number | null;
+  hecs_balance?: number | null;
 };
 
 type Pipeline = { id: string; name: string; stages: string[]; color: string };
@@ -172,6 +189,9 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
     ];
 
     try {
+      // Personal / employment / financial come straight from the prefilled
+      // contact (if any). User can override them later via edit modal.
+      const carryFromContact = prefillContact ?? primaryContact ?? null;
       const res = await fetch("/api/opportunities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -192,6 +212,21 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           linked_contact_ids: linkedIds.length > 0 ? linkedIds : null,
           pipeline_id: pipelineId || null,
           tags:        tags.length > 0 ? tags : null,
+          // Personal / employment / financial carried from contact
+          date_of_birth:         carryFromContact?.date_of_birth ?? null,
+          marital_status:        carryFromContact?.marital_status ?? null,
+          dependents_count:      carryFromContact?.dependents_count ?? null,
+          home_address_street:   carryFromContact?.home_address_street ?? null,
+          home_address_suburb:   carryFromContact?.home_address_suburb ?? null,
+          home_address_state:    carryFromContact?.home_address_state ?? null,
+          home_address_postcode: carryFromContact?.home_address_postcode ?? null,
+          employment_type:       carryFromContact?.employment_type ?? null,
+          employer_name:         carryFromContact?.employer_name ?? null,
+          occupation:            carryFromContact?.occupation ?? null,
+          annual_income:         carryFromContact?.annual_income ?? null,
+          partner_annual_income: carryFromContact?.partner_annual_income ?? null,
+          existing_savings:      carryFromContact?.existing_savings ?? null,
+          hecs_balance:          carryFromContact?.hecs_balance ?? null,
         }),
       });
       const data = await res.json();

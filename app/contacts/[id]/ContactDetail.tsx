@@ -39,6 +39,24 @@ type Contact = {
   ghl_contact_id: string | null;
   tags: string[] | null;
   notes: string | null;
+  // Personal
+  date_of_birth: string | null;
+  marital_status: string | null;
+  dependents_count: number | null;
+  // Home address
+  home_address_street: string | null;
+  home_address_suburb: string | null;
+  home_address_state: string | null;
+  home_address_postcode: string | null;
+  // Employment
+  employment_type: string | null;
+  employer_name: string | null;
+  occupation: string | null;
+  // Financial — feeds borrowing calc
+  annual_income: number | null;
+  partner_annual_income: number | null;
+  existing_savings: number | null;
+  hecs_balance: number | null;
 };
 
 type Lead = {
@@ -303,6 +321,20 @@ export default function ContactDetail({
             buyer_type: contact.buyer_type,
             preferred_state: contact.preferred_state || contact.state,
             budget_max: contact.budget_max || contact.budget,
+            date_of_birth: contact.date_of_birth,
+            marital_status: contact.marital_status,
+            dependents_count: contact.dependents_count,
+            home_address_street: contact.home_address_street,
+            home_address_suburb: contact.home_address_suburb,
+            home_address_state: contact.home_address_state,
+            home_address_postcode: contact.home_address_postcode,
+            employment_type: contact.employment_type,
+            employer_name: contact.employer_name,
+            occupation: contact.occupation,
+            annual_income: contact.annual_income,
+            partner_annual_income: contact.partner_annual_income,
+            existing_savings: contact.existing_savings,
+            hecs_balance: contact.hecs_balance,
           }}
         />
       )}
@@ -523,6 +555,9 @@ export default function ContactDetail({
               <div className="space-y-4 max-w-3xl">
                 {/* Pipelines + opportunities this contact is currently in */}
                 <PipelinesAndOpportunitiesPanel leads={leads} pipelines={pipelines} />
+
+                {/* Personal / Employment / Financial — feeds borrowing calc + AI matchmaker */}
+                <PersonalDetailsPanel contact={contact} />
 
                 {/* AI brief + next-action pill */}
                 <AIBrief contactId={contact.id} />
@@ -1084,6 +1119,117 @@ function GhlSectionCard({ title, children }: { title: string; children: React.Re
     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>
       {children}
+    </div>
+  );
+}
+
+// ─── Personal / Employment / Financial details ──────────────────────────────
+//
+// Three small grouped cards. Empty state nudges Sean toward the edit modal so
+// the contact gets fleshed out before AI matchmaking / borrowing calc runs.
+
+function fmtMoney(n: number | null | undefined) {
+  if (n == null) return null;
+  return `$${Number(n).toLocaleString("en-AU")}`;
+}
+
+function fmtDob(s: string | null) {
+  if (!s) return null;
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function joinAddress(c: {
+  home_address_street: string | null;
+  home_address_suburb: string | null;
+  home_address_state: string | null;
+  home_address_postcode: string | null;
+}) {
+  const line = [c.home_address_street, c.home_address_suburb, c.home_address_state, c.home_address_postcode]
+    .filter(Boolean)
+    .join(", ");
+  return line || null;
+}
+
+function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between gap-3 py-1">
+      <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
+      <span className="text-xs font-medium text-gray-800 text-right">{value}</span>
+    </div>
+  );
+}
+
+function PersonalDetailsPanel({ contact }: { contact: Contact }) {
+  const personal = [
+    { label: "Date of birth",   value: fmtDob(contact.date_of_birth) },
+    { label: "Marital status",  value: contact.marital_status },
+    { label: "Dependents",      value: contact.dependents_count != null ? String(contact.dependents_count) : null },
+  ];
+  const address = joinAddress(contact);
+  const employment = [
+    { label: "Type",       value: contact.employment_type },
+    { label: "Employer",   value: contact.employer_name },
+    { label: "Occupation", value: contact.occupation },
+  ];
+  const financial = [
+    { label: "Annual income",         value: fmtMoney(contact.annual_income) },
+    { label: "Partner annual income", value: fmtMoney(contact.partner_annual_income) },
+    { label: "Savings / deposit",     value: fmtMoney(contact.existing_savings) },
+    { label: "HECS-HELP balance",     value: fmtMoney(contact.hecs_balance) },
+  ];
+  const hasAny =
+    personal.some((r) => r.value) ||
+    !!address ||
+    employment.some((r) => r.value) ||
+    financial.some((r) => r.value);
+
+  if (!hasAny) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">Personal details</h2>
+        <p className="text-xs text-gray-400">
+          No personal info captured yet — click <span className="font-semibold">✏️ Edit</span> at
+          the top to add address, employment and income. These flow through to opportunities
+          and the borrowing-capacity calculator automatically.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Personal</h3>
+        <dl className="divide-y divide-gray-50">
+          {personal.map((r) => <DetailRow key={r.label} label={r.label} value={r.value} />)}
+        </dl>
+        {address && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-1">Home address</p>
+            <p className="text-sm text-gray-800">{address}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">Employment</h3>
+        <dl className="divide-y divide-gray-50">
+          {employment.map((r) => <DetailRow key={r.label} label={r.label} value={r.value} />)}
+        </dl>
+      </div>
+
+      <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-gray-700">Financial</h3>
+          <span className="text-[11px] text-gray-400">feeds borrowing calculator</span>
+        </div>
+        <dl className="divide-y divide-gray-50">
+          {financial.map((r) => <DetailRow key={r.label} label={r.label} value={r.value} />)}
+        </dl>
+      </div>
     </div>
   );
 }

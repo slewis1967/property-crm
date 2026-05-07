@@ -10,20 +10,32 @@
 import { useState } from "react";
 
 type FieldDef =
-  | { key: string; label: string; type: "text" | "email" | "tel" | "number" }
+  | { key: string; label: string; type: "text" | "email" | "tel" | "number" | "date" }
   | { key: string; label: string; type: "select"; options: string[] }
-  | { key: string; label: string; type: "textarea" };
+  | { key: string; label: string; type: "textarea" }
+  | { kind: "section"; label: string };
+
+const isField = (
+  f: FieldDef,
+): f is Exclude<FieldDef, { kind: "section"; label: string }> => !("kind" in f);
+
+const STATE_OPTIONS = ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
+const MARITAL_OPTIONS = ["", "Single", "Married", "De facto", "Separated", "Divorced", "Widowed"];
+const EMPLOYMENT_OPTIONS = [
+  "", "Full-time", "Part-time", "Casual", "Self-employed",
+  "Contract", "Retired", "Unemployed", "Other",
+];
 
 export type RecordKind = "opportunity" | "contact";
 
 const OPP_FIELDS: FieldDef[] = [
+  { kind: "section", label: "Lead" },
   { key: "full_name",   label: "Full name",   type: "text" },
   { key: "email",       label: "Email",       type: "email" },
   { key: "phone",       label: "Phone",       type: "tel" },
   { key: "buyer_type",  label: "Buyer type",  type: "select",
     options: ["", "Owner Occupier", "Investor", "First Home Buyer", "SDA", "SMSF", "Downsizer"] },
-  { key: "state",       label: "State",       type: "select",
-    options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
+  { key: "state",       label: "State (preferred)", type: "select", options: STATE_OPTIONS },
   { key: "preferred_location", label: "Preferred buy location", type: "text" },
   { key: "budget",      label: "Budget",      type: "text" },
   { key: "timeframe",   label: "Timeframe",   type: "text" },
@@ -33,23 +45,46 @@ const OPP_FIELDS: FieldDef[] = [
   { key: "source",      label: "Source",      type: "text" },
   { key: "segment",     label: "Segment",     type: "text" },
   { key: "message",     label: "Message",     type: "textarea" },
+
+  { kind: "section", label: "Personal" },
+  { key: "date_of_birth",    label: "Date of birth",    type: "date" },
+  { key: "marital_status",   label: "Marital status",   type: "select", options: MARITAL_OPTIONS },
+  { key: "dependents_count", label: "Dependents",       type: "number" },
+
+  { kind: "section", label: "Home address" },
+  { key: "home_address_street",   label: "Street",   type: "text" },
+  { key: "home_address_suburb",   label: "Suburb",   type: "text" },
+  { key: "home_address_state",    label: "State",    type: "select", options: STATE_OPTIONS },
+  { key: "home_address_postcode", label: "Postcode", type: "text" },
+
+  { kind: "section", label: "Employment" },
+  { key: "employment_type", label: "Employment type", type: "select", options: EMPLOYMENT_OPTIONS },
+  { key: "employer_name",   label: "Employer",        type: "text" },
+  { key: "occupation",      label: "Occupation",      type: "text" },
+
+  { kind: "section", label: "Financial" },
+  { key: "annual_income",         label: "Annual income (gross)", type: "number" },
+  { key: "partner_annual_income", label: "Partner annual income", type: "number" },
+  { key: "existing_savings",      label: "Savings / deposit",     type: "number" },
+  { key: "hecs_balance",          label: "HECS-HELP balance",     type: "number" },
   // Note: opportunity "notes" is a JSON-encoded entry feed maintained by
   // the notes section on the page — editing it as a textarea here would
   // clobber accumulated entries, so it's intentionally excluded.
 ];
 
 const CONTACT_FIELDS: FieldDef[] = [
+  { kind: "section", label: "Identity" },
   { key: "first_name",      label: "First name",         type: "text" },
   { key: "full_name",       label: "Full name",          type: "text" },
   { key: "name",            label: "Display name",       type: "text" },
   { key: "email",           label: "Email",              type: "email" },
   { key: "phone",           label: "Phone",              type: "tel" },
+
+  { kind: "section", label: "Buyer profile" },
   { key: "buyer_type",      label: "Buyer type",         type: "select",
     options: ["", "Owner Occupier", "Investor", "First Home Buyer", "SDA", "SMSF", "Downsizer"] },
-  { key: "state",           label: "State",              type: "select",
-    options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
-  { key: "preferred_state", label: "Preferred state",    type: "select",
-    options: ["", "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] },
+  { key: "state",           label: "State",              type: "select", options: STATE_OPTIONS },
+  { key: "preferred_state", label: "Preferred buy state", type: "select", options: STATE_OPTIONS },
   { key: "budget",          label: "Budget",             type: "number" },
   { key: "budget_min",      label: "Budget (min)",       type: "number" },
   { key: "budget_max",      label: "Budget (max)",       type: "number" },
@@ -61,6 +96,30 @@ const CONTACT_FIELDS: FieldDef[] = [
   { key: "status",          label: "Status",             type: "select",
     options: ["", "active", "qualified", "matched", "won", "lost", "archived"] },
   { key: "lead_score",      label: "Lead score",         type: "number" },
+
+  { kind: "section", label: "Personal" },
+  { key: "date_of_birth",    label: "Date of birth",     type: "date" },
+  { key: "marital_status",   label: "Marital status",    type: "select", options: MARITAL_OPTIONS },
+  { key: "dependents_count", label: "Dependents",        type: "number" },
+
+  { kind: "section", label: "Home address" },
+  { key: "home_address_street",   label: "Street",   type: "text" },
+  { key: "home_address_suburb",   label: "Suburb",   type: "text" },
+  { key: "home_address_state",    label: "State",    type: "select", options: STATE_OPTIONS },
+  { key: "home_address_postcode", label: "Postcode", type: "text" },
+
+  { kind: "section", label: "Employment" },
+  { key: "employment_type", label: "Employment type", type: "select", options: EMPLOYMENT_OPTIONS },
+  { key: "employer_name",   label: "Employer",        type: "text" },
+  { key: "occupation",      label: "Occupation",      type: "text" },
+
+  { kind: "section", label: "Financial" },
+  { key: "annual_income",         label: "Annual income (gross)", type: "number" },
+  { key: "partner_annual_income", label: "Partner annual income", type: "number" },
+  { key: "existing_savings",      label: "Savings / deposit",     type: "number" },
+  { key: "hecs_balance",          label: "HECS-HELP balance",     type: "number" },
+
+  { kind: "section", label: "Other" },
   { key: "segment",         label: "Segment",            type: "text" },
   { key: "source",          label: "Source",             type: "text" },
   { key: "message",         label: "Message",            type: "textarea" },
@@ -81,10 +140,11 @@ export default function EditRecordModal({
   onSaved: (updated: Record<string, any>) => void;
 }) {
   const fields = kind === "opportunity" ? OPP_FIELDS : CONTACT_FIELDS;
+  const editableFields = fields.filter(isField);
 
   // Local form state — start from current record values
   const initial: Record<string, any> = {};
-  for (const f of fields) {
+  for (const f of editableFields) {
     initial[f.key] = record[f.key] ?? (f.type === "number" ? 0 : "");
   }
   const [form, setForm] = useState(initial);
@@ -101,7 +161,7 @@ export default function EditRecordModal({
     // Only send fields that actually changed; skip empty strings if the
     // record was previously null so we don't write "" over null
     const delta: Record<string, any> = {};
-    for (const f of fields) {
+    for (const f of editableFields) {
       const current = record[f.key];
       const next = form[f.key];
       const blank = next === "" || next === null || next === undefined;
@@ -143,45 +203,63 @@ export default function EditRecordModal({
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
-          {fields.map((f) => (
-            <div key={f.key}>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                {f.label}
-              </label>
-              {f.type === "textarea" ? (
-                <textarea
-                  value={form[f.key] ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : f.type === "select" ? (
-                <select
-                  value={form[f.key] ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {f.options.map((o) => (
-                    <option key={o} value={o}>{o || "—"}</option>
-                  ))}
-                </select>
-              ) : f.type === "number" ? (
-                <input
-                  type="number"
-                  value={form[f.key] ?? 0}
-                  onChange={(e) => set(f.key, Number(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <input
-                  type={f.type}
-                  value={form[f.key] ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
-            </div>
-          ))}
+          {fields.map((f, i) => {
+            if (!isField(f)) {
+              return (
+                <div key={`section-${i}`} className="pt-3 first:pt-0">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-1.5 mb-2">
+                    {f.label}
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div key={f.key}>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                  {f.label}
+                </label>
+                {f.type === "textarea" ? (
+                  <textarea
+                    value={form[f.key] ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : f.type === "select" ? (
+                  <select
+                    value={form[f.key] ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {f.options.map((o) => (
+                      <option key={o} value={o}>{o || "—"}</option>
+                    ))}
+                  </select>
+                ) : f.type === "number" ? (
+                  <input
+                    type="number"
+                    value={form[f.key] ?? 0}
+                    onChange={(e) => set(f.key, Number(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : f.type === "date" ? (
+                  <input
+                    type="date"
+                    value={(form[f.key] ?? "").toString().slice(0, 10)}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <input
+                    type={f.type}
+                    value={form[f.key] ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
+              </div>
+            );
+          })}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               {error}
