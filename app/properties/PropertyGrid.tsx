@@ -127,6 +127,18 @@ export default function PropertyGrid({ properties: initialProperties }: { proper
         </div>
       )}
 
+      {/* Diagnostic banner — confirms data reached the client. Shows the
+          count + first few addresses; tells us whether a "blank page"
+          report is a data problem, a CSS problem, or a hydration crash. */}
+      <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
+        <strong>{properties.length}</strong> properties loaded
+        {properties.length > 0 && (
+          <span className="text-blue-500 ml-2">
+            · first: {(properties[0]?.builder_name || properties[0]?.suburb || properties[0]?.state || properties[0]?.id || "—") + ""}
+          </span>
+        )}
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
