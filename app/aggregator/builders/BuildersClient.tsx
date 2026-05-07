@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabaseBrowser } from "../../../utils/supabase-browser";
 
 type Builder = {
   id: string;
@@ -16,6 +17,11 @@ type Builder = {
   consecutive_no_replies?: number | null;
   outreach_paused_until?: string | null;
   created_at: string;
+  // Per-builder extraction context — see migration 20260507
+  extraction_notes?: string | null;
+  sample_pdf_url?: string | null;
+  sample_pdf_text?: string | null;
+  sample_pdf_uploaded_at?: string | null;
 };
 
 export default function BuildersClient() {
@@ -62,6 +68,7 @@ export default function BuildersClient() {
           contact_phone: edit.contact_phone,
           active: edit.active ?? true,
           draft: false,
+          extraction_notes: edit.extraction_notes ?? null,
         }),
       });
       const json = await res.json();
@@ -70,6 +77,76 @@ export default function BuildersClient() {
       await load();
     } catch (e: any) {
       alert(`Save failed: ${e?.message ?? e}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /**
+   * Browser → Supabase Storage direct upload of a sample PDF (or XLSX),
+   * then PATCH the builder row with the resulting public URL.
+   * Aggregator picks it up on next cron run, extracts text via
+   * pdfplumber, and caches in sample_pdf_text.
+   */
+  const uploadSamplePdf = async (builderId: string, file: File) => {
+    setBusy(builderId);
+    try {
+      // 1. Sign upload URL
+      const signRes = await fetch(
+        `/api/aggregator/builders/${builderId}/sample-pdf`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mime: file.type, size: file.size }),
+        },
+      );
+      const sign = await signRes.json();
+      if (!sign.ok) throw new Error(sign.error || "Could not sign upload URL");
+
+      // 2. Direct browser upload
+      const { error: upErr } = await supabaseBrowser.storage
+        .from("ingestion")
+        .uploadToSignedUrl(sign.path, sign.token, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+      if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+
+      // 3. Persist URL on builder row + clear cached text so aggregator
+      //    re-extracts on next cron run
+      const patchRes = await fetch(`/api/aggregator/builders/${builderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sample_pdf_url: sign.publicUrl,
+          sample_pdf_text: null,
+          sample_pdf_uploaded_at: new Date().toISOString(),
+        }),
+      });
+      const patch = await patchRes.json();
+      if (!patch.ok) throw new Error(patch.error || "Save failed after upload");
+      await load();
+    } catch (e: any) {
+      alert(`Sample PDF upload failed: ${e?.message ?? e}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const removeSamplePdf = async (builderId: string) => {
+    if (!confirm("Remove this builder's sample PDF? Aggregator will fall back to no per-builder context.")) return;
+    setBusy(builderId);
+    try {
+      await fetch(`/api/aggregator/builders/${builderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sample_pdf_url: null,
+          sample_pdf_text: null,
+          sample_pdf_uploaded_at: null,
+        }),
+      });
+      await load();
     } finally {
       setBusy(null);
     }
@@ -265,6 +342,93 @@ export default function BuildersClient() {
                     <span className="text-sm text-gray-700">Active</span>
                   </label>
                 </div>
+
+                {/* Extraction context — given to Claude when extracting
+                    properties from this builder's stocklists. Notes are
+                    direct instructions; sample PDF gives format reference. */}
+                <div className="border-t border-gray-100 pt-3 mt-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                    Extraction context (AI hints)
+                  </h4>
+                  <label className="block text-xs">
+                    <span className="font-medium text-gray-600 mb-0.5 block">
+                      Notes for the extractor
+                      <span className="text-gray-400 font-normal ml-2">
+                        — e.g. "lot # in column 2", "ignore Display Home rows", "pricing is in $1,000s"
+                      </span>
+                    </span>
+                    <textarea
+                      value={edit.extraction_notes ?? ""}
+                      onChange={(e) => setEdit({ ...edit, extraction_notes: e.target.value })}
+                      rows={3}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Anything Claude should know about this builder's stocklist format…"
+                    />
+                  </label>
+
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-600 mb-1">
+                      Sample PDF / Excel
+                      <span className="text-gray-400 font-normal ml-1">— page 1 text excerpt is sent as format reference to the extractor</span>
+                    </p>
+                    {b.sample_pdf_url ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded">
+                        <span className="text-xs text-emerald-800 font-medium flex-1">
+                          ✓ Sample uploaded
+                          {b.sample_pdf_uploaded_at && (
+                            <span className="ml-1 text-emerald-600">
+                              ({new Date(b.sample_pdf_uploaded_at).toLocaleDateString("en-AU")})
+                            </span>
+                          )}
+                          {b.sample_pdf_text == null && (
+                            <span className="ml-2 text-amber-600">
+                              · text extraction queued for next cron run
+                            </span>
+                          )}
+                          {b.sample_pdf_text && (
+                            <span className="ml-2 text-emerald-600">
+                              · {b.sample_pdf_text.length.toLocaleString()} chars cached
+                            </span>
+                          )}
+                        </span>
+                        <a
+                          href={b.sample_pdf_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-emerald-700 hover:underline"
+                        >
+                          View
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => removeSamplePdf(b.id)}
+                          disabled={isBusy}
+                          className="text-xs text-red-600 hover:bg-red-50 rounded px-2 py-0.5 disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="file"
+                          accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                          className="hidden"
+                          disabled={isBusy}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadSamplePdf(b.id, f);
+                            e.target.value = "";
+                          }}
+                        />
+                        <span className="px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded border border-gray-300 hover:bg-gray-50">
+                          {isBusy ? "Uploading…" : "Upload sample"}
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex gap-2 pt-2">
                   <button
                     type="button"

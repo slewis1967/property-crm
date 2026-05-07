@@ -7,6 +7,11 @@ const ALLOWED_FIELDS = [
   "canonical_name", "aliases", "sender_domains",
   "contact_email", "contact_phone", "active", "draft",
   "auto_outreach_enabled", "outreach_paused_until",
+  // Per-builder extraction context. Notes are AI-facing instructions;
+  // the sample PDF + text caches a representative stocklist for
+  // few-shot context (clearing sample_pdf_text triggers a re-extract
+  // on next aggregator cron run).
+  "extraction_notes", "sample_pdf_url", "sample_pdf_text", "sample_pdf_uploaded_at",
 ];
 
 export async function PATCH(
