@@ -68,7 +68,7 @@ Tables that need it (current count):
 
 | Table                    | Notes                                           |
 |--------------------------|-------------------------------------------------|
-| `tenants`                | NEW — one row per customer org                  |
+| `tenants`                | NEW — one row per customer org. `kind` ENUM ('broker' | 'builder'). |
 | `tenant_users`           | NEW — joins users to tenants with role         |
 | `contacts`               | + tenant_id                                     |
 | `property_leads`         | + tenant_id                                     |
@@ -96,17 +96,34 @@ Tables that need it (current count):
 | `tenant_subscription`    | NEW — Stripe state                              |
 | `tenant_branding`        | NEW — logo, colors, custom domain               |
 | `tenant_audit_log`       | NEW — who-did-what for super admin              |
+| `property_eoi`           | NEW — broker EOI on a builder's property        |
+| `property_eoi_messages`  | NEW — threaded comments on an EOI               |
+| `property_view`          | NEW — view tracking for builder analytics       |
+| `property_publishing`    | NEW — builder draft/review/published state per row |
 
-**Shared tables** (`global_stock_pool`, `builders`, `ingestion_run`, `property_review_queue`): NextKey's central ingestion writes here with `tenant_id = NULL` (public). All Pro+ tenants read these rows. Solo/Growth tenants see nothing aggregator-related (tier gate). Agency tenants additionally write rows with their own `tenant_id` set (BYOB private scope, §13). RLS:
+**Shared tables** (`global_stock_pool`, `builders`, `ingestion_run`, `property_review_queue`): three provenance modes coexist:
+
+- `tenant_id IS NULL` → **NextKey-curated** (legacy email aggregator, see §14 — kept running indefinitely as a fallback). Public to all Pro+ broker tenants.
+- `tenant_id = builder.id` AND `visibility = 'public'` → **builder-self-published** via the Builder Portal (§14). Public to all Pro+ broker tenants.
+- `tenant_id = broker.id` AND `visibility = 'private'` → **BYOB** Agency-tier broker private scope (§13). Visible only to that broker tenant.
+
+RLS read policy on these tables:
 
 ```sql
--- Read policy on global_stock_pool (and the other 3 shared tables):
 USING (
-  tenant_id IS NULL                       -- public NextKey catalogue
-  OR tenant_id = (auth.jwt() ->> 'tenant_id')::uuid  -- own BYOB rows
+  CASE current_tenant_kind()
+    WHEN 'broker' THEN
+      visibility = 'public'                        -- NextKey + all builder uploads
+      OR tenant_id = current_tenant_id()           -- own BYOB
+    WHEN 'builder' THEN
+      tenant_id = current_tenant_id()              -- own listings only
+    ELSE FALSE                                     -- shouldn't happen; super admin bypasses RLS
+  END
 )
--- Write policy: super_admin OR (tenant_id matches AND tier='Agency')
+-- Write policy: super_admin OR (tenant_id = current_tenant_id())
 ```
+
+`current_tenant_kind()` and `current_tenant_id()` are SQL functions reading from `auth.jwt()` claims set during login (claims include both fields).
 
 **Q1 cancel resolution** (decided 2026-05-08, supersedes earlier §10):
 
@@ -124,7 +141,16 @@ Cloudflare Access stays only on `crm.nextkey.com.au` (the legacy NextKey CRM). I
 
 ## 4. Tier matrix
 
-Pricing per `project_saas_strategic.md` — confirm in §10 Q4.
+PropMarketer is a **two-sided marketplace**:
+
+- **Broker side** (consumers of the catalogue) — 4 tiers: Solo / Growth / Pro / Agency. Pay to access the curated property catalogue + CRM workflow tools.
+- **Builder side** (suppliers of the catalogue) — 2 tiers: Free / Pro. Self-publish properties into the catalogue, get distribution to the broker network, manage inbound EOIs.
+
+Tenants are typed by `tenants.kind` ENUM (`'broker'` | `'builder'`). A user can theoretically belong to both kinds via separate tenant memberships, but the typical case is one or the other. Subscription tier is independent per tenant.
+
+### Broker tiers
+
+Pricing per `project_saas_strategic.md` — confirmed §10.
 
 | Feature                          | Solo $149 | Growth $449 | Pro $1,199 | Agency $2,999+ |
 |----------------------------------|:---------:|:-----------:|:----------:|:---------------:|
@@ -156,6 +182,29 @@ Pricing per `project_saas_strategic.md` — confirm in §10 Q4.
 | **SLA support**                  | community | email       | email + chat| dedicated CSM  |
 | **Free trial**                   | 14 days   | 14 days     | 14 days    | custom          |
 
+### Builder tiers
+
+Builder side is the **supply** of the marketplace — pricing is deliberately low / free to seed the catalogue. Brokers' subscription revenue is the primary monetisation; builder Pro is a complementary upgrade path for engaged builders who want analytics + branded placement.
+
+| Feature                                      | Builder Free | Builder Pro $299 |
+|----------------------------------------------|:------------:|:----------------:|
+| Active property listings                     | up to 100    | unlimited        |
+| Users (sales team)                           | 1            | 10               |
+| Publishing workflow (draft → review → live)  | ✓            | ✓                |
+| Bulk upload (CSV / XLSX)                     | ✓            | ✓                |
+| Lead inbox (broker EOIs)                     | ✓            | ✓                |
+| EOI alerts                                   | email digest | real-time email + SMS |
+| Analytics (views, matches, EOIs)             | weekly digest| real-time dashboard |
+| Branded property cards (logo, colors)        | ✗            | ✓                |
+| Featured-placement queue                     | ✗            | ✓ (slots rationed) |
+| API access (inventory sync)                  | ✗            | ✓                |
+| Multi-estate hierarchy                       | ✗            | ✓                |
+| Co-branded marketing kits                    | ✗            | ✓                |
+| Support                                      | community    | email + chat     |
+| Free trial                                   | always free  | 30 days          |
+
+**No transaction fees** in v1 — subscription-only revenue model, both sides. Marketplace fees on closed deals deferred until subscription revenue's proven and plumbing exists. Adding them later without breaking trust requires careful ToS handling.
+
 ## 5. Stripe structure
 
 One Product per tier with one monthly Price each. Annual prices added later (typical 2-month discount). Webhook handler in `propmarketer-app/api/stripe/webhook` listens for:
@@ -170,17 +219,35 @@ Customer Portal handles upgrades, downgrades, cards, cancellations. We do NOT ro
 
 ## 6. Provisioning flow
 
+Marketing site has two CTAs above the fold: "I'm a broker / agent / planner" and "I'm a builder / developer". Each routes to its own signup variant; the schema branches on `tenants.kind`.
+
+**Broker signup:**
+
 ```
-Marketing site → "Sign up free" CTA →
-  /signup (collect email, password, business name) →
-    create user in supabase.auth →
-    create tenants row with chosen tier (default: Solo trial) →
-    create tenant_users row linking user as 'owner' →
-    create Stripe customer + 14-day trial subscription →
-    seed tenant defaults (default pipeline, default property types from settings) →
-    redirect to /onboarding (3-step wizard: import contacts, connect calendar, invite team) →
-    /dashboard
+/signup/broker (email, password, business name, tier picker → Solo trial default) →
+  create supabase.auth user →
+  create tenants row { kind: 'broker', tier: chosen } →
+  tenant_users row (user as 'owner') →
+  Stripe customer + 14-day trial subscription on chosen tier →
+  seed defaults (default pipeline, property_types from app_settings) →
+  /onboarding/broker (3-step: import contacts, connect calendar, invite team) →
+  /dashboard
 ```
+
+**Builder signup:**
+
+```
+/signup/builder (email, password, company name, ABN, contact phone) →
+  create supabase.auth user →
+  create tenants row { kind: 'builder', tier: 'builder_free' } →
+  tenant_users row (user as 'owner') →
+  Stripe customer (no subscription — Free tier; upgrade flow lives in /billing) →
+  seed defaults (one default estate placeholder) →
+  /onboarding/builder (3-step: company profile + logo, add first 5 properties OR bulk-upload, set notification prefs) →
+  /builder
+```
+
+Both flows share `supabase.auth` so a user with one email can theoretically belong to multiple tenants (broker + builder), with a tenant-switcher in the nav. Edge case, not Phase 1 priority.
 
 ## 7. Super admin panel
 
@@ -230,6 +297,14 @@ RLS policy ensures a client can only see rows where they're listed in `linked_co
 
 8. **Q-A — Catalogue scope**: universal. Every Pro+ tenant sees the entire NextKey-curated catalogue. No geo-filter or per-tenant curated packs at launch. Easier to reason about, easier to sell.
 9. **Q-B — Bring-your-own-builder**: yes, Agency-tier exclusive. Private scope (rows visible only to the contributing tenant + super admin). See §13 for design. Alternative interpretation (tenant submits builder + NextKey reviews + publishes centrally) is **NOT** the chosen model — flag this if it should be.
+
+**Builder side decisions** (added 2026-05-08, see §4 + §14):
+
+10. **B-Q1 — Free tier on builder side**: yes. Marketplace dynamics demand supply seeding before broker subscriptions can carry the model.
+11. **B-Q2 — Two builder tiers** (Free + Pro $299) rather than one. Free entry, premium upgrade path.
+12. **B-Q3 — No marketplace transaction fees** in v1. Subscription revenue both sides only.
+13. **B-Q4 — Email aggregator pipeline** (legacy NextKey ingestion) keeps running indefinitely. Builder Portal is additive, not a replacement.
+14. **B-Q5 — EOI flow**: full broker name + buyer summary + contact info delivered to builder on submission. No anonymous-until-accepted phase.
 
 ## 11. Phase plan + estimated effort
 
@@ -286,6 +361,130 @@ The aggregator parses the recipient from each message's `Delivered-To` / `To` he
 
 **Migration story for NextKey** (Q7): NextKey's existing `global_stock_pool` rows enter PropMarketer as `tenant_id = NULL` (public). NextKey's tenant row uses Agency tier with BYOB enabled — but doesn't *need* BYOB because it's the source of the public catalogue.
 
+## 14. Builder/Developer Portal
+
+The supply side of the marketplace. Builders self-publish properties into the catalogue, manage inbound EOIs, and track distribution analytics.
+
+### Why a builder portal exists alongside the email aggregator
+
+The legacy email aggregator (NEXUS API on Fly, see `project_aggregator_v2.md`) keeps running indefinitely (Q-B4). It's the right tool for builders who don't want to log in to a portal — they email a stocklist, NextKey processes it, properties land in the catalogue tagged `tenant_id = NULL`.
+
+The **portal** is additive. Builders who want richer features (analytics, branded cards, EOI inbox, real-time alerts) sign up, claim their builder identity, and self-publish from there on. Their portal-published rows are tagged `tenant_id = builder.id` AND `visibility = 'public'`. From a broker's perspective the catalogue looks unified — they don't see the provenance distinction.
+
+### Pages (all under `/builder` after login)
+
+- `/builder` — dashboard: active listings count, recent EOIs, weekly view + match stats
+- `/builder/properties` — list view with publishing-state filter (draft / pending review / live / withdrawn / sold)
+- `/builder/properties/new` — create form (single property)
+- `/builder/properties/import` — bulk upload CSV/XLSX with column-mapping wizard
+- `/builder/properties/[id]` — edit single property
+- `/builder/leads` — EOI inbox: each row shows broker, contact summary, status, last activity
+- `/builder/leads/[id]` — EOI detail: full buyer summary, broker contact, threaded messages, status changer (new → viewed → accepted/declined → closed)
+- `/builder/analytics` — Pro tier only: views over time, top-viewed properties, conversion to EOI, broker-tenant heatmap (which broker tenants are matching most)
+- `/builder/team` — Pro tier only: invite users, role assignment (admin / sales / viewer)
+- `/builder/branding` — Pro tier only: company logo, primary/accent colors, optional company description shown on property cards
+- `/builder/settings` — billing portal link, notification prefs, API keys (Pro), webhooks (Pro)
+
+### EOI flow (broker → builder)
+
+1. Broker is on `/properties` (broker app). Clicks a property → property detail page → "Express interest on behalf of <client>" button.
+2. Modal opens: pick which contact (their buyer), write a buyer summary (income, family situation, what they want, urgency), confirm broker contact info that the builder will see.
+3. Submit creates `property_eoi { property_id, broker_tenant_id, builder_tenant_id, broker_contact_id, broker_user_id, buyer_summary, status='new' }`.
+4. Builder receives notification (email digest on Free, instant email + SMS on Pro). Property's analytics counter ticks +1 EOI.
+5. Builder logs in, sees EOI in `/builder/leads`. They can mark `viewed` (auto on first open), then `accepted` / `declined`. They can post messages on the EOI thread.
+6. Broker sees status changes + messages back in their copy of the EOI on the property detail page.
+7. Either side can mark `closed` with a reason (sold to this buyer / sold to other / lost / withdrawn).
+
+Closed-as-sold EOIs feed builder analytics (conversion rate) and broker analytics (deal velocity by builder).
+
+### Schema additions (already listed in §2 table)
+
+```
+property_eoi:
+  id uuid pk
+  property_id uuid (global_stock_pool.id)
+  broker_tenant_id uuid (tenants.id where kind='broker')
+  builder_tenant_id uuid (tenants.id where kind='builder')
+  broker_contact_id uuid (contacts.id) — the buyer
+  broker_user_id uuid — submitter
+  buyer_summary text
+  status enum: 'new' | 'viewed' | 'accepted' | 'declined' | 'closed_sold' | 'closed_lost'
+  created_at, updated_at, viewed_at, closed_at, close_reason
+
+property_eoi_messages:
+  id uuid pk
+  eoi_id uuid (property_eoi.id)
+  sender_user_id uuid
+  body text
+  created_at
+
+property_view:
+  id uuid pk
+  property_id uuid
+  broker_tenant_id uuid
+  broker_user_id uuid
+  viewed_at timestamptz
+  -- Lightweight tracking row inserted by the broker app on property detail page open
+  -- Aggregated nightly into property_analytics (materialised view) for fast dashboard reads
+
+property_publishing:
+  id uuid pk
+  property_id uuid (global_stock_pool.id)
+  state enum: 'draft' | 'pending_review' | 'live' | 'withdrawn' | 'sold'
+  changed_by uuid (user)
+  changed_at timestamptz
+  reason text  -- e.g. "withdrawn — under contract"
+```
+
+### RLS for EOI tables
+
+- A broker tenant sees `property_eoi` rows where `broker_tenant_id = current_tenant_id()`.
+- A builder tenant sees rows where `builder_tenant_id = current_tenant_id()`.
+- A broker can write a row with `broker_tenant_id = current_tenant_id()` and `broker_user_id = current_user_id()`. Status defaults to 'new'; only the **builder** can advance it to `viewed`/`accepted`/`declined` (CHECK + trigger). Both sides can mark `closed_*`.
+- Messages: anyone whose tenant_id matches either side of the EOI can read or write.
+
+### Admin / moderation
+
+Super admin sees everything. Approval workflow on builder-published rows:
+
+- Default: builder publishes → status = `pending_review` → super admin or an automated quality check approves → status = `live`. Below-quality rows (price missing, no suburb) auto-route to a manual queue.
+- Pro tier can be auto-approved past N successful publishes (trust-built, reduces friction).
+- Banned for repeated quality violations: super admin can flag a builder tenant `quality_paused` which blocks new publishes until reviewed.
+
+### Builder onboarding (post-signup)
+
+- Step 1 — company profile: ABN, registered name, primary state, logo upload, colors (Pro feature, defaults applied for Free).
+- Step 2 — first properties: pick "add manually" (form for 1-5 listings) or "bulk upload" (CSV template download + upload + column mapping). For Free tier, gates active count to 100; for Pro, unlimited.
+- Step 3 — notifications: email-only (default Free), email + SMS (Pro).
+- Land on `/builder` dashboard with empty-state guidance until first EOI arrives.
+
+### Builder cancellation
+
+- On `subscription.deleted` (Pro → Free downgrade) or full cancel:
+  - Pro → Free: feature gates flip; > 100 active listings get the most-recently-edited 100 kept live, the rest move to `withdrawn` (kept on disk, not in catalogue).
+  - Full cancel: all live listings → `withdrawn` immediately. Catalogue feeds for brokers stop showing them. Builder retains read-only export of their own data for 30 days, hard delete at 60. EOI history kept indexed by tenant_id but visible read-only to brokers who participated.
+
+### Marketability hooks (Phase 4-ish)
+
+- "Verified builder" badge on Pro tier (manual verification by NextKey team).
+- Featured-placement queue: Pro tenants get N featured slots per month, surfaced first in `/properties` for matching searches.
+- Co-branded marketing kits: shareable property page on `propmarketer.app/listing/[slug]` that broker can email to clients, branded with both broker + builder logos.
+- API access (Pro): inventory sync (POST/PATCH/DELETE on `/api/builder/properties`) so a builder with their own internal CRM can keep PropMarketer in lock-step.
+
 ---
 
-**Next step after Sean signs off on this doc:** kick Phase 1 — fork the repo, create the new Supabase project, add `tenant_id` + RLS to the schema, build the provisioning flow.
+## 15. Phase plan revision (with Builder Portal)
+
+| Phase | Scope | Estimate |
+|-------|-------|----------|
+| 0 | This doc + tier confirmations + repo/domain naming | done after sign-off |
+| 1 | Fork repo. Multi-tenant schema (`tenants.kind`, all data tables `tenant_id`, RLS). Supabase Auth. Both broker + builder signup flows. Stripe products + webhooks for both sides. End-state: 1 broker tenant + 1 builder tenant share infra cleanly. | 4-5 weeks |
+| 2 | Tier gates + super admin (cross-tenant, impersonate, suspend, moderation queue for builder publishes). Broker app reaches feature parity with current NextKey CRM. | 2-3 weeks |
+| 3 | **Builder Portal MVP**: properties CRUD + bulk upload + EOI inbox + basic analytics. **Broker EOI integration**: submit-EOI button on /properties, EOI status on opportunity. White-label (Agency broker tier). | 4-5 weeks |
+| 4 | Client portal (end-buyer login). Builder Pro features (real-time alerts, advanced analytics, branded cards, featured slots, API). Marketability features rolled out incrementally. | ongoing |
+
+Total Phase 0→3 estimate: **10-13 weeks** to a launchable product covering both sides.
+
+---
+
+**Next step after Sean signs off on this doc:** kick Phase 1 — fork the repo, create the new Supabase project, add `tenants.kind` + `tenant_id` + RLS to the schema, build both provisioning flows (broker + builder).
