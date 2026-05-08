@@ -102,14 +102,19 @@ export async function POST(
       }
     }
 
+    // UPSERT not INSERT — global_stock_pool has a unique constraint on
+    // (builder_name, lot_number, estate_name) and the aggregator may
+    // already have written this row from the same ingestion run with a
+    // lower confidence score. Approve = "use this version" so we want
+    // to overwrite the existing record, not duplicate or 409.
     const { data: inserted, error: insertErr } = await supabase
       .from("global_stock_pool")
-      .insert(row)
+      .upsert(row, { onConflict: "builder_name,lot_number,estate_name" })
       .select("id")
       .single();
     if (insertErr) {
       return NextResponse.json(
-        { ok: false, error: `Insert failed: ${insertErr.message}` },
+        { ok: false, error: `Save failed: ${insertErr.message}` },
         { status: 500 },
       );
     }
