@@ -353,6 +353,22 @@ function pAndIMonthly(balance: number, ratePct: number, years: number): number {
   return (balance * r) / (1 - Math.pow(1 + r, -n));
 }
 
+// Approximate Australian LMI premium as a fraction of the loan amount.
+// Real numbers vary by lender / Genworth-QBE schedule / borrower tier;
+// these are mid-band averages from public LMI calculators 2025-2026.
+// Returns 0 when LVR ≤ 80%. Anyone using these for an actual settlement
+// should pull a live quote — see Disclaimer in BorrowingCalculator.
+function lmiRateForLvr(lvr: number): number {
+  if (lvr <= 80) return 0;
+  if (lvr <= 82) return 0.0050;
+  if (lvr <= 85) return 0.0098;
+  if (lvr <= 87) return 0.0156;
+  if (lvr <= 90) return 0.0224;
+  if (lvr <= 92) return 0.0307;
+  if (lvr <= 95) return 0.0450;
+  return 0.0560; // > 95% LVR — most lenders won't go here without specials
+}
+
 export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   // Income
   const [income, setIncome] = useState<number>(initial?.income ?? 120000);
@@ -364,6 +380,10 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   // Household
   const [dependents, setDependents] = useState<number>(initial?.dependents ?? 0);
   const [declaredExpenses, setDeclaredExpenses] = useState<number>(initial?.declaredExpenses ?? 0);
+
+  // Deposit / savings — auto-fills from contact.existing_savings via
+  // borrowingInitialFromLead. Used to compute max purchase price + LVR.
+  const [deposit, setDeposit] = useState<number>(initial?.deposit ?? 0);
 
   // Existing debts
   const [creditLimit, setCreditLimit] = useState<number>(initial?.creditLimit ?? 0);
@@ -419,16 +439,29 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       ? (surplus * (1 - Math.pow(1 + r, -months))) / r
       : 0;
 
+  // Purchase price + LVR — only meaningful with a deposit input.
+  // Treats deposit as full equity contribution; doesn't account for
+  // stamp duty + closing costs (which would reduce effective deposit).
+  const maxPurchasePrice = maxLoan + deposit;
+  const lvr = maxPurchasePrice > 0 ? (maxLoan / maxPurchasePrice) * 100 : 0;
+  const lmiRate = lmiRateForLvr(lvr);
+  const lmiPremium = lmiRate * maxLoan;
+  const needsLmi = lvr > 80 && maxLoan > 0 && deposit > 0;
+
   useCalcSync(
     {
       inputs: {
         income, partner, otherIncome, hasHecs, partnerHasHecs,
         dependents, declaredExpenses,
+        deposit,
         creditLimit, existingMortgageBalance, existingMortgageRate, existingMortgageTerm,
         personalLoan, carLoan, otherDebts,
         rate, buffer, loanTerm,
       },
-      outputs: { maxLoan, monthlyNet, livingExp, totalDebtCommit, surplus, hem },
+      outputs: {
+        maxLoan, monthlyNet, livingExp, totalDebtCommit, surplus, hem,
+        maxPurchasePrice, lvr, lmiPremium, needsLmi,
+      },
     },
     onChange,
   );
@@ -466,6 +499,15 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
         <NumberInput value={declaredExpenses} onChange={setDeclaredExpenses} prefix="$" step={50} />
         <p className="text-[11px] text-gray-500 mt-1">
           Lenders assess against the higher of declared or HEM.
+        </p>
+      </Field>
+
+      <SubHeading>Deposit</SubHeading>
+      <Field label="Savings / deposit available">
+        <NumberInput value={deposit} onChange={setDeposit} prefix="$" step={5000} />
+        <p className="text-[11px] text-gray-500 mt-1">
+          Auto-fills from contact's saved profile. Drives max purchase price + LVR + LMI estimate.
+          Doesn't account for stamp duty / closing costs.
         </p>
       </Field>
 
@@ -555,14 +597,33 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
 
       <Output>
         <Stat label="Estimated max loan" value={fmtCurrency(maxLoan)} highlight />
+        {deposit > 0 && maxLoan > 0 && (
+          <>
+            <Stat
+              label="Max purchase price (loan + deposit)"
+              value={fmtCurrency(maxPurchasePrice)}
+              highlight
+            />
+            <Stat label={`LVR — ${lvr.toFixed(1)}%`} value={lvr <= 80 ? "no LMI" : "LMI applies"} />
+            {needsLmi && (
+              <Stat
+                label={`Indicative LMI premium (${(lmiRate * 100).toFixed(2)}%)`}
+                value={fmtCurrency(lmiPremium)}
+              />
+            )}
+          </>
+        )}
         <Stat label="Monthly net income" value={fmtCurrency(monthlyNet)} />
         <Stat label="Living expenses (HEM/declared)" value={fmtCurrency(livingExp)} />
         <Stat label="Existing debt commitments" value={fmtCurrency(totalDebtCommit)} />
         <Stat label="Monthly surplus" value={fmtCurrency(surplus)} />
-        {maxLoan > 0 && (
+        {maxLoan > 0 && deposit === 0 && (
           <>
             <Stat label="Indicative deposit @ 80% LVR" value={fmtCurrency(maxLoan * 0.25)} />
             <Stat label="Indicative deposit @ 90% LVR" value={fmtCurrency(maxLoan * 0.111)} />
+            <p className="text-[11px] text-gray-500 col-span-full mt-1">
+              Enter actual deposit above for max purchase price + LMI estimate.
+            </p>
           </>
         )}
       </Output>

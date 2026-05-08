@@ -730,6 +730,7 @@ export default function OpportunityDetail({
               partner_annual_income: lead.partner_annual_income,
               dependents_count: lead.dependents_count,
               hecs_balance: lead.hecs_balance,
+              existing_savings: lead.existing_savings,
             }}
           />
 

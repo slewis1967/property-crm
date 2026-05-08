@@ -104,6 +104,7 @@ type BorrowingPrefill = {
   partner_annual_income?: number | null;
   dependents_count?: number | null;
   hecs_balance?: number | null;
+  existing_savings?: number | null;
 };
 
 function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): Record<string, any> | undefined {
@@ -112,13 +113,15 @@ function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): Record<st
     lead.annual_income != null ||
     lead.partner_annual_income != null ||
     lead.dependents_count != null ||
-    lead.hecs_balance != null;
+    lead.hecs_balance != null ||
+    lead.existing_savings != null;
   if (!has) return undefined;
   return {
     income: lead.annual_income ?? 0,
     partner: lead.partner_annual_income ?? 0,
     dependents: lead.dependents_count ?? 0,
     hasHecs: (lead.hecs_balance ?? 0) > 0,
+    deposit: lead.existing_savings ?? 0,
   };
 }
 
