@@ -115,6 +115,7 @@ export async function POST(req: Request) {
             user: userPrompt,
             maxTokens: 2000,
             effort: "medium",
+            thinking: false,
           }),
       });
       const parsed = parseResponse(result.text);
