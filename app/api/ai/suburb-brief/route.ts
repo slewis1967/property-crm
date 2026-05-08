@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         kind: "suburb-brief",
         refId: `${state}:${suburb}`.toLowerCase(),
         fingerprintInput,
-        maxAgeMs: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAgeMs: 30 * 24 * 60 * 60 * 1000, // 30 days — suburb market data is quarterly
         generate: () =>
           aiCall({
             system: SYSTEM,
