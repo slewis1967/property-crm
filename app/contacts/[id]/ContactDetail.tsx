@@ -297,13 +297,6 @@ export default function ContactDetail({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition">
             🗑️ Delete
           </button>
-          {contact.ghl_contact_id && (
-            <a href={`https://app.gohighlevel.com/contacts/${contact.ghl_contact_id}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-              Open in GHL →
-            </a>
-          )}
         </div>
       </div>
 

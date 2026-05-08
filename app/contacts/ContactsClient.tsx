@@ -772,16 +772,6 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
                   📱 Call
                 </a>
               )}
-              {panel.ghl_contact_id && (
-                <a
-                  href={`https://app.gohighlevel.com/contacts/${panel.ghl_contact_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 text-center text-sm font-medium py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                >
-                  GHL →
-                </a>
-              )}
             </div>
           </>
         )}
