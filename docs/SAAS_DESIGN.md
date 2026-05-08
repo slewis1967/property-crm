@@ -15,37 +15,50 @@ This doc captures the plan from foundation through Phase 4. Read it once, mark u
                      │ propmarketer-app (new repo)  │
                      │  Next.js, multi-tenant       │
                      └──────────────────────────────┘
-                              │           │
-              ┌───────────────┘           └────────────────┐
-              ▼                                            ▼
-     ┌────────────────┐                          ┌──────────────────┐
-     │ Supabase (new) │                          │ NEXUS API on Fly │
-     │  - tenants     │                          │  - aggregator    │
-     │  - users       │                          │  - sequence_runner│
-     │  - all data    │                          │  - email pipeline│
-     │    + tenant_id │                          │  (per-tenant)    │
-     │  - Auth        │                          └──────────────────┘
-     │  - Storage     │
-     └────────────────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Stripe         │
-     │  Solo / Growth │
-     │  / Pro / Agency│
-     └────────────────┘
+                              │
+                              ▼
+     ┌────────────────────────────────────────────────────┐
+     │ Supabase (new)                                     │
+     │  - tenants, tenant_users, tenant_branding          │
+     │  - tenant_subscription, tenant_audit_log           │
+     │  - private operational data (contacts, leads,      │
+     │    sequences, calc, etc.) all keyed on tenant_id   │
+     │  - SHARED catalogue: global_stock_pool, builders,  │
+     │    ingestion_run, property_review_queue            │
+     │    (admin-only writes; Pro+ tenants read-only)     │
+     │  - Auth, Storage                                   │
+     └────────────────────────────────────────────────────┘
+              ▲                       ▲
+              │ per-tenant scope      │ admin-only ingestion
+              │                       │ (NextKey runs centrally)
+     ┌────────────────┐      ┌──────────────────────────┐
+     │ Stripe         │      │ NEXUS API on Fly         │
+     │  Solo / Growth │      │  - central aggregator    │
+     │  / Pro / Agency│      │  - sequence_runner (per-  │
+     │                │      │    tenant via tenant_id) │
+     └────────────────┘      │  - email pipeline (per-  │
+                             │    tenant inbox routing) │
+                             └──────────────────────────┘
 ```
+
+**Catalogue model — centralised, not user-contributed:**
+
+The property `global_stock_pool` is NextKey's product moat. NextKey owns the builder agreements, NextKey's ingestion service processes the stocklists, NextKey publishes the curated catalogue. Pro+ tenants are **read-only consumers** of that catalogue — they don't forward their own builder emails into the system, they don't run their own aggregator pipeline. The value prop on Pro = "live national property catalogue from our builder partner network, AI-matched to your clients."
+
+This means `/aggregator/builders`, `/aggregator/runs`, `/aggregator/review` are **super-admin only** in the SaaS app. Tenant users don't see them at all. They see the resulting `/properties` feed (Pro+ only).
+
+**Bring-Your-Own-Builder (Agency tier exception):** Agency tier tenants can ingest from their own private builder relationships into a tenant-scoped catalogue (rows tagged with their `tenant_id`). RLS policy: a tenant sees `WHERE tenant_id IS NULL OR tenant_id = current_tenant_id` — public NextKey rows + their own private rows. Their private rows are NOT visible to other tenants. See §13 for BYOB details.
 
 **Three new infrastructure pieces** (don't reuse NextKey's):
 
-- **New repo** `propmarketer-app` (or whatever you name it). Forked from `property-crm` at the current SHA so we inherit the work but evolve independently. NextKey's repo continues unchanged.
+- **New repo** `propmarketer-app`. Forked from `property-crm` at the current SHA so we inherit the work but evolve independently. NextKey's repo continues unchanged.
 - **New Supabase project** — separate from `nextkey-property-crm`. Fresh schema with `tenant_id` baked in from day 1. Easier to reason about than back-filling tenant_id into a populated DB.
 - **New Netlify site** — `propmarketer.app` or similar. Custom domains for white-label tenants attach here.
 
 **Existing pieces that stay shared:**
 
-- **NEXUS API on Fly** — handles aggregator + sequence runner + email pipeline. Per-tenant scope passed in request headers. Same Anthropic key, billed-per-call so we can either pass through to tenant or eat the cost (decision: see §10).
-- **Stripe** — new account or new product set inside the existing one. Probably new account so NextKey's revenue and PropMarketer's revenue are clearly separated.
+- **NEXUS API on Fly** — central aggregator stays as it is for NextKey's (now SaaS's) builder pipeline. Sequence runner + email pipeline get per-tenant scope: every cron pass loops tenants and runs each one in isolation.
+- **Stripe** — new account dedicated to PropMarketer revenue (decision §10 Q3 = new account, confirmed 2026-05-08).
 
 ## 2. Multi-tenancy data model
 
@@ -73,10 +86,10 @@ Tables that need it (current count):
 | `tasks`                  | + tenant_id                                     |
 | `unsubscribes`           | + tenant_id                                     |
 | `recommendation_log`     | + tenant_id                                     |
-| `global_stock_pool`      | **shared** — see below                          |
-| `builders`               | **shared** — see below                          |
-| `ingestion_run`          | **shared**                                      |
-| `property_review_queue`  | **shared**                                      |
+| `global_stock_pool`      | **shared** + nullable tenant_id (BYOB)          |
+| `builders`               | **shared** + nullable tenant_id (BYOB)          |
+| `ingestion_run`          | **shared** + nullable tenant_id (BYOB)          |
+| `property_review_queue`  | **shared** + nullable tenant_id (BYOB)          |
 | `ghl_archive_*`          | NextKey-only, doesn't migrate                   |
 | `client_users`           | NEW — end-clients of tenants                    |
 | `client_sessions`        | NEW — magic-link tokens                         |
@@ -84,9 +97,22 @@ Tables that need it (current count):
 | `tenant_branding`        | NEW — logo, colors, custom domain               |
 | `tenant_audit_log`       | NEW — who-did-what for super admin              |
 
-**Shared tables** (`global_stock_pool`, `builders`, `ingestion_run`, `property_review_queue`): the aggregator's value proposition is a network-effect catalogue — every tenant on Pro+ benefits from every other tenant's builder relationships. So these stay shared. Tenants on Free/Solo/Growth see no aggregator output (gated). Pro+ tenants see all properties, all builders.
+**Shared tables** (`global_stock_pool`, `builders`, `ingestion_run`, `property_review_queue`): NextKey's central ingestion writes here with `tenant_id = NULL` (public). All Pro+ tenants read these rows. Solo/Growth tenants see nothing aggregator-related (tier gate). Agency tenants additionally write rows with their own `tenant_id` set (BYOB private scope, §13). RLS:
 
-**Risk:** if a tenant cancels, do we keep ingesting their builders' emails? Decision needed (§10 Q1).
+```sql
+-- Read policy on global_stock_pool (and the other 3 shared tables):
+USING (
+  tenant_id IS NULL                       -- public NextKey catalogue
+  OR tenant_id = (auth.jwt() ->> 'tenant_id')::uuid  -- own BYOB rows
+)
+-- Write policy: super_admin OR (tenant_id matches AND tier='Agency')
+```
+
+**Q1 cancel resolution** (decided 2026-05-08, supersedes earlier §10):
+
+- Catalogue access: revoked immediately on `subscription.deleted` webhook. Their dashboard's `/properties` page now shows the upgrade prompt.
+- Their private data (contacts, opportunities, settings, calendar, sequences): read-only export window for 30 days post-cancel; hard delete after 60 days unless they re-subscribe.
+- Their BYOB rows (Agency tenants only): stay visible to them during the 30-day read-only window, deleted at the 60-day hard cutoff.
 
 ## 3. Auth
 
@@ -113,7 +139,8 @@ Pricing per `project_saas_strategic.md` — confirm in §10 Q4.
 | **Borrowing + stamp duty calcs** | ✓         | ✓           | ✓          | ✓               |
 | **AI lead scoring + matchmaker** | ✗         | ✓           | ✓          | ✓               |
 | **Branded PDF reports**          | ✗         | ✓           | ✓          | ✓               |
-| **Property aggregator feed**     | ✗         | ✗           | ✓          | ✓               |
+| **Property aggregator feed** (NextKey curated)   | ✗ | ✗ | ✓          | ✓               |
+| **Bring-your-own-builder** (private scope)        | ✗ | ✗ | ✗          | ✓               |
 | **AI document extraction**       | ✗         | ✗           | ✓          | ✓               |
 | **AI smart reply / pitch**       | ✗         | ✗           | ✓          | ✓               |
 | **Document e-signing**           | ✗         | ✗           | ✓          | ✓               |
@@ -189,15 +216,20 @@ Separate sub-app under `/client` (or a custom subdomain on Agency tier — `clie
 
 RLS policy ensures a client can only see rows where they're listed in `linked_contact_ids` or `primary_contact_id` and the tenant matches.
 
-## 10. Open questions (need Sean's call)
+## 10. Decisions log (resolved 2026-05-08)
 
-1. **Q1 — Aggregator sharing model**: when a tenant cancels Pro, do we keep ingesting their forwarded builder emails (so re-subscription is smooth) or stop immediately? Recommend: keep ingesting for 60 days, then unforward.
-2. **Q2 — Repo name**: `propmarketer-app`? `brokerpro-crm`? `leadgun`? Open to name + I'll register the domain matching it.
-3. **Q3 — Stripe account**: new account dedicated to PropMarketer revenue, or new products inside NextKey's existing account? Tax + bookkeeping cleaner if new account.
-4. **Q4 — Pricing confirm**: $149/$449/$1199/$2999+ from May memory still right, or rebalance? At $149 Solo with 50 AI requests, gross margin is ~70% after Anthropic + Brevo + Supabase + Netlify. Annual discount? Free tier with severe limits to seed signups?
-5. **Q5 — Beta launch**: who pilots? 5-10 friendly brokers / planners on free Pro for 60 days in exchange for testimonial + feedback?
-6. **Q6 — AI cost passthrough**: fair-use cap (current plan), or metered overage billing visible to user?
-7. **Q7 — NextKey on the new system**: do we migrate NextKey itself onto PropMarketer once it's stable (drinking own champagne) or keep `crm.nextkey.com.au` separate forever?
+1. **Q1 — Cancel flow**: catalogue access revoked immediately. Private data read-only 30 days, hard delete 60. BYOB rows follow private-data timeline. (See §2 cancel resolution.)
+2. **Q2 — Repo name**: `propmarketer-app`. Domain TBD — assume `propmarketer.app`; register before Phase 1 starts.
+3. **Q3 — Stripe**: new dedicated PropMarketer Stripe account.
+4. **Q4 — Pricing**: confirmed $149/$449/$1199/$2999+ Solo/Growth/Pro/Agency. Annual discount + free tier deferred to launch-prep.
+5. **Q5 — Beta launch**: yes — 5–10 friendly brokers/planners on free Pro for 60 days, in exchange for testimonials + feedback. Recruitment list to be drawn during Phase 2.
+6. **Q6 — AI cost**: metered overage billing. Each tier has an included monthly bucket (per §4); overage is metered + visible in the in-app billing page; threshold-based throttle (50%/80%/100% banners). Stripe handles overage as a separate metered Price.
+7. **Q7 — NextKey on PropMarketer**: yes, eventually migrate NextKey onto PropMarketer once it's production-stable (drink own champagne). NextKey becomes a special tenant — likely Agency tier — with BYOB enabled for their direct builder relationships. Existing `crm.nextkey.com.au` data migrates over; old codebase deprecates.
+
+**Catalogue model decisions** (added 2026-05-08, see §1 + §13):
+
+8. **Q-A — Catalogue scope**: universal. Every Pro+ tenant sees the entire NextKey-curated catalogue. No geo-filter or per-tenant curated packs at launch. Easier to reason about, easier to sell.
+9. **Q-B — Bring-your-own-builder**: yes, Agency-tier exclusive. Private scope (rows visible only to the contributing tenant + super admin). See §13 for design. Alternative interpretation (tenant submits builder + NextKey reviews + publishes centrally) is **NOT** the chosen model — flag this if it should be.
 
 ## 11. Phase plan + estimated effort
 
@@ -228,9 +260,31 @@ RLS policy ensures a client can only see rows where they're listed in `linked_co
 
 ## 12. Things explicitly NOT in scope for the SaaS
 
-- Multi-tenanting NextKey's existing `crm.nextkey.com.au` — that stays single-tenant.
+- Multi-tenanting NextKey's existing `crm.nextkey.com.au` in-place — that stays single-tenant. NextKey eventually migrates *onto* PropMarketer (Q7) but the legacy CRM is not modified.
 - The `nextkey-nexus` repo (NEXUS API on Fly) — extending to be tenant-aware is part of Phase 1, but the repo itself stays where it is.
-- Migrating NextKey's data into the SaaS — separate decision (Q7).
+- Tenant-uploaded property listings outside the BYOB-builder model. Tenants can't manually CRUD `global_stock_pool` rows — that's super-admin / pipeline-only.
+
+## 13. Bring-your-own-builder (BYOB) — Agency tier
+
+Agency tier tenants can ingest from their own builder relationships into a private scope. Implementation:
+
+**Schema:** the four shared aggregator tables (`global_stock_pool`, `builders`, `ingestion_run`, `property_review_queue`) get a nullable `tenant_id`. NULL = public NextKey-curated; non-NULL = private to that tenant.
+
+**Intake address routing:** rather than per-tenant Gmail inboxes, use Gmail sub-addressing on a single shared SaaS intake account:
+
+```
+intake+t<tenant_short_id>@propmarketer.app   →  routes to a single inbox
+```
+
+The aggregator parses the recipient from each message's `Delivered-To` / `To` header. `+t<short_id>` → tenant-scoped ingestion. No suffix → public catalogue (NextKey).
+
+**Tenant-side setup:** Agency tenant configures a Gmail filter on their own account auto-forwarding builder emails to `intake+t<their-id>@propmarketer.app`. The pattern is the same one NextKey uses today; the only difference is the recipient address embeds tenant identity.
+
+**UI:** Agency-tier tenants see a tenant-scoped `/aggregator/builders` page (same component as super admin's, but RLS limits visibility to their own rows). They can add builders, set `extraction_notes`, upload sample PDFs — same UX as NextKey's. Super admin retains a separate cross-tenant view at `/admin/aggregator`.
+
+**Cost passthrough:** AI extraction costs for BYOB rows count against the Agency tenant's monthly AI bucket (Q6 — metered overage). Public-catalogue extraction is on NextKey's tab (it's the product).
+
+**Migration story for NextKey** (Q7): NextKey's existing `global_stock_pool` rows enter PropMarketer as `tenant_id = NULL` (public). NextKey's tenant row uses Agency tier with BYOB enabled — but doesn't *need* BYOB because it's the source of the public catalogue.
 
 ---
 
