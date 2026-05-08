@@ -18,13 +18,35 @@ import { supabase } from "../../../../../utils/supabase";
 
 export const dynamic = "force-dynamic";
 
+// total_package_price is a Postgres generated column (computed from
+// house_price + land_price). Trying to INSERT it raises 428C9. We let
+// Postgres compute it from the price components below.
 const PROPERTY_FIELDS = [
   "builder_name", "estate_name", "lot_number", "street_address",
   "suburb", "state", "property_type", "bedrooms", "bathrooms", "car_spaces",
   "land_size_sqm", "house_size", "house_price", "land_price", "build_price",
-  "total_package_price", "expected_rent_weekly", "rebates", "titled",
+  "expected_rent_weekly", "rebates", "titled",
   "sda_category", "status",
 ];
+
+// AI extractor sometimes returns numbers with units ("181m²", "$650,000",
+// "4 bed"). These columns are NUMERIC in Postgres so we strip everything
+// but digits + decimal point before insert. Empty / unparseable → null.
+const NUMERIC_FIELDS = new Set([
+  "bedrooms", "bathrooms", "car_spaces",
+  "land_size_sqm", "house_size",
+  "house_price", "land_price", "build_price",
+  "expected_rent_weekly",
+]);
+
+function coerceNumeric(v: any): number | null {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  const cleaned = String(v).replace(/[^0-9.\-]/g, "");
+  if (!cleaned || cleaned === "." || cleaned === "-") return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
 
 export async function POST(
   req: Request,
@@ -75,7 +97,9 @@ export async function POST(
       source: "aggregator_v2_reviewed",
     };
     for (const f of PROPERTY_FIELDS) {
-      if (f in merged) row[f] = merged[f];
+      if (f in merged) {
+        row[f] = NUMERIC_FIELDS.has(f) ? coerceNumeric(merged[f]) : merged[f];
+      }
     }
 
     const { data: inserted, error: insertErr } = await supabase
