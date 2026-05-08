@@ -20,14 +20,15 @@
 **Out of scope (confirmed Sean 2026-05-08):**
 
 - Calendar — stays on Google OAuth (already integrated). Replacing Google Calendar is a separate 6+ week build.
-- Native mobile email apps (iOS Mail / Outlook mobile / etc). PWA only. We do **not** expose IMAP from a custom backend — that's serious infra and Sean accepts the trade-off.
+- Native mobile email apps for **Glenn** — PWA only on iOS / Android. Sean (per §11 Q5 hybrid) keeps his Google Workspace seat and continues using native iOS Mail / Gmail mobile.
 - Drive, Meet, Docs — not email; out of scope. Replace separately if needed.
+- `stocklist@nextkeypropertyinvest.com` — different domain, free Gmail account, kept on Gmail OAuth poll (the aggregator's existing pipeline).
 
-**Cost picture:**
+**Cost picture (with hybrid mobile choice §11 Q5):**
 
 - Currently: Google Workspace ~$20-60/mo for 2 users
-- After: Postmark Inbound ~$15/mo + Supabase storage delta ~$5/mo
-- **Net savings: $0-40/mo (~$0-480/yr)**. Engineering pays for itself in year 5+, not year 1. Justified by other benefits: tighter CRM integration, every email auto-linked to a contact, AI everywhere, foundation for SaaS email-client tier.
+- After: Postmark Inbound ~$15/mo + Sean's retained Google seat ~$10-15/mo + Supabase storage delta ~$5/mo
+- **Net savings: $0-25/mo (~$0-300/yr)**. Cost-savings are slim — the migration is justified by tighter CRM integration, AI everywhere, foundation for SaaS email-client feature, and data sovereignty. Not by raw subscription dollars.
 
 ## 2. Architecture
 
@@ -225,39 +226,44 @@ Recommendation: **leave the stocklist@ inbox on Gmail OAuth**. It's working, it'
 
 ## 10. Phase plan + estimates
 
-| Phase | Scope | Estimate |
-|-------|-------|----------|
-| 0 | This doc + decisions sign-off | done after Sean's review |
-| 1 | Schema additions (folders, drafts, attachments, search). Polish existing email UI: search, drafts auto-save, folders/labels, bulk actions, attachments via Storage. Per-user inbox routing. **Still uses Gmail OAuth poll on backend.** | 3-4 weeks |
-| 2 | Postmark Inbound setup + webhook handler. Run in parallel with Gmail poll on a test subdomain. | 2 weeks |
-| 3 | MX cutover for `nextkey.com.au`. 14-day belt-and-braces with both running. Cancel Google Workspace at end. | 1 week + 2 weeks observation |
-| 4 | Outbound polish — per-user Brevo sender, signature integration. | 1 week |
-| 5 | Calendar bridge — render incoming ICS attachments as "Add to Google Calendar" inline. | 1 week |
-| 6 *(optional)* | Historical email import. Decision deferred. | 2-3 weeks if done |
+| Phase | Scope | Estimate | Target completion |
+|-------|-------|----------|-------------------|
+| 0 | This doc + decisions sign-off | done | 2026-05-08 |
+| 1 | Schema additions (folders, drafts, attachments, search). Polish existing email UI: search, drafts auto-save, folders/labels, bulk actions, attachments via Storage. Per-user inbox routing. Still uses Gmail OAuth poll on backend. | 3-4 weeks | ~2026-06-08 |
+| 2 | Postmark Inbound setup + webhook handler. Spam-score routing. Run in parallel with Gmail poll on test subdomain `mail-test.nextkey.com.au`. | 2 weeks | ~2026-06-19 |
+| 3 | **MX cutover Sunday 21 June 2026 02:00 AEST.** 14-day belt-and-braces with Gmail OAuth poll still running. Cancel Glenn's Google seat at end. Sean's seat retained per §11 Q5. | cutover day + 2 wks observation | 2026-06-21 cutover, ~2026-07-05 stable |
+| 4 | Outbound polish — per-user Brevo verified senders, signature integration. | 1 week | ~2026-07-12 |
+| 5 | Calendar bridge — render incoming ICS attachments as "Add to Google Calendar" inline. | 1 week | ~2026-07-19 |
+| 6 | **Historical email import** (Q2 = yes). Bulk Google Takeout export per mailbox → import to Supabase as `source='gmail_archive'`. Includes attachments. Streaming import to handle volume. | 2-3 weeks | ~2026-08-09 |
 
-**Total committed: 8-10 weeks** (Phase 1-5). Plus 2-3 weeks if you opt into Phase 6.
+**Total: 11-13 weeks. Project completes ~9 August 2026.**
 
-## 11. Decisions needed before code starts
+## 11. Decisions log (resolved 2026-05-08)
 
-1. **Inbound provider** — Postmark Inbound (recommended) or other? Postmark needs an account creation + payment method.
-2. **Historical migration** — option 1 (don't), 2 (full import), or 3 (selective)? My lean: option 1 for v1.
-3. **Stocklist@ inbox** — leave on Gmail OAuth (recommended) or move into new pipeline?
-4. **Cutover window** — pick a quiet Sunday, give me a date 4-5 weeks out so Phase 1+2 can land in advance.
-5. **Mobile acceptance** — confirm you're OK with PWA-only (no native iOS Mail / Outlook mobile). Push notifications via PWA work; just no native client.
-6. **Spam tolerance** — Postmark has decent inbound spam scoring but it's not Google-grade. Some spam will land in your inbox initially. Accept and tune over time, or pay for a separate spam filter (e.g. SpamAssassin in front, ~$5/mo more)?
-7. **Trash + spam retention** — auto-purge after 30 days like Gmail, or keep forever?
+1. **Inbound provider — Postmark Inbound.** $15/mo, clean webhook API, parses MIME for us, has SpamAssassin scoring built-in.
+2. **Historical migration — option 2 (full import).** Bulk export Sean's + Glenn's Gmail mailboxes via Google Takeout / IMAP, import to Supabase tagged `source='gmail_archive'`. Adds ~2-3 weeks (Phase 6) — see §10 phase plan.
+3. **Stocklist@ inbox — keep on Gmail OAuth.** Free account, working pipeline, separate domain. Don't touch.
+4. **Cutover window — Sunday 21 June 2026, 02:00 AEST.** Picked by Claude on Sean's instruction. Gives Phase 1 (3-4 wks) + Phase 2 (2 wks) clean runway from today (2026-05-08).
+5. **Mobile — hybrid.** Sean keeps his Google Workspace seat (~$10-15/mo) for native iOS Mail / Gmail mobile experience. Glenn drops his and goes PWA-only on `/mail`. Easy to flip later.
+6. **Spam — use Postmark's built-in SpamAssassin scoring.** Postmark already runs SpamAssassin and includes the score on every webhook. We consume the score and route to spam folder above threshold 5.0. No separate $5/mo service needed.
+7. **Trash + spam retention — auto-purge after 30 days** (Gmail-style). Daily cron deletes rows + storage attachments older than 30 days from `is_trashed=true OR is_spam=true`.
 
 ## 12. External steps Sean has to do
 
-Before I can start Phase 2:
+Before I can start Phase 2 (~early June):
 
-1. **Sign up for Postmark.** Verify the account, add payment, get the API key.
-2. **Pick the cutover date** so I can plan Phase 1 to land before it.
+1. **Sign up for Postmark.** Verify the account, add payment, give me the Server API token + Inbound webhook URL config access.
+2. **Verify both `sean.l@nextkey.com.au` and `glenn.m@nextkey.com.au`** as Brevo senders so per-user outbound works (Phase 4).
 
-Before Phase 3 (MX cutover):
+Before Phase 3 cutover (Sunday 21 June 2026):
 
-3. **Be available the day of cutover.** Quiet window, you have eyes on it, we both have rollback ready.
-4. **Plan Google Workspace cancel timing.** Lock-in clauses, billing dates.
+3. **Lower TTL on existing Google MX records** the day before — Saturday 20 June. (One-line DNS change in Cloudflare; I'll write the exact instruction.)
+4. **Be available 02:00 AEST Sunday 21 June.** I do the MX swap + watch logs; you confirm mail reaches the new system from a few external test addresses.
+5. **Plan Google Workspace cancel timing for Glenn's seat.** Postmark catches new mail from cutover; once we've verified 14 days of clean delivery (~2026-07-05), cancel Glenn's seat at end of his current billing period. Sean's seat stays.
+
+Before Phase 6 historical import (~late July):
+
+6. **Run Google Takeout** for both Gmail mailboxes — exports `.mbox` files of all historical mail. I'll give exact instructions; takes ~1 hour to request, ~24 hours for Google to deliver. Upload to Supabase Storage; my import script processes from there.
 
 ## 13. Things explicitly NOT in scope
 
@@ -269,4 +275,4 @@ Before Phase 3 (MX cutover):
 
 ---
 
-**Next step after Sean signs off:** answer the 7 decisions in §11, sign up for Postmark, then I cut Phase 1 work tickets and start the schema + UI polish.
+**Status as of 2026-05-08 EOD:** all 7 decisions resolved (see §11). Sean's blockers: sign up for Postmark, verify both senders in Brevo. I'm cleared to start Phase 1 — schema migrations + UI polish (still on Gmail OAuth backend, no MX changes yet, low risk). Tell me when Postmark's set up and I'll start.
