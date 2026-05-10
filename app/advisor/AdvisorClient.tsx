@@ -15,6 +15,13 @@ type Rec = {
   status: "pending" | "applied" | "dismissed" | "snoozed";
   snoozed_until: string | null;
   created_at: string;
+  /**
+   * Optional structured action emitted by the Veteran when the recommendation
+   * fits a safe-allowlist mutation (set_app_setting, deactivate/activate/
+   * confirm_builder_draft, update_builder_field). Non-null = "🤖 Auto-apply"
+   * button shows; one click runs it via /execute endpoint.
+   */
+  machine_action: Record<string, any> | null;
 };
 
 const IMPACT_BADGE: Record<string, string> = {
@@ -41,6 +48,14 @@ export default function AdvisorClient() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Deep-link from Telegram alerts: /advisor?id=<uuid> auto-expands that rec
+  // so Sean lands directly on the high-impact thing without scrolling.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linkedId = params.get("id");
+    if (linkedId) setExpandedId(linkedId);
+  }, []);
 
   const load = async () => {
     setItems(null);
@@ -73,6 +88,29 @@ export default function AdvisorClient() {
       await load();
     } catch (e: any) {
       alert(e?.message ?? "Action failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /**
+   * One-click auto-apply for recommendations that have a machine_action.
+   * Hits /execute which validates the action against the allowlist, runs
+   * the SQL/upsert, marks the rec applied, and audit-logs the result.
+   */
+  const autoApply = async (r: Rec) => {
+    const summary = describeAction(r.machine_action);
+    if (!confirm(`Auto-apply this action?\n\n${summary}\n\nThis runs immediately and is recorded in the audit log.`)) return;
+    setBusy(r.id);
+    try {
+      const res = await fetch(`/api/advisor/recommendations/${r.id}/execute`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      await load();
+    } catch (e: any) {
+      alert(`Auto-apply failed: ${e?.message ?? e}`);
     } finally {
       setBusy(null);
     }
@@ -195,15 +233,37 @@ export default function AdvisorClient() {
                       </ul>
                     </Detail>
                   )}
+                  {r.machine_action && (
+                    <Detail label="🤖 Machine action available">
+                      <p className="text-xs text-gray-700">
+                        {describeAction(r.machine_action)}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Auto-Apply runs this immediately and records it in the audit log.
+                      </p>
+                    </Detail>
+                  )}
                   {isPending && (
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-2 flex-wrap">
+                      {r.machine_action && (
+                        <button
+                          type="button"
+                          onClick={() => autoApply(r)}
+                          disabled={isBusy}
+                          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 disabled:opacity-50"
+                          title="Run the structured action server-side and mark applied"
+                        >
+                          🤖 Auto-Apply
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => action(r.id, { action: "apply" })}
                         disabled={isBusy}
                         className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 disabled:opacity-50"
+                        title="Mark applied (you'll do the actual change manually)"
                       >
-                        ✓ Apply
+                        ✓ Mark applied
                       </button>
                       <button
                         type="button"
@@ -247,4 +307,22 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
       {children}
     </div>
   );
+}
+
+function describeAction(a: Record<string, any> | null): string {
+  if (!a) return "(no machine action)";
+  switch (a.kind) {
+    case "set_app_setting":
+      return `Set app_settings[${a.key}] = ${JSON.stringify(a.value)}`;
+    case "deactivate_builder":
+      return `Mark builder ${(a.builder_id || "").slice(0, 8)}… as inactive`;
+    case "activate_builder":
+      return `Mark builder ${(a.builder_id || "").slice(0, 8)}… as active`;
+    case "confirm_builder_draft":
+      return `Confirm builder ${(a.builder_id || "").slice(0, 8)}… (clear draft flag)`;
+    case "update_builder_field":
+      return `Update ${a.field} on builder ${(a.builder_id || "").slice(0, 8)}… → ${JSON.stringify(a.value)}`;
+    default:
+      return `Unknown action: ${a.kind}`;
+  }
 }
