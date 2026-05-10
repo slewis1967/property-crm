@@ -35,10 +35,11 @@ type Rec = {
   risk_level: "low" | "medium" | "high" | null;
 };
 
-type Filter = "pending" | "in_progress" | "applied" | "dismissed" | "all";
+type Filter = "pending" | "in_progress" | "senior_deferred" | "applied" | "dismissed" | "all";
 const FILTER_LABELS: Record<Filter, string> = {
   pending: "Pending",
   in_progress: "In progress",
+  senior_deferred: "Deferred to me",
   applied: "Applied",
   dismissed: "Dismissed",
   all: "All history",
@@ -142,7 +143,7 @@ export default function AdvisorClient() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {(["pending", "in_progress", "applied", "dismissed", "all"] as const).map((f) => (
+        {(["pending", "in_progress", "senior_deferred", "applied", "dismissed", "all"] as const).map((f) => (
           <button
             key={f}
             type="button"
