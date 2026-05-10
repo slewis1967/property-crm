@@ -130,6 +130,33 @@ export async function POST(
     );
   }
 
+  // Senior gate: Auto-Apply only fires when the Senior Advisor has
+  // approved AND the risk level isn't 'high'. Anything high-risk needs
+  // Sean to review manually (he can still hit "Mark applied" — that
+  // path is human-only and bypasses this gate).
+  if (rec.senior_status !== "approved") {
+    const labels: Record<string, string> = {
+      pending_review: "still awaiting Senior Advisor review",
+      rejected: "rejected by Senior Advisor",
+      deferred: "deferred to Sean by Senior Advisor",
+    };
+    const friendly = labels[rec.senior_status] ?? `senior_status=${rec.senior_status}`;
+    return NextResponse.json(
+      { ok: false, error: `Auto-Apply blocked — recommendation ${friendly}.` },
+      { status: 409 },
+    );
+  }
+  if (rec.risk_level === "high") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Auto-Apply blocked — high-risk action requires manual review by Sean. Use 'Mark applied' if you've reviewed and accepted.",
+      },
+      { status: 409 },
+    );
+  }
+
   const result = await executeAction(rec.machine_action);
 
   // Audit row regardless of outcome

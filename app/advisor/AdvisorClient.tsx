@@ -24,6 +24,15 @@ type Rec = {
    * button shows; one click runs it via /execute endpoint.
    */
   machine_action: Record<string, any> | null;
+  /**
+   * Senior Advisor's verdict on the Veteran's recommendation. Auto-Apply
+   * only fires when senior_status='approved' AND risk_level!='high'.
+   */
+  senior_status: "pending_review" | "approved" | "rejected" | "deferred" | null;
+  senior_decision_at: string | null;
+  senior_decision_reason: string | null;
+  senior_compliance_notes: string | null;
+  risk_level: "low" | "medium" | "high" | null;
 };
 
 type Filter = "pending" | "in_progress" | "applied" | "dismissed" | "all";
@@ -170,6 +179,11 @@ export default function AdvisorClient() {
           const inFlightDays = isInProgress && r.started_at
             ? Math.floor((Date.now() - new Date(r.started_at).getTime()) / (1000 * 60 * 60 * 24))
             : null;
+          // Auto-Apply only when Senior approved AND risk isn't high.
+          const autoApplyAllowed =
+            !!r.machine_action &&
+            r.senior_status === "approved" &&
+            r.risk_level !== "high";
 
           return (
             <div
@@ -227,6 +241,32 @@ export default function AdvisorClient() {
                         )}
                       </span>
                     )}
+                    {/* Senior Advisor verdict */}
+                    {r.senior_status === "pending_review" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
+                        ⏳ senior reviewing
+                      </span>
+                    )}
+                    {r.senior_status === "approved" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                        🎩 senior approved
+                      </span>
+                    )}
+                    {r.senior_status === "rejected" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
+                        🎩 senior rejected
+                      </span>
+                    )}
+                    {r.senior_status === "deferred" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">
+                        🎩 deferred to Sean
+                      </span>
+                    )}
+                    {r.risk_level === "high" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-200 text-red-800 border border-red-300">
+                        ⚠ HIGH RISK
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-base font-semibold text-gray-800">{r.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{r.description}</p>
@@ -261,6 +301,24 @@ export default function AdvisorClient() {
                       </ul>
                     </Detail>
                   )}
+                  {(r.senior_decision_reason || r.senior_compliance_notes) && (
+                    <Detail label="🎩 Senior Advisor verdict">
+                      {r.senior_decision_reason && (
+                        <p className="text-sm text-gray-700">{r.senior_decision_reason}</p>
+                      )}
+                      {r.senior_compliance_notes && (
+                        <p className="text-xs text-amber-700 mt-1">
+                          <span className="font-medium">AU compliance:</span>{" "}
+                          {r.senior_compliance_notes}
+                        </p>
+                      )}
+                      {r.risk_level && (
+                        <p className="text-[11px] text-gray-500 mt-1">
+                          Risk level: <strong>{r.risk_level}</strong>
+                        </p>
+                      )}
+                    </Detail>
+                  )}
                   {r.machine_action && (
                     <Detail label="🤖 Machine action available">
                       <p className="text-xs text-gray-700">
@@ -268,12 +326,24 @@ export default function AdvisorClient() {
                       </p>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Auto-Apply runs this immediately and records it in the audit log.
+                        {!autoApplyAllowed && r.machine_action && (
+                          <span className="block text-amber-700 mt-1">
+                            {r.senior_status === "pending_review" &&
+                              "⏳ Auto-Apply locked until Senior reviews (next Friday 9:30am AEST)."}
+                            {r.senior_status === "rejected" &&
+                              "✗ Auto-Apply blocked — Senior rejected this recommendation."}
+                            {r.senior_status === "deferred" &&
+                              "⏸ Auto-Apply requires your call — use Mark applied if you accept."}
+                            {r.senior_status === "approved" && r.risk_level === "high" &&
+                              "⚠ Auto-Apply blocked — high-risk action requires your manual review."}
+                          </span>
+                        )}
                       </p>
                     </Detail>
                   )}
                   {isPending && (
                     <div className="flex gap-2 pt-2 flex-wrap">
-                      {r.machine_action && (
+                      {r.machine_action && autoApplyAllowed && (
                         <button
                           type="button"
                           onClick={() => autoApply(r)}
