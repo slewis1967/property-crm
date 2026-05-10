@@ -12,8 +12,10 @@ type Rec = {
   code_refs: Array<{ file: string; lines: string; note: string }>;
   confidence: number | null;
   impact: "low" | "medium" | "high" | null;
-  status: "pending" | "applied" | "dismissed" | "snoozed";
+  status: "pending" | "applied" | "dismissed" | "snoozed" | "in_progress";
   snoozed_until: string | null;
+  started_at: string | null;
+  started_by: string | null;
   created_at: string;
   /**
    * Optional structured action emitted by the Veteran when the recommendation
@@ -22,6 +24,15 @@ type Rec = {
    * button shows; one click runs it via /execute endpoint.
    */
   machine_action: Record<string, any> | null;
+};
+
+type Filter = "pending" | "in_progress" | "applied" | "dismissed" | "all";
+const FILTER_LABELS: Record<Filter, string> = {
+  pending: "Pending",
+  in_progress: "In progress",
+  applied: "Applied",
+  dismissed: "Dismissed",
+  all: "All history",
 };
 
 const IMPACT_BADGE: Record<string, string> = {
@@ -43,7 +54,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default function AdvisorClient() {
-  const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [filter, setFilter] = useState<Filter>("pending");
   const [items, setItems] = useState<Rec[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -121,8 +132,8 @@ export default function AdvisorClient() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        {(["pending", "all"] as const).map((f) => (
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {(["pending", "in_progress", "applied", "dismissed", "all"] as const).map((f) => (
           <button
             key={f}
             type="button"
@@ -133,7 +144,7 @@ export default function AdvisorClient() {
                 : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
             }`}
           >
-            {f === "pending" ? "Pending" : "All history"}
+            {FILTER_LABELS[f]}
           </button>
         ))}
         <span className="text-xs text-gray-500 ml-2">{items.length} item{items.length === 1 ? "" : "s"}</span>
@@ -154,6 +165,11 @@ export default function AdvisorClient() {
           const isBusy = busy === r.id;
           const impactBadge = IMPACT_BADGE[r.impact ?? "medium"] ?? IMPACT_BADGE.medium;
           const isPending = r.status === "pending" || r.status === "snoozed";
+          const isInProgress = r.status === "in_progress";
+          // How long has this been in flight? Useful pressure on stale work.
+          const inFlightDays = isInProgress && r.started_at
+            ? Math.floor((Date.now() - new Date(r.started_at).getTime()) / (1000 * 60 * 60 * 24))
+            : null;
 
           return (
             <div
@@ -163,6 +179,8 @@ export default function AdvisorClient() {
                   ? "border-emerald-200 opacity-75"
                   : r.status === "dismissed"
                   ? "border-gray-200 opacity-50"
+                  : r.status === "in_progress"
+                  ? "border-blue-300 ring-1 ring-blue-100"
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
@@ -197,6 +215,16 @@ export default function AdvisorClient() {
                     {r.status === "snoozed" && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800">
                         💤 snoozed until {r.snoozed_until?.slice(0, 10)}
+                      </span>
+                    )}
+                    {r.status === "in_progress" && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">
+                        🔧 in progress
+                        {inFlightDays != null && (
+                          <span className="ml-1 text-blue-600">
+                            ({inFlightDays === 0 ? "today" : `${inFlightDays}d`})
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -258,6 +286,15 @@ export default function AdvisorClient() {
                       )}
                       <button
                         type="button"
+                        onClick={() => action(r.id, { action: "start" })}
+                        disabled={isBusy}
+                        className="px-3 py-1.5 bg-blue-100 text-blue-800 text-xs font-medium rounded border border-blue-200 hover:bg-blue-200 disabled:opacity-50"
+                        title="Move to In Progress — actively working on it, not done yet"
+                      >
+                        🔧 Start
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => action(r.id, { action: "apply" })}
                         disabled={isBusy}
                         className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 disabled:opacity-50"
@@ -287,6 +324,32 @@ export default function AdvisorClient() {
                         className="px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
                       >
                         💤 Snooze
+                      </button>
+                    </div>
+                  )}
+                  {isInProgress && (
+                    <div className="flex gap-2 pt-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => action(r.id, { action: "complete" })}
+                        disabled={isBusy}
+                        className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 disabled:opacity-50"
+                        title="Mark complete — moves to Applied"
+                      >
+                        ✓ Complete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm("Move back to Pending? Your in-flight work won't be saved as applied.")) {
+                            action(r.id, { action: "reopen" });
+                          }
+                        }}
+                        disabled={isBusy}
+                        className="px-3 py-1.5 bg-white text-gray-700 text-xs font-medium rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        title="Give up — back to Pending queue"
+                      >
+                        ↩ Back to pending
                       </button>
                     </div>
                   )}
