@@ -26,6 +26,12 @@ export async function GET(req: Request) {
     query = query.or(
       `status.eq.pending,and(status.eq.snoozed,snoozed_until.lt.${new Date().toISOString()})`,
     );
+  } else if (status === "senior_deferred") {
+    // Recs the Senior Advisor flagged for Sean's call. Limit to ones
+    // still actionable so the tab is a live to-do, not a history view.
+    query = query
+      .eq("senior_status", "deferred")
+      .in("status", ["pending", "in_progress", "snoozed"]);
   } else if (status !== "all") {
     query = query.eq("status", status);
   }
