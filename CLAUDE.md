@@ -86,3 +86,16 @@ This scrapes PropMarket for estate images and fuzzy-matches to `builder_name`. ~
 Stored in `.env.local` at project root:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+## MARKETING SKILLS + AU COMPLIANCE GUARDRAILS
+`.claude/skills/` holds 10 curated marketing skills (copywriting,
+copy-editing, cold-email, email-sequence, seo-audit, ad-creative,
+page-cro, popup-cro, schema-markup, marketing-psychology) from the
+public coreyhaines31/marketingskills repo.
+
+`.claude/product-marketing-context.md` is loaded by every skill before
+it asks the user questions. It encodes NextKey's AU compliance hard
+rules (ACL s.18/s.29, NCCP, Privacy Act, Spam Act, QLD POA 2014) and
+the approved-phrasing table. Any marketing copy generated in this
+repo must conform — Senior Advisor flags violations on the recs side
+and the same standard applies to anything Claude writes here.
