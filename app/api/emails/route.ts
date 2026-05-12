@@ -105,11 +105,11 @@ export async function POST(req: Request) {
     req.headers.get("cf-access-authenticated-user-email") ??
     null;
 
-  // Append the standard signature. Stored on the row exactly as sent so
-  // the audit trail and recipient see the same body. Caller can opt out by
-  // passing `skip_signature: true` (e.g. for system notifications that
-  // shouldn't carry Sean's personal sig).
-  const sig = await defaultSignature();
+  // Append the standard signature. Per-user resolution: whoever sent it
+  // (CF Access identity) gets their own sig. Falls back to the legacy
+  // shared sig if their per-user row is empty. Caller can opt out by
+  // passing `skip_signature: true` for system mail.
+  const sig = await defaultSignature(sentBy ?? undefined);
   const skipSig = body.skip_signature === true;
   const finalHtml = skipSig ? body_html : `${body_html}${sig.html}`;
   const finalText = skipSig

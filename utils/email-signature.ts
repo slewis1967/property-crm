@@ -49,20 +49,53 @@ function fromEnv(): Partial<SignatureFields> {
   };
 }
 
-/** Resolve the signature fields from DB → env → hardcoded defaults. */
-export async function getSignatureFields(): Promise<SignatureFields> {
+/**
+ * Resolve the signature for a given user. Lookup chain:
+ *   1. email_user_aliases.signature for the given user_email (per-user storage)
+ *   2. app_settings.email_signature (legacy shared signature, pre-2026-05-12)
+ *   3. env vars
+ *   4. Hardcoded defaults
+ *
+ * Pass `userEmail` whenever you know the sender; omit only for tooling/CRON
+ * paths that don't have a user identity. The legacy shared signature stays
+ * in place as a fallback so anyone whose per-user row is still empty gets
+ * a working signature.
+ */
+export async function getSignatureFields(userEmail?: string): Promise<SignatureFields> {
   let dbFields: Partial<SignatureFields> = {};
-  try {
-    const { data } = await supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "email_signature")
-      .maybeSingle();
-    if (data?.value && typeof data.value === "object") {
-      dbFields = data.value as Partial<SignatureFields>;
+
+  // 1. Per-user signature
+  if (userEmail) {
+    try {
+      const { data } = await supabase
+        .from("email_user_aliases")
+        .select("signature")
+        .eq("user_email", userEmail)
+        .maybeSingle();
+      if (data?.signature && typeof data.signature === "object") {
+        dbFields = data.signature as Partial<SignatureFields>;
+      }
+    } catch {
+      // Pre-migration — fall through
     }
-  } catch {
-    // app_settings table not migrated yet — silently fall through to env/defaults
+  }
+
+  // 2. Legacy shared signature — only consulted when the per-user lookup
+  //    didn't find anything. Means "I haven't set up my own yet, use the
+  //    shared one as a fallback" rather than overriding per-user values.
+  if (Object.keys(dbFields).length === 0) {
+    try {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "email_signature")
+        .maybeSingle();
+      if (data?.value && typeof data.value === "object") {
+        dbFields = data.value as Partial<SignatureFields>;
+      }
+    } catch {
+      // app_settings table not migrated yet — silently fall through
+    }
   }
 
   const env = fromEnv();
@@ -115,8 +148,8 @@ export function renderSignature(f: SignatureFields): SignatureBlock {
 }
 
 /** Convenience: fetch + render in one call. */
-export async function defaultSignature(): Promise<SignatureBlock> {
-  const fields = await getSignatureFields();
+export async function defaultSignature(userEmail?: string): Promise<SignatureBlock> {
+  const fields = await getSignatureFields(userEmail);
   return renderSignature(fields);
 }
 

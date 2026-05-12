@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "../../utils/supabase-browser";
 
 type SignatureFields = {
@@ -14,9 +14,21 @@ type SignatureFields = {
   logo_height?: number;
 };
 
-export default function SignatureEditor({ initial }: { initial: SignatureFields }) {
+type UserOption = { user_email: string; display_name: string };
+
+export default function SignatureEditor({
+  users,
+  initialUserEmail,
+  initial,
+}: {
+  users: UserOption[];
+  initialUserEmail: string;
+  initial: SignatureFields;
+}) {
+  const [activeUser, setActiveUser] = useState<string>(initialUserEmail);
   const [fields, setFields] = useState<SignatureFields>(initial);
   const [saving, setSaving] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +38,31 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
 
   const update = <K extends keyof SignatureFields>(key: K, value: SignatureFields[K]) =>
     setFields((s) => ({ ...s, [key]: value }));
+
+  // When the user picker switches, fetch that user's saved signature. The
+  // initial user's signature came pre-baked from the server render, so we
+  // skip the fetch on first render to avoid a redundant round-trip.
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    let cancelled = false;
+    setLoadingUser(true);
+    setError(null);
+    setToast(null);
+    fetch(`/api/settings/signature?user_email=${encodeURIComponent(activeUser)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.ok && data.signature) setFields(data.signature as SignatureFields);
+        else setError(data?.error ?? "Could not load signature");
+      })
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Network error"))
+      .finally(() => !cancelled && setLoadingUser(false));
+    return () => { cancelled = true; };
+  }, [activeUser]);
 
   async function uploadLogo(file: File) {
     setUploading(true);
@@ -89,7 +126,7 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
       const res = await fetch("/api/settings/signature", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
+        body: JSON.stringify({ ...fields, user_email: activeUser }),
       });
       const result = await readJsonOrError(res, "signature save");
       if (!result.ok) {
@@ -101,7 +138,8 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
         setError(json.error || "Save failed");
         return;
       }
-      setToast("Signature saved — applies to all future outbound emails");
+      const activeLabel = users.find((u) => u.user_email === activeUser)?.display_name ?? activeUser;
+      setToast(`Signature saved for ${activeLabel} — applies to all future outbound emails`);
       setTimeout(() => setToast(null), 4000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
@@ -111,7 +149,39 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div>
+      {/* User picker — sits above both columns. Highlights the user currently
+          being edited so a save never gets misattributed. */}
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-gray-500 uppercase font-semibold tracking-wider mr-1">
+          Editing signature for
+        </span>
+        {users.map((u) => {
+          const active = u.user_email === activeUser;
+          return (
+            <button
+              key={u.user_email}
+              type="button"
+              onClick={() => setActiveUser(u.user_email)}
+              disabled={loadingUser || saving}
+              className={`px-3 py-1.5 text-xs rounded-full font-medium transition border ${
+                active
+                  ? "bg-[#0F4C5C] text-white border-[#0F4C5C]"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
+              title={u.user_email}
+            >
+              {u.display_name}
+              <span className={`ml-1.5 text-[10px] ${active ? "text-white/70" : "text-gray-400"}`}>
+                {u.user_email.split("@")[0]}
+              </span>
+            </button>
+          );
+        })}
+        {loadingUser && <span className="text-[11px] text-gray-400 ml-2">loading…</span>}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left: form */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
         {/* Logo */}
@@ -235,6 +305,7 @@ export default function SignatureEditor({ initial }: { initial: SignatureFields 
         <p className="text-[11px] text-gray-400 mt-3">
           Sample body above. The block below the divider is your actual signature — auto-appends to every email.
         </p>
+      </div>
       </div>
     </div>
   );

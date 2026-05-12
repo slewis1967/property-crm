@@ -3,11 +3,30 @@ import SignatureEditor from "./SignatureEditor";
 import CalendarConnections from "./CalendarConnections";
 import PropertyTypesEditor from "./PropertyTypesEditor";
 import { getSignatureFields } from "../../utils/email-signature";
+import { currentUserEmail } from "../../utils/cf-access";
+import { supabase } from "../../utils/supabase";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const initial = await getSignatureFields();
+  // Per-user signatures (slice + extension 2026-05-12). Server picks the
+  // logged-in user as the default selection and pre-fetches their sig so
+  // the editor renders fully populated on first paint.
+  const owner = await currentUserEmail();
+  const { data: aliasRows } = await supabase
+    .from("email_user_aliases")
+    .select("user_email,display_name")
+    .eq("active", true)
+    .order("user_email", { ascending: true });
+  const users = (aliasRows ?? []).map((r) => ({
+    user_email: r.user_email as string,
+    display_name: (r.display_name as string | null) ?? (r.user_email as string),
+  }));
+  // If the current CF Access user is in the alias map, default to them.
+  // Otherwise fall back to whichever user comes first in the list.
+  const defaultUser = users.find((u) => u.user_email === owner)?.user_email ?? users[0]?.user_email ?? owner;
+  const initial = await getSignatureFields(defaultUser);
+
   return (
     <div className="max-w-5xl">
       <div className="mb-8">
@@ -18,9 +37,11 @@ export default async function SettingsPage() {
       <section className="mb-10">
         <h2 className="text-lg font-semibold mb-1">Email signature</h2>
         <p className="text-xs text-gray-500 mb-4">
-          Auto-appended to every outbound email sent from the CRM. Live preview on the right reflects exactly what recipients see.
+          One signature per user. Switch between Sean and Glenn at the top —
+          whichever user sends a message gets their own sig auto-appended.
+          Live preview on the right reflects exactly what recipients see.
         </p>
-        <SignatureEditor initial={initial} />
+        <SignatureEditor users={users} initialUserEmail={defaultUser} initial={initial} />
       </section>
 
       <section className="mb-10">
