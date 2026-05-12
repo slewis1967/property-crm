@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS public.email_user_aliases (
 
 INSERT INTO public.email_user_aliases (user_email, display_name, aliases) VALUES
   ('sean.l@nextkey.com.au',  'Sean Lewis',  '{}'),
-  ('glenn.m@nextkey.com.au', 'Glenn Mercer', '{}')
+  ('glenn.m@nextkey.com.au', 'Glenn Mayes',  '{}')
 ON CONFLICT (user_email) DO NOTHING;
 
 -- ── 5. Backfill owner_user_email on existing rows ─────────────────────────
