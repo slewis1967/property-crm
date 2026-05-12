@@ -3,6 +3,7 @@ import { supabase } from "../../utils/supabase";
 import { currentUserEmail } from "../../utils/cf-access";
 import InboxSidebar from "./InboxSidebar";
 import InboxTable, { type EmailRow, type Thread, type FolderOption } from "./InboxTable";
+import SearchBar from "./SearchBar";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +26,12 @@ const VIEW_META: Record<string, { title: string; description: string }> = {
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; folder?: string }>;
+  searchParams: Promise<{ view?: string; folder?: string; search?: string }>;
 }) {
   const sp = await searchParams;
   const view = sp.view && VIEWS.has(sp.view) ? sp.view : sp.folder ? null : "inbox";
   const folderId = sp.folder ?? null;
+  const searchQuery = (sp.search ?? "").trim();
   const owner = await currentUserEmail();
 
   // Build the query against the current selection. Per-user filter is
@@ -72,6 +74,14 @@ export default async function InboxPage({
         break;
       // 'drafts' is handled separately below — drafts live in email_drafts
     }
+  }
+
+  // Full-text search overrides the search column tsvector. plainto_tsquery is
+  // the right call for user-entered strings (no operators, just words). It
+  // composes with the view filters above so "search within Sent" works as
+  // expected.
+  if (searchQuery) {
+    q = q.textSearch("body_search", searchQuery, { type: "plain", config: "english" });
   }
 
   // Drafts come from a different table — render a different shape on that view.
@@ -147,12 +157,27 @@ export default async function InboxPage({
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{header.title}</h1>
-            <p className="text-gray-500 text-sm mt-0.5">{header.description}</p>
+            <p className="text-gray-500 text-sm mt-0.5">
+              {searchQuery ? (
+                <>
+                  Results for <span className="font-semibold text-gray-700">&ldquo;{searchQuery}&rdquo;</span>
+                  {" "}in {header.title}
+                </>
+              ) : (
+                header.description
+              )}
+            </p>
           </div>
           <p className="text-[11px] text-gray-400">
             {view === "drafts" ? `${drafts.length} drafts` : `${threads.length} threads`}
           </p>
         </div>
+
+        {view !== "drafts" && (
+          <div className="mb-4">
+            <SearchBar initial={searchQuery} />
+          </div>
+        )}
 
         {view === "drafts" ? (
           <DraftsList drafts={drafts} />
