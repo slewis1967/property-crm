@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { currentUserEmail } from "../../utils/cf-access";
 import InboxSidebar from "./InboxSidebar";
@@ -175,12 +176,16 @@ function DraftsList({
   return (
     <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
       {drafts.map((d) => (
-        <div key={d.id} className="p-3 hover:bg-gray-50">
+        <Link
+          key={d.id}
+          href={`/inbox/compose?draft=${d.id}`}
+          className="block p-3 hover:bg-gray-50 transition"
+        >
           <p className="text-sm font-medium text-gray-900">{d.subject || "(no subject)"}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">
             updated {new Date(d.updated_at).toLocaleString()}
           </p>
-        </div>
+        </Link>
       ))}
     </div>
   );
