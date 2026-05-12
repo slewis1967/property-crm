@@ -106,6 +106,13 @@ export default function ComposeClient({
     let cancelled = false;
     async function hydrate() {
       try {
+        // Pull the signature in parallel so new-compose hydration is fast.
+        // Existing drafts already have the sig baked in; only new compose
+        // and reply paths need to inject it.
+        const sigPromise = (!draftId)
+          ? fetch("/api/mail/signature").then((r) => r.json()).catch(() => null)
+          : Promise.resolve(null);
+
         if (draftId) {
           const res = await fetch(`/api/mail/drafts/${draftId}`);
           const data = (await res.json()) as { ok: boolean; draft?: DraftPayload; error?: string };
@@ -134,7 +141,14 @@ export default function ComposeClient({
           setSubject(
             /^re:/i.test(e.subject ?? "") ? (e.subject ?? "") : `Re: ${e.subject ?? ""}`,
           );
+          // Reply body layout: space for the user's reply at top, then their
+          // signature, then the quoted original. This matches Gmail/Outlook so
+          // the recipient sees the response → signature → quoted history.
+          const sigData = await sigPromise;
+          const sigHtml = (sigData && sigData.ok ? sigData.html : "") as string;
           const quoted =
+            `<p><br></p>` +
+            (sigHtml || "") +
             `<br><br><blockquote style="border-left:3px solid #ddd;padding-left:12px;margin-left:0;color:#666">` +
             `<p style="margin:0 0 6px 0;font-size:12px;color:#999">` +
             `On ${e.sent_at ? new Date(e.sent_at).toLocaleString() : "an earlier date"}, ` +
@@ -162,6 +176,19 @@ export default function ComposeClient({
             setLastSavedAt(Date.now());
             // Replace URL so a refresh comes back to the draft, not the reply
             window.history.replaceState({}, "", `/inbox/compose?draft=${draftData.draft.id}`);
+          }
+        } else {
+          // Plain new compose — prefill body with a blank line followed by
+          // the signature so the user types into the empty space at the top.
+          const sigData = await sigPromise;
+          const sigHtml = (sigData && sigData.ok ? sigData.html : "") as string;
+          if (sigHtml) {
+            const initial = `<p><br></p>${sigHtml}`;
+            setBodyHtml(initial);
+            if (bodyRef.current) bodyRef.current.innerHTML = initial;
+            // Place caret at the top so first keystroke lands above the
+            // signature, not inside it.
+            queueMicrotask(() => placeCaretAtStart(bodyRef.current));
           }
         }
       } catch (e) {
@@ -663,4 +690,18 @@ function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Position the caret at the very start of a contentEditable element so a
+// newly hydrated body with a signature gets the user typing above it.
+function placeCaretAtStart(el: HTMLElement | null) {
+  if (!el) return;
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(true);
+  const sel = window.getSelection();
+  if (!sel) return;
+  sel.removeAllRanges();
+  sel.addRange(range);
 }

@@ -15,7 +15,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../../../utils/brevo";
-import { defaultSignature } from "../../../../../../utils/email-signature";
 import { resolveSender } from "../../../../../../utils/mail-owner";
 import { userEmailFromRequest } from "../../../../../../utils/cf-access";
 
@@ -54,10 +53,13 @@ export async function POST(
     return NextResponse.json({ ok: false, error: "Draft body is empty" }, { status: 400 });
   }
 
-  // Append the same signature the existing send path does so what the user
-  // sees in compose matches what the recipient receives.
-  const sig = await defaultSignature();
-  const finalHtml = `${draft.body_html}${sig.html}`;
+  // The composer pre-populates the signature into the draft body so the
+  // user can type above it (Gmail-style WYSIWYG). The body is therefore
+  // the source of truth — do NOT re-append at send time or we'd ship two
+  // signatures. Old drafts created before this slice may still lack a
+  // signature; treat the missing-signature case as user choice rather than
+  // try to detect + retrofit.
+  const finalHtml = draft.body_html;
   const ownerEmail = await resolveSender(owner);
 
   // Resolve attachments + sign download URLs once. Brevo fetches each URL
