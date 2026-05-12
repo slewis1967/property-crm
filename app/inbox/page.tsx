@@ -1,26 +1,111 @@
-import Link from "next/link";
 import { supabase } from "../../utils/supabase";
+import { currentUserEmail } from "../../utils/cf-access";
+import InboxSidebar from "./InboxSidebar";
 import InboxTable, { type EmailRow, type Thread } from "./InboxTable";
 
 export const dynamic = "force-dynamic";
 
+const VIEWS = new Set([
+  "inbox", "starred", "sent", "drafts", "archive", "trash", "spam",
+]);
+
+// One row per system-view giving its title + filter description. Used by the
+// header strip — keeps the page generic across view types without an if-ladder.
+const VIEW_META: Record<string, { title: string; description: string }> = {
+  inbox:    { title: "Inbox",    description: "Unread and recent inbound mail" },
+  starred:  { title: "Starred",  description: "Threads you've flagged" },
+  sent:     { title: "Sent",     description: "Outbound mail from this account" },
+  drafts:   { title: "Drafts",   description: "Auto-saved compose state" },
+  archive:  { title: "Archive",  description: "Out of the inbox, still around" },
+  trash:    { title: "Trash",    description: "Auto-purged after 30 days" },
+  spam:     { title: "Spam",     description: "Auto-purged after 30 days" },
+};
+
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ view?: string; folder?: string }>;
 }) {
   const sp = await searchParams;
-  const filter = sp.filter ?? "all"; // all | inbound | outbound | unread
+  const view = sp.view && VIEWS.has(sp.view) ? sp.view : sp.folder ? null : "inbox";
+  const folderId = sp.folder ?? null;
+  const owner = await currentUserEmail();
 
-  const { data: rows } = await supabase
+  // Build the query against the current selection. Per-user filter is
+  // always on so each user sees only their own mail.
+  let q = supabase
     .from("email_log")
-    .select("id,direction,to_email,to_name,from_email,from_name,subject,body_html,status,contact_id,message_id,thread_id,sent_at,created_at")
+    .select(
+      "id,direction,to_email,to_name,from_email,from_name,subject,body_html,status,contact_id," +
+      "message_id,thread_id,sent_at,created_at,is_read,is_starred,is_archived,is_trashed,is_spam," +
+      "folder_id,labels,owner_user_email",
+    )
+    .eq("owner_user_email", owner)
     .order("created_at", { ascending: false })
     .limit(300);
 
-  const all: EmailRow[] = rows ?? [];
+  if (folderId) {
+    q = q.eq("folder_id", folderId);
+  } else {
+    switch (view) {
+      case "inbox":
+        q = q.eq("direction", "inbound")
+             .eq("is_archived", false)
+             .eq("is_trashed", false)
+             .eq("is_spam", false);
+        break;
+      case "starred":
+        q = q.eq("is_starred", true).eq("is_trashed", false).eq("is_spam", false);
+        break;
+      case "sent":
+        q = q.eq("direction", "outbound").eq("is_trashed", false).eq("is_spam", false);
+        break;
+      case "archive":
+        q = q.eq("is_archived", true).eq("is_trashed", false).eq("is_spam", false);
+        break;
+      case "trash":
+        q = q.eq("is_trashed", true);
+        break;
+      case "spam":
+        q = q.eq("is_spam", true).eq("is_trashed", false);
+        break;
+      // 'drafts' is handled separately below — drafts live in email_drafts
+    }
+  }
 
-  // Build a contact-name lookup
+  // Drafts come from a different table — render a different shape on that view.
+  // For v1 the drafts view shows a stub list; the rich compose UI ships in the
+  // next slice.
+  let drafts: Array<{ id: string; subject: string | null; updated_at: string }> = [];
+  if (view === "drafts") {
+    const { data } = await supabase
+      .from("email_drafts")
+      .select("id,subject,updated_at")
+      .eq("owner_user_email", owner)
+      .order("updated_at", { ascending: false })
+      .limit(100);
+    drafts = data ?? [];
+  }
+
+  let all: EmailRow[] = [];
+  if (view !== "drafts") {
+    const { data: rows } = await q;
+    all = (rows ?? []) as unknown as EmailRow[];
+  }
+
+  // Resolve the folder name for the header strip when a user folder is selected
+  let folderName: string | null = null;
+  if (folderId) {
+    const { data } = await supabase
+      .from("email_folders")
+      .select("name")
+      .eq("id", folderId)
+      .eq("owner_user_email", owner)
+      .maybeSingle();
+    folderName = data?.name ?? null;
+  }
+
+  // Contact-name lookup for the thread list
   const contactIds = Array.from(new Set(all.map((e) => e.contact_id).filter(Boolean))) as string[];
   let contactNames: Record<string, string> = {};
   if (contactIds.length > 0) {
@@ -37,51 +122,67 @@ export default async function InboxPage({
 
   const threads = groupIntoThreads(all);
 
-  const filtered = threads.filter((t) => {
-    if (filter === "inbound") return t.has_inbound;
-    if (filter === "outbound") return t.has_outbound && !t.has_inbound;
-    if (filter === "unread") return t.unread_inbound > 0;
-    return true;
-  });
-
-  const counts = {
-    all: threads.length,
-    inbound: threads.filter((t) => t.has_inbound).length,
-    outbound: threads.filter((t) => t.has_outbound && !t.has_inbound).length,
-    unread: threads.filter((t) => t.unread_inbound > 0).length,
-  };
+  const header = folderName
+    ? { title: folderName, description: "Custom folder" }
+    : view
+      ? VIEW_META[view]
+      : { title: "Inbox", description: "" };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Inbox</h1>
-        <p className="text-gray-500 text-sm mt-1">All email threads — click any row to expand the conversation</p>
+    <div className="flex h-[calc(100vh-4rem)] -mx-8 -my-8">
+      <InboxSidebar selection={{ view: view ?? undefined, folder: folderId ?? undefined }} />
+
+      <div className="flex-1 overflow-y-auto px-8 py-6 min-w-0">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{header.title}</h1>
+            <p className="text-gray-500 text-sm mt-0.5">{header.description}</p>
+          </div>
+          <p className="text-[11px] text-gray-400">
+            {view === "drafts" ? `${drafts.length} drafts` : `${threads.length} threads`}
+          </p>
+        </div>
+
+        {view === "drafts" ? (
+          <DraftsList drafts={drafts} />
+        ) : threads.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-gray-500 text-sm">
+            Nothing here yet.
+          </div>
+        ) : (
+          <InboxTable threads={threads} contactNames={contactNames} />
+        )}
       </div>
-
-      <div className="flex gap-2 mb-5">
-        <FilterPill href="/inbox" active={filter === "all"} label={`All (${counts.all})`} />
-        <FilterPill href="/inbox?filter=inbound" active={filter === "inbound"} label={`📥 Inbound (${counts.inbound})`} />
-        <FilterPill href="/inbox?filter=outbound" active={filter === "outbound"} label={`📤 Outbound only (${counts.outbound})`} />
-        <FilterPill href="/inbox?filter=unread" active={filter === "unread"} label={`🔵 Unread inbound (${counts.unread})`} />
-      </div>
-
-      <InboxTable threads={filtered} contactNames={contactNames} />
-
-      <p className="text-[11px] text-gray-400 mt-4">
-        Showing the most recent 300 emails grouped into threads. Click a contact name to jump to their detail page where you can reply with full context.
-      </p>
     </div>
   );
 }
 
-function FilterPill({ href, active, label }: { href: string; active: boolean; label: string }) {
-  const cls = active
-    ? "bg-gray-900 text-white"
-    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50";
+function DraftsList({
+  drafts,
+}: {
+  drafts: Array<{ id: string; subject: string | null; updated_at: string }>;
+}) {
+  if (drafts.length === 0) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-gray-500 text-sm">
+        No drafts.<br />
+        <span className="text-[11px] text-gray-400">
+          Auto-saved compose state appears here in the next slice.
+        </span>
+      </div>
+    );
+  }
   return (
-    <Link href={href} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${cls}`}>
-      {label}
-    </Link>
+    <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
+      {drafts.map((d) => (
+        <div key={d.id} className="p-3 hover:bg-gray-50">
+          <p className="text-sm font-medium text-gray-900">{d.subject || "(no subject)"}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">
+            updated {new Date(d.updated_at).toLocaleString()}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }
 
