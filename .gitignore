@@ -47,3 +47,7 @@ scripts/*.vcf
 
 # Deno lockfile (created when supabase CLI runs functions; not source-of-truth)
 deno.lock
+
+# Python bytecode (from web-asset-generator skill scripts)
+__pycache__/
+*.py[cod]

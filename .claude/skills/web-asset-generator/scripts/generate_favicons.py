@@ -8,7 +8,7 @@ import sys
 import argparse
 import re
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 
 # Import emoji utilities
@@ -116,13 +116,33 @@ def generate_icons(source_path=None, output_dir=None, icon_types='all', emoji=No
     if icon_types in ['app', 'all']:
         sizes_to_generate.update(APP_ICON_SIZES)
 
+    # Sample source-image corners to pick a pad colour that matches the
+    # logo's own background. Prevents the letterbox bars from looking
+    # alien against the artwork. Falls back to transparent for RGBA.
+    src_rgb = img.convert('RGB')
+    sw, sh = src_rgb.size
+    corners = [src_rgb.getpixel((0, 0)), src_rgb.getpixel((sw - 1, 0)),
+               src_rgb.getpixel((0, sh - 1)), src_rgb.getpixel((sw - 1, sh - 1))]
+    pad_color = (
+        sum(c[0] for c in corners) // 4,
+        sum(c[1] for c in corners) // 4,
+        sum(c[2] for c in corners) // 4,
+        255,
+    )
+
+    def fit_to_square(src, target_size):
+        """Scale src to fit inside target_size (square) preserving aspect.
+        Pads remaining space with pad_color so circles stay circles and
+        wordmarks don't get squashed."""
+        src_rgba = src.convert('RGBA')
+        return ImageOps.pad(src_rgba, target_size,
+                            method=Image.Resampling.LANCZOS,
+                            color=pad_color)
+
     # Generate each size
     generated_files = []
     for filename, size in sizes_to_generate.items():
-        # Resize with high-quality resampling
-        resized = img.resize(size, Image.Resampling.LANCZOS)
-
-        # Save
+        resized = fit_to_square(img, size)
         output_path = output_dir / filename
         resized.save(output_path, 'PNG', optimize=True)
         generated_files.append(str(output_path))
@@ -131,8 +151,8 @@ def generate_icons(source_path=None, output_dir=None, icon_types='all', emoji=No
     # Generate .ico file for browsers (contains 16x16 and 32x32)
     if icon_types in ['favicon', 'all']:
         ico_path = output_dir / 'favicon.ico'
-        icon_16 = img.resize((16, 16), Image.Resampling.LANCZOS)
-        icon_32 = img.resize((32, 32), Image.Resampling.LANCZOS)
+        icon_16 = fit_to_square(img, (16, 16)).convert('RGB')
+        icon_32 = fit_to_square(img, (32, 32)).convert('RGB')
         icon_16.save(ico_path, format='ICO', sizes=[(16, 16), (32, 32)])
         generated_files.append(str(ico_path))
         print(f"✓ Generated favicon.ico (16x16, 32x32)")

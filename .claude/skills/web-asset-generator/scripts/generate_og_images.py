@@ -80,8 +80,8 @@ def create_text_image(text, size, bg_color='#4F46E5', text_color='white',
     logo_height = 0
     if logo_path and Path(logo_path).exists():
         logo = Image.open(logo_path)
-        # Resize logo to fit (max 20% of image height - gives more space for text)
-        max_logo_height = int(size[1] * 0.20)
+        # Resize logo to fit (max 30% of image height - prominent but text-friendly)
+        max_logo_height = int(size[1] * 0.30)
         if logo.height > max_logo_height:
             ratio = max_logo_height / logo.height
             new_size = (int(logo.width * ratio), max_logo_height)
