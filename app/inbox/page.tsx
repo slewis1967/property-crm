@@ -2,7 +2,7 @@ import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { currentUserEmail } from "../../utils/cf-access";
 import InboxSidebar from "./InboxSidebar";
-import InboxTable, { type EmailRow, type Thread } from "./InboxTable";
+import InboxTable, { type EmailRow, type Thread, type FolderOption } from "./InboxTable";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +106,16 @@ export default async function InboxPage({
     folderName = data?.name ?? null;
   }
 
+  // User's custom folders for the bulk "Move to folder" dropdown. Excludes
+  // system folders since they're already first-class views in the sidebar.
+  const { data: userFolders } = await supabase
+    .from("email_folders")
+    .select("id,name")
+    .eq("owner_user_email", owner)
+    .eq("system", false)
+    .order("name", { ascending: true });
+  const folderOptions: FolderOption[] = (userFolders ?? []).map((f) => ({ id: f.id, name: f.name }));
+
   // Contact-name lookup for the thread list
   const contactIds = Array.from(new Set(all.map((e) => e.contact_id).filter(Boolean))) as string[];
   let contactNames: Record<string, string> = {};
@@ -151,7 +161,7 @@ export default async function InboxPage({
             Nothing here yet.
           </div>
         ) : (
-          <InboxTable threads={threads} contactNames={contactNames} />
+          <InboxTable threads={threads} contactNames={contactNames} folders={folderOptions} />
         )}
       </div>
     </div>
