@@ -175,6 +175,32 @@ not to.
 
 ---
 
+## Brand assets
+
+Use these defaults whenever a skill generates visual assets (favicons,
+OG cards, social images). If Sean hasn't confirmed the final brand
+palette, flag the choice in the output so he can override.
+
+- **Primary brand colour**: `#0F4C5C` (deep teal — neutral, professional,
+  reads as established/trustworthy. Property-investment vertical avoids
+  the saturated indigo/purple that screams SaaS startup.)
+- **Accent colour**: `#FFB627` (warm gold — used sparingly for CTAs,
+  highlights, and "approved" badges)
+- **Background neutral**: `#F7F4ED` (warm off-white) or `#FFFFFF`
+- **Body text**: `#1F2937` (slate-800)
+- **Logo**: Not yet committed to repo. Until Sean drops a final logo
+  into `public/logo.png`, use text-based OG cards with the brand colour
+  + "NextKey Property Strategists" set in a serif headline.
+- **OG card style**: brand colour background, white serif headline left-
+  aligned, gold accent rule under headline. Subhead in white sans-serif.
+  No stock photography or gradient backgrounds.
+- **Forbidden in assets**: emoji, exclamation marks, urgency language,
+  stock images of "happy diverse family in front of house" (cliché +
+  generic).
+
+When invoking `web-asset-generator` for OG images, pass
+`--bg-color '#0F4C5C' --text-color '#FFFFFF'` unless overridden.
+
 ## Tools/channels currently live
 
 - Outbound email: Brevo

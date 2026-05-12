@@ -91,11 +91,17 @@ Stored in `.env.local` at project root:
 `.claude/skills/` holds 10 curated marketing skills (copywriting,
 copy-editing, cold-email, email-sequence, seo-audit, ad-creative,
 page-cro, popup-cro, schema-markup, marketing-psychology) from the
-public coreyhaines31/marketingskills repo.
+public coreyhaines31/marketingskills repo, plus `web-asset-generator`
+for favicons, app icons, and Open Graph card images (local Pillow,
+no API cost).
 
 `.claude/product-marketing-context.md` is loaded by every skill before
 it asks the user questions. It encodes NextKey's AU compliance hard
-rules (ACL s.18/s.29, NCCP, Privacy Act, Spam Act, QLD POA 2014) and
-the approved-phrasing table. Any marketing copy generated in this
+rules (ACL s.18/s.29, NCCP, Privacy Act, Spam Act, QLD POA 2014), the
+approved-phrasing table, and brand defaults (primary `#0F4C5C` teal,
+gold accent `#FFB627`). Any marketing copy or asset generated in this
 repo must conform — Senior Advisor flags violations on the recs side
 and the same standard applies to anything Claude writes here.
+
+`web-asset-generator` requires `pip install Pillow Pilmoji` on the
+machine running Claude Code before first use.
