@@ -26,6 +26,10 @@ export type BrevoSendOptions = {
   /** Custom RFC822 headers — used to set In-Reply-To and References on
    * replies so recipient mail clients thread the conversation correctly. */
   headers?: Record<string, string>;
+  /** Attachments — Brevo fetches each `url` during send so it must be
+   * publicly reachable for ~30 seconds. Signed Supabase Storage URLs work.
+   * Per-attachment 10MB limit when sent as URL per Brevo's docs. */
+  attachments?: { name: string; url: string }[];
 };
 
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
@@ -61,6 +65,9 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
       replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
       tags: opts.tags,
       headers: opts.headers && Object.keys(opts.headers).length > 0 ? opts.headers : undefined,
+      attachment: opts.attachments && opts.attachments.length > 0
+        ? opts.attachments.map((a) => ({ name: a.name, url: a.url }))
+        : undefined,
     }),
   });
 

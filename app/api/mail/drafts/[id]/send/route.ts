@@ -60,6 +60,26 @@ export async function POST(
   const finalHtml = `${draft.body_html}${sig.html}`;
   const ownerEmail = await resolveSender(owner);
 
+  // Resolve attachments + sign download URLs once. Brevo fetches each URL
+  // during send; the signed URL lifespan only needs to cover the seconds
+  // between this request and Brevo's pull. 1h TTL covers retries + slow
+  // pipelines without being so long it's a meaningful leak surface.
+  const { data: attachmentRows } = await supabase
+    .from("email_attachments")
+    .select("id,filename,storage_path")
+    .eq("email_id", id)
+    .eq("email_kind", "draft");
+
+  const brevoAttachments: { name: string; url: string }[] = [];
+  for (const a of attachmentRows ?? []) {
+    const { data: signed } = await supabase.storage
+      .from("mail-attachments")
+      .createSignedUrl(a.storage_path, 60 * 60);
+    if (signed?.signedUrl) {
+      brevoAttachments.push({ name: a.filename, url: signed.signedUrl });
+    }
+  }
+
   const replyHeaders: Record<string, string> = {};
   if (draft.reply_to_email_id) {
     // The draft was a reply; look up the parent's message_id to populate
@@ -114,6 +134,7 @@ export async function POST(
       html: finalHtml,
       tags: ["crm-outbound", "draft-send"],
       headers: replyHeaders,
+      attachments: brevoAttachments.length > 0 ? brevoAttachments : undefined,
     });
 
     const updatePatch = result.ok
@@ -127,13 +148,38 @@ export async function POST(
 
     await supabase.from("email_log").update(updatePatch).eq("id", row.id);
 
-    if (result.ok) sentIds.push(row.id);
-    else failures.push({ to, error: result.error ?? "Brevo send failed" });
+    if (result.ok) {
+      sentIds.push(row.id);
+      // Clone the draft's attachment rows onto this email_log row so each
+      // recipient gets a faithful audit trail. The Storage object is shared
+      // (path stays the same) — multi-recipient sends don't double the
+      // storage cost.
+      if (attachmentRows && attachmentRows.length > 0) {
+        await supabase.from("email_attachments").insert(
+          attachmentRows.map((a) => ({
+            email_id: row.id,
+            email_kind: "outbound",
+            filename: a.filename,
+            storage_path: a.storage_path,
+          })),
+        );
+      }
+    } else {
+      failures.push({ to, error: result.error ?? "Brevo send failed" });
+    }
   }
 
   // Discard the draft only if at least one send succeeded — partial failures
   // keep the draft around for the user to retry the failing recipients.
+  // Delete the draft's attachment rows alongside the draft itself; the
+  // storage objects stay because the cloned outbound rows still reference
+  // them (path-based, no FK).
   if (sentIds.length > 0 && failures.length === 0) {
+    await supabase
+      .from("email_attachments")
+      .delete()
+      .eq("email_id", id)
+      .eq("email_kind", "draft");
     await supabase.from("email_drafts").delete().eq("id", id).eq("owner_user_email", owner);
   }
 

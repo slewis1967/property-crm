@@ -18,6 +18,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabaseBrowser } from "../../../utils/supabase-browser";
 
 type DraftPayload = {
   id: string;
@@ -31,7 +32,16 @@ type DraftPayload = {
   updated_at: string;
 };
 
+type AttachmentChip = {
+  id: string;
+  filename: string;
+  size_bytes: number | null;
+  uploading?: boolean;
+  error?: string | null;
+};
+
 const AUTOSAVE_DEBOUNCE_MS = 5000;
+const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 export default function ComposeClient({
   draftId,
@@ -54,6 +64,9 @@ export default function ComposeClient({
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [savingNow, setSavingNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentChip[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const dirtyRef = useRef(false);
@@ -66,6 +79,27 @@ export default function ComposeClient({
   useEffect(() => {
     latestRef.current = { to, cc, bcc, subject, bodyHtml };
   }, [to, cc, bcc, subject, bodyHtml]);
+
+  // ── Hydrate attachments whenever we have a draft id ────────────────────
+  useEffect(() => {
+    if (!id) {
+      setAttachments([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/mail/attachments?draft_id=${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.ok) return;
+        setAttachments(
+          (data.attachments as Array<{ id: string; filename: string; size_bytes: number | null }>).map(
+            (a) => ({ id: a.id, filename: a.filename, size_bytes: a.size_bytes }),
+          ),
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [id]);
 
   // ── Initial hydration ───────────────────────────────────────────────────
   useEffect(() => {
@@ -285,6 +319,104 @@ export default function ComposeClient({
     }
   }
 
+  // ── Attachments ─────────────────────────────────────────────────────────
+  //
+  // Uploads always need a draft id (the server creates the email_attachments
+  // row tied to draft). If the user attaches before typing anything, we
+  // bootstrap an empty draft first so the upload has somewhere to land.
+  async function ensureDraft(): Promise<string | null> {
+    if (id) return id;
+    const res = await fetch("/api/mail/drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (!data?.ok || !data.draft) {
+      setError(data?.error ?? "Could not create draft");
+      return null;
+    }
+    setId(data.draft.id);
+    window.history.replaceState({}, "", `/inbox/compose?draft=${data.draft.id}`);
+    return data.draft.id as string;
+  }
+
+  async function uploadFiles(files: FileList | File[]) {
+    const draftId = await ensureDraft();
+    if (!draftId) return;
+
+    const list = Array.from(files);
+    for (const file of list) {
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        setError(`${file.name} is over the ${MAX_ATTACHMENT_BYTES / 1024 / 1024}MB limit`);
+        continue;
+      }
+      // Add an optimistic chip immediately with a temp id so the user sees
+      // upload progress before the server round-trips back.
+      const tempId = `tmp-${Math.random().toString(36).slice(2)}`;
+      setAttachments((prev) => [
+        ...prev,
+        { id: tempId, filename: file.name, size_bytes: file.size, uploading: true },
+      ]);
+
+      try {
+        const signRes = await fetch("/api/mail/attachments/upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            draft_id: draftId,
+            filename: file.name,
+            size: file.size,
+            mime_type: file.type || null,
+          }),
+        });
+        const signData = await signRes.json();
+        if (!signRes.ok || !signData.ok) throw new Error(signData.error ?? "Sign failed");
+
+        const { token, path, attachment_id } = signData as {
+          token: string; path: string; attachment_id: string;
+        };
+        const { error: upErr } = await supabaseBrowser.storage
+          .from("mail-attachments")
+          .uploadToSignedUrl(path, token, file);
+        if (upErr) throw new Error(upErr.message);
+
+        // Promote the chip from tempId → real id
+        setAttachments((prev) =>
+          prev.map((a) => (a.id === tempId ? { ...a, id: attachment_id, uploading: false } : a)),
+        );
+      } catch (e) {
+        setAttachments((prev) =>
+          prev.map((a) =>
+            a.id === tempId ? { ...a, uploading: false, error: (e as Error).message } : a,
+          ),
+        );
+      }
+    }
+  }
+
+  async function removeAttachment(attachmentId: string) {
+    // Optimistic — remove from UI first, restore if the server rejects.
+    const snapshot = attachments;
+    setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+    try {
+      const res = await fetch(`/api/mail/attachments/${attachmentId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Delete failed");
+    } catch (e) {
+      setError((e as Error).message);
+      setAttachments(snapshot);
+    }
+  }
+
+  function handleDrop(ev: React.DragEvent<HTMLDivElement>) {
+    ev.preventDefault();
+    setDragOver(false);
+    if (ev.dataTransfer.files && ev.dataTransfer.files.length > 0) {
+      void uploadFiles(ev.dataTransfer.files);
+    }
+  }
+
   if (loading) {
     return <div className="p-8 text-gray-400 text-sm">Loading draft…</div>;
   }
@@ -355,20 +487,55 @@ export default function ComposeClient({
           <ToolbarBtn onClick={() => applyFormat("removeFormat")} title="Clear formatting">
             ⌫
           </ToolbarBtn>
+          <div className="ml-auto">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={(e) => {
+                if (e.target.files) void uploadFiles(e.target.files);
+                e.target.value = "";  // allow re-attaching the same file
+              }}
+            />
+            <ToolbarBtn onClick={() => fileInputRef.current?.click()} title="Attach files">
+              📎
+            </ToolbarBtn>
+          </div>
         </div>
 
         <div
           ref={bodyRef}
           contentEditable
           suppressContentEditableWarning
-          className="px-4 py-3 min-h-[300px] text-sm text-gray-900 outline-none prose prose-sm max-w-none"
+          className={`px-4 py-3 min-h-[300px] text-sm text-gray-900 outline-none prose prose-sm max-w-none transition ${
+            dragOver ? "bg-[#E6EEF1] outline-dashed outline-2 outline-[#0F4C5C]" : ""
+          }`}
           onInput={() => {
             if (bodyRef.current) {
               setBodyHtml(bodyRef.current.innerHTML);
               markDirty();
             }
           }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
         />
+
+        {attachments.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex flex-wrap gap-2">
+            {attachments.map((a) => (
+              <AttachmentChip
+                key={a.id}
+                attachment={a}
+                onRemove={() => void removeAttachment(a.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -453,4 +620,47 @@ function ToolbarBtn({
       {children}
     </button>
   );
+}
+
+function AttachmentChip({
+  attachment,
+  onRemove,
+}: {
+  attachment: AttachmentChip;
+  onRemove: () => void;
+}) {
+  const size = attachment.size_bytes ? humanSize(attachment.size_bytes) : "";
+  return (
+    <span
+      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs border ${
+        attachment.error
+          ? "bg-red-50 border-red-200 text-red-700"
+          : attachment.uploading
+            ? "bg-amber-50 border-amber-200 text-amber-800"
+            : "bg-white border-gray-200 text-gray-700"
+      }`}
+      title={attachment.error ?? undefined}
+    >
+      <span>📎</span>
+      <span className="font-medium max-w-[160px] truncate">{attachment.filename}</span>
+      {size && <span className="text-gray-400">{size}</span>}
+      {attachment.uploading && <span className="text-amber-700">uploading…</span>}
+      {!attachment.uploading && (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-1 text-gray-400 hover:text-red-600"
+          title="Remove"
+        >
+          ✕
+        </button>
+      )}
+    </span>
+  );
+}
+
+function humanSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
