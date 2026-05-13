@@ -150,7 +150,7 @@ export default async function InboxPage({
       : { title: "Inbox", description: "" };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] -mx-8 -my-8">
+    <div className="flex h-[calc(100vh-7rem)] lg:h-[calc(100vh-4rem)] -mx-4 -my-4 lg:-mx-8 lg:-my-8">
       <InboxSidebar selection={{ view: view ?? undefined, folder: folderId ?? undefined }} />
 
       <div className="flex-1 overflow-y-auto px-8 py-6 min-w-0">

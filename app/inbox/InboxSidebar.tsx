@@ -81,7 +81,7 @@ export default async function InboxSidebar({ selection }: { selection: Selection
   const activeView = selection.view ?? (selection.folder ? null : "inbox");
 
   return (
-    <aside className="w-56 flex-shrink-0 border-r border-gray-200 bg-white">
+    <aside className="hidden md:flex md:flex-col w-56 flex-shrink-0 border-r border-gray-200 bg-white">
       <div className="p-3">
         <Link
           href="/inbox/compose"

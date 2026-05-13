@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { supabase } from "../utils/supabase";
 import VoiceAssistant from "./components/VoiceAssistant";
+import AppShell from "./components/AppShell";
 
 export const metadata: Metadata = {
   title: "Property Marketer CRM",
@@ -65,9 +66,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const counts = await getSidebarCounts();
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900 flex h-screen overflow-hidden">
-        <aside className="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0">
-          <div className="p-6 border-b border-gray-800">
+      <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
+        <AppShell
+          sidebar={<>
+          <div className="p-6 border-b border-gray-800 hidden lg:block">
             <div className="text-xl font-bold text-white">NextKey CRM</div>
             <div className="text-xs text-gray-400 mt-1">Powered by Elvis AI</div>
           </div>
@@ -170,11 +172,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="p-4 border-t border-gray-800">
             <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
           </div>
-        </aside>
-
-        <main className="flex-1 overflow-y-auto p-8">
+          </>}
+        >
           {children}
-        </main>
+        </AppShell>
         <VoiceAssistant />
       </body>
     </html>
