@@ -1,12 +1,26 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { supabase } from "../utils/supabase";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 
+// PWA + mobile viewport. theme_color matches the brand teal so the
+// chrome on iOS/Android tints to match the app on the home screen.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0F4C5C",
+};
+
 export const metadata: Metadata = {
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "NextKey CRM",
+  },
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
