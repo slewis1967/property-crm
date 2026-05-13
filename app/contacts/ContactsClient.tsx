@@ -96,6 +96,7 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
   const [search, setSearch] = useState("");
   const [filterTemp, setFilterTemp] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterTag, setFilterTag] = useState<string>("all");
   const [activeTypeKey, setActiveTypeKey] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"updated" | "score" | "name" | "created">("updated");
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
@@ -212,6 +213,11 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
     }
 
     if (filterStatus !== "all") out = out.filter((c) => c.status === filterStatus);
+    if (filterTag !== "all") {
+      out = filterTag === "__notags__"
+        ? out.filter((c) => !c.tags || c.tags.length === 0)
+        : out.filter((c) => Array.isArray(c.tags) && c.tags.includes(filterTag));
+    }
     if (activeTypeKey !== "all") {
       if (activeTypeKey === "__unassigned__") {
         out = out.filter(c => !c.buyer_type);
@@ -226,7 +232,19 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
       if (sortBy === "created") return (b.created_at || "").localeCompare(a.created_at || "");
       return (b.updated_at || "").localeCompare(a.updated_at || "");
     });
-  }, [contacts, search, filterTemp, filterStatus, activeTypeKey, sortBy]);
+  }, [contacts, search, filterTemp, filterStatus, filterTag, activeTypeKey, sortBy]);
+
+  // Unique tag values across all contacts, with a count for each. Used to
+  // populate the tag-filter dropdown — sorted by frequency so the heavy
+  // hitters land at the top.
+  const tagOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of contacts) {
+      for (const t of (c.tags || [])) counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [contacts]);
 
   // Stats
   const hot = contacts.filter((c) => c.temperature === "hot").length;
@@ -415,6 +433,20 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
               <option value="new">New</option>
               <option value="matched">Matched</option>
               <option value="contacted">Contacted</option>
+            </select>
+
+            <select
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+            >
+              <option value="all">All tags</option>
+              <option value="__notags__">No tags</option>
+              {tagOptions.map(([tag, count]) => (
+                <option key={tag} value={tag}>
+                  {tag} ({count})
+                </option>
+              ))}
             </select>
 
             <select
