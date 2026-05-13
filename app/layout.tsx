@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { supabase } from "../utils/supabase";
+import VoiceAssistant from "./components/VoiceAssistant";
 
 export const metadata: Metadata = {
   title: "Property Marketer CRM",
@@ -174,6 +175,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main className="flex-1 overflow-y-auto p-8">
           {children}
         </main>
+        <VoiceAssistant />
       </body>
     </html>
   );
