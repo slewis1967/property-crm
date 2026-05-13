@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 export default function AdvisorPage() {
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
+      <div className="mb-5 lg:mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2 lg:gap-3">
           <span>🎩</span> Veteran Advisor
         </h1>
         <p className="text-sm text-gray-500 mt-1">

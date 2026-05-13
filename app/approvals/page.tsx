@@ -41,13 +41,13 @@ export default async function ApprovalsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Approval Queue</h1>
+      <div className="flex justify-between items-start sm:items-center mb-6 lg:mb-8 gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl lg:text-3xl font-bold">Approval Queue</h1>
           <p className="text-gray-500 text-sm mt-1">Content pending review via Telegram · Tap ✅ ❌ ✏️ in Telegram to action</p>
         </div>
         {pending.length > 0 && (
-          <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+          <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse whitespace-nowrap flex-shrink-0">
             {pending.length} Pending
           </span>
         )}
