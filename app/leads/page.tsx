@@ -47,7 +47,7 @@ export default async function LeadsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-6 sm:gap-4 sm:mb-8">
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
           <p className="text-xs text-gray-500 uppercase font-semibold">Hot Leads</p>
           <p className="text-2xl font-bold text-red-600 mt-1">{hotCount ?? 0}</p>

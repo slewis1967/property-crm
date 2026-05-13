@@ -291,10 +291,12 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
         </div>
       </div>
     )}
-    <div className="flex h-full gap-0 -mx-8 -my-8 overflow-hidden">
+    <div className="flex h-full gap-0 -mx-4 lg:-mx-8 -my-4 lg:-my-8 overflow-hidden">
 
-      {/* ── TYPE SIDEBAR ── */}
-      <div className="w-52 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-y-auto">
+      {/* ── TYPE SIDEBAR — hidden on mobile (type filter folds into the
+            top-bar select on smaller screens via the additional dropdown
+            added below the search bar). ── */}
+      <div className="hidden md:flex w-52 flex-shrink-0 bg-white border-r border-gray-100 flex-col overflow-y-auto">
         <div className="px-4 pt-5 pb-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Types</p>
         </div>
@@ -411,6 +413,27 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            {/* Mobile-only type selector — desktop has the same filter as a
+                sidebar to the left, hidden under md. */}
+            <select
+              className="md:hidden text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={activeTypeKey}
+              onChange={(e) => { setActiveTypeKey(e.target.value); setCheckedIds(new Set()); }}
+            >
+              <option value="all">All contact types ({contacts.length})</option>
+              {CONTACT_TYPES.map((ct) => {
+                const count = contacts.filter((c) => (c.buyer_type || "").toLowerCase() === ct.key.toLowerCase()).length;
+                return (
+                  <option key={ct.key} value={ct.key}>
+                    {ct.icon} {ct.label}{count > 0 ? ` (${count})` : ""}
+                  </option>
+                );
+              })}
+              {unassignedCount > 0 && (
+                <option value="__unassigned__">❓ Unassigned ({unassignedCount})</option>
+              )}
+            </select>
 
             <select
               className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
