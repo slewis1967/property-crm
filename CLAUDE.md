@@ -53,6 +53,19 @@ Tool inventory (MVP):
 
 **Confirm-before-send rule:** `send_*` tools take a `confirmed` boolean. Claude is instructed to call with `confirmed=false` first (which only DRAFTS), then re-call with `confirmed=true` after the user says yes. The server enforces this — `confirmed=false` never actually fires. Don't bypass this server-side check; it's the only thing standing between "voice misheard 'send to mum'" and an outbound SMS.
 
+### Broadcast — bulk email to all/tagged contacts (`app/broadcast/` + `app/api/broadcast/route.ts`)
+One-off bulk email send. Reuses the existing **NEXUS sequence engine** (`/mnt/c/NEXUS-Memory/projects/sequence_runner.py`) — a broadcast is just a one-step sequence with auto-enrolment of the target audience. Compliance + unsubscribe filtering + Spam Act footer happen in the runner, not in the CRM, so the CRM-side code is small.
+
+Two-phase POST flow on `/api/broadcast`:
+1. **Phase 1 — review**: with `acknowledge_violations=false` (default), the route calls `utils/compliance-review.ts` which sends the subject + body to **Claude Haiku** with an AU-compliance system prompt (ACL s.18/29, NCCP, QLD POA 2014, Privacy Act, Spam Act, financial-planning boundary). If violations come back, the route responds `{status: "review_required", violations}` and no DB writes happen.
+2. **Phase 2 — send**: with `acknowledge_violations=true` (operator ticked "send anyway"), the route writes one row to `sequences`, one to `sequence_steps` (`step_type=send_email`, `position=1`, `delay_hours=0`, `payload={subject, html_body, text_body}`), and bulk-inserts `sequence_enrollments` (500/chunk) for every eligible contact. The cron runner picks up within 5 min.
+
+**Eligibility filter** (mirrors what the runner enforces): `contacts.email IS NOT NULL`, optional `tags @> [tag]`, exclude any `email` in `unsubscribes` where `channel IN ('email', 'all')`. Runner does its own `is_unsubscribed()` check on every send too — defence in depth, so a stale filter here can't accidentally email an opted-out contact.
+
+**Compliance reviewer** (`utils/compliance-review.ts`) is purpose-built — does NOT call `senior_advisor.py`. Senior Advisor is a scheduled batch agent reviewing recommendations from a Veteran Advisor, not a generic copy reviewer. The reviewer here borrows Senior's AU-law lens but with a `(subject, body) → {violations: [...]}` interface tailored to broadcast copy.
+
+**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (Anthropic outage), the UI offers the same override under a softer warning.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
@@ -69,6 +82,7 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 - `duckdb/` — queries to NEXUS DuckDB via port 8765 API
 - `contacts/`, `opportunities/`, `pipelines/` — GHL CRM proxy
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
+- `broadcast` — two-phase bulk-email send: Phase 1 compliance review (Haiku), Phase 2 sequence + enrolment writes (see *Broadcast* above)
 
 ### Pages
 Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit under their parent.
@@ -94,6 +108,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/appointments` | Appointments |
 | `/inbox` | Email inbox |
 | `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
+| `/broadcast` | Bulk email composer — runs through compliance review, then writes a one-step sequence + enrolments. See *Broadcast* in ARCHITECTURE |
 | `/conversations` | Conversations archive (GHL historical, read-only) |
 | `/notes` | Notes archive (GHL historical, read-only) |
 | `/tasks` | Tasks list |
@@ -127,9 +142,13 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/forms` | GHL archive — forms + submissions + funnels (read-only, reads `ghl_archive_forms` / `ghl_archive_form_submissions` / `ghl_archive_funnels`) |
 
 ## KEY FILES
-- `utils/supabase.ts` — Supabase client (uses `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- `utils/supabase.ts` — **server-side** Supabase client (uses `SUPABASE_SERVICE_KEY`, bypasses RLS; never import from `"use client"` components — the env var isn't in the browser bundle)
+- `utils/compliance-review.ts` — Claude Haiku AU-compliance reviewer used by `/broadcast`
 - `app/properties/page.tsx` — fetches global_stock_pool, normalises fields
 - `app/properties/PropertyGrid.tsx` — card grid, War Room panel, PDF export, delete
+- `app/broadcast/page.tsx` — broadcast audience snapshot server page
+- `app/broadcast/BroadcastClient.tsx` — compose form, audience picker, violations workflow
+- `app/api/broadcast/route.ts` — two-phase compliance-review-then-send handler
 - `app/layout.tsx` — server-side sidebar data fetch + PWA metadata, mounts `AppShell` + `VoiceAssistant`
 - `app/components/AppShell.tsx` — responsive chrome: desktop sidebar / mobile hamburger drawer
 - `app/components/VoiceAssistant.tsx` — push-to-talk floating button (client)

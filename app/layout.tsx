@@ -124,6 +124,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/inbox" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>✉️</span> Inbox
             </a>
+            <a href="/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📣</span> Broadcast
+            </a>
             <a href="/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>💬</span> Conversations (archive)
             </a>
