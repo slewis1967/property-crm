@@ -28,6 +28,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { reviewBroadcastCopy, type Violation } from "../../../utils/compliance-review";
+import { fetchEligibleContacts } from "../../../utils/broadcast-audience";
 
 export const dynamic = "force-dynamic";
 
@@ -47,33 +48,6 @@ function genSlug(): string {
     `-${pad(d.getHours())}${pad(d.getMinutes())}`;
   const suffix = Math.random().toString(36).slice(2, 5);
   return `broadcast-${stamp}-${suffix}`;
-}
-
-async function eligibleContactIds(tag: string | null): Promise<string[]> {
-  let q = supabase
-    .from("contacts")
-    .select("id,email")
-    .not("email", "is", null)
-    .neq("email", "");
-  if (tag) {
-    q = q.contains("tags", [tag]);
-  }
-  const { data: contacts, error: cErr } = await q;
-  if (cErr) throw new Error(`contacts query failed: ${cErr.message}`);
-
-  const { data: unsubs, error: uErr } = await supabase
-    .from("unsubscribes")
-    .select("email")
-    .in("channel", ["email", "all"])
-    .not("email", "is", null);
-  if (uErr) throw new Error(`unsubscribes query failed: ${uErr.message}`);
-
-  const optedOut = new Set(
-    (unsubs ?? []).map((u: { email: string | null }) => (u.email ?? "").toLowerCase()),
-  );
-  return (contacts ?? [])
-    .filter((c: { email: string | null }) => !optedOut.has((c.email ?? "").toLowerCase()))
-    .map((c: { id: string }) => c.id);
 }
 
 export async function POST(req: Request) {
@@ -124,7 +98,8 @@ export async function POST(req: Request) {
   }
 
   // Phase 2: write the sequence + enrolments.
-  const contactIds = await eligibleContactIds(tag);
+  const eligible = await fetchEligibleContacts(tag);
+  const contactIds = eligible.map((c) => c.id);
   if (contactIds.length === 0) {
     return NextResponse.json({
       ok: false,

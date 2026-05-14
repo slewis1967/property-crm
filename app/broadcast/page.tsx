@@ -1,4 +1,4 @@
-import { supabase } from "../../utils/supabase";
+import { fetchEligibleContacts, countOptedOut } from "../../utils/broadcast-audience";
 import BroadcastClient from "./BroadcastClient";
 
 export const dynamic = "force-dynamic";
@@ -15,27 +15,14 @@ export const dynamic = "force-dynamic";
  * This page computes audience snapshots (total eligible + per-tag counts) so
  * the operator sees what they're about to hit before composing. Eligibility
  * mirrors what the runner enforces: has email, not in unsubscribes (email/all).
+ * Uses fetchEligibleContacts() which paginates underneath Supabase's 1000-row
+ * default cap.
  */
 export default async function BroadcastPage() {
-  const [{ data: contacts }, { data: unsubs }] = await Promise.all([
-    supabase
-      .from("contacts")
-      .select("email,tags")
-      .not("email", "is", null)
-      .neq("email", ""),
-    supabase
-      .from("unsubscribes")
-      .select("email")
-      .in("channel", ["email", "all"])
-      .not("email", "is", null),
+  const [eligible, optedOutCount] = await Promise.all([
+    fetchEligibleContacts(null),
+    countOptedOut(),
   ]);
-
-  const optedOut = new Set(
-    (unsubs ?? []).map((u: { email: string | null }) => (u.email ?? "").toLowerCase()),
-  );
-  const eligible = (contacts ?? []).filter(
-    (c: { email: string | null }) => !optedOut.has((c.email ?? "").toLowerCase()),
-  );
 
   const tagCounts: Record<string, number> = {};
   for (const c of eligible) {
@@ -51,6 +38,10 @@ export default async function BroadcastPage() {
     .map(([tag, count]) => ({ tag, count }));
 
   return (
-    <BroadcastClient totalEligible={eligible.length} tags={sortedTags} optedOutCount={optedOut.size} />
+    <BroadcastClient
+      totalEligible={eligible.length}
+      tags={sortedTags}
+      optedOutCount={optedOutCount}
+    />
   );
 }
