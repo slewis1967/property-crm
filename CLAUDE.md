@@ -36,6 +36,23 @@ All property data comes from **Supabase `global_stock_pool`** — not DuckDB. Th
 - `app/properties/page.tsx` — **Server Component**: fetches Supabase data, normalises field names, passes to PropertyGrid
 - `app/properties/PropertyGrid.tsx` — **Client Component** (`"use client"`): renders cards, handles War Room panel, PDF generation, delete
 
+### Mobile / PWA shell (`app/components/AppShell.tsx`)
+`app/layout.tsx` wraps every page in `AppShell` + mounts a global `VoiceAssistant`. AppShell renders the existing left sidebar at `lg`+ and collapses it to a hamburger drawer below `lg` (~1024px). The drawer auto-closes on route change (via `usePathname`) and locks body scroll while open so iOS doesn't bleed-scroll the page behind it. The sidebar JSX (with live `pendingReview` + `draftBuilders` count badges) is passed in as the `sidebar` prop so the data fetch stays at the server-layout level — AppShell itself is presentational.
+
+PWA basics live in `public/manifest.json` + the `metadata`/`viewport` exports in `app/layout.tsx`: standalone display, theme/background `#0F4C5C` (brand teal), `en-AU`, `appleWebApp.capable`, and the favicon/android-chrome/apple-touch icon set wired through `metadata.icons`. The OG/Twitter cards are also declared there.
+
+### Voice Assistant (`app/components/VoiceAssistant.tsx` + `app/api/voice/converse/route.ts`)
+Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a Claude Haiku (`claude-haiku-4-5-20251001`) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
+
+Tool inventory (MVP):
+- `find_contact` — lookup by name/phone/email, returns top match (must be called before any contact-scoped tool)
+- `log_call` — append a dated note to a contact (low-risk, no confirm)
+- `create_task` — add to `tasks` table, optional `contact_id` + `due_date`
+- `send_sms` — ClickSend, requires `confirmed=true`
+- `send_email` — Brevo, requires `confirmed=true`
+
+**Confirm-before-send rule:** `send_*` tools take a `confirmed` boolean. Claude is instructed to call with `confirmed=false` first (which only DRAFTS), then re-call with `confirmed=true` after the user says yes. The server enforces this — `confirmed=false` never actually fires. Don't bypass this server-side check; it's the only thing standing between "voice misheard 'send to mum'" and an outbound SMS.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
@@ -51,26 +68,73 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 - `properties/delete` — DELETE from Supabase by ID array
 - `duckdb/` — queries to NEXUS DuckDB via port 8765 API
 - `contacts/`, `opportunities/`, `pipelines/` — GHL CRM proxy
+- `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
 
 ### Pages
+Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit under their parent.
+
+**Command**
 | Route | Description |
 |-------|-------------|
-| `/` | Dashboard |
-| `/properties` | Aggregator Feed — main listing grid (PropertyGrid) |
-| `/leads` | Inbound leads |
-| `/contacts` | GHL contacts |
-| `/opportunities` | GHL pipeline |
-| `/analytics` | Charts/stats |
-| `/suburbs` | Suburb research |
-| `/social` | Social media queue |
+| `/` | War Room — dashboard / landing |
+| `/advisor` | Advisor view |
+| `/search` | Smart Search |
+| `/analytics` | Charts / stats |
 | `/activity` | Activity log |
+| `/pia` | PIA Modeller (Property Investment Analysis) |
+
+**CRM**
+| Route | Description |
+|-------|-------------|
+| `/opportunities` | GHL pipeline |
+| `/opportunities/[id]` | Opportunity detail |
+| `/leads` | Inbound leads pipeline |
+| `/contacts` | GHL contacts (client-side tag filter dropdown on `ContactsClient.tsx`) |
+| `/contacts/[id]` | Contact detail |
+| `/appointments` | Appointments |
+| `/inbox` | Email inbox |
+| `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
+| `/conversations` | Conversations archive (GHL historical, read-only) |
+| `/notes` | Notes archive (GHL historical, read-only) |
+| `/tasks` | Tasks list |
+| `/media` | Media library |
+
+**Stock / Aggregator**
+| Route | Description |
+|-------|-------------|
+| `/properties` | Aggregator Feed — main listing grid (PropertyGrid) |
+| `/properties/[id]` | Property detail |
+| `/aggregator/review` | Review queue — sidebar shows count badge from `property_review_queue` where `status='pending'` |
+| `/aggregator/runs` | Ingestion runs log |
+| `/aggregator/builders` | Builders list — sidebar shows count badge for `builders` where `draft=true AND active=true` (each blocks future ingestion runs from that sender) |
+| `/suburbs` | Suburb Intelligence |
+
+**System**
+| Route | Description |
+|-------|-------------|
+| `/settings` | Settings |
+
+**Elvis**
+| Route | Description |
+|-------|-------------|
 | `/approvals` | Telegram approval queue |
+| `/social` | Social History |
+| `/sequences` | Email / SMS sequences |
+
+**Unlisted in sidebar**
+| Route | Description |
+|-------|-------------|
+| `/forms` | GHL archive — forms + submissions + funnels (read-only, reads `ghl_archive_forms` / `ghl_archive_form_submissions` / `ghl_archive_funnels`) |
 
 ## KEY FILES
 - `utils/supabase.ts` — Supabase client (uses `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
 - `app/properties/page.tsx` — fetches global_stock_pool, normalises fields
 - `app/properties/PropertyGrid.tsx` — card grid, War Room panel, PDF export, delete
-- `app/layout.tsx` — sidebar nav
+- `app/layout.tsx` — server-side sidebar data fetch + PWA metadata, mounts `AppShell` + `VoiceAssistant`
+- `app/components/AppShell.tsx` — responsive chrome: desktop sidebar / mobile hamburger drawer
+- `app/components/VoiceAssistant.tsx` — push-to-talk floating button (client)
+- `app/api/voice/converse/route.ts` — Haiku tool-use loop with confirm-before-send guard
+- `public/manifest.json` — PWA manifest (standalone, brand teal, AU locale, icon set)
 
 ## SUPABASE SCHEMA (`global_stock_pool` key columns)
 `id`, `builder_name`, `street_address`, `suburb`, `state`, `total_package_price`, `house_price`, `bedrooms`, `bathrooms`, `car_spaces`, `land_size`, `house_size`, `status`, `brochure_url`, `category`, `created_at`, `updated_at`
