@@ -1,0 +1,17 @@
+# Normalise line endings on commit. Working tree keeps whatever the OS
+# wrote (so Windows tools still see CRLF locally), but the index always
+# stores LF. Stops every Windows edit from showing as "all lines changed"
+# in diffs.
+* text=auto eol=lf
+
+# Explicit binary types — never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
