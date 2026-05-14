@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import EmailComposeModal from "../components/EmailComposeModal";
+import { sanitizeEmailHtml } from "../../utils/sanitize-email";
 
 export type EmailRow = {
   id: string;
@@ -460,7 +461,7 @@ function MessageCard({ email, onReply }: { email: EmailRow; onReply?: () => void
       {email.body_html ? (
         <div
           className="email-body text-sm text-gray-800"
-          dangerouslySetInnerHTML={{ __html: email.body_html }}
+          dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(email.body_html) }}
         />
       ) : (
         <p className="text-xs text-gray-400 italic">No body captured.</p>

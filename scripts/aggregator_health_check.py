@@ -2,23 +2,35 @@
 """
 Aggregator v2 — 7-day Health Check
 Run from WSL or Windows (anywhere with outbound Supabase access):
-    python3 scripts/aggregator_health_check.py
+    SUPABASE_SERVICE_KEY=... python3 scripts/aggregator_health_check.py
+
+Reads SUPABASE_URL + SUPABASE_SERVICE_KEY from env. Falls back to the
+NEXT_PUBLIC_SUPABASE_URL constant since the URL is not a secret. The key
+is required — script exits 2 if it's not set.
 """
 
 import json
+import os
 import sys
 import urllib.request
 import urllib.error
 from collections import Counter
 from datetime import datetime, timezone
 
-SUPABASE_URL = "https://jzivferpxlbegrxghqpr.supabase.co"
-SERVICE_KEY = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-    ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6aXZmZXJweGxiZWdyeGdocXByIiwicm9sZSI"
-    "6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTk5OTEzMiwiZXhwIjoyMDg3NTc1MTMyfQ"
-    ".lsr1kBNHlQIi9BcK4uV_Ifral14aR40LUjUDPsPPgQo"
+SUPABASE_URL = os.environ.get(
+    "SUPABASE_URL",
+    os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://jzivferpxlbegrxghqpr.supabase.co"),
 )
+SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+if not SERVICE_KEY:
+    print(
+        "ERROR: SUPABASE_SERVICE_KEY env var not set.\n"
+        "Source .env.local or export the key before running:\n"
+        "  export $(grep SUPABASE_SERVICE_KEY .env.local | xargs)",
+        file=sys.stderr,
+    )
+    sys.exit(2)
+
 HEADERS = {
     "apikey": SERVICE_KEY,
     "Authorization": f"Bearer {SERVICE_KEY}",

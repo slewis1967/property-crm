@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
+import { orSafe } from "../../../../utils/postgrest-safe";
 
 export const dynamic = "force-dynamic";
 
@@ -95,7 +96,10 @@ export async function POST(req: Request) {
       .order("updated_at", { ascending: false })
       .limit(80);
 
-    if (filters.state) qb = qb.or(`preferred_state.ilike.${filters.state},state.ilike.${filters.state}`);
+    if (filters.state) {
+      const s = orSafe(String(filters.state));
+      if (s) qb = qb.or(`preferred_state.ilike.${s},state.ilike.${s}`);
+    }
     if (filters.buyer_type) qb = qb.eq("buyer_type", filters.buyer_type);
     if (typeof filters.temperature === "string") qb = qb.eq("temperature", filters.temperature);
     if (typeof filters.budget_min === "number")
@@ -119,10 +123,12 @@ export async function POST(req: Request) {
       qb = qb.gte("updated_at", cutoff);
     }
     if (typeof filters.free_text === "string" && filters.free_text.trim()) {
-      const term = filters.free_text.trim().replace(/[%_]/g, "");
-      qb = qb.or(
-        `name.ilike.%${term}%,full_name.ilike.%${term}%,email.ilike.%${term}%,notes.ilike.%${term}%`,
-      );
+      const term = orSafe(filters.free_text);
+      if (term) {
+        qb = qb.or(
+          `name.ilike.%${term}%,full_name.ilike.%${term}%,email.ilike.%${term}%,notes.ilike.%${term}%`,
+        );
+      }
     }
 
     const { data: candidates, error } = await qb;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
+import { orSafe } from "../../../../utils/postgrest-safe";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,10 @@ export async function POST(req: Request) {
       .order("lead_score", { ascending: false, nullsFirst: false })
       .order("updated_at", { ascending: false })
       .limit(30);
-    if (propState) q = q.or(`preferred_state.ilike.${propState},state.ilike.${propState}`);
+    if (propState) {
+      const s = orSafe(String(propState));
+      if (s) q = q.or(`preferred_state.ilike.${s},state.ilike.${s}`);
+    }
 
     const { data: candidates, error } = await q;
     if (error) {

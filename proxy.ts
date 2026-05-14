@@ -2,20 +2,18 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Cloudflare Access auth gate for the Property CRM (Next 16 `proxy` convention).
+ * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
+ * (Next 16 `proxy` convention).
  *
- * AUTH_MODE controls behaviour:
+ * AUTH_MODE controls auth behaviour:
  *   local  — no auth (default; safe for `npm run dev` on Sean's workstation)
  *   tunnel — require Cloudflare Access headers on every request except those
  *            explicitly exempted below
  *
- * When the tunnel is up, Cloudflare Access authenticates the user (Google SSO
- * / magic-link) and adds these headers. Trusting their presence is enough as
- * long as Next binds only to localhost — any external reach must come through
- * the tunnel, where Cloudflare adds these headers itself.
- *
- * Set AUTH_MODE=tunnel in `.env.local` (or in the production environment) to
- * enable enforcement. Default is `local`.
+ * The CSRF origin filter runs regardless of AUTH_MODE: any state-changing
+ * request to /api/* with a foreign Origin is rejected. CF Access cookies
+ * are SameSite=Lax which still allows top-level cross-site POSTs, so
+ * Origin enforcement is the actual barrier.
  */
 
 const PUBLIC_PATHS = new Set<string>([
@@ -23,13 +21,49 @@ const PUBLIC_PATHS = new Set<string>([
   // room dashboard requires Sean to be authenticated.
 ]);
 
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+// Trusted hosts for the Origin header on mutating /api/* calls. Production
+// host plus dev hosts in non-prod. Override via TRUSTED_ORIGIN_HOSTS env.
+const TRUSTED_HOSTS: Set<string> = (() => {
+  const fromEnv = (process.env.TRUSTED_ORIGIN_HOSTS ?? "crm.nextkey.com.au")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (process.env.NODE_ENV !== "production") {
+    fromEnv.push("localhost", "127.0.0.1", "172.21.51.163");
+  }
+  return new Set(fromEnv);
+})();
+
+function originAllowed(origin: string | null): boolean {
+  if (!origin) return true; // server-to-server (no Origin) — runners / scripts
+  try {
+    return TRUSTED_HOSTS.has(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // CSRF: any browser-initiated cross-site mutation to /api/* gets 403,
+  // regardless of auth mode. Browsers can't forge the Origin header.
+  if (pathname.startsWith("/api/") && MUTATING_METHODS.has(req.method)) {
+    if (!originAllowed(req.headers.get("origin"))) {
+      return NextResponse.json(
+        { error: "Forbidden: untrusted origin" },
+        { status: 403 },
+      );
+    }
+  }
+
   const mode = (process.env.AUTH_MODE ?? "local").toLowerCase();
   if (mode !== "tunnel") {
     return NextResponse.next();
   }
 
-  const { pathname } = req.nextUrl;
   if (PUBLIC_PATHS.has(pathname)) {
     return NextResponse.next();
   }

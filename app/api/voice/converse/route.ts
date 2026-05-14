@@ -31,6 +31,7 @@ import { sendBrevoEmail } from "../../../../utils/brevo";
 import { defaultSignature } from "../../../../utils/email-signature";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
 import { resolveSender } from "../../../../utils/mail-owner";
+import { orSafe } from "../../../../utils/postgrest-safe";
 
 export const dynamic = "force-dynamic";
 
@@ -120,13 +121,10 @@ type ToolResult = { content: string; side_effect?: Record<string, unknown> };
 async function findContact(query: string): Promise<ToolResult> {
   const q = query.trim();
   if (!q) return { content: "No query provided." };
-  // PostgREST's .or() filter uses , for clause separation and () for grouping,
-  // and ilike's pattern uses % and _ as wildcards. The voice transcript can
-  // contain literal commas, apostrophes, parens, etc. (e.g. "Smith, Jr." or
-  // "O'Brien") which would either break the filter parse or — worse —
-  // inject extra clauses. Strip those characters before interpolation.
-  // Phone lookup is unaffected because we already digit-only it.
-  const safe = q.replace(/[,()*\\%_]/g, " ").trim();
+  // Strip PostgREST .or() / ilike syntax chars before interpolation — handles
+  // transcripts like "Smith, Jr." or "O'Brien" and prevents clause injection.
+  // Phone lookup is unaffected because we digit-only it separately.
+  const safe = orSafe(q);
   if (!safe) return { content: `No usable characters in query "${q}".` };
   const phoneDigits = q.replace(/\D/g, "");
   const orFilter = [

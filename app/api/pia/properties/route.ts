@@ -6,6 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { orSafe } from "../../../../utils/postgrest-safe";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,12 @@ export async function GET(req: Request) {
     .limit(limit);
 
   if (q) {
-    const safe = q.replace(/[%,]/g, " ");
-    query = query.or(
-      `suburb.ilike.%${safe}%,state.ilike.%${safe}%,street_address.ilike.%${safe}%,builder_name.ilike.%${safe}%,estate_name.ilike.%${safe}%`,
-    );
+    const safe = orSafe(q);
+    if (safe) {
+      query = query.or(
+        `suburb.ilike.%${safe}%,state.ilike.%${safe}%,street_address.ilike.%${safe}%,builder_name.ilike.%${safe}%,estate_name.ilike.%${safe}%`,
+      );
+    }
   }
 
   const { data, error } = await query;

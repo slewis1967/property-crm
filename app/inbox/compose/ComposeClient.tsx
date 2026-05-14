@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
+import { sanitizeEmailHtml } from "../../../utils/sanitize-email";
 
 type DraftPayload = {
   id: string;
@@ -146,6 +147,10 @@ export default function ComposeClient({
           // the recipient sees the response → signature → quoted history.
           const sigData = await sigPromise;
           const sigHtml = (sigData && sigData.ok ? sigData.html : "") as string;
+          // Sanitise the quoted original — inbound body_html is attacker-
+          // controlled (anyone can send mail to us), so a `<script>` or
+          // onerror payload would otherwise execute in this contentEditable
+          // AND get persisted into the draft body for later send.
           const quoted =
             `<p><br></p>` +
             (sigHtml || "") +
@@ -153,7 +158,7 @@ export default function ComposeClient({
             `<p style="margin:0 0 6px 0;font-size:12px;color:#999">` +
             `On ${e.sent_at ? new Date(e.sent_at).toLocaleString() : "an earlier date"}, ` +
             `${e.from_name ?? e.from_email} wrote:</p>` +
-            (e.body_html ?? "") +
+            sanitizeEmailHtml(e.body_html) +
             `</blockquote>`;
           setBodyHtml(quoted);
           if (bodyRef.current) bodyRef.current.innerHTML = quoted;
