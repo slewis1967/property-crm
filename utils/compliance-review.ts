@@ -86,16 +86,41 @@ OUTPUT — STRICT JSON. No code fences, no preamble, no commentary outside the J
 
 If the copy is clean, output: {"violations": []}`;
 
+/**
+ * Strip content that's irrelevant to compliance review but can dominate token
+ * count: base64-encoded inline images, <script>/<style> blocks, and a final
+ * char cap. Keeps the visible HTML structure + copy so the reviewer can still
+ * see link text, list items, etc.
+ *
+ * Without this, a pasted HTML email with inline base64 images can run into
+ * the hundreds of thousands of tokens and blow Haiku's 200k context window.
+ */
+function sanitizeForReview(html: string, maxChars = 40000): string {
+  let s = html
+    .replace(/data:[^;]+;base64,[A-Za-z0-9+/=\s]+/g, "[stripped:base64-image]")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "");
+  if (s.length > maxChars) {
+    s = s.slice(0, maxChars) + `\n[...truncated for review at ${maxChars} chars...]`;
+  }
+  return s;
+}
+
 function buildUserMessage(subject: string, html_body: string, text_body: string): string {
+  const sanitized_html = sanitizeForReview(html_body);
+  const sanitized_text = text_body.length > 10000
+    ? text_body.slice(0, 10000) + "\n[...truncated...]"
+    : text_body;
   return [
     "=== EMAIL SUBJECT ===",
     subject,
     "",
-    "=== EMAIL HTML BODY ===",
-    html_body,
+    "=== EMAIL HTML BODY (sanitized: base64/scripts/styles/comments stripped) ===",
+    sanitized_html,
     "",
-    text_body ? "=== EMAIL PLAIN-TEXT BODY ===" : "",
-    text_body,
+    sanitized_text ? "=== EMAIL PLAIN-TEXT BODY ===" : "",
+    sanitized_text,
     "",
     "Review against the laws in your instructions. Output strict JSON.",
   ]
