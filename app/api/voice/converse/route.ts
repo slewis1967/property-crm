@@ -120,13 +120,20 @@ type ToolResult = { content: string; side_effect?: Record<string, unknown> };
 async function findContact(query: string): Promise<ToolResult> {
   const q = query.trim();
   if (!q) return { content: "No query provided." };
-  // Match against name fields (case-insensitive ILIKE) OR phone/email exact-ish
+  // PostgREST's .or() filter uses , for clause separation and () for grouping,
+  // and ilike's pattern uses % and _ as wildcards. The voice transcript can
+  // contain literal commas, apostrophes, parens, etc. (e.g. "Smith, Jr." or
+  // "O'Brien") which would either break the filter parse or — worse —
+  // inject extra clauses. Strip those characters before interpolation.
+  // Phone lookup is unaffected because we already digit-only it.
+  const safe = q.replace(/[,()*\\%_]/g, " ").trim();
+  if (!safe) return { content: `No usable characters in query "${q}".` };
   const phoneDigits = q.replace(/\D/g, "");
   const orFilter = [
-    `full_name.ilike.%${q}%`,
-    `name.ilike.%${q}%`,
-    `first_name.ilike.%${q}%`,
-    `email.ilike.%${q}%`,
+    `full_name.ilike.%${safe}%`,
+    `name.ilike.%${safe}%`,
+    `first_name.ilike.%${safe}%`,
+    `email.ilike.%${safe}%`,
   ];
   if (phoneDigits.length >= 4) orFilter.push(`phone.ilike.%${phoneDigits}%`);
 
@@ -331,6 +338,38 @@ confirm "did you mean X?" if there's ambiguity.
 
 Today's date: ${new Date().toLocaleDateString("en-AU", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.`;
 
+// The history we accept back from the client is whatever we returned on the
+// previous turn — but the client can also tamper with it. Validating defends
+// against injecting fake tool_results (e.g. "user already confirmed the SMS")
+// that would prime Claude to call confirmed=true without a real verbal yes.
+const ALLOWED_BLOCK_TYPES = new Set(["text", "tool_use", "tool_result"]);
+
+function sanitizeHistory(raw: unknown): Anthropic.MessageParam[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Anthropic.MessageParam[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const role = (item as { role?: unknown }).role;
+    if (role !== "user" && role !== "assistant") continue;
+    const content = (item as { content?: unknown }).content;
+    if (typeof content === "string") {
+      out.push({ role, content });
+      continue;
+    }
+    if (!Array.isArray(content)) continue;
+    const blocks = content.filter(
+      (b): b is Record<string, unknown> =>
+        b !== null &&
+        typeof b === "object" &&
+        typeof (b as { type?: unknown }).type === "string" &&
+        ALLOWED_BLOCK_TYPES.has((b as { type: string }).type),
+    );
+    if (blocks.length === 0) continue;
+    out.push({ role, content: blocks as unknown as Anthropic.MessageParam["content"] });
+  }
+  return out;
+}
+
 export async function POST(req: Request) {
   try {
     const { transcript, history } = await req.json();
@@ -340,7 +379,7 @@ export async function POST(req: Request) {
 
     const senderEmail = userEmailFromRequest(req);
     const messages: Anthropic.MessageParam[] = [
-      ...(Array.isArray(history) ? history : []),
+      ...sanitizeHistory(history),
       { role: "user", content: transcript },
     ];
 

@@ -58,7 +58,9 @@ export default function BroadcastClient({
 
   const audienceLabel = selectedTag === null ? "All contacts" : `Tag: ${selectedTag}`;
 
-  async function postBroadcast(acknowledge: boolean): Promise<void> {
+  async function postBroadcast(
+    mode: "review" | "override_violations" | "override_outage",
+  ): Promise<void> {
     setSending(true);
     setError(null);
     setReviewFailed(null);
@@ -71,7 +73,8 @@ export default function BroadcastClient({
           html_body: htmlBody,
           text_body: textBody,
           tag: selectedTag,
-          acknowledge_violations: acknowledge,
+          acknowledge_violations: mode === "override_violations",
+          skip_review_outage: mode === "override_outage",
         }),
       });
       const body = await r.json();
@@ -110,7 +113,7 @@ export default function BroadcastClient({
       setError(`Tick "I confirm send to all ${totalEligible} contacts" first.`);
       return;
     }
-    void postBroadcast(false);
+    void postBroadcast("review");
   }
 
   if (result) {
@@ -271,7 +274,7 @@ export default function BroadcastClient({
           </label>
           {ackViolations && (
             <button
-              onClick={() => void postBroadcast(true)}
+              onClick={() => void postBroadcast("override_outage")}
               disabled={sending}
               className="mt-3 px-4 py-2 bg-amber-700 text-white rounded text-sm hover:bg-amber-800 disabled:opacity-50"
             >
@@ -327,7 +330,7 @@ export default function BroadcastClient({
               Edit copy
             </button>
             <button
-              onClick={() => void postBroadcast(true)}
+              onClick={() => void postBroadcast("override_violations")}
               disabled={!ackViolations || sending}
               className="px-4 py-2 bg-red-700 text-white rounded text-sm hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >

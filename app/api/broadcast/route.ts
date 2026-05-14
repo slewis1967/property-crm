@@ -38,6 +38,11 @@ interface BroadcastInput {
   text_body: string;
   tag: string | null;
   acknowledge_violations: boolean;
+  // Distinct from acknowledge_violations: this flag means the operator chose to
+  // proceed despite the review service itself failing (Anthropic outage). We
+  // gate it separately so a transient 5xx can't be turned into a free pass on
+  // real violations — the client only sets this after seeing a review_failed.
+  skip_review_outage: boolean;
 }
 
 function genSlug(): string {
@@ -48,6 +53,27 @@ function genSlug(): string {
     `-${pad(d.getHours())}${pad(d.getMinutes())}`;
   const suffix = Math.random().toString(36).slice(2, 5);
   return `broadcast-${stamp}-${suffix}`;
+}
+
+// Retry the compliance call a few times before declaring outage. Anthropic
+// 5xx / rate-limit blips are common and the cost of a false-outage is high
+// (operator gets pushed onto the skip-review path).
+async function reviewWithRetry(
+  input: { subject: string; html_body: string; text_body: string },
+): Promise<{ violations: Violation[] }> {
+  const ATTEMPTS = 3;
+  let lastErr: unknown;
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try {
+      return await reviewBroadcastCopy(input);
+    } catch (e) {
+      lastErr = e;
+      if (i < ATTEMPTS - 1) {
+        await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 export async function POST(req: Request) {
@@ -63,6 +89,7 @@ export async function POST(req: Request) {
   const text_body = (body.text_body ?? "").trim();
   const tag = body.tag ? String(body.tag).trim() : null;
   const acknowledge_violations = body.acknowledge_violations === true;
+  const skip_review_outage = body.skip_review_outage === true;
 
   if (!subject) {
     return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 });
@@ -71,20 +98,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "html_body is required" }, { status: 400 });
   }
 
-  // Phase 1: compliance review. Skipped if the operator already acknowledged
-  // on a prior request.
-  let violations: Violation[] = [];
-  if (!acknowledge_violations) {
+  // Phase 1: compliance review.
+  //   - acknowledge_violations=true  → operator has seen real violations and chose to send anyway. Skip.
+  //   - skip_review_outage=true      → operator acknowledges the review SERVICE is down. Skip, but log it.
+  //   - otherwise                    → run the review (with retry).
+  // The two flags are deliberately separate so an Anthropic 5xx can't become a
+  // free pass on substantive violations: an outage override only opens the
+  // narrower door.
+  if (!acknowledge_violations && !skip_review_outage) {
+    let violations: Violation[] = [];
     try {
-      const review = await reviewBroadcastCopy({ subject, html_body, text_body });
+      const review = await reviewWithRetry({ subject, html_body, text_body });
       violations = review.violations;
     } catch (e) {
-      // If the compliance check itself fails (Anthropic outage, network), don't
-      // block the operator — surface as a soft warning so the UI can decide.
       return NextResponse.json({
         ok: false,
         status: "review_failed",
-        error: `compliance review failed: ${e instanceof Error ? e.message : String(e)}`,
+        error: `compliance review failed after retry: ${e instanceof Error ? e.message : String(e)}`,
         violations: [],
       }, { status: 200 });
     }
@@ -113,6 +143,10 @@ export async function POST(req: Request) {
   const subjectPreview = subject.length > 60 ? subject.slice(0, 57) + "..." : subject;
   const audienceLabel = tag ? `tag:${tag}` : "all contacts";
 
+  // Insert sequence INACTIVE first. If step/enrolment writes fail partway,
+  // the runner won't pick the half-built sequence up. We flip is_active=true
+  // only after every enrolment chunk lands. On any failure we tear down the
+  // sequence so retries don't accumulate orphan rows + duplicate sends.
   const { data: seqRow, error: seqErr } = await supabase
     .from("sequences")
     .insert({
@@ -121,7 +155,7 @@ export async function POST(req: Request) {
       description:
         `Ad-hoc email broadcast sent ${new Date().toISOString()} from /broadcast UI to ${audienceLabel}.`,
       channel: "email",
-      is_active: true,
+      is_active: false,
     })
     .select("id")
     .single();
@@ -133,6 +167,15 @@ export async function POST(req: Request) {
   }
   const sequenceId = seqRow.id as string;
 
+  async function teardown(reason: string, status = 500) {
+    // Best-effort cleanup. The sequence is is_active=false so the runner
+    // won't fire it even if these deletes partially fail.
+    await supabase.from("sequence_enrollments").delete().eq("sequence_id", sequenceId);
+    await supabase.from("sequence_steps").delete().eq("sequence_id", sequenceId);
+    await supabase.from("sequences").delete().eq("id", sequenceId);
+    return NextResponse.json({ ok: false, error: reason }, { status });
+  }
+
   const { error: stepErr } = await supabase
     .from("sequence_steps")
     .insert({
@@ -143,11 +186,7 @@ export async function POST(req: Request) {
       payload: { subject, html_body, text_body },
     });
   if (stepErr) {
-    return NextResponse.json({
-      ok: false,
-      error: `failed to insert step: ${stepErr.message}`,
-      sequence_id: sequenceId,
-    }, { status: 500 });
+    return await teardown(`failed to insert step: ${stepErr.message}`);
   }
 
   // Chunked enrolment inserts. Supabase REST can handle 1000-row batches
@@ -162,14 +201,18 @@ export async function POST(req: Request) {
     }));
     const { error: enrErr } = await supabase.from("sequence_enrollments").insert(rows);
     if (enrErr) {
-      return NextResponse.json({
-        ok: false,
-        error: `enrolment failed at chunk ${i / CHUNK}: ${enrErr.message}`,
-        sequence_id: sequenceId,
-        enrolled_count: inserted,
-      }, { status: 500 });
+      return await teardown(`enrolment failed at chunk ${i / CHUNK}: ${enrErr.message}`);
     }
     inserted += rows.length;
+  }
+
+  // Everything landed — flip the sequence on so the runner picks it up.
+  const { error: activateErr } = await supabase
+    .from("sequences")
+    .update({ is_active: true })
+    .eq("id", sequenceId);
+  if (activateErr) {
+    return await teardown(`failed to activate sequence: ${activateErr.message}`);
   }
 
   // ETA: the runner sends one email at a time (~300ms each via Brevo), and
