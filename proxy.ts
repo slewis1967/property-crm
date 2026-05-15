@@ -48,6 +48,17 @@ function originAllowed(origin: string | null): boolean {
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
+  // a Cloudflare Access redirect_url concatenation can produce URLs like
+  // crm.nextkey.com.au//aggregator/runs; Next's client router then treats
+  // "//aggregator/runs" as protocol-relative ("https://aggregator/runs")
+  // and SecurityErrors out on history.replaceState. Fix it at the edge.
+  if (pathname.includes("//")) {
+    const cleaned = req.nextUrl.clone();
+    cleaned.pathname = pathname.replace(/\/{2,}/g, "/");
+    return NextResponse.redirect(cleaned, 301);
+  }
+
   // CSRF: any browser-initiated cross-site mutation to /api/* gets 403,
   // regardless of auth mode. Browsers can't forge the Origin header.
   if (pathname.startsWith("/api/") && MUTATING_METHODS.has(req.method)) {
