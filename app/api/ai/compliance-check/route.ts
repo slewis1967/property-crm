@@ -26,6 +26,7 @@ import { NextResponse } from "next/server";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You're a compliance reviewer for an Australian property advisor (Sean, NextKey Property Strategists). You read draft outbound text — emails, SMS, ad copy, social posts — and flag risky language BEFORE it reaches a client.
@@ -77,6 +78,8 @@ DO NOT flag:
 Snippets must be quoted verbatim from the input — don't paraphrase. If the input is fine, return severity:"clean", violations:[], rewrite:"".`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const text: string | undefined = body.text;

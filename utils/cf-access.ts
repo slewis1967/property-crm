@@ -20,6 +20,7 @@
  * could be set by any external curl.
  */
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 const DEV_DEFAULT = process.env.DEV_USER_EMAIL ?? "sean.l@nextkey.com.au";
@@ -49,4 +50,30 @@ export function userEmailFromRequest(req: Request): string {
  *  routes that should hard-401 rather than silently return zero rows. */
 export function isUnauthenticated(email: string): boolean {
   return email === UNAUTHENTICATED_SENTINEL;
+}
+
+/**
+ * One-line auth gate for API routes that mutate state, send outbound, or
+ * spend Anthropic/Gemini tokens. Returns either the authenticated email
+ * (caller continues) or a 401 NextResponse the caller should return.
+ *
+ * Usage:
+ *   const auth = requireAuth(req);
+ *   if (auth instanceof NextResponse) return auth;
+ *   const ownerEmail = auth;
+ *
+ * Goal: every defence-in-depth gate adds the same three lines. Cheaper
+ * to read, harder to forget. Don't use in routes that just LIST data
+ * already scoped by owner_user_email — those degrade gracefully via the
+ * sentinel without needing the explicit 401.
+ */
+export function requireAuth(req: Request): string | NextResponse {
+  const email = userEmailFromRequest(req);
+  if (isUnauthenticated(email)) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthenticated" },
+      { status: 401 },
+    );
+  }
+  return email;
 }

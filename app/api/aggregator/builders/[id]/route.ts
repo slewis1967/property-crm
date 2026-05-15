@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 
+import { requireAuth } from "../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const ALLOWED_FIELDS = [
@@ -18,6 +19,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const update: Record<string, any> = {};

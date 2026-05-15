@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are a property advisor's coach. Look at one contact and suggest the SINGLE most leveraged next action the advisor (Sean) could take with them today.
@@ -19,6 +20,8 @@ Examples:
 Rules: be concrete (name a property/document/topic when possible), respect what's already happened (don't suggest something they just did), bias to low-friction actions, and keep it under 25 words.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();
     if (!contactId) {

@@ -33,6 +33,7 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 import { resolveSender } from "../../../../utils/mail-owner";
 import { orSafe } from "../../../../utils/postgrest-safe";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const client = new Anthropic();
@@ -369,6 +370,8 @@ function sanitizeHistory(raw: unknown): Anthropic.MessageParam[] {
 }
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { transcript, history } = await req.json();
     if (!transcript || typeof transcript !== "string") {

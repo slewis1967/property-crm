@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 
+import { requireAuth } from "../../../../utils/cf-access";
 /**
  * Soft-delete properties from the aggregator UI.
  *
@@ -16,10 +17,27 @@ import { supabase } from "../../../../utils/supabase";
  * and stamp withdrawn_at. Consumers (PIA picker, matchmaker, properties
  * grid) already filter these out so the visible behaviour is unchanged.
  */
+// Cap on a single bulk withdraw. Comfortably covers "select-all + delete"
+// from the UI while preventing a single bad request from withdrawing the
+// whole catalogue. Anyone wanting a bigger purge can paginate.
+const MAX_IDS = 500;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function POST(req: NextRequest) {
-  const { ids } = await req.json();
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+  const { ids } = await req.json().catch(() => ({ ids: null }));
   if (!Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: "No ids provided" }, { status: 400 });
+  }
+  if (ids.length > MAX_IDS) {
+    return NextResponse.json(
+      { error: `Too many ids — max ${MAX_IDS} per request` },
+      { status: 400 },
+    );
+  }
+  if (!ids.every((id) => typeof id === "string" && UUID_RE.test(id))) {
+    return NextResponse.json({ error: "Invalid id format" }, { status: 400 });
   }
   const { error } = await supabase
     .from("global_stock_pool")

@@ -25,6 +25,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60; // Netlify default 10s — bump for large PDFs
@@ -53,6 +54,8 @@ Rules:
 - Don't expose any unredacted personal IDs (license numbers, passport, TFN) in tags or summary — keep those out unless absolutely critical to the action.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const fileBase64: string | undefined = body.fileBase64;

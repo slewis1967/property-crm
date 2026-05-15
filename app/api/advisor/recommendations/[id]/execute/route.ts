@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 
+import { requireAuth } from "../../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const ALLOWED_BUILDER_FIELDS = new Set([
@@ -110,9 +111,11 @@ async function executeAction(action: any): Promise<ExecResult> {
 }
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id } = await params;
 
   const { data: rec, error: fetchErr } = await supabase

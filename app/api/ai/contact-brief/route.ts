@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are an AI brief writer for a property advisor's CRM. The advisor (Sean, NextKey Property Strategists) opens a contact's page and needs to know in 5 seconds: who is this person, where are they in their journey, and what should I focus on with them.
@@ -16,6 +17,8 @@ Write a tight, factual brief in EXACTLY 3 lines:
 Rules: no preamble, no headers, no bullet markers, no quotation marks, no emoji. Use plain prose. If a field is unknown, omit it rather than saying "unknown." Treat the contact as the subject — don't address the advisor as "you."`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();
     if (!contactId) {

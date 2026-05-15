@@ -14,9 +14,12 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { sendSms, toE164AU } from "../../../../utils/sms";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const text: string | undefined = body.body;

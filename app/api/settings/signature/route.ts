@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { getSignatureFields, type SignatureFields } from "../../../../utils/email-signature";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -23,6 +24,8 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json().catch(() => ({}));
     const userEmail: string = typeof body.user_email === "string" ? body.user_email.trim() : "";

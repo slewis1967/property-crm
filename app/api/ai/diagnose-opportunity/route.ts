@@ -5,6 +5,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You diagnose stuck opportunities in a property advisor's pipeline. Sean opens an opportunity and wants to know: is it stuck, and if so, why, and what should I do?
@@ -23,6 +24,8 @@ Rules:
 - If the opp is fresh and progressing fine, set stuck=false and put a short positive read in diagnosis (e.g., "Active, last contacted 2 days ago — no intervention needed yet"). Leave unblock as "".`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { opportunityId } = await req.json();
     if (!opportunityId) {

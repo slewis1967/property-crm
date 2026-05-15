@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { nexusApi } from "../../../../utils/nexus-api";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You write a concise market briefing for a property advisor about a single suburb. Sean uses these to sound knowledgeable on calls and tailor pitches per area.
@@ -21,6 +22,8 @@ Format STRICTLY (use ** for bold labels, • for bullets, plain prose otherwise)
 Total under 200 words. Plain text. No preamble, no closer.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { suburb, state } = await req.json();
     if (!suburb || !state) {

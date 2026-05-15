@@ -21,6 +21,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 type Task = { title: string; due_date: string | null };
@@ -43,6 +44,8 @@ type Applied = {
 };
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const contactId: string | undefined = body.contactId;

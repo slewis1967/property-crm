@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { orSafe } from "../../../../utils/postgrest-safe";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You match a property to the contacts in a CRM who are most likely to want it. Sean is a property advisor at NextKey Property Strategists; you're helping him decide who to pitch this property to.
@@ -18,6 +19,8 @@ Output STRICT JSON only — no preamble, no markdown fences. Format:
 If fewer than 5 candidates clearly fit, return only the ones that do. If none fit, return {"matches":[]}.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { propertyId } = await req.json();
     if (!propertyId) {

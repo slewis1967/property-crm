@@ -16,6 +16,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You're drafting a property pitch on Sean's behalf. Sean is a property advisor at NextKey Property Strategists. Match the framing to the contact's buyer profile — don't write generic copy.
@@ -43,6 +44,8 @@ Voice rules:
 Output: just the pitch body, ready to send. No preamble, no "Here's a draft:", no explanation, no markdown headers.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const contactId: string | undefined = body.contactId;

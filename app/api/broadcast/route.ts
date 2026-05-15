@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { reviewBroadcastCopy, type Violation } from "../../../utils/compliance-review";
 import { fetchEligibleContacts } from "../../../utils/broadcast-audience";
+import { sanitizeEmailHtml } from "../../../utils/sanitize-email";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,11 @@ export async function POST(req: Request) {
   }
 
   const subject = (body.subject ?? "").trim();
-  const html_body = (body.html_body ?? "").trim();
+  // Sanitize the operator-typed HTML BEFORE the compliance review runs and
+  // BEFORE it gets persisted into sequence_steps.payload. Strips <script>,
+  // event handlers, javascript: URIs etc. Keeps inline styles + safe link
+  // anchors so Brevo renders the broadcast correctly to recipients.
+  const html_body = sanitizeEmailHtml((body.html_body ?? "").trim());
   const text_body = (body.text_body ?? "").trim();
   const tag = body.tag ? String(body.tag).trim() : null;
   const acknowledge_violations = body.acknowledge_violations === true;

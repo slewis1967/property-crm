@@ -4,6 +4,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You match a property buyer to the available stock that fits them best. Sean is a property advisor at NextKey Property Strategists; you're picking which 5 properties to send this contact.
@@ -22,6 +23,8 @@ Output STRICT JSON only — no preamble, no markdown fences. Format:
 If fewer than 5 candidates clearly fit, return only the ones that do. If none fit, return {"matches":[]}.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();
     if (!contactId) {

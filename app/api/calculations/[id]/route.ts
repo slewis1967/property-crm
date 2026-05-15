@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json();
   const update: Record<string, any> = {};
@@ -26,9 +29,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const { error } = await supabase.from("opportunity_calculations").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

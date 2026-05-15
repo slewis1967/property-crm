@@ -19,6 +19,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { orSafe } from "../../../../utils/postgrest-safe";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const PARSE_SYSTEM = `You translate a property advisor's natural-language search query into structured filters for the CRM contacts table.
@@ -62,6 +63,8 @@ Rules:
 - Respect the implicit limit from the query (e.g. "top 5" → at most 5 results). Default to 10.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { query } = await req.json();
     if (typeof query !== "string" || !query.trim()) {

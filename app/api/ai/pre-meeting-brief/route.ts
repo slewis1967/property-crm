@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You write a 60-second pre-meeting brief for a property advisor.
@@ -19,6 +20,8 @@ Format STRICTLY:
 Plain text, no markdown beyond ** for bold labels and • for bullets. Keep the whole brief under 150 words. No preamble.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { appointmentId } = await req.json();
     if (!appointmentId) {

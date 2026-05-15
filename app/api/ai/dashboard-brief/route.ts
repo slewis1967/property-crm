@@ -3,6 +3,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are the morning briefing for Sean — a property advisor who runs NextKey Property Strategists. He opens his War Room dashboard and needs to know in 15 seconds: what should I do today?
@@ -18,7 +19,9 @@ Topics to scan: hot contacts that haven't been touched recently, new leads, oppo
 
 No greeting, no header, no closer. Just the bullets.`;
 
-export async function POST() {
+export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const nowIso = new Date().toISOString();
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400_000).toISOString();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { aiCall } from "../../../../utils/ai";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You take a property advisor's free-form note about a contact interaction and extract structured actions.
@@ -33,6 +34,8 @@ Rules:
 - Don't echo the raw input verbatim — clean and condense.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { contactId, noteText } = await req.json();
     if (!contactId || !noteText || typeof noteText !== "string") {

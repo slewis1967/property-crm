@@ -3,6 +3,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCallEnvelope } from "../../../../utils/ai";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
+import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are drafting a reply on Sean's behalf. Sean is a property advisor at NextKey Property Strategists. He needs a reply he can send with one tap (or edit lightly first).
@@ -22,6 +23,8 @@ Voice rules:
 Output: just the reply body, ready to send. No preamble, no "Here's a draft:", no explanation.`;
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();
     const {
