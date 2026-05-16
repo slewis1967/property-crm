@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BulkUploadModal from "./BulkUploadModal";
 
-type Contact = {
+export type Contact = {
   id: string;
   created_at: string | null;
   updated_at: string | null;

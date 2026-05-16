@@ -1,113 +1,138 @@
 import { supabase } from "../../utils/supabase";
-import ContactsClient from "./ContactsClient";
+import { log, errInfo } from "../../utils/logger";
+import ContactsClient, { type Contact } from "./ContactsClient";
 
 export const dynamic = "force-dynamic";
 
 const PAGE = 1000;
+// Hard ceiling so a pathological pagination can't loop forever / OOM the
+// function. Far above current volume (~7k live, ~6.5k archive).
+const MAX_ROWS = 500_000;
 
-async function fetchAll(table: string, columns = "*") {
-  const out: any[] = [];
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from(table)
-      .select(columns)
-      .order("updated_at" in {} ? "updated_at" : "id", { ascending: false })
-      .range(from, from + PAGE - 1);
-    if (error) throw error;
-    out.push(...(data || []));
-    if (!data || data.length < PAGE) break;
-    from += PAGE;
-  }
-  return out;
+// Only the columns ContactsClient's Contact type actually consumes. The
+// table has ~38 columns including a free-text `notes` blob and a block of
+// PII/financial fields (income, savings, DOB, addresses) that the list view
+// never touches — `select("*")` was dragging all of that into memory and
+// the RSC payload for ~7k rows on every render, which is what tipped the
+// cold-start render past Netlify's 10s function timeout.
+const LIVE_COLUMNS =
+  "id,created_at,updated_at,name,full_name,first_name,email,phone," +
+  "buyer_type,state,preferred_state,budget,budget_min,budget_max," +
+  "finance_status,timeframe,lead_score,temperature,status,source," +
+  "ghl_contact_id,tags,notes";
+
+const ARCHIVE_COLUMNS =
+  "id,contact_name,first_name,last_name,email,phone,type,source,state,country,date_added,tags";
+
+interface ArchiveRow {
+  id: string;
+  contact_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  type: string | null;
+  source: string | null;
+  state: string | null;
+  country: string | null;
+  date_added: string | null;
+  tags: string[] | null;
 }
 
-export default async function ContactsPage() {
-  let contacts: any[] = [];
-  let from = 0;
-
-  // Live contacts (existing CRM rows)
-  while (true) {
+async function loadLive(): Promise<{ contacts: Contact[]; error: string | null }> {
+  const rows: Contact[] = [];
+  for (let from = 0; from < MAX_ROWS; from += PAGE) {
     const { data, error } = await supabase
       .from("contacts")
-      .select("*")
+      .select(LIVE_COLUMNS)
       .order("updated_at", { ascending: false })
       .order("id", { ascending: true })
       .range(from, from + PAGE - 1);
-
-    if (error) {
-      return <div className="text-red-600 p-4">Error loading contacts: {error.message}</div>;
-    }
-
-    contacts = contacts.concat(data || []);
+    if (error) return { contacts: rows, error: error.message };
+    rows.push(...((data as unknown as Contact[]) ?? []));
     if (!data || data.length < PAGE) break;
-    from += PAGE;
+  }
+  // Dedupe by id — pagination overlap is possible on non-unique updated_at.
+  const seen = new Set<string>();
+  const deduped: Contact[] = [];
+  for (const c of rows) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id);
+    deduped.push(c);
+  }
+  return { contacts: deduped, error: null };
+}
+
+async function loadArchive(): Promise<ArchiveRow[]> {
+  const rows: ArchiveRow[] = [];
+  for (let from = 0; from < MAX_ROWS; from += PAGE) {
+    const { data, error } = await supabase
+      .from("ghl_archive_contacts")
+      .select(ARCHIVE_COLUMNS)
+      .order("date_added", { ascending: false, nullsFirst: false })
+      .range(from, from + PAGE - 1);
+    if (error) {
+      log.warn("contacts.archive_fetch_failed", errInfo(error));
+      break;
+    }
+    rows.push(...((data as unknown as ArchiveRow[]) ?? []));
+    if (!data || data.length < PAGE) break;
+  }
+  return rows;
+}
+
+export default async function ContactsPage() {
+  // Live + archive are independent fetches. Previously they ran
+  // sequentially (fully drain live, THEN fully drain archive), which
+  // roughly doubled cold-start wall-clock. Run them concurrently and do
+  // the in-memory anti-join (drop archive rows that have a live
+  // counterpart) once both are in.
+  const [live, archiveRows] = await Promise.all([loadLive(), loadArchive()]);
+
+  if (live.error) {
+    return <div className="text-red-600 p-4">Error loading contacts: {live.error}</div>;
   }
 
-  // Dedupe live by id (pagination overlap on non-unique updated_at)
-  const seenIds = new Set<string>();
-  contacts = contacts.filter(c => {
-    if (seenIds.has(c.id)) return false;
-    seenIds.add(c.id);
-    return true;
-  });
-
-  // Build the set of emails already in live contacts (case-insensitive) so we
-  // don't show GHL-archive duplicates of contacts that exist live.
   const liveEmails = new Set<string>();
-  // Also track ghl_contact_id links so an archive contact already linked to a
-  // live one doesn't get added a second time.
   const liveGhlIds = new Set<string>();
-  for (const c of contacts) {
+  for (const c of live.contacts) {
     if (c.email) liveEmails.add(String(c.email).toLowerCase());
     if (c.ghl_contact_id) liveGhlIds.add(c.ghl_contact_id);
   }
 
-  // Fetch archive contacts and append the ones with no live counterpart
-  let archiveFrom = 0;
-  const archiveOnly: any[] = [];
-  while (true) {
-    const { data, error } = await supabase
-      .from("ghl_archive_contacts")
-      .select("id,contact_name,first_name,last_name,email,phone,type,source,state,country,date_added,tags")
-      .order("date_added", { ascending: false, nullsFirst: false })
-      .range(archiveFrom, archiveFrom + PAGE - 1);
-    if (error) break;
-    for (const a of data || []) {
-      const aEmailLc = a.email ? String(a.email).toLowerCase() : null;
-      if (aEmailLc && liveEmails.has(aEmailLc)) continue;
-      if (liveGhlIds.has(a.id)) continue;
-      const name =
-        a.contact_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || null;
-      archiveOnly.push({
-        id: a.id,
-        created_at: a.date_added || null,
-        updated_at: a.date_added || null,
-        name,
-        full_name: a.contact_name || null,
-        first_name: a.first_name || null,
-        email: a.email || null,
-        phone: a.phone || null,
-        buyer_type: a.type || null,
-        state: a.state || null,
-        preferred_state: a.state || null,
-        budget: null,
-        budget_min: null,
-        budget_max: null,
-        finance_status: null,
-        timeframe: null,
-        lead_score: null,
-        temperature: null,
-        status: "archive",
-        source: a.source || null,
-        ghl_contact_id: a.id,
-        tags: Array.isArray(a.tags) ? [...a.tags, "ghl-archive"] : ["ghl-archive"],
-        notes: null,
-      });
-    }
-    if (!data || data.length < PAGE) break;
-    archiveFrom += PAGE;
+  const archiveOnly: Contact[] = [];
+  for (const a of archiveRows) {
+    const aEmailLc = a.email ? String(a.email).toLowerCase() : null;
+    if (aEmailLc && liveEmails.has(aEmailLc)) continue;
+    if (liveGhlIds.has(a.id)) continue;
+    const name =
+      a.contact_name || `${a.first_name || ""} ${a.last_name || ""}`.trim() || null;
+    archiveOnly.push({
+      id: a.id,
+      created_at: a.date_added || null,
+      updated_at: a.date_added || null,
+      name,
+      full_name: a.contact_name || null,
+      first_name: a.first_name || null,
+      email: a.email || null,
+      phone: a.phone || null,
+      buyer_type: a.type || null,
+      state: a.state || null,
+      preferred_state: a.state || null,
+      budget: null,
+      budget_min: null,
+      budget_max: null,
+      finance_status: null,
+      timeframe: null,
+      lead_score: null,
+      temperature: null,
+      status: "archive",
+      source: a.source || null,
+      ghl_contact_id: a.id,
+      tags: Array.isArray(a.tags) ? [...a.tags, "ghl-archive"] : ["ghl-archive"],
+      notes: null,
+    });
   }
 
-  return <ContactsClient initialContacts={[...contacts, ...archiveOnly]} />;
+  return <ContactsClient initialContacts={[...live.contacts, ...archiveOnly]} />;
 }
