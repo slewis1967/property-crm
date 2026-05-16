@@ -31,43 +31,105 @@ import { log } from "./utils/logger";
  * Origin enforcement is the actual barrier.
  */
 
-// Cloudflare Access verification config. CF_ACCESS_TEAM_DOMAIN is either the
-// team name ("nextkey") or the full "https://nextkey.cloudflareaccess.com".
-// CF_ACCESS_AUD is the Application Audience tag from the Access app.
-const CF_TEAM_RAW = (process.env.CF_ACCESS_TEAM_DOMAIN ?? "").trim();
-const CF_AUD = (process.env.CF_ACCESS_AUD ?? "").trim();
+// Cloudflare Access verification config.
+//
+// CRITICAL — env access in the edge runtime: this file is compiled into a
+// Netlify Edge Function (Deno). Reading `process.env.X` at *module scope*
+// in Next middleware is unreliable there — Netlify exposes runtime env via
+// the `Netlify.env` global instead, and module-scope reads can resolve
+// empty even when the variable is correctly configured. So we read at
+// REQUEST time, trying the Netlify edge global first, then process.env
+// (Node / local dev), and memoise once a value is found.
+interface NetlifyEnvGlobal {
+  env?: { get(key: string): string | undefined };
+}
+
+function readEnv(name: string): { value: string; viaNetlify: boolean; viaProcess: boolean } {
+  const g = globalThis as unknown as { Netlify?: NetlifyEnvGlobal };
+  const fromNetlify = g.Netlify?.env?.get(name);
+  const fromProcess =
+    typeof process !== "undefined" ? process.env?.[name] : undefined;
+  const value = (fromNetlify ?? fromProcess ?? "").trim();
+  return {
+    value,
+    viaNetlify: Boolean(fromNetlify && fromNetlify.trim()),
+    viaProcess: Boolean(fromProcess && fromProcess.trim()),
+  };
+}
+
 // Accept all three natural forms of the team domain so a misconfig can't
-// silently break JWT verification (which would 401 every request):
+// silently break JWT verification:
 //   "nextkeycrm"                              -> https://nextkeycrm.cloudflareaccess.com
 //   "nextkeycrm.cloudflareaccess.com"         -> https://nextkeycrm.cloudflareaccess.com
 //   "https://nextkeycrm.cloudflareaccess.com" -> unchanged
-const CF_ISSUER = (() => {
-  if (!CF_TEAM_RAW) return "";
-  const v = CF_TEAM_RAW.replace(/\/+$/, "");
+function normaliseIssuer(raw: string): string {
+  if (!raw) return "";
+  const v = raw.replace(/\/+$/, "");
   if (v.startsWith("http://") || v.startsWith("https://")) return v;
   if (v.includes(".")) return `https://${v}`;
   return `https://${v}.cloudflareaccess.com`;
-})();
-const CF_VERIFY_ENABLED = Boolean(CF_ISSUER && CF_AUD);
-// createRemoteJWKSet caches keys internally — build it once at module scope.
-const CF_JWKS = CF_VERIFY_ENABLED
-  ? createRemoteJWKSet(new URL(`${CF_ISSUER}/cdn-cgi/access/certs`))
-  : null;
+}
+
+interface CfConfig {
+  issuer: string;
+  aud: string;
+  jwks: ReturnType<typeof createRemoteJWKSet> | null;
+  enabled: boolean;
+  diag: {
+    team_via_netlify: boolean;
+    team_via_process: boolean;
+    aud_via_netlify: boolean;
+    aud_via_process: boolean;
+    netlify_global_present: boolean;
+  };
+}
+
+// Resolved on first request, then memoised (only once enabled — a cold
+// isolate that briefly lacked env can still recover on a later request).
+let cfConfig: CfConfig | null = null;
+function getCfConfig(): CfConfig {
+  if (cfConfig?.enabled) return cfConfig;
+  const team = readEnv("CF_ACCESS_TEAM_DOMAIN");
+  const aud = readEnv("CF_ACCESS_AUD");
+  const issuer = normaliseIssuer(team.value);
+  const enabled = Boolean(issuer && aud.value);
+  cfConfig = {
+    issuer,
+    aud: aud.value,
+    enabled,
+    jwks: enabled
+      ? createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`))
+      : null,
+    diag: {
+      team_via_netlify: team.viaNetlify,
+      team_via_process: team.viaProcess,
+      aud_via_netlify: aud.viaNetlify,
+      aud_via_process: aud.viaProcess,
+      netlify_global_present:
+        typeof (globalThis as unknown as { Netlify?: unknown }).Netlify !==
+        "undefined",
+    },
+  };
+  return cfConfig;
+}
 
 async function cfJwtVerified(jwt: string, email: string): Promise<boolean> {
-  if (!CF_VERIFY_ENABLED || !CF_JWKS) {
-    // Not configured — can't cryptographically verify. Fail back to the
-    // previous presence-trust behaviour but make the gap loud.
+  const cfg = getCfConfig();
+  if (!cfg.enabled || !cfg.jwks) {
+    // Can't cryptographically verify — fall back to presence-trust (no
+    // worse than before) but log loudly, WITH diagnostics (booleans only,
+    // never the secret values) so we can see exactly which source is empty.
     log.error("cf_access.jwt_verification_disabled", {
-      detail: "Set CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD to enable signature verification",
+      detail: "CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD not readable in the edge runtime",
+      ...cfg.diag,
       email,
     });
     return true;
   }
   try {
-    const { payload } = await jwtVerify(jwt, CF_JWKS, {
-      issuer: CF_ISSUER,
-      audience: CF_AUD,
+    const { payload } = await jwtVerify(jwt, cfg.jwks, {
+      issuer: cfg.issuer,
+      audience: cfg.aud,
     });
     const claimEmail =
       typeof payload.email === "string" ? payload.email : undefined;
