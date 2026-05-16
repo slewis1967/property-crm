@@ -36,11 +36,18 @@ import { log } from "./utils/logger";
 // CF_ACCESS_AUD is the Application Audience tag from the Access app.
 const CF_TEAM_RAW = (process.env.CF_ACCESS_TEAM_DOMAIN ?? "").trim();
 const CF_AUD = (process.env.CF_ACCESS_AUD ?? "").trim();
-const CF_ISSUER = CF_TEAM_RAW
-  ? CF_TEAM_RAW.startsWith("http")
-    ? CF_TEAM_RAW.replace(/\/$/, "")
-    : `https://${CF_TEAM_RAW}.cloudflareaccess.com`
-  : "";
+// Accept all three natural forms of the team domain so a misconfig can't
+// silently break JWT verification (which would 401 every request):
+//   "nextkeycrm"                              -> https://nextkeycrm.cloudflareaccess.com
+//   "nextkeycrm.cloudflareaccess.com"         -> https://nextkeycrm.cloudflareaccess.com
+//   "https://nextkeycrm.cloudflareaccess.com" -> unchanged
+const CF_ISSUER = (() => {
+  if (!CF_TEAM_RAW) return "";
+  const v = CF_TEAM_RAW.replace(/\/+$/, "");
+  if (v.startsWith("http://") || v.startsWith("https://")) return v;
+  if (v.includes(".")) return `https://${v}`;
+  return `https://${v}.cloudflareaccess.com`;
+})();
 const CF_VERIFY_ENABLED = Boolean(CF_ISSUER && CF_AUD);
 // createRemoteJWKSet caches keys internally — build it once at module scope.
 const CF_JWKS = CF_VERIFY_ENABLED
