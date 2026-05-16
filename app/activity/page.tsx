@@ -1,11 +1,14 @@
 import { nexusApi } from "@/utils/nexus-api";
+import { log, errInfo } from "@/utils/logger";
 export const dynamic = "force-dynamic";
 
 async function getActivity() {
   try {
     const res = await nexusApi("/api/activity", { cache: "no-store" });
     if (res.ok) return res.json();
-  } catch {}
+  } catch (e) {
+    log.warn("activity.nexus_fetch_failed", errInfo(e));
+  }
   return { events: [], error: "NEXUS API offline" };
 }
 

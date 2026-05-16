@@ -1,20 +1,82 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+import { log } from "./utils/logger";
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
  * (Next 16 `proxy` convention).
  *
  * AUTH_MODE controls auth behaviour:
- *   local  — no auth (default; safe for `npm run dev` on Sean's workstation)
- *   tunnel — require Cloudflare Access headers on every request except those
+ *   local  — no auth (only honoured OUTSIDE production; safe for `npm run dev`)
+ *   tunnel — require Cloudflare Access on every request except those
  *            explicitly exempted below
+ *
+ * FAIL CLOSED: in production the auth gate is ALWAYS on, regardless of
+ * AUTH_MODE. A missing/typo'd env var used to silently run the whole CRM
+ * unauthenticated — production is always behind the CF tunnel, so we no
+ * longer let an env var opt out of that.
+ *
+ * JWT VERIFICATION: the `cf-access-authenticated-user-email` header is only
+ * trustworthy if the signed `cf-access-jwt-assertion` is cryptographically
+ * verified against the Cloudflare team JWKS. Header *presence* alone is
+ * forgeable by anyone who reaches the Netlify origin directly. We verify
+ * when CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD are configured; if they're
+ * not, we fall back to presence-trust (no worse than before) but log it
+ * loudly so the gap is visible instead of silent.
  *
  * The CSRF origin filter runs regardless of AUTH_MODE: any state-changing
  * request to /api/* with a foreign Origin is rejected. CF Access cookies
  * are SameSite=Lax which still allows top-level cross-site POSTs, so
  * Origin enforcement is the actual barrier.
  */
+
+// Cloudflare Access verification config. CF_ACCESS_TEAM_DOMAIN is either the
+// team name ("nextkey") or the full "https://nextkey.cloudflareaccess.com".
+// CF_ACCESS_AUD is the Application Audience tag from the Access app.
+const CF_TEAM_RAW = (process.env.CF_ACCESS_TEAM_DOMAIN ?? "").trim();
+const CF_AUD = (process.env.CF_ACCESS_AUD ?? "").trim();
+const CF_ISSUER = CF_TEAM_RAW
+  ? CF_TEAM_RAW.startsWith("http")
+    ? CF_TEAM_RAW.replace(/\/$/, "")
+    : `https://${CF_TEAM_RAW}.cloudflareaccess.com`
+  : "";
+const CF_VERIFY_ENABLED = Boolean(CF_ISSUER && CF_AUD);
+// createRemoteJWKSet caches keys internally — build it once at module scope.
+const CF_JWKS = CF_VERIFY_ENABLED
+  ? createRemoteJWKSet(new URL(`${CF_ISSUER}/cdn-cgi/access/certs`))
+  : null;
+
+async function cfJwtVerified(jwt: string, email: string): Promise<boolean> {
+  if (!CF_VERIFY_ENABLED || !CF_JWKS) {
+    // Not configured — can't cryptographically verify. Fail back to the
+    // previous presence-trust behaviour but make the gap loud.
+    log.error("cf_access.jwt_verification_disabled", {
+      detail: "Set CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD to enable signature verification",
+      email,
+    });
+    return true;
+  }
+  try {
+    const { payload } = await jwtVerify(jwt, CF_JWKS, {
+      issuer: CF_ISSUER,
+      audience: CF_AUD,
+    });
+    const claimEmail =
+      typeof payload.email === "string" ? payload.email : undefined;
+    if (claimEmail && claimEmail.toLowerCase() !== email.toLowerCase()) {
+      log.error("cf_access.email_claim_mismatch", { header: email, claim: claimEmail });
+      return false;
+    }
+    return true;
+  } catch (e) {
+    log.warn("cf_access.jwt_verify_failed", {
+      email,
+      reason: e instanceof Error ? e.message : String(e),
+    });
+    return false;
+  }
+}
 
 const PUBLIC_PATHS = new Set<string>([
   // Add any explicitly-public routes here. Currently none — even the war
@@ -45,7 +107,7 @@ function originAllowed(origin: string | null): boolean {
   }
 }
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
@@ -70,7 +132,13 @@ export function proxy(req: NextRequest) {
     }
   }
 
-  const mode = (process.env.AUTH_MODE ?? "local").toLowerCase();
+  // Fail closed: production ALWAYS enforces the tunnel gate. AUTH_MODE can
+  // only relax auth outside production (local dev). A missing env var in
+  // prod can no longer drop the gate.
+  const isProd = process.env.NODE_ENV === "production";
+  const mode = isProd
+    ? "tunnel"
+    : (process.env.AUTH_MODE ?? "local").toLowerCase();
   if (mode !== "tunnel") {
     return NextResponse.next();
   }
@@ -84,6 +152,15 @@ export function proxy(req: NextRequest) {
   if (!email || !jwt) {
     return new NextResponse(
       "Unauthenticated — this CRM is only reachable through the NextKey Cloudflare tunnel.",
+      { status: 401 },
+    );
+  }
+
+  // Cryptographically verify the CF Access assertion. Header presence alone
+  // is forgeable by anyone hitting the origin directly.
+  if (!(await cfJwtVerified(jwt, email))) {
+    return new NextResponse(
+      "Unauthenticated — Cloudflare Access token invalid.",
       { status: 401 },
     );
   }

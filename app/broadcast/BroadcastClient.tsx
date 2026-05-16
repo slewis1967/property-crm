@@ -47,6 +47,11 @@ export default function BroadcastClient({
   const [violations, setViolations] = useState<Violation[] | null>(null);
   const [reviewFailed, setReviewFailed] = useState<string | null>(null);
   const [ackViolations, setAckViolations] = useState(false);
+  // Server-issued, content-bound token from a prior review_required /
+  // review_failed response. Echoed back to authorise the override send.
+  // The server re-derives the content hash, so editing the copy after a
+  // review silently invalidates this and forces a fresh review.
+  const [reviewToken, setReviewToken] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +70,9 @@ export default function BroadcastClient({
     setError(null);
     setReviewFailed(null);
     try {
+      // On a plain review, send no token (forces the server-side review).
+      // On either override, echo the token the server issued earlier.
+      const tokenForRequest = mode === "review" ? null : reviewToken;
       const r = await fetch("/api/broadcast", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -73,18 +81,19 @@ export default function BroadcastClient({
           html_body: htmlBody,
           text_body: textBody,
           tag: selectedTag,
-          acknowledge_violations: mode === "override_violations",
-          skip_review_outage: mode === "override_outage",
+          review_token: tokenForRequest,
         }),
       });
       const body = await r.json();
       if (body.status === "review_required") {
         setViolations(body.violations as Violation[]);
+        setReviewToken(body.review_token ?? null);
         setAckViolations(false);
         return;
       }
       if (body.status === "review_failed") {
         setReviewFailed(body.error || "compliance review failed");
+        setReviewToken(body.review_token ?? null);
         return;
       }
       if (!body.ok) {
@@ -93,6 +102,7 @@ export default function BroadcastClient({
       }
       setResult(body as SendResult);
       setViolations(null);
+      setReviewToken(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

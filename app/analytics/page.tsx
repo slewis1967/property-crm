@@ -1,4 +1,5 @@
 import { supabase } from "../../utils/supabase";
+import { fetchAllRows } from "../../utils/supabase-paginate";
 
 export const dynamic = "force-dynamic";
 
@@ -19,17 +20,23 @@ export default async function AnalyticsPage() {
     { data: steps7d },
     { data: recs },
   ] = await Promise.all([
-    supabase
-      .from("property_leads")
-      .select("temperature,buyer_type,state,score,match_status,created_at"),
+    // Paginated: these grow unbounded and feed in-JS aggregations — a
+    // silent 1000-row cap would freeze every chart once the table passes
+    // it (one all-contacts broadcast alone clears it on enrollments).
+    fetchAllRows((from, to) =>
+      supabase
+        .from("property_leads")
+        .select("temperature,buyer_type,state,score,match_status,created_at")
+        .range(from, to),
+    ),
     supabase
       .from("ingestion_run")
       .select("started_at,builder_name,email_subject,status,props_added,props_updated,props_to_review,ai_cost_usd")
       .gte("started_at", sevenDays)
       .order("started_at", { ascending: false }),
-    supabase
-      .from("global_stock_pool")
-      .select("pipeline_status"),
+    fetchAllRows((from, to) =>
+      supabase.from("global_stock_pool").select("pipeline_status").range(from, to),
+    ),
     supabase
       .from("sms_log")
       .select("status,campaign,cost,sent_at")
@@ -37,16 +44,22 @@ export default async function AnalyticsPage() {
     supabase
       .from("sms_opt_outs")
       .select("*", { count: "exact", head: true }),
-    supabase
-      .from("sequence_enrollments")
-      .select("status"),
-    supabase
-      .from("sequence_step_runs")
-      .select("status,run_at")
-      .gte("run_at", sevenDays),
-    supabase
-      .from("recommendation_log")
-      .select("status,impact,applied_at,created_at"),
+    fetchAllRows((from, to) =>
+      supabase.from("sequence_enrollments").select("status").range(from, to),
+    ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("sequence_step_runs")
+        .select("status,run_at")
+        .gte("run_at", sevenDays)
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("recommendation_log")
+        .select("status,impact,applied_at,created_at")
+        .range(from, to),
+    ),
   ]);
 
   // ── Lead Intelligence ──

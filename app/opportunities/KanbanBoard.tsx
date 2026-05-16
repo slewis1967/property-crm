@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "./NewOpportunityModal";
 import NewPipelineModal from "./NewPipelineModal";
+import { log, errInfo } from "../../utils/logger";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -305,7 +306,9 @@ export default function KanbanBoard({
         setTimeout(() => setAutoMoved(new Set()), 3000);
       }
       setLastSync(new Date());
-    } catch {}
+    } catch (e) {
+      log.warn("kanban.poll_failed", errInfo(e));
+    }
   }, [activePipeline]);
 
   useEffect(() => {

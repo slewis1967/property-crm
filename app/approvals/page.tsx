@@ -1,6 +1,7 @@
 import { nexusApi } from "@/utils/nexus-api";
 import { supabase } from "../../utils/supabase";
 import { createClient } from "@supabase/supabase-js";
+import { log, errInfo } from "@/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,9 @@ async function getPendingContent() {
   try {
     const res = await nexusApi("/api/approvals/pending", { cache: "no-store" });
     if (res.ok) return res.json();
-  } catch {}
+  } catch (e) {
+    log.warn("approvals.nexus_fetch_failed", errInfo(e));
+  }
   return { pending: [] };
 }
 

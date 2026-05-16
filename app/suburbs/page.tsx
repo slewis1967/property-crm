@@ -1,6 +1,7 @@
 import { nexusApi } from "@/utils/nexus-api";
 import { createClient } from "@supabase/supabase-js";
 import AISuburbBrief from "../components/AISuburbBrief";
+import { log, errInfo } from "@/utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,9 @@ async function getSuburbs() {
   try {
     const res = await nexusApi("/api/suburbs", { cache: "no-store" });
     if (res.ok) return res.json();
-  } catch {}
+  } catch (e) {
+    log.warn("suburbs.nexus_fetch_failed", errInfo(e));
+  }
   return { suburbs: [], error: "NEXUS API offline" };
 }
 

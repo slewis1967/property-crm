@@ -2,6 +2,7 @@ import { nexusApi } from "@/utils/nexus-api";
 import { supabase } from "../../../utils/supabase";
 import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
+import { log, errInfo } from "@/utils/logger";
 
 /** Match this lead to its GHL counterpart via email + pull notes/conversations
  * /tasks /appointments scoped to that contact. Returns nulls if no match. */
@@ -67,7 +68,9 @@ export default async function OpportunityDetailPage({
       cache: "no-store",
     });
     if (res.ok) lead = await res.json();
-  } catch {}
+  } catch (e) {
+    log.warn("opportunity_detail.nexus_fetch_failed", { id, ...errInfo(e) });
+  }
 
   if (!lead || lead.error) return notFound();
 

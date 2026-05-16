@@ -5,6 +5,7 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { nexusApi } from "../../../../utils/nexus-api";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { log, errInfo } from "../../../../utils/logger";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You write a concise market briefing for a property advisor about a single suburb. Sean uses these to sound knowledgeable on calls and tailor pitches per area.
@@ -47,7 +48,9 @@ export async function POST(req: Request) {
               String(s.state || "").toUpperCase() === String(state).toUpperCase(),
           ) || null;
       }
-    } catch {}
+    } catch (e) {
+      log.warn("suburb_brief.nexus_fetch_failed", { suburb, state, ...errInfo(e) });
+    }
 
     // Pull stock currently in this suburb
     const { data: stock } = await supabase
@@ -82,7 +85,9 @@ export async function POST(req: Request) {
       try {
         const parsed = JSON.parse(suburbData.key_infrastructure);
         if (Array.isArray(parsed)) infraList = parsed.slice(0, 8);
-      } catch {}
+      } catch (e) {
+        log.warn("suburb_brief.infra_parse_failed", { suburb, state, ...errInfo(e) });
+      }
     }
 
     const userPrompt = [

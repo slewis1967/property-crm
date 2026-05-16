@@ -30,6 +30,13 @@ import { supabase } from "../../../utils/supabase";
 import { reviewBroadcastCopy, type Violation } from "../../../utils/compliance-review";
 import { fetchEligibleContacts } from "../../../utils/broadcast-audience";
 import { sanitizeEmailHtml } from "../../../utils/sanitize-email";
+import { requireAuth } from "../../../utils/cf-access";
+import {
+  contentHash,
+  issueReviewToken,
+  verifyReviewToken,
+} from "../../../utils/review-token";
+import { log, errInfo } from "../../../utils/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +45,12 @@ interface BroadcastInput {
   html_body: string;
   text_body: string;
   tag: string | null;
-  acknowledge_violations: boolean;
-  // Distinct from acknowledge_violations: this flag means the operator chose to
-  // proceed despite the review service itself failing (Anthropic outage). We
-  // gate it separately so a transient 5xx can't be turned into a free pass on
-  // real violations — the client only sets this after seeing a review_failed.
-  skip_review_outage: boolean;
+  // Server-issued token from a prior Phase-1 response. Presenting a valid
+  // one (content + operator bound, 15-min TTL) is the ONLY way to send
+  // after violations / a review outage. The old client-supplied
+  // acknowledge_violations / skip_review_outage booleans no longer grant a
+  // bypass — a forged value just triggers a real review.
+  review_token: string;
 }
 
 function genSlug(): string {
@@ -78,6 +85,13 @@ async function reviewWithRetry(
 }
 
 export async function POST(req: Request) {
+  // Route-level auth. The proxy/CF-Access gate is the primary barrier, but
+  // this route sends bulk email to every contact — defence in depth, and we
+  // need the operator identity to bind the review token to.
+  const auth = requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+  const operator = auth;
+
   let body: Partial<BroadcastInput>;
   try {
     body = await req.json();
@@ -93,8 +107,6 @@ export async function POST(req: Request) {
   const html_body = sanitizeEmailHtml((body.html_body ?? "").trim());
   const text_body = (body.text_body ?? "").trim();
   const tag = body.tag ? String(body.tag).trim() : null;
-  const acknowledge_violations = body.acknowledge_violations === true;
-  const skip_review_outage = body.skip_review_outage === true;
 
   if (!subject) {
     return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 });
@@ -103,31 +115,55 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "html_body is required" }, { status: 400 });
   }
 
-  // Phase 1: compliance review.
-  //   - acknowledge_violations=true  → operator has seen real violations and chose to send anyway. Skip.
-  //   - skip_review_outage=true      → operator acknowledges the review SERVICE is down. Skip, but log it.
-  //   - otherwise                    → run the review (with retry).
-  // The two flags are deliberately separate so an Anthropic 5xx can't become a
-  // free pass on substantive violations: an outage override only opens the
-  // narrower door.
-  if (!acknowledge_violations && !skip_review_outage) {
+  // Phase 1: compliance review — un-bypassable.
+  //
+  // The ONLY ways past the review are:
+  //   (a) the review runs THIS request and comes back clean, or
+  //   (b) the caller presents a valid server-issued review_token whose
+  //       content hash matches this exact copy and whose operator matches
+  //       the authenticated caller (issued by a prior Phase-1 response that
+  //       flagged violations or hit a review outage).
+  // Editing the copy invalidates the token (hash mismatch) → re-review.
+  const hash = contentHash(subject, html_body, text_body);
+  const tokenCheck = verifyReviewToken(body.review_token, hash, operator);
+
+  if (tokenCheck.ok) {
+    // Operator is overriding with a valid, content-bound token. Audit it.
+    log.warn("broadcast.compliance_override", {
+      operator,
+      kind: tokenCheck.kind === "v" ? "violations_acknowledged" : "review_outage_skipped",
+      subject,
+      tag,
+    });
+  } else {
+    // No valid token → the review MUST run now, regardless of any flags.
     let violations: Violation[] = [];
     try {
       const review = await reviewWithRetry({ subject, html_body, text_body });
       violations = review.violations;
     } catch (e) {
+      log.error("broadcast.review_outage", { operator, ...errInfo(e) });
       return NextResponse.json({
         ok: false,
         status: "review_failed",
         error: `compliance review failed after retry: ${e instanceof Error ? e.message : String(e)}`,
         violations: [],
+        // Token that authorises an outage-override of THIS exact copy only.
+        review_token: issueReviewToken("o", hash, operator),
       }, { status: 200 });
     }
     if (violations.length > 0) {
+      log.info("broadcast.review_flagged", {
+        operator,
+        count: violations.length,
+        subject,
+      });
       return NextResponse.json({
         ok: false,
         status: "review_required",
         violations,
+        // Token that authorises a violations-override of THIS exact copy only.
+        review_token: issueReviewToken("v", hash, operator),
       }, { status: 200 });
     }
   }
@@ -225,6 +261,14 @@ export async function POST(req: Request) {
   // 5 min wait) and finishes after N * 0.3s. Round up.
   const sendSeconds = Math.ceil(inserted * 0.3);
   const etaMinutes = Math.ceil(5 + sendSeconds / 60);
+
+  log.info("broadcast.queued", {
+    operator,
+    sequence_id: sequenceId,
+    slug,
+    enrolled_count: inserted,
+    audience: audienceLabel,
+  });
 
   return NextResponse.json({
     ok: true,

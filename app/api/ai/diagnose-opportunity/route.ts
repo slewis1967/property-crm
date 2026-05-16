@@ -6,6 +6,7 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { log, errInfo } from "../../../../utils/logger";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You diagnose stuck opportunities in a property advisor's pipeline. Sean opens an opportunity and wants to know: is it stuck, and if so, why, and what should I do?
@@ -37,7 +38,9 @@ export async function POST(req: Request) {
     try {
       const res = await nexusApi(`/api/leads/${opportunityId}`, { cache: "no-store" });
       if (res.ok) lead = await res.json();
-    } catch {}
+    } catch (e) {
+      log.warn("diagnose.nexus_lead_fetch_failed", { opportunityId, ...errInfo(e) });
+    }
 
     if (!lead || lead.error) {
       // Fall back to GHL archive opportunity

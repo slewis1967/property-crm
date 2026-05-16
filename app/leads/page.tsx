@@ -1,4 +1,5 @@
 import { supabase } from "../../utils/supabase";
+import { fetchAllRows } from "../../utils/supabase-paginate";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,13 @@ const matchColor = (s: string | null) => {
 };
 
 export default async function LeadsPage() {
-  const { data: leads, error } = await supabase
-    .from("property_leads")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data: leads, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("property_leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to),
+  );
 
   const { count: hotCount } = await supabase
     .from("property_leads")
@@ -31,7 +35,7 @@ export default async function LeadsPage() {
     .eq("match_status", "matched");
 
   if (error) {
-    return <div className="text-red-600 p-4">Error loading leads: {error.message}</div>;
+    return <div className="text-red-600 p-4">Error loading leads: {error}</div>;
   }
 
   return (

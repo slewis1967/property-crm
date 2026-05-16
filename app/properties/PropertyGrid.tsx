@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { jsPDF } from "jspdf";
 
 // Deterministic gradient palette so cards from the same builder share a
@@ -516,7 +517,19 @@ export default function PropertyGrid({
                 property.brochure_url ? "bg-gray-100" : "bg-gradient-to-br " + tileGradient(property.builder_name || property.state)
               }`}>
                 {property.brochure_url ? (
-                  <img src={property.brochure_url} className="object-cover w-full h-full" alt="Thumbnail" />
+                  // unoptimized: brochure_url points at arbitrary builder /
+                  // PropMarket hosts. Skipping the optimizer avoids both a
+                  // remotePatterns allowlist per builder domain and an SSRF
+                  // surface, while still getting next/image's lazy-load + no
+                  // layout shift from the sized `fill` parent (h-48 relative).
+                  <Image
+                    src={property.brochure_url}
+                    alt="Thumbnail"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 ) : (
                   <div className="text-center px-4 text-white">
                     <div className="text-3xl mb-1">🏘️</div>
