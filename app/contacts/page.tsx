@@ -9,17 +9,22 @@ const PAGE = 1000;
 // function. Far above current volume (~7k live, ~6.5k archive).
 const MAX_ROWS = 500_000;
 
-// Only the columns ContactsClient's Contact type actually consumes. The
-// table has ~38 columns including a free-text `notes` blob and a block of
-// PII/financial fields (income, savings, DOB, addresses) that the list view
-// never touches — `select("*")` was dragging all of that into memory and
-// the RSC payload for ~7k rows on every render, which is what tipped the
-// cold-start render past Netlify's 10s function timeout.
+// Only the columns the list view actually renders. The table has ~38
+// columns; `select("*")` was dragging a block of unused PII/financial
+// fields (income, savings, DOB, addresses) AND the free-text `notes`
+// blob into memory + the RSC payload for ~7k rows every render, tipping
+// the cold-start render past Netlify's 10s function timeout.
+//
+// `notes` is deliberately NOT fetched here: ContactsClient never renders
+// it (clicking a row routes to /contacts/[id], whose page does its own
+// select("*") and owns the notes view/edit). Keeping it out of the list
+// payload is the single biggest remaining size win, with zero behaviour
+// change. Don't add it back without moving the notes UI into the list.
 const LIVE_COLUMNS =
   "id,created_at,updated_at,name,full_name,first_name,email,phone," +
   "buyer_type,state,preferred_state,budget,budget_min,budget_max," +
   "finance_status,timeframe,lead_score,temperature,status,source," +
-  "ghl_contact_id,tags,notes";
+  "ghl_contact_id,tags";
 
 const ARCHIVE_COLUMNS =
   "id,contact_name,first_name,last_name,email,phone,type,source,state,country,date_added,tags";
