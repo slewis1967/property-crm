@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
+import { useRouter } from 'next/router';
 
 // Deterministic gradient palette so cards from the same builder share a
 // visual identity instead of all looking like the same "No Image" tile.
@@ -52,6 +53,7 @@ export default function PropertyGrid({
   const [properties, setProperties] = useState<any[]>(initialProperties);
 
   // Lookup map name → icon for fast card rendering
+  const router = useRouter();
   const typeIconMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const t of propertyTypes) {
@@ -483,220 +485,23 @@ export default function PropertyGrid({
         </div>
         {checkedIds.size > 0 && (
           <button
-            onClick={() => setConfirmDelete({ ids: Array.from(checkedIds), label: `${checkedIds.size} propert${checkedIds.size !== 1 ? "ies" : "y"}` })}
+            onClick={() => setConfirmDelete({ ids: Array.from(checkedIds), label: `${checkedIds.size} propert${checkedIds.size !== 1 ? "ies" : "y"}` })
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
           >
             🗑️ Delete {checkedIds.size}
           </button>
         )}
-      </div>
-
-      {/* Empty filter result state */}
-      {filtered.length === 0 && properties.length > 0 && (
-        <div className="bg-white border border-dashed border-gray-300 rounded-xl p-10 text-center mb-4">
-          <p className="text-gray-500 font-medium mb-1">No properties match your filters.</p>
-          <p className="text-sm text-gray-400 mb-3">Try widening the price range or clearing builder / state filters.</p>
+        {checkedIds.size >= 2 && (
           <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+            onClick={() => {
+              // Save selected IDs to localStorage
+              localStorage.setItem("comparedProperties", JSON.stringify(Array.from(checkedIds)));
+              // Navigate to compare page
+              router.push("/compare");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            Clear filters
+            🔍 Compare {checkedIds.size}
           </button>
-        </div>
-      )}
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filtered.map((property) => {
-          const isChecked = checkedIds.has(property.id);
-          return (
-            <div key={property.id}
-              className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition flex flex-col ${isChecked ? "border-blue-400 ring-2 ring-blue-200" : "border-gray-200"}`}
-            >
-              <div className={`h-48 relative flex items-center justify-center overflow-hidden ${
-                property.brochure_url ? "bg-gray-100" : "bg-gradient-to-br " + tileGradient(property.builder_name || property.state)
-              }`}>
-                {property.brochure_url ? (
-                  // unoptimized: brochure_url points at arbitrary builder /
-                  // PropMarket hosts. Skipping the optimizer avoids both a
-                  // remotePatterns allowlist per builder domain and an SSRF
-                  // surface, while still getting next/image's lazy-load + no
-                  // layout shift from the sized `fill` parent (h-48 relative).
-                  <Image
-                    src={property.brochure_url}
-                    alt="Thumbnail"
-                    fill
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="text-center px-4 text-white">
-                    <div className="text-3xl mb-1">🏘️</div>
-                    <div className="text-sm font-bold leading-tight line-clamp-2">{property.builder_name || "Property"}</div>
-                    <div className="text-xs opacity-90 mt-0.5">{[property.suburb, property.state].filter(Boolean).join(", ") || "—"}</div>
-                    {property.lot_number && (
-                      <div className="text-[10px] opacity-75 mt-1">Lot {property.lot_number}</div>
-                    )}
-                  </div>
-                )}
-                <span className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs font-bold rounded shadow-sm capitalize">
-                  {property.status || "available"}
-                </span>
-                {property.property_type && (
-                  <span className="absolute bottom-2 right-2 bg-white/90 text-gray-800 px-2 py-0.5 text-[10px] font-semibold rounded-full shadow-sm">
-                    {iconFor(property.property_type)} {property.property_type}
-                  </span>
-                )}
-                {/* Checkbox top-left */}
-                <div className="absolute top-2 left-2" onClick={e => toggleCheck(property.id, e)}>
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => {}}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer shadow"
-                  />
-                </div>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col">
-                <h3 className="font-bold text-xl text-gray-900">
-                  {(property.total_package_price || property.house_price) ? `$${(property.total_package_price || property.house_price).toLocaleString()}` : 'Price TBD'}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {property.street_address || property.suburb || "Unknown"}{property.suburb && property.street_address ? `, ${property.suburb}` : ""} {property.state}
-                </p>
-
-                <div className="flex gap-4 mt-4 text-sm text-gray-700 font-medium">
-                  <span>🛏️ {property.bedrooms || '-'}</span>
-                  <span>🛁 {property.bathrooms || '-'}</span>
-                  <span>🚗 {property.car_spaces || '-'}</span>
-                </div>
-
-                <div className="mt-auto">
-                  <hr className="my-4 border-gray-100" />
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-xs text-gray-400 font-medium uppercase tracking-wider truncate max-w-[100px]">
-                      {property.builder_name || "Unknown Builder"}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setConfirmDelete({ ids: [property.id], label: property.street_address || property.suburb || "this property" })}
-                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 transition"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
-                      <a
-                        href={`/properties/${property.id}`}
-                        className="text-gray-500 hover:text-gray-900 text-xs font-semibold underline-offset-2 hover:underline transition"
-                      >
-                        Detail →
-                      </a>
-                      <button
-                        onClick={() => setSelectedProperty(property)}
-                        className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm"
-                      >
-                        Open War Room
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        )}
       </div>
-
-      {/* War Room Panel */}
-      {selectedProperty && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50 transition-opacity">
-          <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col">
-            <div className="px-6 py-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Campaign War Room</h2>
-                <p className="text-sm text-gray-500">
-                  {selectedProperty.street_address || selectedProperty.suburb}, {selectedProperty.suburb} {selectedProperty.state}
-                </p>
-              </div>
-              <button onClick={() => setSelectedProperty(null)}
-                className="text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-200 transition">
-                ✕ Close
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="mb-8 border border-blue-200 bg-blue-50 rounded-xl p-5">
-                <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center">⚡ Empower Intelligence</h3>
-                <div className="mb-6 space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">
-                      <label>Interest Rate (Interest Only)</label>
-                      <span>{interestRate}%</span>
-                    </div>
-                    <input type="range" min="2" max="10" step="0.1" value={interestRate}
-                      onChange={e => setInterestRate(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm font-medium text-gray-700 mb-1">
-                      <label>10-Year Est. Capital Growth</label>
-                      <span>{growthRate}%</span>
-                    </div>
-                    <input type="range" min="1" max="12" step="0.5" value={growthRate}
-                      onChange={e => setGrowthRate(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-bold">Purchase Price</p>
-                    <p className="text-lg font-bold">${(selectedProperty.total_package_price || selectedProperty.house_price)?.toLocaleString() || 'TBD'}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-bold">Est. Weekly Rent</p>
-                    <p className="text-lg font-bold text-gray-900">${Math.round(weeklyRent)}/wk</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-bold">Weekly Cashflow</p>
-                    <p className={`text-lg font-bold ${weeklyCashflow >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {weeklyCashflow >= 0 ? '+' : ''}${Math.round(weeklyCashflow)}/wk
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-bold">10-Yr Est. Equity</p>
-                    <p className="text-lg font-bold text-purple-600">+${Math.round(tenYearEquity).toLocaleString()}</p>
-                  </div>
-                </div>
-                <button onClick={generatePDF}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm transition">
-                  Generate Branded Wealth Report (PDF)
-                </button>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Marketing Assets</h3>
-                <div className="space-y-3">
-                  <div className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-sm">Landing Page</p>
-                      <p className="text-xs text-gray-500">Not published yet</p>
-                    </div>
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold py-2 px-4 rounded">Publish</button>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-sm">AI Ad Copy</p>
-                      <p className="text-xs text-gray-500">Based on builder remarks</p>
-                    </div>
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold py-2 px-4 rounded">Generate</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
