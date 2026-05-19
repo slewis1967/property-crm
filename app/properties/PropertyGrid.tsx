@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
 
@@ -68,6 +69,7 @@ export default function PropertyGrid({
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
 
   // --- FILTERS ---
   const [search, setSearch] = useState("");
@@ -481,14 +483,27 @@ export default function PropertyGrid({
             {checkedIds.size > 0 ? `${checkedIds.size} selected` : `Select all (${filtered.length})`}
           </label>
         </div>
-        {checkedIds.size > 0 && (
-          <button
-            onClick={() => setConfirmDelete({ ids: Array.from(checkedIds), label: `${checkedIds.size} propert${checkedIds.size !== 1 ? "ies" : "y"}` })}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            🗑️ Delete {checkedIds.size}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {checkedIds.size >= 2 && (
+            <button
+              onClick={() => {
+                localStorage.setItem("comparedProperties", JSON.stringify(Array.from(checkedIds)));
+                router.push("/compare");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              🔍 Compare {checkedIds.size}
+            </button>
+          )}
+          {checkedIds.size > 0 && (
+            <button
+              onClick={() => setConfirmDelete({ ids: Array.from(checkedIds), label: `${checkedIds.size} propert${checkedIds.size !== 1 ? "ies" : "y"}` })}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              🗑️ Delete {checkedIds.size}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Empty filter result state */}
