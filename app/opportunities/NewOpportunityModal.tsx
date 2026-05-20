@@ -86,6 +86,23 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
   const [tagInput,    setTagInput]    = useState("");
   const [tags,        setTags]        = useState<string[]>([]);
 
+  // Optional appointment to schedule alongside the opportunity (POST /api/appointments).
+  // Hidden by default so the existing flow stays one-screen; expanding reveals a quick
+  // scheduler that creates a Google Calendar event (+ invite) and a Supabase appointments
+  // row in one go. Falls back to CRM-only if Google Calendar isn't connected.
+  const [apptOpen,      setApptOpen]      = useState(false);
+  const [apptTitle,     setApptTitle]     = useState("");
+  const [apptStartTime, setApptStartTime] = useState(""); // <input type="datetime-local"> value
+  const [apptNotes,     setApptNotes]     = useState("");
+  const [apptInvite,    setApptInvite]    = useState(true);
+
+  // Optional task to schedule alongside the opportunity (POST /api/tasks).
+  // Same collapsible pattern as the appointment block. Inserts a row into the
+  // tasks table with source="crm_modal", linked to the primary contact.
+  const [taskOpen,    setTaskOpen]    = useState(false);
+  const [taskTitle,   setTaskTitle]   = useState("");
+  const [taskDueDate, setTaskDueDate] = useState(""); // <input type="date"> value
+
   // Update stage options when pipeline changes
   const activePipeline = pipelines.find(p => p.id === pipelineId);
   const pipelineStages = activePipeline?.stages || STAGES;
@@ -231,7 +248,64 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create");
+
+      // Optional: schedule an appointment and/or a task alongside the opportunity.
+      // Both are best-effort — the opp is already saved at this point, so a
+      // sub-step failure is a soft warning rather than a rollback.
+      const warnings: string[] = [];
+      const contactForExtras = primaryContact ?? prefillContact ?? null;
+
+      if (apptOpen && apptStartTime && contactForExtras?.id) {
+        try {
+          const apptRes = await fetch("/api/appointments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contact_id: contactForExtras.id,
+              contact_email: email.trim().toLowerCase(),
+              contact_name: fullName.trim(),
+              title: apptTitle.trim() || `Meeting with ${fullName.trim()}`,
+              start_time: new Date(apptStartTime).toISOString(),
+              notes: apptNotes.trim() || undefined,
+              invite_contact: apptInvite,
+            }),
+          });
+          const apptData = await apptRes.json().catch(() => ({}));
+          if (!apptRes.ok) {
+            warnings.push(`Appointment: ${apptData.error || `HTTP ${apptRes.status}`}.`);
+          } else if (apptData.calendar_warning) {
+            warnings.push(`Appointment: ${apptData.calendar_warning}`);
+          }
+        } catch (apptErr: any) {
+          warnings.push(`Appointment: ${apptErr.message || "request failed"}.`);
+        }
+      }
+
+      if (taskOpen && taskTitle.trim() && contactForExtras?.id) {
+        try {
+          const taskRes = await fetch("/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: taskTitle.trim(),
+              contact_id: contactForExtras.id,
+              due_date: taskDueDate || null,
+              source: "opportunity_modal",
+            }),
+          });
+          const taskData = await taskRes.json().catch(() => ({}));
+          if (!taskRes.ok) {
+            warnings.push(`Task: ${taskData.error || `HTTP ${taskRes.status}`}.`);
+          }
+        } catch (taskErr: any) {
+          warnings.push(`Task: ${taskErr.message || "request failed"}.`);
+        }
+      }
+
       setSuccess(true);
+      if (warnings.length > 0) {
+        setError(`⚠ Opportunity created. ${warnings.join(" ")}`);
+      }
       setTimeout(() => {
         onCreated({
           ...data,
@@ -248,7 +322,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           top_match_price: null,
           created_at: new Date().toISOString(),
         });
-      }, 800);
+      }, warnings.length > 0 ? 3000 : 800);
     } catch (err: any) {
       setError(err.message);
       setSaving(false);
@@ -521,6 +595,125 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
               <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Any additional context about this opportunity…" />
+            </div>
+
+            {/* ── Schedule appointment (optional) ── */}
+            <div className="border-t border-gray-100 pt-4">
+              {!apptOpen ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setApptOpen(true);
+                    if (!apptTitle && fullName.trim()) setApptTitle(`Meeting with ${fullName.trim()}`);
+                  }}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  ＋ Schedule appointment (optional)
+                </button>
+              ) : (
+                <div className="space-y-3 bg-blue-50/40 border border-blue-100 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-900">📅 Schedule appointment</h3>
+                    <button
+                      type="button"
+                      onClick={() => { setApptOpen(false); setApptStartTime(""); }}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Title</label>
+                    <input
+                      type="text"
+                      value={apptTitle}
+                      onChange={(e) => setApptTitle(e.target.value)}
+                      placeholder={fullName.trim() ? `Meeting with ${fullName.trim()}` : "Meeting title"}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Date & time</label>
+                    <input
+                      type="datetime-local"
+                      value={apptStartTime}
+                      onChange={(e) => setApptStartTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Defaults to a 60-minute slot. Google Meet link auto-attached.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes (optional)</label>
+                    <textarea
+                      value={apptNotes}
+                      onChange={(e) => setApptNotes(e.target.value)}
+                      rows={2}
+                      placeholder="Agenda or context for the meeting…"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={apptInvite}
+                      onChange={(e) => setApptInvite(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Send calendar invite to <span className="font-semibold">{email.trim() || "the contact"}</span>
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* ── Schedule task (optional) ── */}
+            <div className="border-t border-gray-100 pt-4">
+              {!taskOpen ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaskOpen(true);
+                    if (!taskTitle && fullName.trim()) setTaskTitle(`Follow up with ${fullName.trim()}`);
+                  }}
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  ＋ Schedule task (optional)
+                </button>
+              ) : (
+                <div className="space-y-3 bg-amber-50/40 border border-amber-100 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-900">✅ Schedule task</h3>
+                    <button
+                      type="button"
+                      onClick={() => { setTaskOpen(false); setTaskTitle(""); setTaskDueDate(""); }}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Task</label>
+                    <input
+                      type="text"
+                      value={taskTitle}
+                      onChange={(e) => setTaskTitle(e.target.value)}
+                      placeholder={fullName.trim() ? `Follow up with ${fullName.trim()}` : "What needs to be done"}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Due date (optional)</label>
+                    <input
+                      type="date"
+                      value={taskDueDate}
+                      onChange={(e) => setTaskDueDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact's detail page.</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && (
