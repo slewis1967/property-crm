@@ -55,10 +55,13 @@ export async function POST(req: NextRequest) {
   if (body.contact_id) row.contact_id = body.contact_id;
   if (body.due_date) row.due_date = body.due_date;
 
+  // NB: this table uses created_at, NOT date_added — that's the GHL archive
+  // convention from ghl_archive_tasks. A handful of older AI routes still
+  // SELECT date_added from tasks; they were silently returning no rows.
   const { data, error } = await supabase
     .from("tasks")
     .insert(row)
-    .select("id,title,due_date,contact_id,source,completed,date_added")
+    .select("id,title,due_date,contact_id,source,completed,created_at")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ task: data });
