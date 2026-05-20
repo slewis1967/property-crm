@@ -9,6 +9,7 @@ import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
+import AddTaskModal from "./AddTaskModal";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
@@ -128,6 +129,7 @@ export default function OpportunityDetail({
   const [lead, setLead] = useState(initialLead);
   const [showEdit, setShowEdit] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [showAddTask, setShowAddTask] = useState(false);
   const [showBookingLinks, setShowBookingLinks] = useState(false);
   const bookingLinkRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -357,6 +359,12 @@ export default function OpportunityDetail({
           >
             📅 Schedule meeting
           </button>
+          <button
+            onClick={() => setShowAddTask(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            ✅ Add task
+          </button>
           <div ref={bookingLinkRef} className="relative">
             <button
               onClick={() => setShowBookingLinks((s) => !s)}
@@ -413,7 +421,18 @@ export default function OpportunityDetail({
         <ScheduleMeetingModal
           lead={lead}
           hosts={SCHEDULING_HOSTS}
+          contactId={lead.primary_contact_id}
           onClose={() => setShowSchedule(false)}
+          onCreated={() => router.refresh()}
+        />
+      )}
+
+      {showAddTask && (
+        <AddTaskModal
+          lead={lead}
+          contactId={lead.primary_contact_id}
+          onClose={() => setShowAddTask(false)}
+          onCreated={() => router.refresh()}
         />
       )}
 

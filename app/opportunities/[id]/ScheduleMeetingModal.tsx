@@ -1,11 +1,17 @@
 "use client";
 
 /**
- * In-CRM Google Calendar event creation. Drops the bounce-to-Google
- * eventedit URL flow in favour of a real form that POSTs to
- * /api/calendar/events. Server-side uses the host's stored refresh
- * token to create the event with a Google Meet link, and Google sends
- * the invite to the attendee on save.
+ * In-CRM appointment scheduler. POSTs to /api/appointments — the unified
+ * orchestrator route that BOTH creates a Google Calendar event (with
+ * Meet link + attendee invite, via the host's stored refresh token) AND
+ * writes a Supabase `appointments` row so the booking shows up in the
+ * opp's Appointments list, the /appointments page, and contact panels.
+ * Previously this modal hit /api/calendar/events directly, which left
+ * the calendar event un-tracked in the CRM.
+ *
+ * Calendar step is best-effort: if the host hasn't connected their
+ * calendar yet (or OAuth env isn't configured), the appointment is
+ * still saved to the CRM and the modal surfaces a soft warning.
  */
 import { useEffect, useMemo, useState } from "react";
 
@@ -59,11 +65,20 @@ function toIsoWithOffset(date: string, time: string): string {
 export default function ScheduleMeetingModal({
   lead,
   hosts,
+  contactId,
   onClose,
+  onCreated,
 }: {
   lead: Lead;
   hosts: Host[];
+  /** Supabase contacts.id for this lead's primary contact — required for the
+   * /api/appointments insert. If null (lead with no matched contact),
+   * scheduling is disabled with a soft message. */
+  contactId: string | null;
   onClose: () => void;
+  /** Optional: called after a successful save so the parent can refresh
+   * the appointments panel without a full page reload. */
+  onCreated?: () => void;
 }) {
   const def = useMemo(defaultStart, []);
   const [hostEmail, setHostEmail] = useState(hosts[0]?.email ?? "");
@@ -85,11 +100,17 @@ export default function ScheduleMeetingModal({
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ htmlLink: string; hangoutLink?: string } | null>(null);
+  const [warning, setWarning] = useState<string | null>(null); // calendar_warning from API
+  const [success, setSuccess] = useState<{ htmlLink?: string; hangoutLink?: string } | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setWarning(null);
+    if (!contactId) {
+      setError("This lead has no matched contact in the CRM — can't link an appointment to it.");
+      return;
+    }
     setSubmitting(true);
     try {
       const start = toIsoWithOffset(date, time);
@@ -97,15 +118,22 @@ export default function ScheduleMeetingModal({
       endDate.setMinutes(endDate.getMinutes() + duration);
       const end = endDate.toISOString().replace(/\.\d{3}Z$/, "+00:00"); // ISO + offset
 
-      const res = await fetch("/api/calendar/events", {
+      // Unified appointment endpoint: creates the Google Cal event (with Meet
+      // link + attendee invite) AND inserts the Supabase appointments row, so
+      // the booking surfaces in the opp's Appointments panel without waiting
+      // on any external sync.
+      const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          contact_id: contactId,
+          contact_email: attendeeEmail || lead.email,
+          contact_name: lead.full_name || undefined,
           host_email: hostEmail,
-          summary: title,
+          title,
           description,
-          start,
-          end,
+          start_time: start,
+          end_time: end,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           attendees: attendeeEmail
             ? [{ email: attendeeEmail, displayName: lead.full_name || undefined }]
@@ -115,12 +143,16 @@ export default function ScheduleMeetingModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        if (data.code === "not_connected") {
-          throw new Error(`${hostEmail} hasn't connected their calendar yet. Settings → Calendar connections → Connect.`);
-        }
         throw new Error(data.error || `Failed (${res.status})`);
       }
-      setSuccess({ htmlLink: data.event.htmlLink, hangoutLink: data.event.hangoutLink });
+      // Soft warning surfaces when the calendar leg couldn't run (no host
+      // creds, OAuth not configured, etc.) — the Supabase row still landed.
+      if (data.calendar_warning) setWarning(data.calendar_warning);
+      setSuccess({
+        htmlLink: data.calendar_event?.htmlLink,
+        hangoutLink: data.calendar_event?.hangoutLink,
+      });
+      onCreated?.();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -139,18 +171,29 @@ export default function ScheduleMeetingModal({
         {success ? (
           <div className="p-6 space-y-4">
             <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-              ✓ Meeting scheduled. Invite sent to {attendeeEmail || "you only"}.
+              {success.htmlLink
+                ? <>✓ Meeting scheduled. Invite sent to {attendeeEmail || "you only"}.</>
+                : <>✓ Saved to CRM. Calendar invite was NOT sent — see below.</>}
             </div>
-            <div className="flex flex-col gap-2 text-sm">
-              <a href={success.htmlLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Open in Google Calendar →
-              </a>
-              {success.hangoutLink && (
-                <a href={success.hangoutLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  Join via Google Meet →
-                </a>
-              )}
-            </div>
+            {warning && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+                ⚠ {warning}
+              </div>
+            )}
+            {(success.htmlLink || success.hangoutLink) && (
+              <div className="flex flex-col gap-2 text-sm">
+                {success.htmlLink && (
+                  <a href={success.htmlLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Open in Google Calendar →
+                  </a>
+                )}
+                {success.hangoutLink && (
+                  <a href={success.hangoutLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Join via Google Meet →
+                  </a>
+                )}
+              </div>
+            )}
             <button
               onClick={onClose}
               className="w-full mt-2 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
