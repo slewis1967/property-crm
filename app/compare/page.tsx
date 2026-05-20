@@ -1,6 +1,7 @@
+"use client";
+
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/utils/supabase';
 
 export default function ComparePage() {
   const [properties, setProperties] = useState<any[]>([]);
@@ -23,13 +24,14 @@ export default function ComparePage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
-        .from('global_stock_pool')
-        .select('*')
-        .in('id', ids);
-
-      if (error) throw error;
-      setProperties(data);
+      const res = await fetch('/api/properties/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+      setProperties(json.properties ?? []);
     } catch (err: any) {
       setError(err.message);
       setProperties([]);
