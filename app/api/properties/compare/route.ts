@@ -33,11 +33,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid id format" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from("global_stock_pool")
-    .select("*")
-    .in("id", ids);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const { data, error } = await supabase
+      .from("global_stock_pool")
+      .select("*")
+      .in("id", ids);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ properties: data ?? [] });
+    return NextResponse.json({ properties: data ?? [] });
+  } catch (err) {
+    console.error("[compare] supabase fetch failed", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { error: "Failed to fetch properties" },
+      { status: 500 },
+    );
+  }
 }
