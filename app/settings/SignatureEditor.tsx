@@ -338,6 +338,10 @@ function Field({
 // preview renders client-side without a server round-trip on every keystroke.
 function renderSignatureHtml(f: SignatureFields): string {
   const logoH = typeof f.logo_height === "number" && f.logo_height > 0 ? f.logo_height : 60;
+  // Only allow https:// URLs on the web field to prevent attribute injection
+  const safeWeb = /^[a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,}$/.test(f.web)
+    ? escapeHtml(f.web)
+    : "";
   const logoBlock = f.logo_url
     ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(f.logo_url)}" alt="${escapeHtml(f.name)}" style="height:${logoH}px;width:auto;display:block;" /></div>`
     : "";
@@ -351,7 +355,7 @@ function renderSignatureHtml(f: SignatureFields): string {
     &nbsp;·&nbsp;
     <a href="tel:${escapeHtml(f.phone.replace(/\s/g, ""))}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.phone)}</a>
     &nbsp;·&nbsp;
-    <a href="https://${escapeHtml(f.web)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.web)}</a>
+    <a href="https://${safeWeb}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.web)}</a>
   </p>
   ${f.disclaimer ? `<p style="margin:8px 0 0;font-size:11px;color:#9ca3af;font-style:italic;">${escapeHtml(f.disclaimer)}</p>` : ""}
 </div>`.trim();
