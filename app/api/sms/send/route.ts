@@ -13,11 +13,11 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { sendSms, toE164AU } from "../../../../utils/sms";
-
 import { requireAuth } from "../../../../utils/cf-access";
+import { withObservability } from "../../../../utils/observability";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+async function handler(req: Request) {
   const auth = requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
@@ -68,3 +68,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withObservability("POST /api/sms/send", handler);
