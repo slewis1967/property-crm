@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
       sourceNotes: mapping.notes,
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
+      // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)
+      rentBasis: property.rent_basis,
       address: property.address,
       suburb: property.suburb,
       thesisPoints: property.thesis_points,

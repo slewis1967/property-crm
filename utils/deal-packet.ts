@@ -63,10 +63,13 @@ export interface MarketData {
 
 /** The rent basis the PIA cashflow is built on — body-sourced or operator-supplied. */
 export interface RentBasis {
+  /** GROSS weekly rent. For co-living this is room_rent × rooms. */
   weekly_rent: number | null;
   /** True for co-living (rent is per-room × rooms); false for single-tenancy. */
   per_room: boolean;
   rooms: number | null;
+  /** Per-room weekly rent (co-living only) — kept for provenance + the report's income callout. */
+  room_rent?: number | null;
   /** Where the figure came from. Operator entries are attributed as a NextKey estimate. */
   source: "email_body" | "operator" | null;
 }
