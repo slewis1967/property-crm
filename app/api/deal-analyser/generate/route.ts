@@ -53,6 +53,11 @@ export async function POST(req: NextRequest) {
       ...runPia(mapping.inputs),
       marketContext: mapping.marketContext,
       sourceNotes: mapping.notes,
+      // carried so the report page is self-contained (specs incl. image_paths)
+      propertySpecs: property.specs,
+      address: property.address,
+      suburb: property.suburb,
+      thesisPoints: property.thesis_points,
     };
     const title = `PIA — ${property.address ?? property.suburb ?? "Property"}`;
     const { data: rep, error: repErr } = await supabase
