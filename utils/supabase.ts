@@ -17,15 +17,31 @@ import { createClient } from "@supabase/supabase-js";
  * that explicitly allows what that browser session should see.
  */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
+// IMPORTANT: do NOT throw here on missing config.
+//
+// This module is imported by the root layout and nearly every route, so a
+// module-load throw (the previous behaviour) crashes EVERY page — surfacing
+// as a bare 500 "Internal Server Error" on login that no page-level try/catch
+// can catch, because the throw happens at import time, before any component
+// renders. A single missing/rotated prod env var (Netlify) = total outage.
+//
+// Instead: log loudly and build a non-throwing client with placeholder creds.
+// Queries then fail at call-time as a rejected promise, which callers already
+// guard (see the try/catch in app/page.tsx and app/layout.tsx). Net effect:
+// a misconfigured key degrades to "data unavailable" banners, not a dead app.
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error(
-    "Supabase server client not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_KEY in .env.local.",
+  console.error(
+    "[supabase] NEXT_PUBLIC_SUPABASE_URL and/or SUPABASE_SERVICE_KEY is not set — " +
+      "Supabase queries will fail until configured (Netlify env in prod, .env.local in dev). " +
+      "Serving in degraded mode rather than crashing every route.",
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+export const supabase = createClient(
+  supabaseUrl || "https://unconfigured.supabase.invalid",
+  supabaseServiceKey || "unconfigured",
+  { auth: { persistSession: false, autoRefreshToken: false } },
+);

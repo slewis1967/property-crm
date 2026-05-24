@@ -19,7 +19,7 @@ const statusColor = (s: string | null) => {
 
 export default async function Home() {
   let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
-  let hotLeads = [], recentLeads = [], recentContacts = [];
+  let hotLeads: any[] = [], recentLeads: any[] = [], recentContacts: any[] = [];
   let dataFetchError = false;
 
   try {
@@ -32,14 +32,12 @@ export default async function Home() {
       supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
     ]);
 
-    [
-      { count: leadsCount },
-      { count: propertiesCount },
-      { count: contactsCount },
-      { data: hotLeads },
-      { data: recentLeads },
-      { data: recentContacts },
-    ] = results;
+    leadsCount = results[0].count ?? 0;
+    propertiesCount = results[1].count ?? 0;
+    contactsCount = results[2].count ?? 0;
+    hotLeads = results[3].data ?? [];
+    recentLeads = results[4].data ?? [];
+    recentContacts = results[5].data ?? [];
   } catch (error) {
     console.error("Failed to fetch dashboard data:", error);
     dataFetchError = true;
@@ -191,15 +189,15 @@ export default async function Home() {
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 pr-4 font-medium">{c.name || "—"}</td>
                     <td className="py-2 pr-4 text-gray-500">{c.email || "—"}</td>
-                    <td className="py-2 pr-4 capitalize>{c.buyer_type || "—"}</td>
-                    <td className="py-2 pr-4>{c.preferred_state || "—"}</td>
-                    <td className="py-2 pr-4>
+                    <td className="py-2 pr-4 capitalize">{c.buyer_type || "—"}</td>
+                    <td className="py-2 pr-4">{c.preferred_state || "—"}</td>
+                    <td className="py-2 pr-4">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(c.temperature)}`}>
                         {c.temperature || "—"}
                       </span>
                     </td>
-                    <td className="py-2 pr-4>{c.lead_score ?? "—"}</td>
-                    <td className="py-2>
+                    <td className="py-2 pr-4">{c.lead_score ?? "—"}</td>
+                    <td className="py-2">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor(c.status)}`}>
                         {c.status || "new"}
                       </span>
