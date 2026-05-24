@@ -3,6 +3,7 @@ import { supabase } from "@/utils/supabase";
 import { requireAuth, userEmailFromRequest } from "@/utils/cf-access";
 import { runPia } from "@/app/pia/_calc";
 import { dealPacketPropertyToPia } from "@/utils/deal-packet-to-pia";
+import { buildComparison, type ComparisonInput } from "@/utils/deal-comparison";
 import type { DealPacket } from "@/utils/deal-packet";
 
 /**
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
   const packet = dp.packet as DealPacket;
   const generated: { suburb: string | null; report_id: string }[] = [];
   const needsRent: string[] = [];
+  const compInputs: ComparisonInput[] = [];
 
   for (const property of packet.properties ?? []) {
     const mapping = dealPacketPropertyToPia(property);
@@ -48,9 +50,10 @@ export async function POST(req: NextRequest) {
       needsRent.push(property.suburb ?? "(unknown)");
       continue;
     }
+    const pia = runPia(mapping.inputs);
     // Projection + sourced context travel together in `results` for the template.
     const results = {
-      ...runPia(mapping.inputs),
+      ...pia,
       marketContext: mapping.marketContext,
       sourceNotes: mapping.notes,
       // carried so the report page is self-contained (specs incl. image_paths)
@@ -76,10 +79,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `report insert failed: ${repErr.message}` }, { status: 500 });
     }
     generated.push({ suburb: property.suburb, report_id: rep.id });
+    compInputs.push({
+      suburb: property.suburb,
+      address: property.address,
+      grossYield: pia.grossYield ?? null,
+      netYield: pia.netYield ?? null,
+      price: property.specs?.total_price ?? mapping.inputs.purchasePrice ?? null,
+      land_size_m2: property.specs?.land_size_m2 ?? null,
+      is_co_living: property.specs?.is_co_living ?? false,
+      rooms: property.specs?.bedrooms ?? null,
+      weekly_rent: mapping.inputs.weeklyRent ?? null,
+      vacancy_rate_pct: property.market?.vacancy_rate_pct ?? null,
+    });
+  }
+
+  // One comparison report across every property that produced a PIA (≥2). Holds
+  // the 1–10 ratings + best-pick recommendation; stored as a pia_report tagged
+  // kind=comparison so it attaches to the opportunity and is PDF-exportable too.
+  let comparison_report_id: string | null = null;
+  if (compInputs.length >= 2) {
+    const comparison = buildComparison(compInputs);
+    const { data: cmp, error: cmpErr } = await supabase
+      .from("pia_reports")
+      .insert({
+        title: `Comparison — ${compInputs.length} properties`,
+        inputs: {},
+        results: { kind: "comparison", comparison },
+        opportunity_id: dp.opportunity_id ?? null,
+        property_id: null,
+        generated_by: user,
+      })
+      .select("id")
+      .single();
+    if (cmpErr) {
+      return NextResponse.json({ error: `comparison insert failed: ${cmpErr.message}` }, { status: 500 });
+    }
+    comparison_report_id = cmp.id;
   }
 
   const status = needsRent.length > 0 ? "needs_rent_input" : "reports_generated";
   await supabase.from("deal_packets").update({ status }).eq("id", dp.id);
 
-  return NextResponse.json({ ok: true, status, generated, needs_rent_input: needsRent });
+  return NextResponse.json({ ok: true, status, generated, comparison_report_id, needs_rent_input: needsRent });
 }

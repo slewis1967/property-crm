@@ -1,5 +1,5 @@
 import { supabase } from "../../../../utils/supabase";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PrintButton from "./PrintButton";
 
 /**
@@ -25,6 +25,8 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
   if (!report) return notFound();
 
   const r = (report.results ?? {}) as any;
+  // A comparison report lives on its own route — send it there.
+  if (r.kind === "comparison") redirect(`/deal-analyser/compare/${id}`);
   const inputs = (report.inputs ?? {}) as any;
   const specs = r.propertySpecs ?? {};
   const mc = r.marketContext ?? {};
