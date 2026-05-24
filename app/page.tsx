@@ -19,7 +19,7 @@ const statusColor = (s: string | null) => {
 
 export default async function Home() {
   let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
-  let hotLeads: Record<string, unknown>[] = [], recentLeads: Record<string, unknown>[] = [], recentContacts: Record<string, unknown>[] = [];
+  let hotLeads: any[] = [], recentLeads: any[] = [], recentContacts: any[] = [];
   let dataFetchError = false;
 
   try {

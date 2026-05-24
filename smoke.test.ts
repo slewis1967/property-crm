@@ -20,7 +20,7 @@ describe("validate-env", () => {
       "NEXT_PUBLIC_SUPABASE_URL",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY",
       "SUPABASE_SERVICE_KEY",
-      "NEXUS_API_KEY",
+      "NEXUS_INTERNAL_API_KEY",
     ];
     const saved: Record<string, string | undefined> = {};
     for (const k of keys) {
@@ -44,7 +44,7 @@ describe("validate-env", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
-    process.env.NEXUS_API_KEY = "test-nexus-key";
+    process.env.NEXUS_INTERNAL_API_KEY = "test-nexus-key";
 
     const { validateEnv } = await import("./utils/validate-env");
     // Should not throw — all required vars are set
