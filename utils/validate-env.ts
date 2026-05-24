@@ -18,7 +18,12 @@ const CRITICAL_VARS: EnvVar[] = [
   { name: "NEXT_PUBLIC_SUPABASE_URL", required: true, feature: "property/contact data" },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", required: true, feature: "Supabase client" },
   { name: "SUPABASE_SERVICE_KEY", required: true, feature: "server-side Supabase (bypasses RLS)" },
-  { name: "NEXUS_API_KEY", required: true, feature: "NEXUS API proxy" },
+  // Correct name is NEXUS_INTERNAL_API_KEY (see utils/nexus-api.ts) — the old
+  // "NEXUS_API_KEY" name existed nowhere else, so it was ALWAYS missing and
+  // threw at startup, 500-ing the whole app. Also downgraded to optional:
+  // NEXUS is a backend dependency the opportunities/leads pages already
+  // degrade around, so a missing key must not block the entire CRM from boot.
+  { name: "NEXUS_INTERNAL_API_KEY", required: false, feature: "NEXUS API proxy (opportunities/leads; degrades gracefully if unset)" },
   { name: "NEXUS_API_BASE", required: false, feature: "NEXUS API proxy — defaults to localhost:8765" },
 
   // Outbound comms — required for their respective features
