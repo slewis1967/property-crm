@@ -122,6 +122,17 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
 
         {/* The numbers — projection on conservative assumptions */}
         <Section title="The numbers">
+          {r.rentBasis?.per_room && (
+            <div className="rounded-lg p-5 mb-5" style={{ background: "#0F4C5C0d", border: "1px solid #0F4C5C33" }}>
+              <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: "#0F4C5C" }}>Co-living income</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {r.rentBasis.rooms} rooms × {AUD(r.rentBasis.room_rent)}/wk = {AUD(r.rentBasis.weekly_rent)}/wk
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {PCT(r.grossYield)} gross yield — multiple income streams from one home, well above a single-tenancy let.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             <Spec label="Gross yield" value={PCT(r.grossYield)} />
             <Spec label="Net yield (yr 1)" value={PCT(r.netYield)} />
