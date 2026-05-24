@@ -18,32 +18,63 @@ const statusColor = (s: string | null) => {
 };
 
 export default async function Home() {
-  const [
-    { count: leadsCount },
-    { count: propertiesCount },
-    { count: contactsCount },
-    { data: hotLeads },
-    { data: recentLeads },
-    { data: recentContacts },
-  ] = await Promise.all([
-    supabase.from("property_leads").select("*", { count: "exact", head: true }),
-    supabase.from("global_stock_pool").select("*", { count: "exact", head: true }),
-    supabase.from("contacts").select("*", { count: "exact", head: true }),
-    supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
-    supabase.from("property_leads").select("full_name,email,state,buyer_type,temperature,score,match_status,created_at").order("created_at", { ascending: false }).limit(8),
-    supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
-  ]);
+  let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
+  let hotLeads: Record<string, unknown>[] = [], recentLeads: Record<string, unknown>[] = [], recentContacts: Record<string, unknown>[] = [];
+  let dataFetchError = false;
+
+  try {
+    const results = await Promise.all([
+      supabase.from("property_leads").select("*", { count: "exact", head: true }),
+      supabase.from("global_stock_pool").select("*", { count: "exact", head: true }),
+      supabase.from("contacts").select("*", { count: "exact", head: true }),
+      supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
+      supabase.from("property_leads").select("full_name,email,state,buyer_type,temperature,score,match_status,created_at").order("created_at", { ascending: false }).limit(8),
+      supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
+    ]);
+
+    leadsCount = results[0].count ?? 0;
+    propertiesCount = results[1].count ?? 0;
+    contactsCount = results[2].count ?? 0;
+    hotLeads = results[3].data ?? [];
+    recentLeads = results[4].data ?? [];
+    recentContacts = results[5].data ?? [];
+  } catch (error) {
+    console.error("Failed to fetch dashboard data:", error);
+    dataFetchError = true;
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">War Room</h1>
-          <p className="text-gray-500 text-sm mt-1">NextKey Property Strategists — Elvis AI Command Centre</p>
+      {dataFetchError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-2">
+              Unable to load dashboard data
+            </h2>
+            <p className="text-gray-600 mb-4">
+              The War Room could not load some data. This may be a temporary
+              issue. Please try again later or contact support if the problem
+              persists.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[#0F4C5C] text-white rounded-md hover:bg-[#0B3D4A] transition"
+            >
+              Try again
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span className="text-sm text-gray-500">Elvis Online</span>
+      )}
+      <div className="relative z-0">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">War Room</h1>
+            <p className="text-gray-500 text-sm mt-1">NextKey Property Strategists — Elvis AI Command Centre</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span className="text-sm text-gray-500">Elvis Online</span>
+          </div>
         </div>
       </div>
 
@@ -177,7 +208,9 @@ export default async function Home() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-400 text-sm">No contacts yet. Submit a lead via /webhook/lead/facebook_form to see data here.</p>
+          <p className="text-gray-400 text-sm">
+            No contacts yet. Submit a lead via /webhook/lead/facebook_form to see data here.
+          </p>
         )}
       </div>
 
