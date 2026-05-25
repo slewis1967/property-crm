@@ -52,8 +52,8 @@ export const metadata: Metadata = {
 // Sidebar shows badges with the count of items needing attention. Single
 // HEAD count(*) per badge — Postgres handles this in milliseconds, and
 // missing the badge isn't worth a layout-fail so we swallow errors.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number }> {
-  const out = { pendingReview: 0, draftBuilders: 0 };
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number }> {
+  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0 };
   try {
     const { count } = await supabase
       .from("property_review_queue")
@@ -72,6 +72,15 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
       .eq("draft", true)
       .eq("active", true);
     out.draftBuilders = count ?? 0;
+  } catch { /* swallow */ }
+  try {
+    // Packets awaiting operator action: rent still needed, or rent supplied but
+    // reports not yet generated. reports_generated / failed drop off the badge.
+    const { count } = await supabase
+      .from("deal_packets")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["needs_rent_input", "ready"]);
+    out.dealPackets = count ?? 0;
   } catch { /* swallow */ }
   return out;
 }
@@ -111,6 +120,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
             <a href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🗂️</span> Opportunities
+            </a>
+            <a href="/deal-analyser" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📑</span>
+              <span className="flex-1">Deal Analyser</span>
+              {counts.dealPackets > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold" title={`${counts.dealPackets} packet(s) awaiting reports`}>
+                  {counts.dealPackets}
+                </span>
+              )}
             </a>
             <a href="/leads" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🔥</span> Leads Pipeline
