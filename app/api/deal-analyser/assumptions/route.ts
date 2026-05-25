@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     if (entry.contract_type === "single" || entry.contract_type === "dual") prop.contract_type = entry.contract_type;
     const lp = Number(entry.land_price);
     if (prop.specs && isFinite(lp) && lp > 0) prop.specs.land_price = Math.round(lp);
+    if (prop.specs && typeof entry.state === "string" && entry.state) prop.specs.state = entry.state;
   }
 
   const allHaveRent = props.every((p) => p.rent_basis.weekly_rent != null);
