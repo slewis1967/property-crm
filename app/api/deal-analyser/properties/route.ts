@@ -68,6 +68,7 @@ function buildFromStock(row: any): DealPacketProperty {
       land_size_m2: row.land_size ?? null,
       house_size_m2: row.house_size ?? null,
       estate: null,
+      state: row.state ?? null,
       house_design: null,
       bedrooms: row.bedrooms ?? null,
       bathrooms: row.bathrooms ?? null,

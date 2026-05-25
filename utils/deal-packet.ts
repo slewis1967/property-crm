@@ -39,6 +39,8 @@ export interface PropertySpecs {
   land_size_m2: number | null;
   house_size_m2: number | null;
   estate: string | null;
+  /** AU state (VIC/NSW/QLD…) — drives the stamp-duty estimate. */
+  state?: string | null;
   house_design: string | null;
   bedrooms: number | null;
   bathrooms: number | null;

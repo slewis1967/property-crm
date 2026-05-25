@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { runPia, type PiaInputs } from "@/app/pia/_calc";
+import { estimateStampDuty, AU_STATES } from "@/utils/stamp-duty";
 import type { AssumptionSource } from "@/utils/deal-packet";
 
 /**
@@ -28,6 +29,7 @@ interface Prop {
   land: number | null;
   contract_type: "single" | "dual";
   land_price: number | null;
+  state: string | null;
   pia: PiaInputs;
   sources: AssumptionSource[];
 }
@@ -99,6 +101,9 @@ export default function DealPacketClient({
   const [landPrice, setLandPrice] = useState<Record<number, string>>(
     Object.fromEntries(properties.map((p) => [p.index, p.land_price != null ? String(p.land_price) : ""])),
   );
+  const [stateOf, setStateOf] = useState<Record<number, string>>(
+    Object.fromEntries(properties.map((p) => [p.index, p.state ?? ""])),
+  );
   const [advOpen, setAdvOpen] = useState<Record<number, boolean>>({});
   const [researching, setResearching] = useState<Record<number, boolean>>({});
   const [addOpen, setAddOpen] = useState(false);
@@ -127,6 +132,19 @@ export default function DealPacketClient({
     return isFinite(v) && v > 0 ? v : null;
   };
   const setField = (i: number, key: string, v: string) => setVals((s) => ({ ...s, [i]: { ...s[i], [key]: v } }));
+
+  // Live-estimate stamp duty when contract / state / dutiable value changes (dual = land,
+  // single = full price). Marks it an estimate by dropping any prior researched citation.
+  function recalcDuty(i: number, over: { contract?: "single" | "dual"; state?: string; land?: string; price?: string } = {}) {
+    const p = properties.find((pp) => pp.index === i);
+    const ct = over.contract ?? contractType[i];
+    const st = (over.state ?? stateOf[i] ?? "") || p?.state || "";
+    const base = ct === "dual" ? num(over.land ?? landPrice[i] ?? "") : num(over.price ?? vals[i]?.purchasePrice ?? "");
+    const duty = estimateStampDuty(st, base);
+    if (duty == null) return;
+    setVals((s) => ({ ...s, [i]: { ...s[i], stampDuty: String(duty) } }));
+    setSources((s) => ({ ...s, [i]: (s[i] ?? []).filter((x) => x.field !== "stampDuty") }));
+  }
   const weeklyFor = (p: Prop): number | null => {
     const r = num(rentVals[p.index] ?? "");
     if (r == null) return null;
@@ -197,6 +215,7 @@ export default function DealPacketClient({
           room_rent: p.per_room ? num(rentVals[p.index] ?? "") ?? undefined : undefined,
           contract_type: contractType[p.index],
           land_price: Number(landPrice[p.index]) || null,
+          state: stateOf[p.index] || null,
         };
       });
       const ar = await fetch("/api/deal-analyser/assumptions", {
@@ -252,7 +271,7 @@ export default function DealPacketClient({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <FieldInput label="Package price" unit="$" value={v.purchasePrice ?? ""} onChange={(x) => setField(p.index, "purchasePrice", x)} />
+              <FieldInput label="Package price" unit="$" value={v.purchasePrice ?? ""} onChange={(x) => { setField(p.index, "purchasePrice", x); recalcDuty(p.index, { price: x }); }} />
               <FieldInput
                 label={p.per_room ? "Rent per room" : "Weekly rent"}
                 unit="$/wk"
@@ -283,7 +302,10 @@ export default function DealPacketClient({
                 {(["single", "dual"] as const).map((c) => (
                   <button
                     key={c}
-                    onClick={() => setContractType((s) => ({ ...s, [p.index]: c }))}
+                    onClick={() => {
+                      setContractType((s) => ({ ...s, [p.index]: c }));
+                      recalcDuty(p.index, { contract: c });
+                    }}
                     className={`px-3 py-1 ${contractType[p.index] === c ? "text-white" : "text-gray-600"}`}
                     style={contractType[p.index] === c ? { background: "#0F4C5C" } : undefined}
                   >
@@ -291,6 +313,19 @@ export default function DealPacketClient({
                   </button>
                 ))}
               </div>
+              <select
+                value={stateOf[p.index] ?? ""}
+                onChange={(e) => {
+                  setStateOf((s) => ({ ...s, [p.index]: e.target.value }));
+                  recalcDuty(p.index, { state: e.target.value });
+                }}
+                className="text-xs rounded-lg border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#0F4C5C]"
+              >
+                <option value="">State…</option>
+                {AU_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
               {contractType[p.index] === "dual" && (
                 <label className="text-xs flex items-center gap-2">
                   <span className="text-gray-500">Land price (duty base) $</span>
@@ -298,14 +333,17 @@ export default function DealPacketClient({
                     type="number"
                     inputMode="numeric"
                     value={landPrice[p.index] ?? ""}
-                    onChange={(e) => setLandPrice((s) => ({ ...s, [p.index]: e.target.value }))}
+                    onChange={(e) => {
+                      setLandPrice((s) => ({ ...s, [p.index]: e.target.value }));
+                      recalcDuty(p.index, { land: e.target.value });
+                    }}
                     placeholder="e.g. 297000"
                     className="w-32 rounded-lg border border-gray-300 px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-[#0F4C5C]"
                   />
                 </label>
               )}
               <span className="text-[11px] text-gray-400">
-                {contractType[p.index] === "dual" ? "Stamp duty on land only" : "Stamp duty on house + land"}
+                {contractType[p.index] === "dual" ? "Stamp duty on land only" : "Stamp duty on house + land"} · auto-estimated, Research for exact
               </span>
             </div>
 
