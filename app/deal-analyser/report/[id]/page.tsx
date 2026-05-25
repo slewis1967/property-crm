@@ -1,6 +1,7 @@
 import { supabase } from "../../../../utils/supabase";
 import { notFound, redirect } from "next/navigation";
 import PrintButton from "./PrintButton";
+import ReportActions from "../../ReportActions";
 
 /**
  * Client-facing PIA report — first-pass Apple-speak template.
@@ -55,7 +56,10 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
       {/* Toolbar — not printed */}
       <div className="no-print sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         <span className="text-sm text-gray-500">{report.title}</span>
-        <PrintButton />
+        <div className="flex items-center gap-2">
+          <ReportActions reportId={id} dealPacketId={r.deal_packet_id ?? null} />
+          <PrintButton />
+        </div>
       </div>
 
       <article className="max-w-3xl mx-auto bg-white my-6 print:my-0 shadow-sm print:shadow-none">
