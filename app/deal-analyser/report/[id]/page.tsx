@@ -149,6 +149,13 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           </div>
         </Section>
 
+        {/* Operator's additional information / changes (free text from the hub) */}
+        {r.operatorNotes && (
+          <Section title="Additional information">
+            <p className="text-sm text-gray-700 whitespace-pre-line">{r.operatorNotes}</p>
+          </Section>
+        )}
+
         {/* Disclaimer */}
         <footer className="px-10 py-8 border-t border-gray-100 text-[11px] leading-relaxed text-gray-400">
           <p className="font-semibold text-gray-500 mb-1">General advice only</p>

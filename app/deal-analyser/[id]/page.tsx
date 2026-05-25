@@ -1,6 +1,8 @@
 import { supabase } from "../../../utils/supabase";
+import { nexusApi } from "@/utils/nexus-api";
 import { notFound } from "next/navigation";
 import DealPacketClient from "./DealPacketClient";
+import PacketLinkPanel from "./PacketLinkPanel";
 import type { DealPacket } from "../../../utils/deal-packet";
 
 /**
@@ -24,6 +26,22 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
   if (!dp) return notFound();
 
   const packet = dp.packet as DealPacket;
+
+  // Opportunities (NEXUS leads) for the picker + AI auto-match. Non-fatal if NEXUS
+  // is unreachable — the panel just falls back to a manual id with no options.
+  let opportunities: { id: string; label: string; email: string | null }[] = [];
+  try {
+    const res = await nexusApi("/api/leads", { cache: "no-store" });
+    if (res.ok) {
+      const leads = ((await res.json()).leads ?? []) as any[];
+      opportunities = leads.map((l) => ({
+        id: l.lead_id,
+        label: l.full_name || l.email || l.lead_id,
+        email: l.email ?? null,
+      }));
+    }
+  } catch { /* picker shows empty; not fatal */ }
+
   const properties = (packet.properties ?? []).map((p, i) => ({
     index: i,
     suburb: p.suburb,
@@ -51,6 +69,15 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
           {properties.length} {properties.length === 1 ? "property" : "properties"} · extracted{" "}
           {new Date(dp.created_at).toLocaleDateString("en-AU")}
         </p>
+        <div className="mb-4">
+          <PacketLinkPanel
+            packetId={dp.id}
+            initialOpportunityId={dp.opportunity_id ?? null}
+            clientHint={packet.client_hint ?? null}
+            initialNotes={packet.operator_notes ?? null}
+            opportunities={opportunities}
+          />
+        </div>
         <DealPacketClient packetId={dp.id} status={dp.status} properties={properties} />
       </div>
     </div>
