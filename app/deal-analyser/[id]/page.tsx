@@ -57,6 +57,8 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     bedrooms: p.specs?.bedrooms ?? null,
     bathrooms: p.specs?.bathrooms ?? null,
     land: p.specs?.land_size_m2 ?? null,
+    contract_type: p.contract_type ?? "single",
+    land_price: p.specs?.land_price ?? null,
     pia: resolvePiaInputs(p),
     sources: p.pia_sources ?? [],
   }));

@@ -99,16 +99,24 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           )}
         </Section>
 
-        {/* Gallery */}
+        {/* Gallery — own section (NOT break-inside-avoid) so it flows across pages;
+            each image is capped to a page height + kept whole, so floorplans don't
+            split mid-image or orphan the heading on a near-empty page. */}
         {imageUrls.length > 0 && (
-          <Section title="Floorplan & design">
+          <section className="px-10 py-8 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-5">Floorplan & design</h2>
             <div className="grid grid-cols-1 gap-4">
               {imageUrls.map((u, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={u} alt={`Plan ${i + 1}`} className="w-full rounded-lg border border-gray-100" />
+                <img
+                  key={i}
+                  src={u}
+                  alt={`Plan ${i + 1}`}
+                  className="w-full h-auto rounded-lg border border-gray-100 print:w-auto print:max-h-[240mm] print:object-contain print:mx-auto print:break-inside-avoid"
+                />
               ))}
             </div>
-          </Section>
+          </section>
         )}
 
         {/* The opportunity — sourced, past-performance, disclaimed */}
@@ -213,7 +221,13 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             <Spec label="Marginal tax" value={PCT(inputs.marginalTaxRate)} />
             <Spec label="Vacancy" value={`${inputs.vacancyWeeks} wk/yr`} />
             <Spec label="Holding period" value={`${inputs.holdingYears} yr`} />
+            <Spec label="Contract" value={r.contractType === "dual" ? "Dual (split)" : "Single"} />
           </div>
+          <p className="text-xs text-gray-500 mt-3">
+            {r.contractType === "dual"
+              ? "Dual (split land + build) contract — stamp duty is calculated on the land value only."
+              : "Single contract — stamp duty is calculated on the full house + land package."}
+          </p>
           {(r.assumptionSources?.length ?? 0) > 0 && (
             <p className="text-xs text-gray-400 mt-3">
               Sourced figures: {r.assumptionSources.map((s: any) => `${s.label} — ${s.source} (${s.date})`).join(" · ")}.
