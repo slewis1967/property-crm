@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import SignatureEditor from "./SignatureEditor";
 import CalendarConnections from "./CalendarConnections";
 import PropertyTypesEditor from "./PropertyTypesEditor";
+import AiInstructionsEditor from "./AiInstructionsEditor";
 import { getSignatureFields } from "../../utils/email-signature";
+import { getAiInstructions } from "../../utils/ai-instructions";
 import { currentUserEmail } from "../../utils/cf-access";
 import { supabase } from "../../utils/supabase";
 
@@ -26,6 +28,7 @@ export default async function SettingsPage() {
   // Otherwise fall back to whichever user comes first in the list.
   const defaultUser = users.find((u) => u.user_email === owner)?.user_email ?? users[0]?.user_email ?? owner;
   const initial = await getSignatureFields(defaultUser);
+  const aiInstructions = await getAiInstructions();
 
   return (
     <div className="max-w-5xl">
@@ -33,6 +36,17 @@ export default async function SettingsPage() {
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-gray-500 text-sm mt-1">CRM-wide configuration</p>
       </div>
+
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold mb-1">AI instructions</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Extra instructions for the NextKey voice assistant — tone, phrasing, default
+          preferences. These are added to the assistant's brief and apply to its next reply.
+          They never override its safety rules: it still drafts and asks before sending any
+          SMS or email, and the AU compliance limits always stand.
+        </p>
+        <AiInstructionsEditor initial={aiInstructions} />
+      </section>
 
       <section className="mb-10">
         <h2 className="text-lg font-semibold mb-1">Email signature</h2>

@@ -32,6 +32,7 @@ import { defaultSignature } from "../../../../utils/email-signature";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
 import { resolveSender } from "../../../../utils/mail-owner";
 import { orSafe } from "../../../../utils/postgrest-safe";
+import { getAiInstructions, aiInstructionsBlock } from "../../../../utils/ai-instructions";
 
 import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -379,6 +380,9 @@ export async function POST(req: Request) {
     }
 
     const senderEmail = userEmailFromRequest(req);
+    // Operator's custom instructions (Settings → AI instructions), appended as a
+    // subordinate block — can't override confirm-before-send or compliance limits.
+    const system = SYSTEM + aiInstructionsBlock(await getAiInstructions());
     const messages: Anthropic.MessageParam[] = [
       ...sanitizeHistory(history),
       { role: "user", content: transcript },
@@ -391,7 +395,7 @@ export async function POST(req: Request) {
       const response = await client.messages.create({
         model: MODEL,
         max_tokens: 1024,
-        system: SYSTEM,
+        system,
         tools: TOOLS,
         messages,
       });
