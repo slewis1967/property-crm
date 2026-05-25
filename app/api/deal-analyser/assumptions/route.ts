@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
 
     // Contract structure + land price (the dual-contract stamp-duty base).
     if (entry.contract_type === "single" || entry.contract_type === "dual") prop.contract_type = entry.contract_type;
+    if (typeof entry.property_type === "string" && entry.property_type) prop.property_type = entry.property_type;
     const lp = Number(entry.land_price);
     if (prop.specs && isFinite(lp) && lp > 0) prop.specs.land_price = Math.round(lp);
     if (prop.specs && typeof entry.state === "string" && entry.state) prop.specs.state = entry.state;

@@ -58,6 +58,7 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     bathrooms: p.specs?.bathrooms ?? null,
     land: p.specs?.land_size_m2 ?? null,
     contract_type: p.contract_type ?? "single",
+    property_type: p.property_type ?? (p.specs?.is_co_living ? "Co-living" : "House & Land"),
     land_price: p.specs?.land_price ?? null,
     state: p.specs?.state ?? null,
     pia: resolvePiaInputs(p),
