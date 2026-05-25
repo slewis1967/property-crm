@@ -46,9 +46,9 @@ export default function AppShell({
   }, [drawerOpen]);
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+    <div data-appshell-root className="flex flex-col lg:flex-row h-screen overflow-hidden">
       {/* Mobile-only top bar */}
-      <div className="lg:hidden flex items-center justify-between px-3 py-2.5 bg-gray-900 text-white shadow flex-shrink-0">
+      <div data-appshell-chrome className="lg:hidden flex items-center justify-between px-3 py-2.5 bg-gray-900 text-white shadow flex-shrink-0">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
@@ -62,7 +62,7 @@ export default function AppShell({
       </div>
 
       {/* Desktop sidebar — always present on lg+ */}
-      <aside className="hidden lg:flex w-64 bg-gray-900 text-white flex-col flex-shrink-0">
+      <aside data-appshell-chrome className="hidden lg:flex w-64 bg-gray-900 text-white flex-col flex-shrink-0">
         {sidebar}
       </aside>
 
@@ -92,7 +92,7 @@ export default function AppShell({
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto p-4 lg:p-8 min-w-0">
+      <main data-appshell-main className="flex-1 overflow-y-auto p-4 lg:p-8 min-w-0">
         {children}
       </main>
     </div>
