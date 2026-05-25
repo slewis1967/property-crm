@@ -14,7 +14,29 @@
  * is a clearly-labelled conservative assumption — the two never blur together.
  */
 import { DEFAULT_INPUTS, type PiaInputs } from "../app/pia/_calc";
-import type { DealPacketProperty, SourcedMetric } from "./deal-packet";
+import type { DealPacketProperty, SourcedMetric, AssumptionSource } from "./deal-packet";
+
+/** Default loan-to-value ratio when the operator hasn't set a loan amount. */
+const DEFAULT_LVR = 0.8;
+
+/**
+ * Resolve a property's full PIA inputs: DEFAULT_INPUTS <- saved pia_inputs (operator
+ * + AI-researched) <- canonical price/rent (specs.total_price / rent_basis), so edits
+ * to price/rent via any path flow through. Before any assumptions are saved, growth
+ * stays the conservative house default (compliance) and the loan defaults to 80% LVR.
+ */
+export function resolvePiaInputs(property: DealPacketProperty): PiaInputs {
+  const { specs, rent_basis: rent, pia_inputs } = property;
+  const base: PiaInputs = { ...DEFAULT_INPUTS, ...(pia_inputs ?? {}) };
+  base.purchasePrice = specs?.total_price ?? base.purchasePrice;
+  base.weeklyRent = rent.weekly_rent ?? base.weeklyRent;
+  if (!pia_inputs) {
+    base.capitalGrowth = FORWARD_ASSUMPTIONS.capitalGrowth;
+    base.rentalGrowth = FORWARD_ASSUMPTIONS.rentalGrowth;
+    base.loanAmount = Math.round(base.purchasePrice * DEFAULT_LVR);
+  }
+  return base;
+}
 
 /** Forward assumptions for the projection = conservative house defaults. */
 export const FORWARD_ASSUMPTIONS = {
@@ -34,7 +56,7 @@ export interface MarketContext {
 }
 
 export interface PiaMapping {
-  /** Ready to POST to /api/pia/reports or feed runPia(). */
+  /** Full, resolved PIA inputs ready to feed runPia(). */
   inputs: PiaInputs;
   marketContext: MarketContext;
   rent_source: "email_body" | "operator" | null;
@@ -42,24 +64,17 @@ export interface PiaMapping {
   needs_rent_input: boolean;
   /** Human-readable trail of how inputs were derived (auditability). */
   notes: string[];
+  /** AI-researched cost citations to surface in the report. */
+  sources: AssumptionSource[];
 }
 
 export function dealPacketPropertyToPia(property: DealPacketProperty): PiaMapping {
   const { specs, market, rent_basis: rent } = property;
+  const inputs = resolvePiaInputs(property);
   const notes: string[] = [];
 
-  const inputs: PiaInputs = {
-    ...DEFAULT_INPUTS,
-    purchasePrice: specs?.total_price ?? DEFAULT_INPUTS.purchasePrice,
-    weeklyRent: rent.weekly_rent ?? DEFAULT_INPUTS.weeklyRent,
-    // Deliberately conservative — do NOT seed from market.capital_growth_12m_pct:
-    capitalGrowth: FORWARD_ASSUMPTIONS.capitalGrowth,
-    rentalGrowth: FORWARD_ASSUMPTIONS.rentalGrowth,
-  };
-
   notes.push(
-    `Forward capital growth = ${inputs.capitalGrowth}% p.a. (conservative house default; ` +
-      `the body's past-growth figure is shown in context only, not projected).`,
+    `Forward capital growth = ${inputs.capitalGrowth}% p.a.${property.pia_inputs ? "" : " (conservative house default; the body's past-growth figure is shown in context only, not projected)"}.`,
   );
   if (specs?.is_co_living) {
     notes.push(
@@ -69,8 +84,9 @@ export function dealPacketPropertyToPia(property: DealPacketProperty): PiaMappin
   }
   if (rent.weekly_rent == null) {
     notes.push("Weekly rent not set — projection is NOT valid until the operator supplies a figure.");
-  } else {
-    notes.push(`Stamp duty left at default ${inputs.stampDuty} — confirm for the property's state/price.`);
+  }
+  for (const s of property.pia_sources ?? []) {
+    notes.push(`${s.label} = ${s.value} (sourced: ${s.source}, ${s.date}).`);
   }
 
   const marketContext: MarketContext = {
@@ -88,5 +104,6 @@ export function dealPacketPropertyToPia(property: DealPacketProperty): PiaMappin
     rent_source: rent.source,
     needs_rent_input: rent.weekly_rent == null,
     notes,
+    sources: property.pia_sources ?? [],
   };
 }

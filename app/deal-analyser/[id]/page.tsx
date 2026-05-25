@@ -3,6 +3,7 @@ import { nexusApi } from "@/utils/nexus-api";
 import { notFound } from "next/navigation";
 import DealPacketClient from "./DealPacketClient";
 import PacketLinkPanel from "./PacketLinkPanel";
+import { resolvePiaInputs } from "../../../utils/deal-packet-to-pia";
 import type { DealPacket } from "../../../utils/deal-packet";
 
 /**
@@ -56,6 +57,8 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     bedrooms: p.specs?.bedrooms ?? null,
     bathrooms: p.specs?.bathrooms ?? null,
     land: p.specs?.land_size_m2 ?? null,
+    pia: resolvePiaInputs(p),
+    sources: p.pia_sources ?? [],
   }));
 
   // Current reports for this packet (so the hub always links to the live set,

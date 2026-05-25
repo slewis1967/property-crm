@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       ...pia,
       marketContext: mapping.marketContext,
       sourceNotes: mapping.notes,
+      assumptionSources: mapping.sources,
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
       // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)

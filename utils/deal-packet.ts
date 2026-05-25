@@ -11,6 +11,8 @@
  * figures (commission) are captured in `redactions`, never inside a property.
  */
 
+import type { PiaInputs } from "../app/pia/_calc";
+
 /** Lifecycle of a packet from extraction to reports. */
 export type DealPacketStatus =
   | "extracting"        // NEXUS is still reading the email/PDFs
@@ -74,12 +76,26 @@ export interface RentBasis {
   source: "email_body" | "operator" | null;
 }
 
+/** A cost assumption the AI sourced from the web — cited (source + date) in the report. */
+export interface AssumptionSource {
+  field: string;   // PiaInputs key, e.g. "interestRate"
+  label: string;   // human label, e.g. "Investment loan interest rate"
+  value: number;
+  source: string;  // e.g. "Finder Australia"
+  date: string;    // e.g. "May 2026"
+}
+
 export interface DealPacketProperty {
   suburb: string | null;
   address: string | null;
   specs: PropertySpecs | null;
   market: MarketData | null;
   rent_basis: RentBasis;
+  /** Full PIA assumptions (operator-edited + AI-researched), resolved over defaults.
+   *  null/absent => use defaults + canonical price/rent. See resolvePiaInputs. */
+  pia_inputs?: PiaInputs | null;
+  /** Citations for AI-researched cost assumptions (interest, stamp duty, rates, insurance). */
+  pia_sources?: AssumptionSource[];
   /** Investment thesis bullet points lifted/normalised from the body. */
   thesis_points: string[];
   /**
