@@ -166,14 +166,69 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           </div>
         </Section>
 
+        {/* Weekly cashflow — positive or negative, itemised */}
+        {r.cashflow && (() => {
+          const cf = r.cashflow as any;
+          const pos = cf.positiveAfterTax;
+          const signed = (n: number) => `${n < 0 ? "−" : "+"}${AUD(Math.abs(n))}`;
+          return (
+            <Section title="Weekly cashflow">
+              <div
+                className="rounded-lg p-5 mb-5"
+                style={{ background: pos ? "#0F4C5C0d" : "#FFF7ED", border: `1px solid ${pos ? "#0F4C5C33" : "#F59E0B55"}` }}
+              >
+                <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: pos ? "#0F4C5C" : "#B45309" }}>
+                  {pos ? "Cashflow positive" : "Cashflow negative (negatively geared)"}
+                </p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {signed(cf.weeklyAfterTax)}/week after tax
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {AUD(Math.abs(cf.afterTaxAnnual))}/year {pos ? "in your pocket" : "to hold"} in year 1, after tax.
+                </p>
+              </div>
+              <div className="text-sm">
+                <Row label="Rental income" value={`${AUD(cf.annualRent)}/yr`} />
+                <Row label="Council rates" value={`− ${AUD(cf.expenses.rates)}`} />
+                <Row label="Landlord insurance" value={`− ${AUD(cf.expenses.insurance)}`} />
+                {cf.expenses.bodyCorporate > 0 && <Row label="Body corporate" value={`− ${AUD(cf.expenses.bodyCorporate)}`} />}
+                <Row label="Property management" value={`− ${AUD(cf.expenses.management)}`} />
+                <Row label="Maintenance allowance" value={`− ${AUD(cf.expenses.maintenance)}`} />
+                <Row label="Loan repayments" value={`− ${AUD(cf.loanRepaymentsAnnual)}`} />
+                <Row label="Cashflow before tax" value={`${signed(cf.beforeTaxAnnual)}/yr · ${signed(cf.weeklyBeforeTax)}/wk`} strong />
+                <Row
+                  label={cf.taxBenefitAnnual >= 0 ? "Tax benefit (negative gearing)" : "Tax on net rental income"}
+                  value={`${cf.taxBenefitAnnual >= 0 ? "+ " : "− "}${AUD(Math.abs(cf.taxBenefitAnnual))}`}
+                />
+                <Row label="Cashflow after tax" value={`${signed(cf.afterTaxAnnual)}/yr · ${signed(cf.weeklyAfterTax)}/wk`} strong />
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                Year-1 figures. Rates, insurance, body corporate, management and maintenance are operating costs;
+                loan repayments are at {PCT(inputs.interestRate)}. Estimates on the stated assumptions, not a guarantee.
+              </p>
+            </Section>
+          );
+        })()}
+
         {/* Funding & cashflow */}
         <Section title="Funding & cashflow">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
             <Spec label="Loan / LVR" value={`${AUD(inputs.loanAmount)} · ${lvr}%`} />
-            <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
-            <Spec label="Cash to purchase" value={AUD(r.initialCashRequired)} />
+            {inputs.loanAmount > inputs.purchasePrice ? (
+              <Spec label="Equity drawn / extra borrowing" value={AUD(inputs.loanAmount - inputs.purchasePrice)} />
+            ) : (
+              <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
+            )}
+            <Spec label="Cash to purchase" value={r.initialCashRequired > 0 ? AUD(r.initialCashRequired) : "Equity-funded"} />
             <Spec label="Interest rate" value={PCT(inputs.interestRate)} />
           </div>
+          {lvr >= 100 && (
+            <p className="text-xs text-gray-500 mb-3">
+              Funded at {lvr}% LVR — the borrowing above the property&apos;s value is drawn from equity in other
+              property. Its interest is already included in the cashflow above, so the projection reflects the full
+              cost of the geared position.
+            </p>
+          )}
           <p className="text-sm font-semibold text-gray-700 mb-2">After-tax cashflow</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 5, 10].filter((y) => y <= inputs.holdingYears).map((y) => {
@@ -286,6 +341,19 @@ function Spec({ label, value }: { label: string; value: string | number | null |
     <div>
       <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
       <p className="text-sm font-semibold text-gray-900 mt-0.5">{value ?? "—"}</p>
+    </div>
+  );
+}
+
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-between py-1.5 ${
+        strong ? "border-t border-gray-200 mt-1 font-bold text-gray-900" : "text-gray-600 border-b border-gray-50"
+      }`}
+    >
+      <span>{label}</span>
+      <span className={strong ? "" : "font-medium text-gray-800"}>{value}</span>
     </div>
   );
 }

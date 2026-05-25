@@ -80,6 +80,23 @@ export interface YearRow {
   equity: number;               // propertyValue - loanBalance
 }
 
+/** Year-1 cashflow breakdown — "is it cashflow positive/negative, and by how much". */
+export interface Cashflow {
+  weeklyRent: number;
+  annualRent: number;        // effective (after vacancy), year 1
+  expenses: { rates: number; insurance: number; bodyCorporate: number; management: number; maintenance: number };
+  totalExpenses: number;     // sum of the above (year 1)
+  interestAnnual: number;    // year-1 loan interest
+  loanRepaymentsAnnual: number; // year-1 repayments (interest, or interest+principal in P&I years)
+  beforeTaxAnnual: number;   // rent − expenses − repayments (negative = out of pocket)
+  taxBenefitAnnual: number;  // negative-gearing tax saving (positive number = benefit)
+  afterTaxAnnual: number;    // before-tax + tax benefit
+  weeklyBeforeTax: number;
+  weeklyAfterTax: number;
+  positiveBeforeTax: boolean;
+  positiveAfterTax: boolean;
+}
+
 export interface PiaSummary {
   // KPIs
   grossYield: number;
@@ -97,6 +114,7 @@ export interface PiaSummary {
   totalReturn: number;          // netCashOverHolding + (endEquity - initialCashRequired) - cgtPayable
   irrApprox: number;            // simple compounded return on initial cash, ignoring time-of-cashflows
   breakevenYear: number | null; // first year cashFlowAfterTax >= 0 (null if never)
+  cashflow: Cashflow;           // year-1 positive/negative breakdown
   schedule: YearRow[];
 }
 
@@ -257,6 +275,32 @@ export function runPia(inputs: PiaInputs): PiaSummary {
       ? (Math.pow(finalValue / initialCashRequired, 1 / inputs.holdingYears) - 1) * 100
       : 0;
 
+  // Year-1 cashflow breakdown — itemised expenses + net before/after tax.
+  const y1 = schedule[0];
+  const mgmt1 = annualRent * (inputs.managementPct / 100);
+  const maint1 = annualRent * (inputs.maintenancePct / 100);
+  const cashflow: Cashflow = {
+    weeklyRent: inputs.weeklyRent,
+    annualRent: round(y1?.effectiveRent ?? annualRent),
+    expenses: {
+      rates: round(inputs.rates),
+      insurance: round(inputs.insurance),
+      bodyCorporate: round(inputs.bodyCorporate),
+      management: round(mgmt1),
+      maintenance: round(maint1),
+    },
+    totalExpenses: round(y1?.propertyExpenses ?? inputs.rates + inputs.insurance + inputs.bodyCorporate + mgmt1 + maint1),
+    interestAnnual: round(y1?.interestPaid ?? 0),
+    loanRepaymentsAnnual: round(y1?.loanRepayments ?? 0),
+    beforeTaxAnnual: round(y1?.cashFlowBeforeTax ?? 0),
+    taxBenefitAnnual: round(-(y1?.taxEffect ?? 0)),
+    afterTaxAnnual: round(y1?.cashFlowAfterTax ?? 0),
+    weeklyBeforeTax: round((y1?.cashFlowBeforeTax ?? 0) / 52),
+    weeklyAfterTax: round((y1?.cashFlowAfterTax ?? 0) / 52),
+    positiveBeforeTax: (y1?.cashFlowBeforeTax ?? 0) >= 0,
+    positiveAfterTax: (y1?.cashFlowAfterTax ?? 0) >= 0,
+  };
+
   return {
     grossYield: round(grossYield * 100) / 100,
     netYield: round(netYield * 100) / 100,
@@ -273,6 +317,7 @@ export function runPia(inputs: PiaInputs): PiaSummary {
     totalReturn: round(totalReturn),
     irrApprox: round(irrApprox * 100) / 100,
     breakevenYear,
+    cashflow,
     schedule,
   };
 }
