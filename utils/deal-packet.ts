@@ -97,6 +97,9 @@ export interface DealPacketProperty {
    *  house+land package; "dual" (split land + build contracts) = duty on land only.
    *  Defaults to "single". */
   contract_type?: "single" | "dual";
+  /** Operator-set property type (House & Land, Co-living, NDIS / SDA, Apartment…) —
+   *  drives the "why buy this type here" investment case. Defaults from is_co_living. */
+  property_type?: string;
   /** Full PIA assumptions (operator-edited + AI-researched), resolved over defaults.
    *  null/absent => use defaults + canonical price/rent. See resolvePiaInputs. */
   pia_inputs?: PiaInputs | null;
