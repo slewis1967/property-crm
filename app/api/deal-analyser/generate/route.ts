@@ -6,6 +6,7 @@ import { dealPacketPropertyToPia } from "@/utils/deal-packet-to-pia";
 import { buildComparison, type ComparisonInput } from "@/utils/deal-comparison";
 import { getSuburbIntel } from "@/utils/suburb-intel";
 import { getSuburbNarrative } from "@/utils/suburb-narrative";
+import { getInvestmentThesis } from "@/utils/investment-thesis";
 import type { DealPacket } from "@/utils/deal-packet";
 
 /**
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest) {
       market: property.market,
       intel: nexusIntel,
     });
+    // "Why buy this type here" — persuasive (selling) but compliant investment case.
+    const propertyType = property.property_type ?? (property.specs?.is_co_living ? "Co-living" : "House & Land");
+    const investmentThesis = await getInvestmentThesis({
+      propertyType,
+      suburb: property.suburb,
+      state: property.specs?.state ?? null,
+      market: property.market,
+    });
     // Projection + sourced context travel together in `results` for the template.
     const results = {
       // kind + deal_packet_id let the opportunity panel route to the right page
@@ -81,6 +90,7 @@ export async function POST(req: NextRequest) {
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
       suburbIntelligence: { narrative: suburbNarrative, intel: nexusIntel },
+      investmentThesis: { type: propertyType, narrative: investmentThesis },
       contractType: property.contract_type ?? "single",
       // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)
       rentBasis: property.rent_basis,

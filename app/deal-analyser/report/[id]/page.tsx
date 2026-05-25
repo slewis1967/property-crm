@@ -82,6 +82,13 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           </div>
         </header>
 
+        {/* Why buy this — the persuasive (compliant) investment case, leading the report */}
+        {r.investmentThesis?.narrative && (
+          <Section title={`Why ${r.investmentThesis.type ?? "this property"}${r.suburb ? ` in ${r.suburb}` : ""}`}>
+            <RichText text={r.investmentThesis.narrative} />
+          </Section>
+        )}
+
         {/* The home */}
         <Section title="The home">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

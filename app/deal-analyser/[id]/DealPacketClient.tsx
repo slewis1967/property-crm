@@ -29,11 +29,14 @@ interface Prop {
   bathrooms: number | null;
   land: number | null;
   contract_type: "single" | "dual";
+  property_type: string;
   land_price: number | null;
   state: string | null;
   pia: PiaInputs;
   sources: AssumptionSource[];
 }
+
+const PROPERTY_TYPES = ["House & Land", "Co-living", "NDIS / SDA", "Apartment", "Townhouse", "Duplex", "Dual occupancy"];
 interface ReportLink { id: string; kind: string; label: string }
 
 const AUD = (n: number | null | undefined) =>
@@ -104,6 +107,9 @@ export default function DealPacketClient({
   );
   const [stateOf, setStateOf] = useState<Record<number, string>>(
     Object.fromEntries(properties.map((p) => [p.index, p.state ?? ""])),
+  );
+  const [propType, setPropType] = useState<Record<number, string>>(
+    Object.fromEntries(properties.map((p) => [p.index, p.property_type])),
   );
   const [advOpen, setAdvOpen] = useState<Record<number, boolean>>({});
   const [researching, setResearching] = useState<Record<number, boolean>>({});
@@ -215,6 +221,7 @@ export default function DealPacketClient({
           pia_sources: sources[p.index] ?? [],
           room_rent: p.per_room ? num(rentVals[p.index] ?? "") ?? undefined : undefined,
           contract_type: contractType[p.index],
+          property_type: propType[p.index] || null,
           land_price: Number(landPrice[p.index]) || null,
           state: stateOf[p.index] || null,
         };
@@ -336,6 +343,16 @@ export default function DealPacketClient({
                 <option value="">State…</option>
                 {AU_STATES.map((s) => (
                   <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <select
+                value={propType[p.index] ?? ""}
+                onChange={(e) => setPropType((s) => ({ ...s, [p.index]: e.target.value }))}
+                title="Property type — drives the 'why buy this' investment case"
+                className="text-xs rounded-lg border border-gray-300 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#0F4C5C]"
+              >
+                {PROPERTY_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
                 ))}
               </select>
               {contractType[p.index] === "dual" && (
