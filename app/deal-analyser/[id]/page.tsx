@@ -1,6 +1,9 @@
 import { supabase } from "../../../utils/supabase";
+import { nexusApi } from "@/utils/nexus-api";
 import { notFound } from "next/navigation";
 import DealPacketClient from "./DealPacketClient";
+import PacketLinkPanel from "./PacketLinkPanel";
+import { resolvePiaInputs } from "../../../utils/deal-packet-to-pia";
 import type { DealPacket } from "../../../utils/deal-packet";
 
 /**
@@ -24,6 +27,22 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
   if (!dp) return notFound();
 
   const packet = dp.packet as DealPacket;
+
+  // Opportunities (NEXUS leads) for the picker + AI auto-match. Non-fatal if NEXUS
+  // is unreachable — the panel just falls back to a manual id with no options.
+  let opportunities: { id: string; label: string; email: string | null }[] = [];
+  try {
+    const res = await nexusApi("/api/leads", { cache: "no-store" });
+    if (res.ok) {
+      const leads = ((await res.json()).leads ?? []) as any[];
+      opportunities = leads.map((l) => ({
+        id: l.lead_id,
+        label: l.full_name || l.email || l.lead_id,
+        email: l.email ?? null,
+      }));
+    }
+  } catch { /* picker shows empty; not fatal */ }
+
   const properties = (packet.properties ?? []).map((p, i) => ({
     index: i,
     suburb: p.suburb,
@@ -38,7 +57,25 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     bedrooms: p.specs?.bedrooms ?? null,
     bathrooms: p.specs?.bathrooms ?? null,
     land: p.specs?.land_size_m2 ?? null,
+    pia: resolvePiaInputs(p),
+    sources: p.pia_sources ?? [],
   }));
+
+  // Current reports for this packet (so the hub always links to the live set,
+  // and re-renders to the new set after a regenerate via router.refresh()).
+  const { data: repRows } = await supabase
+    .from("pia_reports")
+    .select("id, results")
+    .eq("results->>deal_packet_id", dp.id)
+    .order("generated_at", { ascending: false });
+  const existingReports = (repRows ?? []).map((r) => {
+    const res = (r.results ?? {}) as any;
+    return {
+      id: r.id as string,
+      kind: (res.kind as string) ?? "deal_analyser_pia",
+      label: res.kind === "comparison" ? "Comparison (rating + best pick)" : `PIA — ${res.suburb ?? res.address ?? "Property"}`,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-8">
@@ -51,7 +88,16 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
           {properties.length} {properties.length === 1 ? "property" : "properties"} · extracted{" "}
           {new Date(dp.created_at).toLocaleDateString("en-AU")}
         </p>
-        <DealPacketClient packetId={dp.id} status={dp.status} properties={properties} />
+        <div className="mb-4">
+          <PacketLinkPanel
+            packetId={dp.id}
+            initialOpportunityId={dp.opportunity_id ?? null}
+            clientHint={packet.client_hint ?? null}
+            initialNotes={packet.operator_notes ?? null}
+            opportunities={opportunities}
+          />
+        </div>
+        <DealPacketClient packetId={dp.id} status={dp.status} properties={properties} existingReports={existingReports} />
       </div>
     </div>
   );

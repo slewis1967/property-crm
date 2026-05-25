@@ -31,6 +31,11 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
   const specs = r.propertySpecs ?? {};
   const mc = r.marketContext ?? {};
   const growth = mc.historical_capital_growth_12m_pct ?? null;
+  const sched = (r.schedule ?? []) as any[];
+  const yr = (n: number) => sched.find((x) => x.year === n);
+  const final = sched[sched.length - 1];
+  const y1 = yr(1);
+  const lvr = inputs.purchasePrice ? Math.round((inputs.loanAmount / inputs.purchasePrice) * 100) : 0;
 
   // Sign the flyer images (private bucket).
   let imageUrls: string[] = [];
@@ -148,6 +153,77 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             higher recent figures above. Actual returns will differ.
           </div>
         </Section>
+
+        {/* Funding & cashflow */}
+        <Section title="Funding & cashflow">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <Spec label="Loan / LVR" value={`${AUD(inputs.loanAmount)} · ${lvr}%`} />
+            <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
+            <Spec label="Cash to purchase" value={AUD(r.initialCashRequired)} />
+            <Spec label="Interest rate" value={PCT(inputs.interestRate)} />
+          </div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">After-tax cashflow</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 5, 10].filter((y) => y <= inputs.holdingYears).map((y) => {
+              const row = yr(y);
+              return <Spec key={y} label={`Year ${y}`} value={row ? `${AUD(row.cashFlowAfterTax)}/yr` : "—"} />;
+            })}
+            <Spec label={`Year ${inputs.holdingYears}`} value={final ? `${AUD(final.cashFlowAfterTax)}/yr` : "—"} />
+          </div>
+          {y1 && y1.taxEffect < 0 && (
+            <p className="text-xs text-gray-500 mt-3">
+              Year-1 negative gearing reduces taxable income by {AUD(-y1.taxableIncome)} — an estimated tax saving of about{" "}
+              {AUD(-y1.taxEffect)} at a {PCT(inputs.marginalTaxRate)} marginal rate.
+            </p>
+          )}
+        </Section>
+
+        {/* Projected position at end of hold */}
+        <Section title={`Projected position — year ${inputs.holdingYears}`}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Spec label="Property value" value={AUD(r.endValue)} />
+            <Spec label="Loan balance" value={AUD(r.endLoanBalance)} />
+            <Spec label="Equity" value={AUD(r.endEquity)} />
+            <Spec label="Growth assumed" value={`${PCT(inputs.capitalGrowth)} p.a.`} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+            <Spec label="Net cash over hold" value={AUD(r.netCashOverHolding)} />
+            <Spec label="Capital gain (gross)" value={AUD(r.capitalGain)} />
+            <Spec label="Est. CGT" value={AUD(r.cgtPayable)} />
+            <Spec label="Indicative total return" value={AUD(r.totalReturn)} />
+          </div>
+          <p className="text-xs text-gray-400 mt-3">
+            Indicative total return = net cashflow + equity gain − estimated CGT, on {PCT(inputs.capitalGrowth)} p.a. growth
+            held {inputs.holdingYears} years. An estimate on the stated assumptions, not a forecast or guarantee.
+          </p>
+        </Section>
+
+        {/* Assumptions + sourced costs */}
+        <Section title="Assumptions">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Spec label="Interest rate" value={PCT(inputs.interestRate)} />
+            <Spec label="Stamp duty" value={AUD(inputs.stampDuty)} />
+            <Spec label="Council rates" value={`${AUD(inputs.rates)}/yr`} />
+            <Spec label="Insurance" value={`${AUD(inputs.insurance)}/yr`} />
+            <Spec label="Management" value={PCT(inputs.managementPct)} />
+            <Spec label="Marginal tax" value={PCT(inputs.marginalTaxRate)} />
+            <Spec label="Vacancy" value={`${inputs.vacancyWeeks} wk/yr`} />
+            <Spec label="Holding period" value={`${inputs.holdingYears} yr`} />
+          </div>
+          {(r.assumptionSources?.length ?? 0) > 0 && (
+            <p className="text-xs text-gray-400 mt-3">
+              Sourced figures: {r.assumptionSources.map((s: any) => `${s.label} — ${s.source} (${s.date})`).join(" · ")}.
+              Costs are current estimates and will vary by lender, insurer and council.
+            </p>
+          )}
+        </Section>
+
+        {/* Operator's additional information / changes (free text from the hub) */}
+        {r.operatorNotes && (
+          <Section title="Additional information">
+            <p className="text-sm text-gray-700 whitespace-pre-line">{r.operatorNotes}</p>
+          </Section>
+        )}
 
         {/* Disclaimer */}
         <footer className="px-10 py-8 border-t border-gray-100 text-[11px] leading-relaxed text-gray-400">

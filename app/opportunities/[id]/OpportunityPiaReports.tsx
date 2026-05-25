@@ -11,7 +11,23 @@ type SavedReport = {
   last_emailed_at: string | null;
   last_emailed_to: string | null;
   email_count: number | null;
+  /** deal_analyser_pia | comparison | null (a plain PIA-modeller report) */
+  kind: string | null;
 };
+
+/** Deal-analyser reports open in their client-facing viewers; modeller reports
+ *  open in the PIA modeller. */
+function reportHref(r: SavedReport): string {
+  if (r.kind === "comparison") return `/deal-analyser/compare/${r.id}`;
+  if (r.kind === "deal_analyser_pia") return `/deal-analyser/report/${r.id}`;
+  return `/pia?report=${r.id}`;
+}
+
+function reportTag(kind: string | null): string | null {
+  if (kind === "comparison") return "Comparison";
+  if (kind === "deal_analyser_pia") return "Deal Analyser";
+  return null;
+}
 
 export default function OpportunityPiaReports({ leadId, propertyId }: { leadId: string; propertyId?: string | null }) {
   const [reports, setReports] = useState<SavedReport[] | null>(null);
@@ -51,9 +67,14 @@ export default function OpportunityPiaReports({ leadId, propertyId }: { leadId: 
             <li key={r.id} className="px-2 py-2.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <a
-                  href={`/pia?report=${r.id}`}
+                  href={reportHref(r)}
                   className="text-sm font-medium text-blue-600 hover:underline truncate block"
                 >
+                  {reportTag(r.kind) && (
+                    <span className="inline-block mr-2 px-1.5 py-0.5 rounded text-[10px] font-semibold align-middle bg-[#0F4C5C] text-white">
+                      {reportTag(r.kind)}
+                    </span>
+                  )}
                   {r.title}
                 </a>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -69,7 +90,7 @@ export default function OpportunityPiaReports({ leadId, propertyId }: { leadId: 
                 )}
               </div>
               <a
-                href={`/pia?report=${r.id}`}
+                href={reportHref(r)}
                 className="text-xs text-gray-500 hover:text-gray-800 whitespace-nowrap"
               >
                 Open →

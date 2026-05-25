@@ -40,6 +40,12 @@ export async function POST(req: NextRequest) {
   if (!dp) return NextResponse.json({ error: "deal_packet not found" }, { status: 404 });
 
   const packet = dp.packet as DealPacket;
+
+  // Idempotent regenerate: clear any prior reports for this packet first, so
+  // re-running (e.g. after a rent/price change) replaces the set instead of
+  // piling up duplicates. Reports are re-created fresh below.
+  await supabase.from("pia_reports").delete().eq("results->>deal_packet_id", dp.id);
+
   const generated: { suburb: string | null; report_id: string }[] = [];
   const needsRent: string[] = [];
   const compInputs: ComparisonInput[] = [];
@@ -53,13 +59,20 @@ export async function POST(req: NextRequest) {
     const pia = runPia(mapping.inputs);
     // Projection + sourced context travel together in `results` for the template.
     const results = {
+      // kind + deal_packet_id let the opportunity panel route to the right page
+      // and let attach cascade the opportunity_id onto already-generated reports.
+      kind: "deal_analyser_pia",
+      deal_packet_id: dp.id,
       ...pia,
       marketContext: mapping.marketContext,
       sourceNotes: mapping.notes,
+      assumptionSources: mapping.sources,
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
       // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)
       rentBasis: property.rent_basis,
+      // operator's free-text changes / extra info, rendered in the report
+      operatorNotes: packet.operator_notes ?? null,
       address: property.address,
       suburb: property.suburb,
       thesisPoints: property.thesis_points,
@@ -106,7 +119,7 @@ export async function POST(req: NextRequest) {
       .insert({
         title: `Comparison — ${compInputs.length} properties`,
         inputs: {},
-        results: { kind: "comparison", comparison },
+        results: { kind: "comparison", deal_packet_id: dp.id, comparison },
         opportunity_id: dp.opportunity_id ?? null,
         property_id: null,
         generated_by: user,

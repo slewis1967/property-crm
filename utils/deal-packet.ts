@@ -11,6 +11,8 @@
  * figures (commission) are captured in `redactions`, never inside a property.
  */
 
+import type { PiaInputs } from "../app/pia/_calc";
+
 /** Lifecycle of a packet from extraction to reports. */
 export type DealPacketStatus =
   | "extracting"        // NEXUS is still reading the email/PDFs
@@ -74,12 +76,26 @@ export interface RentBasis {
   source: "email_body" | "operator" | null;
 }
 
+/** A cost assumption the AI sourced from the web — cited (source + date) in the report. */
+export interface AssumptionSource {
+  field: string;   // PiaInputs key, e.g. "interestRate"
+  label: string;   // human label, e.g. "Investment loan interest rate"
+  value: number;
+  source: string;  // e.g. "Finder Australia"
+  date: string;    // e.g. "May 2026"
+}
+
 export interface DealPacketProperty {
   suburb: string | null;
   address: string | null;
   specs: PropertySpecs | null;
   market: MarketData | null;
   rent_basis: RentBasis;
+  /** Full PIA assumptions (operator-edited + AI-researched), resolved over defaults.
+   *  null/absent => use defaults + canonical price/rent. See resolvePiaInputs. */
+  pia_inputs?: PiaInputs | null;
+  /** Citations for AI-researched cost assumptions (interest, stamp duty, rates, insurance). */
+  pia_sources?: AssumptionSource[];
   /** Investment thesis bullet points lifted/normalised from the body. */
   thesis_points: string[];
   /**
@@ -90,9 +106,31 @@ export interface DealPacketProperty {
   verify_flags: string[];
 }
 
+/** The client the deal is for, as inferred from the forwarded email. Used to
+ *  auto-match a CRM opportunity. Null fields when the email gives no usable hint. */
+export interface ClientHint {
+  name: string | null;
+  email: string | null;
+}
+
+/** Audit record: an operator proceeded with note wording the compliance reviewer
+ *  flagged. Kept so there's a named, timestamped trail of who authorised it. */
+export interface ComplianceOverride {
+  full_name: string;
+  acknowledged_at: string;
+  flagged_text: string;
+  violations: { law: string; severity: string; snippet: string }[];
+}
+
 export interface DealPacket {
   properties: DealPacketProperty[];
   /** Internal/commercial figures stripped from the email (e.g. commission) — never client-facing. */
   redactions: string[];
   status: DealPacketStatus;
+  /** Who the email indicates the deal is for — drives opportunity auto-attach. */
+  client_hint?: ClientHint | null;
+  /** Operator's free-text changes / extra information to include in the reports. */
+  operator_notes?: string | null;
+  /** Named overrides of compliance warnings (audit trail). */
+  compliance_overrides?: ComplianceOverride[];
 }

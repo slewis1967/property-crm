@@ -153,6 +153,60 @@ function parseViolations(text: string): Violation[] {
   }
 }
 
+/* ── Deal-analyser operator notes ──────────────────────────────────────────
+ * The operator can add free-text "changes / extra information" that prints in a
+ * CLIENT'S investment report. Same AU-law lens as broadcast copy, but tuned for a
+ * short note and it also returns a compliant rewrite to offer the operator. */
+
+export interface NoteReviewResult {
+  violations: Violation[];
+  /** A compliant rewrite of the note that keeps the intent; "" when already clean. */
+  suggestion: string;
+  reviewed_at: string;
+  model: string;
+}
+
+const NOTE_SYSTEM = `You are a compliance reviewer for NextKey Property Strategists (Queensland, NOT
+licensed under NCCP, NOT a real estate agent, NOT a financial planner). You are reviewing a short
+free-text note an operator wants to ADD TO A CLIENT'S property investment report.
+
+Flag wording that risks breach of Australian law. Quote the exact snippet. Don't flag tone/style.
+
+Laws:
+1. ACL s.18 — misleading/deceptive conduct ("guaranteed", "no risk", "can't lose").
+2. ACL s.29 — false/misleading claims about price, value, performance or FUTURE matters; specific
+   yield/growth claims stated as fact or without disclaimer; unfounded comparisons.
+3. NCCP 2009 — no credit licence: must not give credit advice / recommend a loan, lender or rate.
+4. QLD Property Occupations Act 2014 — strategist, not a licensed agent: must not offer to sell,
+   appraise, or act as buyer's agent.
+5. Spam Act / Privacy Act 1988 — no untrue data-handling claims.
+6. Financial planning — not licensed: no personal financial/super/retirement advice.
+
+Then SUGGESTION: a compliant rewrite of the whole note that keeps the operator's intent but removes
+the breach (soften absolutes, add "general information only", strip credit/financial advice, frame
+projections as estimates). If the note is already clean, suggestion = "".
+
+OUTPUT — STRICT JSON, no code fences, no commentary:
+{"violations":[{"law":"...","severity":"high"|"medium"|"low","snippet":"...","reason":"...","fix":"..."}],"suggestion":"<compliant rewrite or empty>"}`;
+
+export async function reviewDealNote(note: string): Promise<NoteReviewResult> {
+  const client = new Anthropic();
+  const resp = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1200,
+    system: NOTE_SYSTEM,
+    messages: [{ role: "user", content: `NOTE TO REVIEW:\n${note.slice(0, 4000)}\n\nOutput strict JSON.` }],
+  });
+  const text = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+  let suggestion = "";
+  try {
+    const s = text.startsWith("```") ? text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "") : text;
+    const obj = JSON.parse(s) as { suggestion?: unknown };
+    suggestion = typeof obj.suggestion === "string" ? obj.suggestion.trim() : "";
+  } catch { /* leave blank */ }
+  return { violations: parseViolations(text), suggestion, reviewed_at: new Date().toISOString(), model: MODEL };
+}
+
 export async function reviewBroadcastCopy(args: {
   subject: string;
   html_body: string;

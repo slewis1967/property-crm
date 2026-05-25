@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
   let q = supabase
     .from("pia_reports")
-    .select("id,title,opportunity_id,contact_id,property_id,generated_at,generated_by,last_emailed_at,last_emailed_to,email_count")
+    .select("id,title,opportunity_id,contact_id,property_id,generated_at,generated_by,last_emailed_at,last_emailed_to,email_count,results")
     .order("generated_at", { ascending: false })
     .limit(limit);
   if (opportunityId) q = q.eq("opportunity_id", opportunityId);
@@ -27,7 +27,13 @@ export async function GET(req: Request) {
 
   const { data, error } = await q;
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, reports: data ?? [] });
+  // Surface `kind` (deal_analyser_pia / comparison / null) so the UI can link to
+  // the right viewer, without shipping the whole results blob to the client.
+  const reports = (data ?? []).map(({ results, ...r }) => ({
+    ...r,
+    kind: (results as { kind?: string } | null)?.kind ?? null,
+  }));
+  return NextResponse.json({ ok: true, reports });
 }
 
 export async function POST(req: Request) {
