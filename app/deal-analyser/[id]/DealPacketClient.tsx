@@ -291,7 +291,13 @@ export default function DealPacketClient({
             </div>
 
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
-              <span>LVR: <strong className="text-gray-800">{isFinite(lvr) ? lvr.toFixed(0) : "—"}%</strong> · deposit {AUD(price - Number(v.loanAmount))}</span>
+              <span>
+                LVR: <strong style={{ color: lvr > 100 ? "#B45309" : "#1f2937" }}>{isFinite(lvr) ? lvr.toFixed(0) : "—"}%</strong>
+                {" · "}
+                {Number(v.loanAmount) > price
+                  ? <>equity drawn <strong className="text-gray-800">{AUD(Number(v.loanAmount) - price)}</strong></>
+                  : <>deposit {AUD(price - Number(v.loanAmount))}</>}
+              </span>
               {p.per_room && weeklyFor(p) != null && <span>Gross weekly: <strong className="text-gray-800">{AUD(weeklyFor(p))}</strong> ({p.rooms} rooms)</span>}
               {preview && <span>Gross yield <strong className="text-gray-800">{preview.grossYield}%</strong> · net {preview.netYield}% · breakeven {preview.breakevenYear ? `yr ${preview.breakevenYear}` : "beyond term"}</span>}
               {preview && (

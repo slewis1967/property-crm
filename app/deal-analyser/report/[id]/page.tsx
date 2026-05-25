@@ -212,12 +212,23 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
 
         {/* Funding & cashflow */}
         <Section title="Funding & cashflow">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
             <Spec label="Loan / LVR" value={`${AUD(inputs.loanAmount)} · ${lvr}%`} />
-            <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
-            <Spec label="Cash to purchase" value={AUD(r.initialCashRequired)} />
+            {inputs.loanAmount > inputs.purchasePrice ? (
+              <Spec label="Equity drawn / extra borrowing" value={AUD(inputs.loanAmount - inputs.purchasePrice)} />
+            ) : (
+              <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
+            )}
+            <Spec label="Cash to purchase" value={r.initialCashRequired > 0 ? AUD(r.initialCashRequired) : "Equity-funded"} />
             <Spec label="Interest rate" value={PCT(inputs.interestRate)} />
           </div>
+          {lvr >= 100 && (
+            <p className="text-xs text-gray-500 mb-3">
+              Funded at {lvr}% LVR — the borrowing above the property&apos;s value is drawn from equity in other
+              property. Its interest is already included in the cashflow above, so the projection reflects the full
+              cost of the geared position.
+            </p>
+          )}
           <p className="text-sm font-semibold text-gray-700 mb-2">After-tax cashflow</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 5, 10].filter((y) => y <= inputs.holdingYears).map((y) => {
