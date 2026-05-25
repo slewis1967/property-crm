@@ -89,9 +89,10 @@ export default async function ComparisonReportPage({ params }: { params: Promise
         <section className="px-10 py-8 border-b border-gray-100 print:break-inside-avoid">
           <h2 className="text-xl font-bold text-gray-900 mb-3">How the rating is built</h2>
           <p className="text-sm text-gray-600">
-            Each score is the sum of five factual factors — rental yield (max 4), income structure (1.5), land /
-            growth potential (2), rental demand (1.5) and entry price (1) — out of 10. Nothing is weighted by
-            opinion; every point above traces to the figure shown for that property.
+            Each score is the sum of six factors out of 10, led by each property&apos;s own modelled PIA figures:
+            projected return / IRR (max 3), net rental yield (2) and cashflow strength (1.5), then income structure
+            (1), land / growth potential (1.5) and entry price (1). Nothing is weighted by opinion; every point traces
+            to the figure shown for that property, and the modelled figures use conservative growth assumptions.
           </p>
         </section>
 
@@ -146,11 +147,13 @@ function Scorecard({ p, pick }: { p: ScoredProperty; pick: boolean }) {
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 text-sm">
         <Metric label="Package price" value={AUD(p.price)} />
-        <Metric label="Gross yield" value={PCT(p.grossYield)} />
+        <Metric label="Projected return (IRR)" value={PCT(p.irr)} />
         <Metric label="Net yield" value={PCT(p.netYield)} />
-        <Metric label="Land" value={p.land_size_m2 ? `${p.land_size_m2} m²` : "—"} />
+        <Metric label="Total return" value={AUD(p.totalReturn)} />
+        <Metric label="Cashflow-positive" value={p.breakevenYear ? `Year ${p.breakevenYear}` : "Beyond term"} />
+        <Metric label="End equity" value={AUD(p.endEquity)} />
         <Metric label="Income" value={p.is_co_living ? `Co-living · ${p.rooms ?? "?"} rooms` : "Single tenancy"} />
-        <Metric label="Weekly rent" value={AUD(p.weekly_rent)} />
+        <Metric label="Land" value={p.land_size_m2 ? `${p.land_size_m2} m²` : "—"} />
       </div>
 
       <div className="mt-4 space-y-2">

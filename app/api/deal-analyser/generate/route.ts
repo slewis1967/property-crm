@@ -105,6 +105,13 @@ export async function POST(req: NextRequest) {
       rooms: property.specs?.bedrooms ?? null,
       weekly_rent: mapping.inputs.weeklyRent ?? null,
       vacancy_rate_pct: property.market?.vacancy_rate_pct ?? null,
+      // Modelled PIA outputs — the comparison scores on these.
+      irr: pia.irrApprox ?? null,
+      totalReturn: pia.totalReturn ?? null,
+      netCashOverHolding: pia.netCashOverHolding ?? null,
+      endEquity: pia.endEquity ?? null,
+      breakevenYear: pia.breakevenYear ?? null,
+      holdingYears: mapping.inputs.holdingYears ?? null,
     });
   }
 
