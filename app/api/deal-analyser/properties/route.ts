@@ -57,6 +57,33 @@ function buildProperty(input: any): DealPacketProperty {
   };
 }
 
+function buildFromStock(row: any): DealPacketProperty {
+  return {
+    suburb: row.suburb ?? null,
+    address: row.street_address ?? null,
+    specs: {
+      total_price: row.total_package_price ?? row.house_price ?? null,
+      land_price: null,
+      build_price: null,
+      land_size_m2: row.land_size ?? null,
+      house_size_m2: row.house_size ?? null,
+      estate: null,
+      house_design: null,
+      bedrooms: row.bedrooms ?? null,
+      bathrooms: row.bathrooms ?? null,
+      car_spaces: row.car_spaces ?? null,
+      living_areas: null,
+      is_co_living: false,
+      key_inclusions: [],
+      image_paths: [],
+    },
+    market: null,
+    rent_basis: { weekly_rent: null, per_room: false, rooms: row.bedrooms ?? null, room_rent: null, source: null },
+    thesis_points: [],
+    verify_flags: [`Added from stock pool${row.builder_name ? ` — ${row.builder_name}` : ""}. Supply a rent to model it.`],
+  };
+}
+
 export async function POST(req: NextRequest) {
   const auth = requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -76,6 +103,12 @@ export async function POST(req: NextRequest) {
 
   if (action === "add") {
     props.push(buildProperty(body.property ?? {}));
+  } else if (action === "add_from_stock") {
+    if (!body.stock_id) return NextResponse.json({ error: "stock_id is required" }, { status: 400 });
+    const { data: row, error: sErr } = await supabase.from("global_stock_pool").select("*").eq("id", body.stock_id).maybeSingle();
+    if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 });
+    if (!row) return NextResponse.json({ error: "stock listing not found" }, { status: 404 });
+    props.push(buildFromStock(row));
   } else if (action === "delete") {
     const i = Number(body.index);
     if (!Number.isInteger(i) || i < 0 || i >= props.length) {
@@ -90,7 +123,7 @@ export async function POST(req: NextRequest) {
     }
     [props[i], props[j]] = [props[j], props[i]];
   } else {
-    return NextResponse.json({ error: "action must be add | delete | move" }, { status: 400 });
+    return NextResponse.json({ error: "action must be add | add_from_stock | delete | move" }, { status: 400 });
   }
 
   packet.properties = props;

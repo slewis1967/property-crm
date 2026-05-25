@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { runPia, type PiaInputs } from "@/app/pia/_calc";
 import type { AssumptionSource } from "@/utils/deal-packet";
 
@@ -279,7 +279,12 @@ export default function DealPacketClient({
       })}
 
       {addOpen ? (
-        <AddPropertyForm onAdd={(prop) => propAction({ action: "add", property: prop })} onClose={() => setAddOpen(false)} busy={busy} />
+        <AddPropertyForm
+          onAdd={(prop) => propAction({ action: "add", property: prop })}
+          onAddStock={(id) => propAction({ action: "add_from_stock", stock_id: id })}
+          onClose={() => setAddOpen(false)}
+          busy={busy}
+        />
       ) : (
         <button onClick={() => setAddOpen(true)} className="text-sm font-medium text-[#0F4C5C] hover:underline">
           + Add a property
@@ -319,13 +324,98 @@ export default function DealPacketClient({
   );
 }
 
-function AddPropertyForm({ onAdd, onClose, busy }: { onAdd: (p: any) => void; onClose: () => void; busy: boolean }) {
+type StockHit = { id: string; label: string; price: number | null; beds: number | null; baths: number | null; builder: string | null };
+
+function AddPropertyForm({
+  onAdd,
+  onAddStock,
+  onClose,
+  busy,
+}: {
+  onAdd: (p: any) => void;
+  onAddStock: (id: string) => void;
+  onClose: () => void;
+  busy: boolean;
+}) {
+  const [mode, setMode] = useState<"manual" | "stock">("manual");
   const [f, setF] = useState<Record<string, string>>({});
   const [coLiving, setCoLiving] = useState(false);
   const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  // Stock search
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<StockHit[]>([]);
+  const [searching, setSearching] = useState(false);
+  useEffect(() => {
+    if (mode !== "stock") return;
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/deal-analyser/stock-search?q=${encodeURIComponent(q)}`);
+        const j = await res.json();
+        setHits(res.ok ? j.results ?? [] : []);
+      } catch {
+        setHits([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q, mode]);
+
   return (
     <div className="bg-white rounded-xl border-2 p-5" style={{ borderColor: "#0F4C5C" }}>
-      <h3 className="font-bold text-gray-900 mb-3">Add a property</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-bold text-gray-900">Add a property</h3>
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
+          {(["manual", "stock"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-3 py-1.5 ${mode === m ? "text-white" : "text-gray-600"}`}
+              style={mode === m ? { background: "#0F4C5C" } : undefined}
+            >
+              {m === "manual" ? "Manual entry" : "From stock"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {mode === "stock" ? (
+        <div>
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search your stock by suburb, address or builder…"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C5C]"
+          />
+          <ul className="mt-2 max-h-64 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-50">
+            {searching && <li className="px-3 py-2 text-xs text-gray-400">Searching…</li>}
+            {!searching && hits.length === 0 && <li className="px-3 py-2 text-xs text-gray-400">No matches</li>}
+            {hits.map((h) => (
+              <li key={h.id}>
+                <button
+                  disabled={busy}
+                  onClick={() => onAddStock(h.id)}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-50 disabled:opacity-40"
+                >
+                  <span className="text-sm font-medium text-gray-900">{h.label}</span>
+                  <span className="block text-xs text-gray-400">
+                    {h.price != null ? `$${h.price.toLocaleString("en-AU")}` : "price n/a"}
+                    {h.beds != null ? ` · ${h.beds} bed` : ""}
+                    {h.baths != null ? ` · ${h.baths} bath` : ""}
+                    {h.builder ? ` · ${h.builder}` : ""}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-gray-400">Added from stock with no rent — supply a weekly rent in its card, then regenerate.</p>
+          <button onClick={onClose} disabled={busy} className="mt-3 text-sm text-gray-500 hover:text-gray-800">Cancel</button>
+        </div>
+      ) : (
+      <>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <AddField label="Address" value={f.address ?? ""} onChange={(v) => set("address", v)} type="text" />
         <AddField label="Suburb" value={f.suburb ?? ""} onChange={(v) => set("suburb", v)} type="text" />
@@ -361,6 +451,8 @@ function AddPropertyForm({ onAdd, onClose, busy }: { onAdd: (p: any) => void; on
         </button>
         <button onClick={onClose} disabled={busy} className="text-sm text-gray-500 hover:text-gray-800">Cancel</button>
       </div>
+      </>
+      )}
     </div>
   );
 }
