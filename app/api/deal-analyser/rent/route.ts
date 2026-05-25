@@ -4,11 +4,13 @@ import { requireAuth } from "@/utils/cf-access";
 import type { DealPacket } from "@/utils/deal-packet";
 
 /**
- * POST /api/deal-analyser/rent  { deal_packet_id, rents: [{ index, weekly_rent? , per_room_rent? }] }
+ * POST /api/deal-analyser/rent
+ *   { deal_packet_id, rents: [{ index, weekly_rent?, per_room_rent?, price? }] }
  *
- * The operator-supplies-rent step. When a (co-living) property arrived without a
- * usable rent, the packet sits at status="needs_rent_input"; this writes the
- * operator's figure into that property's rent_basis so the PIA can run.
+ * Applies per-property operator edits — rent and/or price. Used both to supply a
+ * missing rent (status="needs_rent_input") and to CHANGE already-set values (a
+ * manual field edit, or an AI-parsed change). Each field is optional per entry;
+ * only the ones provided are written.
  *
  * Never fabricated: the figure comes from the operator and is attributed
  * source="operator" (a NextKey estimate), not presented as a builder-quoted rent.
@@ -41,37 +43,53 @@ export async function POST(req: NextRequest) {
   const packet = dp.packet as DealPacket;
   const props = packet.properties ?? [];
 
+  const pos = (v: unknown) => (typeof v === "number" && isFinite(v) && v > 0 ? v : null);
   for (const entry of rents) {
     const i = Number(entry?.index);
     if (!Number.isInteger(i) || i < 0 || i >= props.length) {
-      return NextResponse.json({ error: `rent entry has invalid index ${entry?.index}` }, { status: 400 });
+      return NextResponse.json({ error: `edit entry has invalid index ${entry?.index}` }, { status: 400 });
     }
-    const rb = props[i].rent_basis;
-    const pos = (v: unknown) => (typeof v === "number" && isFinite(v) && v > 0 ? v : null);
+    const prop = props[i];
+    const rb = prop.rent_basis;
 
-    if (rb.per_room) {
-      const perRoom = pos(entry.per_room_rent);
-      const rooms = rb.rooms ?? props[i].specs?.bedrooms ?? null;
-      if (perRoom == null || !rooms) {
-        return NextResponse.json(
-          { error: `co-living property "${props[i].suburb ?? i}" needs a positive per-room rent and a room count` },
-          { status: 400 },
-        );
+    // Rent (optional) — only when a rent field is supplied.
+    if (entry.per_room_rent != null || entry.weekly_rent != null) {
+      if (rb.per_room) {
+        const perRoom = pos(entry.per_room_rent);
+        const rooms = rb.rooms ?? prop.specs?.bedrooms ?? null;
+        if (perRoom == null || !rooms) {
+          return NextResponse.json(
+            { error: `co-living property "${prop.suburb ?? i}" needs a positive per-room rent and a room count` },
+            { status: 400 },
+          );
+        }
+        rb.room_rent = perRoom;
+        rb.rooms = rooms;
+        rb.weekly_rent = Math.round(perRoom * rooms);
+      } else {
+        const weekly = pos(entry.weekly_rent);
+        if (weekly == null) {
+          return NextResponse.json(
+            { error: `property "${prop.suburb ?? i}" needs a positive weekly rent` },
+            { status: 400 },
+          );
+        }
+        rb.weekly_rent = Math.round(weekly);
       }
-      rb.room_rent = perRoom;
-      rb.rooms = rooms;
-      rb.weekly_rent = Math.round(perRoom * rooms);
-    } else {
-      const weekly = pos(entry.weekly_rent);
-      if (weekly == null) {
-        return NextResponse.json(
-          { error: `property "${props[i].suburb ?? i}" needs a positive weekly rent` },
-          { status: 400 },
-        );
-      }
-      rb.weekly_rent = Math.round(weekly);
+      rb.source = "operator";
     }
-    rb.source = "operator";
+
+    // Price (optional).
+    if (entry.price != null) {
+      const price = pos(entry.price);
+      if (price == null) {
+        return NextResponse.json({ error: `property "${prop.suburb ?? i}" needs a positive price` }, { status: 400 });
+      }
+      if (!prop.specs) {
+        return NextResponse.json({ error: `property "${prop.suburb ?? i}" has no specs to set a price on` }, { status: 400 });
+      }
+      prop.specs.total_price = Math.round(price);
+    }
   }
 
   // "ready" only once every property has a usable rent.

@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
   }
   const setOpportunity = "opportunity_id" in body;
   const setNotes = "operator_notes" in body;
-  if (!setOpportunity && !setNotes) {
+  const setOverride = body.compliance_override && typeof body.compliance_override === "object";
+  if (!setOpportunity && !setNotes && !setOverride) {
     return NextResponse.json({ error: "nothing to update" }, { status: 400 });
   }
 
@@ -53,6 +54,27 @@ export async function POST(req: NextRequest) {
   if (setNotes) {
     const notes = typeof body.operator_notes === "string" ? body.operator_notes.trim().slice(0, 4000) : "";
     packet.operator_notes = notes || null;
+    update.packet = packet;
+  }
+  if (setOverride) {
+    const ov = body.compliance_override;
+    const full_name = typeof ov.full_name === "string" ? ov.full_name.trim() : "";
+    if (!full_name) {
+      return NextResponse.json({ error: "compliance_override requires full_name" }, { status: 400 });
+    }
+    const record = {
+      full_name,
+      acknowledged_at: new Date().toISOString(),
+      flagged_text: typeof ov.flagged_text === "string" ? ov.flagged_text.slice(0, 4000) : "",
+      violations: Array.isArray(ov.violations)
+        ? ov.violations.slice(0, 20).map((v: any) => ({
+            law: String(v?.law ?? "").slice(0, 120),
+            severity: String(v?.severity ?? "").slice(0, 10),
+            snippet: String(v?.snippet ?? "").slice(0, 400),
+          }))
+        : [],
+    };
+    packet.compliance_overrides = [...(packet.compliance_overrides ?? []), record];
     update.packet = packet;
   }
 

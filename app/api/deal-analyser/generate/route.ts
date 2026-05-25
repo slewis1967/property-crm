@@ -40,6 +40,12 @@ export async function POST(req: NextRequest) {
   if (!dp) return NextResponse.json({ error: "deal_packet not found" }, { status: 404 });
 
   const packet = dp.packet as DealPacket;
+
+  // Idempotent regenerate: clear any prior reports for this packet first, so
+  // re-running (e.g. after a rent/price change) replaces the set instead of
+  // piling up duplicates. Reports are re-created fresh below.
+  await supabase.from("pia_reports").delete().eq("results->>deal_packet_id", dp.id);
+
   const generated: { suburb: string | null; report_id: string }[] = [];
   const needsRent: string[] = [];
   const compInputs: ComparisonInput[] = [];

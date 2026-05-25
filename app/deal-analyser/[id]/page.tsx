@@ -58,6 +58,22 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     land: p.specs?.land_size_m2 ?? null,
   }));
 
+  // Current reports for this packet (so the hub always links to the live set,
+  // and re-renders to the new set after a regenerate via router.refresh()).
+  const { data: repRows } = await supabase
+    .from("pia_reports")
+    .select("id, results")
+    .eq("results->>deal_packet_id", dp.id)
+    .order("generated_at", { ascending: false });
+  const existingReports = (repRows ?? []).map((r) => {
+    const res = (r.results ?? {}) as any;
+    return {
+      id: r.id as string,
+      kind: (res.kind as string) ?? "deal_analyser_pia",
+      label: res.kind === "comparison" ? "Comparison (rating + best pick)" : `PIA — ${res.suburb ?? res.address ?? "Property"}`,
+    };
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-8">
       <div className="max-w-3xl mx-auto">
@@ -78,7 +94,7 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
             opportunities={opportunities}
           />
         </div>
-        <DealPacketClient packetId={dp.id} status={dp.status} properties={properties} />
+        <DealPacketClient packetId={dp.id} status={dp.status} properties={properties} existingReports={existingReports} />
       </div>
     </div>
   );

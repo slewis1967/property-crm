@@ -97,6 +97,15 @@ export interface ClientHint {
   email: string | null;
 }
 
+/** Audit record: an operator proceeded with note wording the compliance reviewer
+ *  flagged. Kept so there's a named, timestamped trail of who authorised it. */
+export interface ComplianceOverride {
+  full_name: string;
+  acknowledged_at: string;
+  flagged_text: string;
+  violations: { law: string; severity: string; snippet: string }[];
+}
+
 export interface DealPacket {
   properties: DealPacketProperty[];
   /** Internal/commercial figures stripped from the email (e.g. commission) — never client-facing. */
@@ -106,4 +115,6 @@ export interface DealPacket {
   client_hint?: ClientHint | null;
   /** Operator's free-text changes / extra information to include in the reports. */
   operator_notes?: string | null;
+  /** Named overrides of compliance warnings (audit trail). */
+  compliance_overrides?: ComplianceOverride[];
 }
