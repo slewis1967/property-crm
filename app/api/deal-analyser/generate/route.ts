@@ -4,6 +4,8 @@ import { requireAuth, userEmailFromRequest } from "@/utils/cf-access";
 import { runPia } from "@/app/pia/_calc";
 import { dealPacketPropertyToPia } from "@/utils/deal-packet-to-pia";
 import { buildComparison, type ComparisonInput } from "@/utils/deal-comparison";
+import { getSuburbIntel } from "@/utils/suburb-intel";
+import { getSuburbNarrative } from "@/utils/suburb-narrative";
 import type { DealPacket } from "@/utils/deal-packet";
 
 /**
@@ -57,6 +59,15 @@ export async function POST(req: NextRequest) {
       continue;
     }
     const pia = runPia(mapping.inputs);
+    // Suburb intelligence baked into the report (comprehensive, client-facing,
+    // NextKey-branded). Narrative is cached per suburb so regenerating is free.
+    const nexusIntel = await getSuburbIntel(property.suburb, property.specs?.state ?? null);
+    const suburbNarrative = await getSuburbNarrative({
+      suburb: property.suburb,
+      state: property.specs?.state ?? null,
+      market: property.market,
+      intel: nexusIntel,
+    });
     // Projection + sourced context travel together in `results` for the template.
     const results = {
       // kind + deal_packet_id let the opportunity panel route to the right page
@@ -69,6 +80,7 @@ export async function POST(req: NextRequest) {
       assumptionSources: mapping.sources,
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
+      suburbIntelligence: { narrative: suburbNarrative, intel: nexusIntel },
       contractType: property.contract_type ?? "single",
       // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)
       rentBasis: property.rent_basis,

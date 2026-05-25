@@ -8,13 +8,13 @@ import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
 export const dynamic = "force-dynamic";
 
-const SYSTEM = `You write a concise market briefing for a property advisor about a single suburb. Sean uses these to sound knowledgeable on calls and tailor pitches per area.
+const SYSTEM = `You write a concise market briefing for a property advisor about a single suburb. NextKey advisors use these to sound knowledgeable on calls and tailor pitches per area.
 
 Format STRICTLY (use ** for bold labels, • for bullets, plain prose otherwise):
 
 **Snapshot:** <one-paragraph (3-4 sentences) market read — price level, recent growth direction, population, demographic flavour. Anchor in the data shown.>
 
-**What we have here:** <one paragraph (2-3 sentences) — how Sean's current stock fits this market: number of listings, price-positioning vs median, who they suit (investor / FHB / SDA / etc.). If no listings, say so.>
+**What we have here:** <one paragraph (2-3 sentences) — how NextKey's current stock fits this market: number of listings, price-positioning vs median, who they suit (investor / FHB / SDA / etc.). If no listings, say so.>
 
 **Talking points:** <3-4 short bullets — specific, advisor-useful angles for conversations. Mention infrastructure projects by name if known, growth drivers, lifestyle pull, NDIS suitability where relevant.>
 

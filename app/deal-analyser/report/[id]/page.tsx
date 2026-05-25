@@ -39,8 +39,11 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
   const y1 = yr(1);
   const lvr = inputs.purchasePrice ? Math.round((inputs.loanAmount / inputs.purchasePrice) * 100) : 0;
 
-  // Suburb intelligence (NEXUS-enriched) — client-facing snapshot. Non-fatal.
-  const suburbIntel = await getSuburbIntel(r.suburb ?? null, specs.state ?? null);
+  // Suburb intelligence: prefer the comprehensive narrative baked at generation;
+  // fall back to a live NEXUS snapshot for older reports. Non-fatal.
+  const baked = (r.suburbIntelligence ?? null) as { narrative: string | null; intel: any } | null;
+  const bakedIntel = baked?.intel ?? null;
+  const suburbIntel = baked?.narrative ? null : await getSuburbIntel(r.suburb ?? null, specs.state ?? null);
 
   // Sign the flyer images (private bucket).
   let imageUrls: string[] = [];
@@ -143,29 +146,46 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           )}
         </Section>
 
-        {/* Suburb intelligence — NEXUS-enriched factual snapshot (client-facing) */}
-        {suburbIntel && (suburbIntel.median_price || suburbIntel.population || suburbIntel.key_infrastructure.length > 0) && (
+        {/* Suburb intelligence — comprehensive client-facing narrative baked at
+            generation; live NEXUS snapshot as a fallback for older reports. */}
+        {(baked?.narrative || (suburbIntel && (suburbIntel.median_price || suburbIntel.population || suburbIntel.key_infrastructure.length > 0))) && (
           <Section title="Suburb intelligence">
-            <p className="text-sm text-gray-500 mb-4">
-              Independent area data for {suburbIntel.suburb}, {suburbIntel.state}
-              {suburbIntel.last_updated ? ` (as at ${suburbIntel.last_updated})` : ""}. Sourced figures —
-              past performance, not a forecast.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Spec label="Median price" value={suburbIntel.median_price ? AUD(suburbIntel.median_price) : null} />
-              <Spec label="Price growth" value={suburbIntel.price_growth_pct != null ? `${suburbIntel.price_growth_pct}%` : null} />
-              <Spec label="Population" value={suburbIntel.population ? suburbIntel.population.toLocaleString("en-AU") : null} />
-            </div>
-            {suburbIntel.key_infrastructure.length > 0 && (
+            {baked?.narrative ? (
               <>
-                <p className="text-sm font-semibold text-gray-700 mt-5 mb-2">Key infrastructure</p>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
-                  {suburbIntel.key_infrastructure.map((inf, i) => (
-                    <li key={i} className="flex gap-2"><span className="text-[#0F4C5C]">▪</span>{inf}</li>
-                  ))}
-                </ul>
+                <RichText text={baked.narrative} />
+                {bakedIntel && (bakedIntel.median_price || bakedIntel.population) && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-5">
+                    <Spec label="Median price" value={bakedIntel.median_price ? AUD(bakedIntel.median_price) : null} />
+                    <Spec label="Price growth" value={bakedIntel.price_growth_pct != null ? `${bakedIntel.price_growth_pct}%` : null} />
+                    <Spec label="Population" value={bakedIntel.population ? bakedIntel.population.toLocaleString("en-AU") : null} />
+                    {bakedIntel.last_updated && <Spec label="Data as at" value={bakedIntel.last_updated} />}
+                  </div>
+                )}
               </>
-            )}
+            ) : suburbIntel ? (
+              <>
+                <p className="text-sm text-gray-500 mb-4">
+                  Independent area data for {suburbIntel.suburb}, {suburbIntel.state}
+                  {suburbIntel.last_updated ? ` (as at ${suburbIntel.last_updated})` : ""}. Sourced figures —
+                  past performance, not a forecast.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Spec label="Median price" value={suburbIntel.median_price ? AUD(suburbIntel.median_price) : null} />
+                  <Spec label="Price growth" value={suburbIntel.price_growth_pct != null ? `${suburbIntel.price_growth_pct}%` : null} />
+                  <Spec label="Population" value={suburbIntel.population ? suburbIntel.population.toLocaleString("en-AU") : null} />
+                </div>
+                {suburbIntel.key_infrastructure.length > 0 && (
+                  <>
+                    <p className="text-sm font-semibold text-gray-700 mt-5 mb-2">Key infrastructure</p>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                      {suburbIntel.key_infrastructure.map((inf, i) => (
+                        <li key={i} className="flex gap-2"><span className="text-[#0F4C5C]">▪</span>{inf}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </>
+            ) : null}
           </Section>
         )}
 
@@ -371,6 +391,22 @@ function Spec({ label, value }: { label: string; value: string | number | null |
     <div>
       <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
       <p className="text-sm font-semibold text-gray-900 mt-0.5">{value ?? "—"}</p>
+    </div>
+  );
+}
+
+/** Light renderer for the AI narrative: paragraphs + inline **bold** (no HTML injection). */
+function RichText({ text }: { text: string }) {
+  return (
+    <div className="text-sm text-gray-700 leading-relaxed space-y-2">
+      {text.split(/\n+/).filter((l) => l.trim()).map((line, i) => {
+        const parts = line.split(/\*\*(.+?)\*\*/g); // odd indices were wrapped in **
+        return (
+          <p key={i}>
+            {parts.map((p, j) => (j % 2 === 1 ? <strong key={j} className="text-gray-900">{p}</strong> : <span key={j}>{p}</span>))}
+          </p>
+        );
+      })}
     </div>
   );
 }
