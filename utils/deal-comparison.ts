@@ -1,11 +1,12 @@
 /**
  * Deal comparison + 1–10 investment-merit rating.
  *
- * Compliance note: the score is NextKey's GENERAL assessment of a property's
- * investment merits, built from FACTUAL metrics (yield, land, vacancy, price,
- * co-living income structure) — not a promise of return and not personal advice.
- * Every point is traceable to a shown factor, so the rating is explainable, not
- * a black box. The comparison report must carry the general-advice disclaimer.
+ * Compliance note: the score is NextKey's GENERAL assessment of investment merits,
+ * built from the property's own MODELLED PIA figures (projected return/IRR, net
+ * yield, cashflow) plus factual structural metrics (income structure, land, price).
+ * It is not a promise of return and not personal advice. Every point is traceable to
+ * a shown factor. The modelled figures use the conservative growth assumptions baked
+ * into the PIA — the comparison report must carry the general-advice disclaimer.
  */
 
 export interface ComparisonInput {
@@ -19,6 +20,13 @@ export interface ComparisonInput {
   rooms: number | null;
   weekly_rent: number | null;
   vacancy_rate_pct: number | null;
+  // Modelled PIA outputs (drive the score):
+  irr: number | null; // % p.a. (irrApprox)
+  totalReturn: number | null; // $ over the hold
+  netCashOverHolding: number | null; // $
+  endEquity: number | null; // $
+  breakevenYear: number | null; // first cashflow-positive year (null = never within term)
+  holdingYears: number | null;
 }
 
 export interface ScoreFactor {
@@ -41,39 +49,56 @@ export interface DealComparison {
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+const AUD = (n: number | null | undefined) =>
+  n == null ? "—" : n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
 /**
- * Factor rubric (max 10 pts). Weights favour the levers that actually drive
- * investor return for this product set; yield dominates, co-living adds income
- * resilience, land proxies long-run growth.
+ * Factor rubric (max 10 pts). Driven by the property's modelled PIA figures: the
+ * projected return (IRR) leads, then after-cost net yield and cashflow timing —
+ * the things that actually determine investor outcome — with income structure,
+ * land and entry price as supporting factors.
  */
 function scoreOne(p: ComparisonInput): ScoredProperty {
   const factors: ScoreFactor[] = [];
 
-  // Rental yield — the dominant ROI lever (0–4). 8%+ gross = full marks.
-  const yld = p.grossYield ?? 0;
-  factors.push({ label: "Rental yield", detail: `${yld}% gross`, points: round1(clamp((yld / 8) * 4, 0, 4)), max: 4 });
-
-  // Co-living — multiple income streams from one home (0–1.5).
+  // Projected return (IRR) — the headline modelled return on cash invested (0–3). 12%+ = full.
+  const irr = p.irr ?? 0;
   factors.push({
-    label: "Income structure",
-    detail: p.is_co_living ? `Co-living · ${p.rooms ?? "?"} income streams` : "Single tenancy",
-    points: p.is_co_living ? 1.5 : 0,
+    label: "Projected return",
+    detail: p.irr != null ? `${irr}% p.a. (modelled IRR)` : "—",
+    points: round1(clamp((irr / 12) * 3, 0, 3)),
+    max: 3,
+  });
+
+  // Net rental yield — income after operating costs (0–2). 6%+ net = full.
+  const net = p.netYield ?? 0;
+  factors.push({ label: "Net rental yield", detail: p.netYield != null ? `${net}% net` : "—", points: round1(clamp((net / 6) * 2, 0, 2)), max: 2 });
+
+  // Cashflow strength — how soon it's cashflow-positive (0–1.5). Sooner = less holding cost.
+  const be = p.breakevenYear;
+  const bePts = be == null ? 0 : round1(clamp(1.5 - (be - 1) * 0.2, 0, 1.5));
+  factors.push({
+    label: "Cashflow strength",
+    detail: be == null ? "negative cashflow over term" : be <= 1 ? "cashflow-positive from year 1" : `cashflow-positive year ${be}`,
+    points: bePts,
     max: 1.5,
   });
 
-  // Land size — long-run growth proxy (0–2). 650m²+ = full marks.
-  const land = p.land_size_m2 ?? 0;
-  factors.push({ label: "Land (growth potential)", detail: land ? `${land} m²` : "—", points: round1(clamp((land / 650) * 2, 0, 2)), max: 2 });
+  // Income resilience — co-living = multiple income streams (0–1).
+  factors.push({
+    label: "Income structure",
+    detail: p.is_co_living ? `Co-living · ${p.rooms ?? "?"} income streams` : "Single tenancy",
+    points: p.is_co_living ? 1 : 0,
+    max: 1,
+  });
 
-  // Rental demand via vacancy (0–1.5). Tighter vacancy = stronger demand. Unknown → neutral.
-  const vac = p.vacancy_rate_pct;
-  const vacPts = vac == null ? 0.75 : round1(clamp(((3 - vac) / 3) * 1.5, 0, 1.5));
-  factors.push({ label: "Rental demand", detail: vac == null ? "vacancy n/a" : `${vac}% vacancy`, points: vacPts, max: 1.5 });
+  // Land — long-run growth proxy (0–1.5). 650m²+ = full.
+  const land = p.land_size_m2 ?? 0;
+  factors.push({ label: "Land (growth potential)", detail: land ? `${land} m²` : "—", points: round1(clamp((land / 650) * 1.5, 0, 1.5)), max: 1.5 });
 
   // Entry accessibility (0–1). Lower entry price scores slightly higher.
   const price = p.price ?? 0;
-  factors.push({ label: "Entry price", detail: price ? `$${price.toLocaleString("en-AU")}` : "—", points: round1(clamp((850000 - price) / 350000, 0, 1)), max: 1 });
+  factors.push({ label: "Entry price", detail: price ? AUD(price) : "—", points: round1(clamp((850000 - price) / 350000, 0, 1)), max: 1 });
 
   const total = clamp(round1(factors.reduce((s, f) => s + f.points, 0)), 1, 10);
   return { ...p, score: total, factors };
@@ -95,8 +120,8 @@ export function buildComparison(items: ComparisonInput[]): DealComparison {
     properties: scored,
     recommendation,
     disclaimers: [
-      "Ratings are NextKey's general assessment of each property's investment merits based on the factual metrics shown — not personal advice and not a forecast or guarantee of return.",
-      "Yield and growth figures are estimates/historical data as labelled; past performance is not indicative of future results.",
+      "Ratings are NextKey's general assessment of each property's investment merits, built from its modelled PIA figures and the factual metrics shown — not personal advice and not a forecast or guarantee of return.",
+      "Projected return, net yield and cashflow are modelled on conservative growth assumptions; actual results will differ and past performance is not indicative of future results.",
       "Seek your own independent financial, legal and taxation advice before deciding.",
     ],
   };

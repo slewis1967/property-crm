@@ -27,3 +27,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Print / Export-to-PDF. The app shell normally locks the page to one viewport
+ * (body h-screen overflow-hidden, <main> overflow-y-auto), which clips printing
+ * to a single page; and browsers drop background colours unless told otherwise.
+ * This unlocks the flow, hides the chrome, and forces backgrounds to render so
+ * report pages export in full with their colours.
+ */
+@media print {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-appshell-root] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-appshell-main] {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  [data-appshell-chrome],
+  .no-print {
+    display: none !important;
+  }
+}
