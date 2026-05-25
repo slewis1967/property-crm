@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { runPia, type PiaInputs } from "@/app/pia/_calc";
 import { estimateStampDuty, AU_STATES } from "@/utils/stamp-duty";
+import AISuburbBrief from "@/app/components/AISuburbBrief";
 import type { AssumptionSource } from "@/utils/deal-packet";
 
 /**
@@ -375,6 +376,11 @@ export default function DealPacketClient({
               </p>
             )}
             {p.per_room && <p className="mt-1 text-[11px] text-gray-400">Rent is an operator estimate attributed to NextKey — not a builder-quoted figure.</p>}
+            {p.suburb && stateOf[p.index] ? (
+              <AISuburbBrief suburb={p.suburb} state={stateOf[p.index]} />
+            ) : (
+              p.suburb && <p className="mt-3 text-[11px] text-gray-400">Pick the state above for the Elvis suburb brief.</p>
+            )}
           </div>
         );
       })}

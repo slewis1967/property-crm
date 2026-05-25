@@ -2,6 +2,7 @@ import { supabase } from "../../../../utils/supabase";
 import { notFound, redirect } from "next/navigation";
 import PrintButton from "./PrintButton";
 import ReportActions from "../../ReportActions";
+import { getSuburbIntel } from "../../../../utils/suburb-intel";
 
 /**
  * Client-facing PIA report — first-pass Apple-speak template.
@@ -37,6 +38,9 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
   const final = sched[sched.length - 1];
   const y1 = yr(1);
   const lvr = inputs.purchasePrice ? Math.round((inputs.loanAmount / inputs.purchasePrice) * 100) : 0;
+
+  // Suburb intelligence (NEXUS-enriched) — client-facing snapshot. Non-fatal.
+  const suburbIntel = await getSuburbIntel(r.suburb ?? null, specs.state ?? null);
 
   // Sign the flyer images (private bucket).
   let imageUrls: string[] = [];
@@ -138,6 +142,32 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             </p>
           )}
         </Section>
+
+        {/* Suburb intelligence — NEXUS-enriched factual snapshot (client-facing) */}
+        {suburbIntel && (suburbIntel.median_price || suburbIntel.population || suburbIntel.key_infrastructure.length > 0) && (
+          <Section title="Suburb intelligence">
+            <p className="text-sm text-gray-500 mb-4">
+              Independent area data for {suburbIntel.suburb}, {suburbIntel.state}
+              {suburbIntel.last_updated ? ` (as at ${suburbIntel.last_updated})` : ""}. Sourced figures —
+              past performance, not a forecast.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Spec label="Median price" value={suburbIntel.median_price ? AUD(suburbIntel.median_price) : null} />
+              <Spec label="Price growth" value={suburbIntel.price_growth_pct != null ? `${suburbIntel.price_growth_pct}%` : null} />
+              <Spec label="Population" value={suburbIntel.population ? suburbIntel.population.toLocaleString("en-AU") : null} />
+            </div>
+            {suburbIntel.key_infrastructure.length > 0 && (
+              <>
+                <p className="text-sm font-semibold text-gray-700 mt-5 mb-2">Key infrastructure</p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                  {suburbIntel.key_infrastructure.map((inf, i) => (
+                    <li key={i} className="flex gap-2"><span className="text-[#0F4C5C]">▪</span>{inf}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </Section>
+        )}
 
         {/* The numbers — projection on conservative assumptions */}
         <Section title="The numbers">
