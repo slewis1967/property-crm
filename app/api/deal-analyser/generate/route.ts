@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       assumptionSources: mapping.sources,
       // carried so the report page is self-contained (specs incl. image_paths)
       propertySpecs: property.specs,
+      contractType: property.contract_type ?? "single",
       // drives the co-living income callout (per_room / room_rent / rooms / weekly_rent)
       rentBasis: property.rent_basis,
       // operator's free-text changes / extra info, rendered in the report

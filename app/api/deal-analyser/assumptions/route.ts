@@ -69,6 +69,11 @@ export async function POST(req: NextRequest) {
     rb.source = "operator";
     const roomRent = Number(entry.room_rent);
     if (rb.per_room && isFinite(roomRent) && roomRent > 0) rb.room_rent = roomRent;
+
+    // Contract structure + land price (the dual-contract stamp-duty base).
+    if (entry.contract_type === "single" || entry.contract_type === "dual") prop.contract_type = entry.contract_type;
+    const lp = Number(entry.land_price);
+    if (prop.specs && isFinite(lp) && lp > 0) prop.specs.land_price = Math.round(lp);
   }
 
   const allHaveRent = props.every((p) => p.rent_basis.weekly_rent != null);

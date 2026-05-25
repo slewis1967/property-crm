@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const auth = requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  const { deal_packet_id, index } = await req.json().catch(() => ({}));
+  const { deal_packet_id, index, contract_type, land_price } = await req.json().catch(() => ({}));
   if (!deal_packet_id || typeof deal_packet_id !== "string") {
     return NextResponse.json({ error: "deal_packet_id is required" }, { status: 400 });
   }
@@ -65,9 +65,14 @@ export async function POST(req: NextRequest) {
 
   const where = [p.address, p.suburb].filter(Boolean).join(", ") || "Australia";
   const price = p.specs?.total_price ?? null;
+  const isDual = contract_type === "dual";
+  const dutyBase = isDual ? (Number(land_price) || p.specs?.land_price || null) : price;
+  const dutyClause = isDual
+    ? `This is a DUAL (split land + build) contract — calculate transfer/stamp duty on the LAND value ONLY${dutyBase ? ` (~$${dutyBase.toLocaleString("en-AU")})` : ""}, not the full package, and label that figure "Stamp duty (land only, <state>)".`
+    : `This is a SINGLE contract — calculate transfer/stamp duty on the full purchase price${price ? ` (~$${price.toLocaleString("en-AU")})` : ""}.`;
   const prompt = `Property: ${where}${price ? ` · purchase price ~$${price.toLocaleString("en-AU")}` : ""}. ` +
-    `Research the current investment loan interest rate, stamp duty for an investment purchase at this price in this state, ` +
-    `typical council rates, and typical landlord insurance. Output the strict JSON only.`;
+    `${dutyClause} ` +
+    `Research the current investment loan interest rate, that stamp duty, typical council rates, and typical landlord insurance. Output the strict JSON only.`;
 
   const client = new Anthropic();
   let parsed: any = null;

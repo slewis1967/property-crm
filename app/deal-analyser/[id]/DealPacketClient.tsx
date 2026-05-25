@@ -26,6 +26,8 @@ interface Prop {
   price: number | null;
   bathrooms: number | null;
   land: number | null;
+  contract_type: "single" | "dual";
+  land_price: number | null;
   pia: PiaInputs;
   sources: AssumptionSource[];
 }
@@ -91,6 +93,12 @@ export default function DealPacketClient({
   const [sources, setSources] = useState<Record<number, AssumptionSource[]>>(
     Object.fromEntries(properties.map((p) => [p.index, p.sources])),
   );
+  const [contractType, setContractType] = useState<Record<number, "single" | "dual">>(
+    Object.fromEntries(properties.map((p) => [p.index, p.contract_type])),
+  );
+  const [landPrice, setLandPrice] = useState<Record<number, string>>(
+    Object.fromEntries(properties.map((p) => [p.index, p.land_price != null ? String(p.land_price) : ""])),
+  );
   const [advOpen, setAdvOpen] = useState<Record<number, boolean>>({});
   const [researching, setResearching] = useState<Record<number, boolean>>({});
   const [addOpen, setAddOpen] = useState(false);
@@ -149,7 +157,12 @@ export default function DealPacketClient({
       const res = await fetch("/api/deal-analyser/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deal_packet_id: packetId, index: p.index }),
+        body: JSON.stringify({
+          deal_packet_id: packetId,
+          index: p.index,
+          contract_type: contractType[p.index],
+          land_price: Number(landPrice[p.index]) || null,
+        }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Research failed");
@@ -177,7 +190,14 @@ export default function DealPacketClient({
         }
         const weekly = weeklyFor(p);
         if (weekly != null) inputs.weeklyRent = weekly;
-        return { index: p.index, pia_inputs: inputs, pia_sources: sources[p.index] ?? [], room_rent: p.per_room ? num(rentVals[p.index] ?? "") ?? undefined : undefined };
+        return {
+          index: p.index,
+          pia_inputs: inputs,
+          pia_sources: sources[p.index] ?? [],
+          room_rent: p.per_room ? num(rentVals[p.index] ?? "") ?? undefined : undefined,
+          contract_type: contractType[p.index],
+          land_price: Number(landPrice[p.index]) || null,
+        };
       });
       const ar = await fetch("/api/deal-analyser/assumptions", {
         method: "POST",
@@ -255,6 +275,38 @@ export default function DealPacketClient({
               <span>LVR: <strong className="text-gray-800">{isFinite(lvr) ? lvr.toFixed(0) : "—"}%</strong> · deposit {AUD(price - Number(v.loanAmount))}</span>
               {p.per_room && weeklyFor(p) != null && <span>Gross weekly: <strong className="text-gray-800">{AUD(weeklyFor(p))}</strong> ({p.rooms} rooms)</span>}
               {preview && <span>Gross yield <strong className="text-gray-800">{preview.grossYield}%</strong> · net {preview.netYield}% · breakeven {preview.breakevenYear ? `yr ${preview.breakevenYear}` : "beyond term"}</span>}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="text-xs text-gray-500">Contract</span>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
+                {(["single", "dual"] as const).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setContractType((s) => ({ ...s, [p.index]: c }))}
+                    className={`px-3 py-1 ${contractType[p.index] === c ? "text-white" : "text-gray-600"}`}
+                    style={contractType[p.index] === c ? { background: "#0F4C5C" } : undefined}
+                  >
+                    {c === "single" ? "Single" : "Dual (split)"}
+                  </button>
+                ))}
+              </div>
+              {contractType[p.index] === "dual" && (
+                <label className="text-xs flex items-center gap-2">
+                  <span className="text-gray-500">Land price (duty base) $</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={landPrice[p.index] ?? ""}
+                    onChange={(e) => setLandPrice((s) => ({ ...s, [p.index]: e.target.value }))}
+                    placeholder="e.g. 297000"
+                    className="w-32 rounded-lg border border-gray-300 px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-[#0F4C5C]"
+                  />
+                </label>
+              )}
+              <span className="text-[11px] text-gray-400">
+                {contractType[p.index] === "dual" ? "Stamp duty on land only" : "Stamp duty on house + land"}
+              </span>
             </div>
 
             <button onClick={() => setAdvOpen((s) => ({ ...s, [p.index]: !s[p.index] }))} className="mt-3 text-xs font-semibold text-[#0F4C5C]">

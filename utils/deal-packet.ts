@@ -91,6 +91,10 @@ export interface DealPacketProperty {
   specs: PropertySpecs | null;
   market: MarketData | null;
   rent_basis: RentBasis;
+  /** Contract structure — drives the stamp-duty base. "single" = duty on the full
+   *  house+land package; "dual" (split land + build contracts) = duty on land only.
+   *  Defaults to "single". */
+  contract_type?: "single" | "dual";
   /** Full PIA assumptions (operator-edited + AI-researched), resolved over defaults.
    *  null/absent => use defaults + canonical price/rent. See resolvePiaInputs. */
   pia_inputs?: PiaInputs | null;
