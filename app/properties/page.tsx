@@ -1,6 +1,11 @@
 import { supabase } from "../../utils/supabase";
 import PropertyGrid from "./PropertyGrid";
 
+// The Aggregator Feed must reflect live stock on every load — without this,
+// Next.js serves a cached build snapshot, so withdrawn/edited rows (e.g. the
+// garbage ARG range rows we clean up) linger in the grid until the next deploy.
+export const dynamic = "force-dynamic";
+
 // Default property type list — used as a fallback when the
 // app_settings row is missing. Mirrors the API route's defaults.
 const DEFAULT_PROPERTY_TYPES = [
