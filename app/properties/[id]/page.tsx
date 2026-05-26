@@ -37,6 +37,22 @@ export default async function PropertyDetailPage({
 
   if (!property) return notFound();
 
+  // Brochure media (facade is already on property.brochure_url as the hero;
+  // here we surface the floor plan, gallery, and a brochure-download link).
+  const { data: media } = await supabase
+    .from("property_media")
+    .select("kind,storage_path,source_url")
+    .eq("property_id", id);
+  const mediaRows = media ?? [];
+  const floorplans = mediaRows.filter((m) => m.kind === "floorplan" && m.storage_path);
+  const gallery = mediaRows.filter((m) => m.kind === "gallery" && m.storage_path);
+  // Prefer a Supabase-hosted brochure PDF (no link expiry); fall back to the
+  // builder's source folder link so the operator can still grab the brochure.
+  const brochureLink =
+    mediaRows.find((m) => m.kind === "brochure_pdf" && m.storage_path)?.storage_path ??
+    mediaRows.find((m) => m.source_url)?.source_url ??
+    null;
+
   const price = property.total_package_price ?? property.house_price ?? 0;
   const address =
     property.street_address || property.estate_name || property.suburb || "(unknown address)";
@@ -105,6 +121,55 @@ export default async function PropertyDetailPage({
               <span className="text-5xl">🏠</span>
             </div>
           )}
+
+          {brochureLink && (
+            <a
+              href={brochureLink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-[#0F4C5C] text-white text-sm font-semibold py-2.5 hover:bg-[#0d4250] transition-colors"
+            >
+              📄 Download brochure
+            </a>
+          )}
+
+          {floorplans.length > 0 && (
+            <div className="mt-3">
+              <p className="text-[11px] text-gray-400 uppercase tracking-wide font-medium mb-1.5">
+                Floor plan
+              </p>
+              <div className="space-y-2">
+                {floorplans.map((m, i) => (
+                  <a
+                    key={i}
+                    href={m.storage_path}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-lg border border-gray-200 overflow-hidden bg-white"
+                  >
+                    <img src={m.storage_path} alt="Floor plan" className="w-full object-contain" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {gallery.length > 0 && (
+            <div className="mt-3 grid grid-cols-3 gap-1.5">
+              {gallery.map((m, i) => (
+                <a
+                  key={i}
+                  href={m.storage_path}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-md overflow-hidden border border-gray-200"
+                >
+                  <img src={m.storage_path} alt="" className="w-full aspect-square object-cover" />
+                </a>
+              ))}
+            </div>
+          )}
+
           {property.source_document_url && (
             <a
               href={property.source_document_url}
