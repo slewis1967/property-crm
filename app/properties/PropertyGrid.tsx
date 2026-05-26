@@ -80,6 +80,10 @@ export default function PropertyGrid({
   const [bedsMin, setBedsMin] = useState<number>(0);
   const [bathsMin, setBathsMin] = useState<number>(0);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("");
+  const [carsMin, setCarsMin] = useState<number>(0);
+  const [contractFilter, setContractFilter] = useState<string>("");   // "" | "single" | "split"
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [titledFilter, setTitledFilter] = useState<string>("");       // "" | "yes" | "no"
   const [showFilters, setShowFilters] = useState(true);
 
   // Build filter dropdown options from the loaded data so they match
@@ -106,17 +110,41 @@ export default function PropertyGrid({
   // even before any property has been classified as them yet. Fall
   // back to data-derived names if the settings list is empty for some
   // reason (e.g. fetch failed).
+  // Show EVERY property type on file PLUS the canonical list — so nothing is
+  // hidden, including ad-hoc/variant labels actually in the data (e.g.
+  // "Storage", "Co-living"/"Co_living", "Dual Occ"/"Dual Occupancy").
   const propertyTypeOptions = useMemo(() => {
-    if (propertyTypes && propertyTypes.length > 0) {
-      return propertyTypes.map((t) => t.name).filter(Boolean);
-    }
     const set = new Set<string>();
+    for (const t of propertyTypes) if (t?.name) set.add(t.name.toString().trim());
     for (const p of properties) {
       const t = (p.property_type || "").toString().trim();
       if (t) set.add(t);
     }
-    return Array.from(set).sort();
+    return Array.from(set).filter(Boolean).sort();
   }, [properties, propertyTypes]);
+
+  // Split (2-part / dual) contract is signalled by separate land + build prices.
+  const isSplit = (p: any) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
+
+  // Status is messy free-text (availability words mixed with ETAs/dates), so
+  // bucket it into the handful that matter for a feed filter.
+  const statusBucket = (s: any): string => {
+    const v = (s || "").toString().toLowerCase();
+    if (!v) return "Unknown";
+    if (v.includes("avail")) return "Available";
+    if (v.includes("under contract") || v.includes("under offer")) return "Under Contract";
+    if (v.includes("settled")) return "Settled";
+    if (v.includes("sold")) return "Sold";
+    if (v.includes("hold")) return "On Hold";
+    if (v.includes("construction") || v.startsWith("due") || v.includes("completed") || /q[1-4]\s*\/?\s*20/.test(v))
+      return "Off-plan / Under Construction";
+    return "Other";
+  };
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of properties) set.add(statusBucket(p.status));
+    return Array.from(set).sort();
+  }, [properties]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -139,9 +167,15 @@ export default function PropertyGrid({
       if (propertyTypeFilter && (p.property_type || "").toString().trim() !== propertyTypeFilter) return false;
       if (bedsMin > 0 && (Number(p.bedrooms) || 0) < bedsMin) return false;
       if (bathsMin > 0 && (Number(p.bathrooms) || 0) < bathsMin) return false;
+      if (carsMin > 0 && (Number(p.car_spaces) || 0) < carsMin) return false;
+      if (contractFilter === "split" && !isSplit(p)) return false;
+      if (contractFilter === "single" && isSplit(p)) return false;
+      if (statusFilter && statusBucket(p.status) !== statusFilter) return false;
+      if (titledFilter === "yes" && p.titled !== true) return false;
+      if (titledFilter === "no" && p.titled === true) return false;
       return true;
     });
-  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, propertyTypeFilter, bedsMin, bathsMin]);
+  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, propertyTypeFilter, bedsMin, bathsMin, carsMin, contractFilter, statusFilter, titledFilter]);
 
   const activeFilterCount =
     (search ? 1 : 0) +
@@ -151,12 +185,17 @@ export default function PropertyGrid({
     (builderFilter ? 1 : 0) +
     (propertyTypeFilter ? 1 : 0) +
     (bedsMin > 0 ? 1 : 0) +
-    (bathsMin > 0 ? 1 : 0);
+    (bathsMin > 0 ? 1 : 0) +
+    (carsMin > 0 ? 1 : 0) +
+    (contractFilter ? 1 : 0) +
+    (statusFilter ? 1 : 0) +
+    (titledFilter ? 1 : 0);
 
   const clearFilters = () => {
     setSearch(""); setPriceMin(""); setPriceMax("");
     setStateFilter(""); setBuilderFilter(""); setPropertyTypeFilter("");
     setBedsMin(0); setBathsMin(0);
+    setCarsMin(0); setContractFilter(""); setStatusFilter(""); setTitledFilter("");
   };
 
   // --- EMPOWER MATH VARIABLES ---
@@ -464,6 +503,78 @@ export default function PropertyGrid({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Car spaces */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Car spaces
+              </label>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setCarsMin(n)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-lg border transition ${
+                      carsMin === n
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n === 0 ? "Any" : `${n}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Contract type */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Contract
+              </label>
+              <select
+                value={contractFilter}
+                onChange={(e) => setContractFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All contracts</option>
+                <option value="single">Single contract</option>
+                <option value="split">Split / dual contract</option>
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All statuses</option>
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Titled */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Titled
+              </label>
+              <select
+                value={titledFilter}
+                onChange={(e) => setTitledFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Any</option>
+                <option value="yes">Titled</option>
+                <option value="no">Not titled</option>
+              </select>
             </div>
           </div>
         )}
