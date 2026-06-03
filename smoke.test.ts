@@ -45,6 +45,10 @@ describe("validate-env", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
     process.env.NEXUS_INTERNAL_API_KEY = "test-nexus-key";
+    // CF Access vars are required in production for JWT verification —
+    // they were promoted from optional in the 2026-06 audit.
+    process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
+    process.env.CF_ACCESS_AUD = "test-aud-tag";
 
     const { validateEnv } = await import("./utils/validate-env");
     // Should not throw — all required vars are set

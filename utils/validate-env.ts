@@ -31,9 +31,11 @@ const CRITICAL_VARS: EnvVar[] = [
   { name: "CLICKSEND_API_KEY", required: false, feature: "outbound SMS" },
   { name: "CLICKSEND_USERNAME", required: false, feature: "outbound SMS" },
 
-  // Auth — required for Cloudflare Access
-  { name: "CF_ACCESS_TEAM_DOMAIN", required: false, feature: "Cloudflare Access auth" },
-  { name: "CF_ACCESS_AUD", required: false, feature: "Cloudflare Access JWT validation" },
+  // Auth — required in production for Cloudflare Access JWT verification.
+  // In dev, missing CF Access means we'll fall back to header trust (still
+  // gated by isProd() in cf-access.ts), so we don't need to crash dev boot.
+  { name: "CF_ACCESS_TEAM_DOMAIN", required: true, feature: "Cloudflare Access JWT verification (required in production)" },
+  { name: "CF_ACCESS_AUD", required: true, feature: "Cloudflare Access JWT verification — pin audience to your CRM application AUD (Cloudflare Zero Trust → Access → Applications → CRM → 'Application Audience (AUD)')" },
 
   // Calendar — optional, graceful fallback exists
   { name: "GOOGLE_OAUTH_CLIENT_ID", required: false, feature: "Google Calendar integration" },
