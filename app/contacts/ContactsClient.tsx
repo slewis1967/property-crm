@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BulkUploadModal from "./BulkUploadModal";
+import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
 
 export type Contact = {
   id: string;
@@ -88,9 +89,28 @@ const CONTACT_TYPES = [
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function ContactsClient({ initialContacts }: { initialContacts: Contact[] }) {
+export default function ContactsClient({
+  initialContacts,
+  initialTotal = 0,
+  initialPageSize = 50,
+}: {
+  initialContacts: Contact[];
+  /** Total contacts at server-render time (live + archive, deduped).
+   *  The client updates this as more pages arrive. */
+  initialTotal?: number;
+  /** Page size the server used for the first render. Preserved across
+   *  the "Load more" call so chunk size stays consistent. */
+  initialPageSize?: PageSize;
+}) {
   const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>(initialContacts);
+  const [pageSize, setPageSize] = useState<PageSize>(initialPageSize);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(initialTotal);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const hasMore = contacts.length < total;
+  const fetchSeq = useRef(0);
   const [selected, setSelected] = useState<Contact | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [search, setSearch] = useState("");
@@ -107,6 +127,72 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
   const [savingNote, setSavingNote] = useState(false);
   const [noteText, setNoteText] = useState("");
   const noteInitRef = useRef<string>("");
+
+  // Restore saved page size on first mount. We just update the
+  // dropdown state; the data on screen is whatever the server
+  // shipped. If the saved size differs the user will see the
+  // mismatch in the selector but it self-corrects on the next
+  // explicit user action or hard refresh.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("contacts.pageSize");
+      if (saved && (ALLOWED_PAGE_SIZES as readonly number[]).includes(Number(saved))) {
+        setPageSize(Number(saved) as PageSize);
+      }
+    } catch {}
+  }, []);
+
+  const setPageSizeAndReset = useCallback((next: PageSize) => {
+    try { localStorage.setItem("contacts.pageSize", String(next)); } catch {}
+    setPageSize(next);
+    setPage(1);
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    fetch(`/api/contacts/list?page=1&pageSize=${next}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: Contact[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return;
+        setContacts(data.rows);
+        setTotal(data.total);
+        setPageSize(data.pageSize as PageSize);
+        setPage(1);
+        setCheckedIds(new Set());
+        setSelected(null);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load contacts");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    const nextPage = page + 1;
+    fetch(`/api/contacts/list?page=${nextPage}&pageSize=${pageSize}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: Contact[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return;
+        setContacts((prev) => [...prev, ...data.rows]);
+        setTotal(data.total);
+        setPage(nextPage);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load more");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, [loadingMore, hasMore, page, pageSize]);
 
   const openContact = (c: Contact) => {
     router.push(`/contacts/${c.id}`);
@@ -355,7 +441,13 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
               <h1 className="text-2xl font-bold text-gray-900">
                 {activeTypeKey === "all" ? "All Contacts" : activeTypeKey === "__unassigned__" ? "Unassigned" : (CONTACT_TYPES.find(t => t.key === activeTypeKey)?.icon + " " + activeTypeKey)}
               </h1>
-              <p className="text-gray-400 text-sm mt-0.5">{contacts.length} total · {filtered.length} showing</p>
+              <p className="text-gray-400 text-sm mt-0.5">
+                {contacts.length.toLocaleString()} loaded
+                {contacts.length < total && (
+                  <span> of {total.toLocaleString()}</span>
+                )}{" "}
+                · {filtered.length.toLocaleString()} showing
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">🔥 {hot} hot</span>
@@ -651,6 +743,49 @@ export default function ContactsClient({ initialContacts }: { initialContacts: C
               </tbody>
             </table>
           )}
+
+          {/* Page size selector + Load more button. Lives at the
+              bottom of the table region so the user can pull more
+              rows after they finish scrolling. */}
+          <div className="flex items-center justify-between mt-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label htmlFor="contacts-page-size" className="text-xs text-gray-500">
+                Show
+              </label>
+              <select
+                id="contacts-page-size"
+                value={pageSize}
+                onChange={(e) => setPageSizeAndReset(Number(e.target.value) as PageSize)}
+                disabled={loadingMore}
+                className="text-xs px-2 py-1 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+              >
+                {ALLOWED_PAGE_SIZES.map((n) => (
+                  <option key={n} value={n}>{n} per page</option>
+                ))}
+              </select>
+              {loadingMore && <span className="text-xs text-gray-400">loading…</span>}
+            </div>
+            {loadError && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                {loadError}
+              </div>
+            )}
+            {hasMore ? (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-5 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-wait"
+              >
+                {loadingMore
+                  ? "Loading…"
+                  : `Load more (${contacts.length.toLocaleString()} of ${total.toLocaleString()})`}
+              </button>
+            ) : (
+              contacts.length > 0 && (
+                <p className="text-xs text-gray-400">All {total.toLocaleString()} loaded</p>
+              )
+            )}
+          </div>
         </div>
       </div>
 
