@@ -1,9 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
 import type { PropertyGridItem } from "./types";
+import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
 
 // Deterministic gradient palette so cards from the same builder share a
 // visual identity instead of all looking like the same "No Image" tile.
@@ -43,14 +44,103 @@ type SettingsPropertyType = { name: string; icon?: string | null; description?: 
 export default function PropertyGrid({
   properties: initialProperties,
   propertyTypes = [],
+  initialTotal = 0,
+  initialPageSize = 50,
 }: {
   properties: PropertyGridItem[];
   /** Canonical type list from app_settings — drives the filter dropdown
    *  so newly-added types show up even before any property has them.
    *  Falls back to data-derived names when empty. */
   propertyTypes?: SettingsPropertyType[];
+  /** Total active stock at the time of the initial server render. The
+   *  grid will recount as more pages are loaded and use the larger of
+   *  the two for the "X of Y" counter. */
+  initialTotal?: number;
+  /** Page size the server component used for the first page; the grid
+   *  preserves it so changing the dropdown triggers a refetch that
+   *  matches the new chunk size. */
+  initialPageSize?: PageSize;
 }) {
+  // --- PAGINATION STATE ---
+  // The Aggregator Feed used to render every active row at once —
+  // fine at 200, but the brochure_url column + full text blobs made
+  // the RSC payload heavy. Now we ship the first page from the
+  // server component and let the user pull more on demand.
   const [properties, setProperties] = useState<PropertyGridItem[]>(initialProperties);
+  const [pageSize, setPageSize] = useState<PageSize>(initialPageSize);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(initialTotal);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const hasMore = properties.length < total;
+  const fetchSeq = useRef(0); // discard stale responses on rapid clicks
+
+  const setPageSizeAndReset = useCallback((next: PageSize) => {
+    // Persist preference so the next server render uses the same size.
+    try { localStorage.setItem("properties.pageSize", String(next)); } catch {}
+    setPageSize(next);
+    setPage(1);
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    fetch(`/api/properties/list?page=1&pageSize=${next}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return; // a newer request superseded us
+        setProperties(data.rows);
+        setTotal(data.total);
+        setPageSize(data.pageSize as PageSize);
+        setPage(1);
+        setCheckedIds(new Set());
+        setSelectedProperty(null);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load properties");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, []);
+
+  // Restore the saved page size on first mount (no server round-trip —
+  // we just re-default the dropdown; the first page data is whatever
+  // the server sent).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("properties.pageSize");
+      if (saved && (ALLOWED_PAGE_SIZES as readonly number[]).includes(Number(saved))) {
+        setPageSize(Number(saved) as PageSize);
+      }
+    } catch {}
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    const nextPage = page + 1;
+    fetch(`/api/properties/list?page=${nextPage}&pageSize=${pageSize}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return;
+        setProperties((prev) => [...prev, ...data.rows]);
+        setTotal(data.total);
+        setPage(nextPage);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load more");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, [loadingMore, hasMore, page, pageSize]);
+
+  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
 
   // Lookup map name → icon for fast card rendering
   const typeIconMap = useMemo(() => {
@@ -65,7 +155,6 @@ export default function PropertyGrid({
     const fromSettings = name ? typeIconMap.get(name.toLowerCase()) : null;
     return (fromSettings && fromSettings.length > 0) ? fromSettings : fallbackIcon(name);
   };
-  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -360,8 +449,29 @@ export default function PropertyGrid({
             {filtered.length !== properties.length && (
               <span className="text-gray-400"> of {properties.length}</span>
             )}{" "}
-            properties
+            shown · {total.toLocaleString()} total active
           </div>
+        </div>
+
+        {/* Page size selector — how many to load per page. Persisted
+            in localStorage so the user's choice survives a refresh.
+            Changing it resets the grid to page 1 with the new size. */}
+        <div className="flex items-center gap-2 mt-2 ml-1">
+          <label htmlFor="properties-page-size" className="text-xs text-gray-500">
+            Show
+          </label>
+          <select
+            id="properties-page-size"
+            value={pageSize}
+            onChange={(e) => setPageSizeAndReset(Number(e.target.value) as PageSize)}
+            disabled={loadingMore}
+            className="text-xs px-2 py-1 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+          >
+            {ALLOWED_PAGE_SIZES.map((n) => (
+              <option key={n} value={n}>{n} per page</option>
+            ))}
+          </select>
+          {loadingMore && <span className="text-xs text-gray-400">loading…</span>}
         </div>
 
         {showFilters && (
@@ -732,6 +842,34 @@ export default function PropertyGrid({
             </div>
           );
         })}
+      </div>
+
+      {/* Load more + pagination summary. The grid only renders cards
+          from the pages it's already fetched, so "Load more" is the
+          only way to see rows beyond `pageSize`. */}
+      <div className="mt-6 flex flex-col items-center gap-2">
+        {loadError && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {loadError}
+          </div>
+        )}
+        {hasMore ? (
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-wait"
+          >
+            {loadingMore
+              ? "Loading…"
+              : `Load more (${properties.length} of ${total.toLocaleString()} loaded)`}
+          </button>
+        ) : (
+          properties.length > 0 && (
+            <p className="text-xs text-gray-400">
+              All {total.toLocaleString()} loaded
+            </p>
+          )
+        )}
       </div>
 
       {/* War Room Panel */}
