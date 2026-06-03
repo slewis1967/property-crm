@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "../../../utils/supabase";
 import AIPropertyMatches from "../../components/AIPropertyMatches";
 
@@ -109,9 +110,13 @@ export default async function PropertyDetailPage({
                 rel="noreferrer"
                 className="block"
               >
-                <img
+                <Image
                   src={property.brochure_url}
                   alt={address}
+                  width={800}
+                  height={600}
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  unoptimized
                   className="w-full aspect-[4/3] object-cover"
                 />
               </a>
@@ -147,7 +152,15 @@ export default async function PropertyDetailPage({
                     rel="noreferrer"
                     className="block rounded-lg border border-gray-200 overflow-hidden bg-white"
                   >
-                    <img src={m.storage_path} alt="Floor plan" className="w-full object-contain" />
+                    <Image
+                      src={m.storage_path}
+                      alt="Floor plan"
+                      width={800}
+                      height={600}
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      unoptimized
+                      className="w-full object-contain"
+                    />
                   </a>
                 ))}
               </div>
@@ -164,7 +177,15 @@ export default async function PropertyDetailPage({
                   rel="noreferrer"
                   className="block rounded-md overflow-hidden border border-gray-200"
                 >
-                  <img src={m.storage_path} alt="" className="w-full aspect-square object-cover" />
+                  <Image
+                    src={m.storage_path}
+                    alt=""
+                    width={200}
+                    height={200}
+                    sizes="120px"
+                    unoptimized
+                    className="w-full aspect-square object-cover"
+                  />
                 </a>
               ))}
             </div>

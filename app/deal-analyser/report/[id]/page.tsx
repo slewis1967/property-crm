@@ -1,5 +1,6 @@
 import { supabase } from "../../../../utils/supabase";
 import { notFound, redirect } from "next/navigation";
+import Image from "next/image";
 import PrintButton from "./PrintButton";
 import ReportActions from "../../ReportActions";
 import { getSuburbIntel } from "../../../../utils/suburb-intel";
@@ -121,11 +122,19 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             <h2 className="text-xl font-bold text-gray-900 mb-5">Floorplan & design</h2>
             <div className="grid grid-cols-1 gap-4">
               {imageUrls.map((u, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                // unoptimized: floorplan URLs are Supabase storage paths
+                // (already in remotePatterns) but we also want the print
+                // path to work without the image optimizer — the browser
+                // fetches the original asset directly, which is correct
+                // for print and for offline caching.
+                <Image
                   key={i}
                   src={u}
                   alt={`Plan ${i + 1}`}
+                  width={1200}
+                  height={800}
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  unoptimized
                   className="w-full h-auto rounded-lg border border-gray-100 print:w-auto print:max-h-[240mm] print:object-contain print:mx-auto print:break-inside-avoid"
                 />
               ))}

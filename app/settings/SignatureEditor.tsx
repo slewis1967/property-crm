@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { supabaseBrowser } from "../../utils/supabase-browser";
 
 type SignatureFields = {
@@ -189,9 +190,16 @@ export default function SignatureEditor({
           <span className="block text-xs text-gray-600 mb-2 font-semibold uppercase tracking-wider">Logo</span>
           {fields.logo_url ? (
             <div className="flex items-start gap-3">
-              <img
+              {/* unoptimized: signature logos are user-uploaded, can be any
+                  shape, and the displayed height is user-controlled (20-200px).
+                  The width is auto-scaled by CSS to preserve aspect ratio. */}
+              <Image
                 src={fields.logo_url}
                 alt="Current logo"
+                width={300}
+                height={fields.logo_height || 60}
+                sizes="300px"
+                unoptimized
                 style={{ height: `${fields.logo_height || 60}px`, width: "auto" }}
                 className="border border-gray-200 rounded p-1 bg-white"
               />
