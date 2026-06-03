@@ -24,7 +24,7 @@ function sanitizeInputs(incoming: any): PiaInputs {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   const { deal_packet_id, properties } = await req.json().catch(() => ({}));

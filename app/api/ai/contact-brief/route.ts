@@ -17,7 +17,7 @@ Write a tight, factual brief in EXACTLY 3 lines:
 Rules: no preamble, no headers, no bullet markers, no quotation marks, no emoji. Use plain prose. If a field is unknown, omit it rather than saying "unknown." Treat the contact as the subject — don't address the advisor as "you."`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();

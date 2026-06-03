@@ -4,6 +4,8 @@ import PrintButton from "../../report/[id]/PrintButton";
 import ReportActions from "../../ReportActions";
 import type { DealComparison, ScoredProperty, ScoreFactor } from "../../../../utils/deal-comparison";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Client-facing comparison report — the 1–10 investment-merit rating + best-pick
  * across every property in a deal packet. Renders a pia_report tagged

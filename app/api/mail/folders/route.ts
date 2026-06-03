@@ -14,7 +14,7 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const { data, error } = await supabase
     .from("email_folders")
     .select("id,name,parent_id,color,system,created_at")
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
   const { name, parent_id, color } = body ?? {};
 

@@ -21,7 +21,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const { data, error } = await supabase
     .from("email_log")
     .select("*")
@@ -38,7 +38,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
 
   const writePatch: Record<string, unknown> = {};

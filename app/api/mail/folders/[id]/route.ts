@@ -30,7 +30,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const lookup = await loadFolder(id, owner);
   if (!lookup.ok) {
     return NextResponse.json({ ok: false, error: lookup.error }, { status: lookup.status });
@@ -73,7 +73,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const lookup = await loadFolder(id, owner);
   if (!lookup.ok) {
     return NextResponse.json({ ok: false, error: lookup.error }, { status: lookup.status });

@@ -52,3 +52,7 @@ deno.lock
 # Python bytecode (from web-asset-generator skill scripts)
 __pycache__/
 *.py[cod]
+
+# Voice test recordings (PII risk)
+output.wav
+*.wav

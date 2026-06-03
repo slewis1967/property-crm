@@ -6,7 +6,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json();
@@ -32,7 +32,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const { error } = await supabase.from("opportunity_calculations").delete().eq("id", id);

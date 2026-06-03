@@ -3,7 +3,7 @@ import { supabase } from "../../../../utils/supabase";
 
 import { requireAuth } from "../../../../utils/cf-access";
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { ids, buyer_type } = await req.json();
   if (!Array.isArray(ids) || ids.length === 0) {

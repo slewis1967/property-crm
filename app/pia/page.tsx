@@ -1,7 +1,7 @@
 import PiaClient from "./PiaClient";
 import DisclaimerBanner from "../components/DisclaimerBanner";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default function PiaPage() {
   return (

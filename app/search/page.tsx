@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 type Result = { contact_id: string; name: string; rationale: string };
 
 const EXAMPLE_QUERIES = [

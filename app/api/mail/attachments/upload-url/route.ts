@@ -26,7 +26,7 @@ const MAX_BYTES = 25 * 1024 * 1024;  // matches the bucket's file_size_limit
 const BUCKET = "mail-attachments";
 
 export async function POST(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
   const { draft_id, filename, size, mime_type } = body ?? {};
 

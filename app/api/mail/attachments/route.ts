@@ -12,7 +12,7 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const url = new URL(req.url);
   const draftId = url.searchParams.get("draft_id");
   const emailId = url.searchParams.get("email_id");

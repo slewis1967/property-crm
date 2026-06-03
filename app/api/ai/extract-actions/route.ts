@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { aiCall } from "../../../../utils/ai";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You take a property advisor's free-form note about a contact interaction and extract structured actions.
@@ -34,7 +35,9 @@ Rules:
 - Don't echo the raw input verbatim — clean and condense.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
+  const rateLimited = applyAiRateLimit(req, aiExpensive);
+  if (rateLimited) return rateLimited;
   if (auth instanceof NextResponse) return auth;
   try {
     const { contactId, noteText } = await req.json();

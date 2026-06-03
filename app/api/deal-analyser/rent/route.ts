@@ -21,7 +21,7 @@ import type { DealPacket } from "@/utils/deal-packet";
  * "needs_rent_input". Idempotent — re-submitting just overwrites the figures.
  */
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   const { deal_packet_id, rents } = await req.json().catch(() => ({}));

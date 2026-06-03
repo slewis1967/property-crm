@@ -18,7 +18,7 @@ import type { DealPacket } from "@/utils/deal-packet";
  *     packet; baked into reports at the NEXT generate (existing reports are snapshots).
  */
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json().catch(() => ({}));

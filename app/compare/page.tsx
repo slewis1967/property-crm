@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
+export const dynamic = "force-dynamic";
+
 export default function ComparePage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

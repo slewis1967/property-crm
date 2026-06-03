@@ -7,7 +7,7 @@ const MAX_IDS = 50;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function handler(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   const { ids } = await req.json().catch(() => ({ ids: null }));

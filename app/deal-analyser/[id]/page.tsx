@@ -6,6 +6,8 @@ import PacketLinkPanel from "./PacketLinkPanel";
 import { resolvePiaInputs } from "../../../utils/deal-packet-to-pia";
 import type { DealPacket } from "../../../utils/deal-packet";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Deal-packet hub (operator-facing, internal). Shows the extracted properties and,
  * when a (co-living) property has no usable rent, prompts the operator to supply

@@ -88,7 +88,7 @@ export async function POST(req: Request) {
   // Route-level auth. The proxy/CF-Access gate is the primary barrier, but
   // this route sends bulk email to every contact — defence in depth, and we
   // need the operator identity to bind the review token to.
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const operator = auth;
 

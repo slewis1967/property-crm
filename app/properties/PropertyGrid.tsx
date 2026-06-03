@@ -1,9 +1,9 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
+import type { PropertyGridItem } from "./types";
 
 // Deterministic gradient palette so cards from the same builder share a
 // visual identity instead of all looking like the same "No Image" tile.
@@ -44,13 +44,13 @@ export default function PropertyGrid({
   properties: initialProperties,
   propertyTypes = [],
 }: {
-  properties: any[];
+  properties: PropertyGridItem[];
   /** Canonical type list from app_settings — drives the filter dropdown
    *  so newly-added types show up even before any property has them.
    *  Falls back to data-derived names when empty. */
   propertyTypes?: SettingsPropertyType[];
 }) {
-  const [properties, setProperties] = useState<any[]>(initialProperties);
+  const [properties, setProperties] = useState<PropertyGridItem[]>(initialProperties);
 
   // Lookup map name → icon for fast card rendering
   const typeIconMap = useMemo(() => {
@@ -65,7 +65,7 @@ export default function PropertyGrid({
     const fromSettings = name ? typeIconMap.get(name.toLowerCase()) : null;
     return (fromSettings && fromSettings.length > 0) ? fromSettings : fallbackIcon(name);
   };
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -124,11 +124,11 @@ export default function PropertyGrid({
   }, [properties, propertyTypes]);
 
   // Split (2-part / dual) contract is signalled by separate land + build prices.
-  const isSplit = (p: any) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
+  const isSplit = (p: PropertyGridItem) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
 
   // Status is messy free-text (availability words mixed with ETAs/dates), so
   // bucket it into the handful that matter for a feed filter.
-  const statusBucket = (s: any): string => {
+  const statusBucket = (s: unknown): string => {
     const v = (s || "").toString().toLowerCase();
     if (!v) return "Unknown";
     if (v.includes("avail")) return "Available";
