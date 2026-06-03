@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
@@ -127,10 +128,17 @@ export default function ComparePage() {
                 property.brochure_url ? 'bg-gray-100' : 'bg-gradient-to-br from-blue-500 to-indigo-600'
               }`}>
                 {property.brochure_url ? (
-                  <img 
-                    src={property.brochure_url} 
-                    alt="Property thumbnail" 
-                    className="object-cover w-full h-full"
+                  // unoptimized: brochure_url points at arbitrary builder /
+                  // PropMarket hosts that aren't in remotePatterns. We still
+                  // get lazy-load + no layout shift from the `fill` parent
+                  // (h-48 relative) without needing to allowlist per builder.
+                  <Image
+                    src={property.brochure_url}
+                    alt="Property thumbnail"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    unoptimized
+                    className="object-cover"
                   />
                 ) : (
                   <div className="text-center px-4 text-white">
