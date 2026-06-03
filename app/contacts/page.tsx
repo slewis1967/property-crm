@@ -1,13 +1,10 @@
+import { cookies } from "next/headers";
 import { supabase } from "../../utils/supabase";
 import { log, errInfo } from "../../utils/logger";
 import ContactsClient, { type Contact } from "./ContactsClient";
+import { ALLOWED_PAGE_SIZES, DEFAULT_PAGE_SIZE, type PageSize } from "../../utils/pagination";
 
 export const dynamic = "force-dynamic";
-
-const PAGE = 1000;
-// Hard ceiling so a pathological pagination can't loop forever / OOM the
-// function. Far above current volume (~7k live, ~6.5k archive).
-const MAX_ROWS = 500_000;
 
 // Only the columns the list view actually renders. The table has ~38
 // columns; `select("*")` was dragging a block of unused PII/financial
@@ -43,6 +40,11 @@ interface ArchiveRow {
   date_added: string | null;
   tags: string[] | null;
 }
+
+const PAGE = 1000;
+// Hard ceiling so a pathological pagination can't loop forever / OOM the
+// function. Far above current volume (~7k live, ~6.5k archive).
+const MAX_ROWS = 500_000;
 
 async function loadLive(): Promise<{ contacts: Contact[]; error: string | null }> {
   const rows: Contact[] = [];
@@ -86,25 +88,11 @@ async function loadArchive(): Promise<ArchiveRow[]> {
   return rows;
 }
 
-export default async function ContactsPage() {
-  // Live + archive are independent fetches. Previously they ran
-  // sequentially (fully drain live, THEN fully drain archive), which
-  // roughly doubled cold-start wall-clock. Run them concurrently and do
-  // the in-memory anti-join (drop archive rows that have a live
-  // counterpart) once both are in.
-  const [live, archiveRows] = await Promise.all([loadLive(), loadArchive()]);
-
-  if (live.error) {
-    return <div className="text-red-600 p-4">Error loading contacts: {live.error}</div>;
-  }
-
-  const liveEmails = new Set<string>();
-  const liveGhlIds = new Set<string>();
-  for (const c of live.contacts) {
-    if (c.email) liveEmails.add(String(c.email).toLowerCase());
-    if (c.ghl_contact_id) liveGhlIds.add(c.ghl_contact_id);
-  }
-
+function mergeIntoArchiveOnly(
+  archiveRows: ArchiveRow[],
+  liveEmails: Set<string>,
+  liveGhlIds: Set<string>,
+): Contact[] {
   const archiveOnly: Contact[] = [];
   for (const a of archiveRows) {
     const aEmailLc = a.email ? String(a.email).toLowerCase() : null;
@@ -138,6 +126,59 @@ export default async function ContactsPage() {
       notes: null,
     });
   }
+  return archiveOnly;
+}
 
-  return <ContactsClient initialContacts={[...live.contacts, ...archiveOnly]} />;
+/**
+ * Read the user's preferred page size from cookies so the server
+ * component's first render matches the dropdown. Falls back to
+ * DEFAULT_PAGE_SIZE if the cookie is missing or invalid.
+ */
+async function pageSizeFromCookies(): Promise<PageSize> {
+  try {
+    const jar = await cookies();
+    const raw = jar.get("contacts_pageSize")?.value;
+    if (raw) {
+      const n = Number(raw);
+      if ((ALLOWED_PAGE_SIZES as readonly number[]).includes(n)) return n as PageSize;
+    }
+  } catch {
+    // cookies() throws if called outside a request context.
+  }
+  return DEFAULT_PAGE_SIZE;
+}
+
+export default async function ContactsPage() {
+  const pageSize = await pageSizeFromCookies();
+
+  // Live + archive are independent fetches. Previously they ran
+  // sequentially (fully drain live, THEN fully drain archive), which
+  // roughly doubled cold-start wall-clock. Run them concurrently and do
+  // the in-memory anti-join (drop archive rows that have a live
+  // counterpart) once both are in.
+  const [live, archiveRows] = await Promise.all([loadLive(), loadArchive()]);
+
+  if (live.error) {
+    return <div className="text-red-600 p-4">Error loading contacts: {live.error}</div>;
+  }
+
+  const liveEmails = new Set<string>();
+  const liveGhlIds = new Set<string>();
+  for (const c of live.contacts) {
+    if (c.email) liveEmails.add(String(c.email).toLowerCase());
+    if (c.ghl_contact_id) liveGhlIds.add(c.ghl_contact_id);
+  }
+
+  const archiveOnly = mergeIntoArchiveOnly(archiveRows, liveEmails, liveGhlIds);
+  const merged = [...live.contacts, ...archiveOnly];
+  const total = merged.length;
+  const firstPage = merged.slice(0, pageSize);
+
+  return (
+    <ContactsClient
+      initialContacts={firstPage}
+      initialTotal={total}
+      initialPageSize={pageSize}
+    />
+  );
 }
