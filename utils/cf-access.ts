@@ -22,14 +22,18 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-const IS_PROD = process.env.NODE_ENV === "production";
+// Read NODE_ENV per-request so test env-stubbing works correctly and
+// the dev/prod behaviour can be flipped without a process restart.
+function isProd(): boolean {
+  return process.env.NODE_ENV === "production";
+}
 const DEV_DEFAULT = process.env.DEV_USER_EMAIL ?? "sean.l@nextkey.com.au";
 export const UNAUTHENTICATED_SENTINEL = "__unauthenticated__@invalid";
 
 function resolveFromHeaders(get: (n: string) => string | null): string {
   const cf = get("cf-access-authenticated-user-email");
   if (cf) return cf;
-  if (IS_PROD) return UNAUTHENTICATED_SENTINEL;
+  if (isProd()) return UNAUTHENTICATED_SENTINEL;
   // x-user-email is a dev-only override (testing as another user from a
   // local script). Never honoured in production.
   return get("x-user-email") ?? DEV_DEFAULT;

@@ -213,11 +213,11 @@ export default function PropertyGrid({
   }, [properties, propertyTypes]);
 
   // Split (2-part / dual) contract is signalled by separate land + build prices.
-  const isSplit = (p: any) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
+  const isSplit = (p: PropertyGridItem) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
 
   // Status is messy free-text (availability words mixed with ETAs/dates), so
   // bucket it into the handful that matter for a feed filter.
-  const statusBucket = (s: any): string => {
+  const statusBucket = (s: unknown): string => {
     const v = (s || "").toString().toLowerCase();
     if (!v) return "Unknown";
     if (v.includes("avail")) return "Available";
