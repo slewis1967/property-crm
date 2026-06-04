@@ -1,9 +1,10 @@
 "use client";
-
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
+import type { PropertyGridItem } from "./types";
+import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
 
 // Deterministic gradient palette so cards from the same builder share a
 // visual identity instead of all looking like the same "No Image" tile.
@@ -43,14 +44,103 @@ type SettingsPropertyType = { name: string; icon?: string | null; description?: 
 export default function PropertyGrid({
   properties: initialProperties,
   propertyTypes = [],
+  initialTotal = 0,
+  initialPageSize = 50,
 }: {
-  properties: any[];
+  properties: PropertyGridItem[];
   /** Canonical type list from app_settings — drives the filter dropdown
    *  so newly-added types show up even before any property has them.
    *  Falls back to data-derived names when empty. */
   propertyTypes?: SettingsPropertyType[];
+  /** Total active stock at the time of the initial server render. The
+   *  grid will recount as more pages are loaded and use the larger of
+   *  the two for the "X of Y" counter. */
+  initialTotal?: number;
+  /** Page size the server component used for the first page; the grid
+   *  preserves it so changing the dropdown triggers a refetch that
+   *  matches the new chunk size. */
+  initialPageSize?: PageSize;
 }) {
-  const [properties, setProperties] = useState<any[]>(initialProperties);
+  // --- PAGINATION STATE ---
+  // The Aggregator Feed used to render every active row at once —
+  // fine at 200, but the brochure_url column + full text blobs made
+  // the RSC payload heavy. Now we ship the first page from the
+  // server component and let the user pull more on demand.
+  const [properties, setProperties] = useState<PropertyGridItem[]>(initialProperties);
+  const [pageSize, setPageSize] = useState<PageSize>(initialPageSize);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(initialTotal);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const hasMore = properties.length < total;
+  const fetchSeq = useRef(0); // discard stale responses on rapid clicks
+
+  const setPageSizeAndReset = useCallback((next: PageSize) => {
+    // Persist preference so the next server render uses the same size.
+    try { localStorage.setItem("properties.pageSize", String(next)); } catch {}
+    setPageSize(next);
+    setPage(1);
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    fetch(`/api/properties/list?page=1&pageSize=${next}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return; // a newer request superseded us
+        setProperties(data.rows);
+        setTotal(data.total);
+        setPageSize(data.pageSize as PageSize);
+        setPage(1);
+        setCheckedIds(new Set());
+        setSelectedProperty(null);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load properties");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, []);
+
+  // Restore the saved page size on first mount (no server round-trip —
+  // we just re-default the dropdown; the first page data is whatever
+  // the server sent).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("properties.pageSize");
+      if (saved && (ALLOWED_PAGE_SIZES as readonly number[]).includes(Number(saved))) {
+        setPageSize(Number(saved) as PageSize);
+      }
+    } catch {}
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    setLoadError(null);
+    fetchSeq.current += 1;
+    const seq = fetchSeq.current;
+    const nextPage = page + 1;
+    fetch(`/api/properties/list?page=${nextPage}&pageSize=${pageSize}`)
+      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+        if (seq !== fetchSeq.current) return;
+        setProperties((prev) => [...prev, ...data.rows]);
+        setTotal(data.total);
+        setPage(nextPage);
+      })
+      .catch((e: unknown) => {
+        if (seq !== fetchSeq.current) return;
+        setLoadError(e instanceof Error ? e.message : "Failed to load more");
+      })
+      .finally(() => {
+        if (seq === fetchSeq.current) setLoadingMore(false);
+      });
+  }, [loadingMore, hasMore, page, pageSize]);
+
+  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
 
   // Lookup map name → icon for fast card rendering
   const typeIconMap = useMemo(() => {
@@ -65,7 +155,6 @@ export default function PropertyGrid({
     const fromSettings = name ? typeIconMap.get(name.toLowerCase()) : null;
     return (fromSettings && fromSettings.length > 0) ? fromSettings : fallbackIcon(name);
   };
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -80,6 +169,10 @@ export default function PropertyGrid({
   const [bedsMin, setBedsMin] = useState<number>(0);
   const [bathsMin, setBathsMin] = useState<number>(0);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>("");
+  const [carsMin, setCarsMin] = useState<number>(0);
+  const [contractFilter, setContractFilter] = useState<string>("");   // "" | "single" | "split"
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [titledFilter, setTitledFilter] = useState<string>("");       // "" | "yes" | "no"
   const [showFilters, setShowFilters] = useState(true);
 
   // Build filter dropdown options from the loaded data so they match
@@ -106,17 +199,41 @@ export default function PropertyGrid({
   // even before any property has been classified as them yet. Fall
   // back to data-derived names if the settings list is empty for some
   // reason (e.g. fetch failed).
+  // Show EVERY property type on file PLUS the canonical list — so nothing is
+  // hidden, including ad-hoc/variant labels actually in the data (e.g.
+  // "Storage", "Co-living"/"Co_living", "Dual Occ"/"Dual Occupancy").
   const propertyTypeOptions = useMemo(() => {
-    if (propertyTypes && propertyTypes.length > 0) {
-      return propertyTypes.map((t) => t.name).filter(Boolean);
-    }
     const set = new Set<string>();
+    for (const t of propertyTypes) if (t?.name) set.add(t.name.toString().trim());
     for (const p of properties) {
       const t = (p.property_type || "").toString().trim();
       if (t) set.add(t);
     }
-    return Array.from(set).sort();
+    return Array.from(set).filter(Boolean).sort();
   }, [properties, propertyTypes]);
+
+  // Split (2-part / dual) contract is signalled by separate land + build prices.
+  const isSplit = (p: PropertyGridItem) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
+
+  // Status is messy free-text (availability words mixed with ETAs/dates), so
+  // bucket it into the handful that matter for a feed filter.
+  const statusBucket = (s: unknown): string => {
+    const v = (s || "").toString().toLowerCase();
+    if (!v) return "Unknown";
+    if (v.includes("avail")) return "Available";
+    if (v.includes("under contract") || v.includes("under offer")) return "Under Contract";
+    if (v.includes("settled")) return "Settled";
+    if (v.includes("sold")) return "Sold";
+    if (v.includes("hold")) return "On Hold";
+    if (v.includes("construction") || v.startsWith("due") || v.includes("completed") || /q[1-4]\s*\/?\s*20/.test(v))
+      return "Off-plan / Under Construction";
+    return "Other";
+  };
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of properties) set.add(statusBucket(p.status));
+    return Array.from(set).sort();
+  }, [properties]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -139,9 +256,15 @@ export default function PropertyGrid({
       if (propertyTypeFilter && (p.property_type || "").toString().trim() !== propertyTypeFilter) return false;
       if (bedsMin > 0 && (Number(p.bedrooms) || 0) < bedsMin) return false;
       if (bathsMin > 0 && (Number(p.bathrooms) || 0) < bathsMin) return false;
+      if (carsMin > 0 && (Number(p.car_spaces) || 0) < carsMin) return false;
+      if (contractFilter === "split" && !isSplit(p)) return false;
+      if (contractFilter === "single" && isSplit(p)) return false;
+      if (statusFilter && statusBucket(p.status) !== statusFilter) return false;
+      if (titledFilter === "yes" && p.titled !== true) return false;
+      if (titledFilter === "no" && p.titled === true) return false;
       return true;
     });
-  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, propertyTypeFilter, bedsMin, bathsMin]);
+  }, [properties, search, priceMin, priceMax, stateFilter, builderFilter, propertyTypeFilter, bedsMin, bathsMin, carsMin, contractFilter, statusFilter, titledFilter]);
 
   const activeFilterCount =
     (search ? 1 : 0) +
@@ -151,12 +274,17 @@ export default function PropertyGrid({
     (builderFilter ? 1 : 0) +
     (propertyTypeFilter ? 1 : 0) +
     (bedsMin > 0 ? 1 : 0) +
-    (bathsMin > 0 ? 1 : 0);
+    (bathsMin > 0 ? 1 : 0) +
+    (carsMin > 0 ? 1 : 0) +
+    (contractFilter ? 1 : 0) +
+    (statusFilter ? 1 : 0) +
+    (titledFilter ? 1 : 0);
 
   const clearFilters = () => {
     setSearch(""); setPriceMin(""); setPriceMax("");
     setStateFilter(""); setBuilderFilter(""); setPropertyTypeFilter("");
     setBedsMin(0); setBathsMin(0);
+    setCarsMin(0); setContractFilter(""); setStatusFilter(""); setTitledFilter("");
   };
 
   // --- EMPOWER MATH VARIABLES ---
@@ -321,8 +449,29 @@ export default function PropertyGrid({
             {filtered.length !== properties.length && (
               <span className="text-gray-400"> of {properties.length}</span>
             )}{" "}
-            properties
+            shown · {total.toLocaleString()} total active
           </div>
+        </div>
+
+        {/* Page size selector — how many to load per page. Persisted
+            in localStorage so the user's choice survives a refresh.
+            Changing it resets the grid to page 1 with the new size. */}
+        <div className="flex items-center gap-2 mt-2 ml-1">
+          <label htmlFor="properties-page-size" className="text-xs text-gray-500">
+            Show
+          </label>
+          <select
+            id="properties-page-size"
+            value={pageSize}
+            onChange={(e) => setPageSizeAndReset(Number(e.target.value) as PageSize)}
+            disabled={loadingMore}
+            className="text-xs px-2 py-1 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+          >
+            {ALLOWED_PAGE_SIZES.map((n) => (
+              <option key={n} value={n}>{n} per page</option>
+            ))}
+          </select>
+          {loadingMore && <span className="text-xs text-gray-400">loading…</span>}
         </div>
 
         {showFilters && (
@@ -464,6 +613,78 @@ export default function PropertyGrid({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Car spaces */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Car spaces
+              </label>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setCarsMin(n)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-lg border transition ${
+                      carsMin === n
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n === 0 ? "Any" : `${n}+`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Contract type */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Contract
+              </label>
+              <select
+                value={contractFilter}
+                onChange={(e) => setContractFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All contracts</option>
+                <option value="single">Single contract</option>
+                <option value="split">Split / dual contract</option>
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">All statuses</option>
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Titled */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                Titled
+              </label>
+              <select
+                value={titledFilter}
+                onChange={(e) => setTitledFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Any</option>
+                <option value="yes">Titled</option>
+                <option value="no">Not titled</option>
+              </select>
             </div>
           </div>
         )}
@@ -621,6 +842,34 @@ export default function PropertyGrid({
             </div>
           );
         })}
+      </div>
+
+      {/* Load more + pagination summary. The grid only renders cards
+          from the pages it's already fetched, so "Load more" is the
+          only way to see rows beyond `pageSize`. */}
+      <div className="mt-6 flex flex-col items-center gap-2">
+        {loadError && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {loadError}
+          </div>
+        )}
+        {hasMore ? (
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-wait"
+          >
+            {loadingMore
+              ? "Loading…"
+              : `Load more (${properties.length} of ${total.toLocaleString()} loaded)`}
+          </button>
+        ) : (
+          properties.length > 0 && (
+            <p className="text-xs text-gray-400">
+              All {total.toLocaleString()} loaded
+            </p>
+          )
+        )}
       </div>
 
       {/* War Room Panel */}

@@ -20,7 +20,7 @@ Examples:
 Rules: be concrete (name a property/document/topic when possible), respect what's already happened (don't suggest something they just did), bias to low-friction actions, and keep it under 25 words.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();

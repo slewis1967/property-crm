@@ -28,7 +28,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
 
   const { data: draft, error: loadErr } = await supabase
     .from("email_drafts")

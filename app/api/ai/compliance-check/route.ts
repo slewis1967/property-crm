@@ -78,7 +78,7 @@ DO NOT flag:
 Snippets must be quoted verbatim from the input — don't paraphrase. If the input is fine, return severity:"clean", violations:[], rewrite:"".`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();

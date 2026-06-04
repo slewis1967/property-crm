@@ -24,7 +24,7 @@ const MAX_IDS = 500;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { ids } = await req.json().catch(() => ({ ids: null }));
   if (!Array.isArray(ids) || ids.length === 0) {

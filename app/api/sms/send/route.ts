@@ -18,7 +18,7 @@ import { withObservability } from "../../../../utils/observability";
 export const dynamic = "force-dynamic";
 
 async function handler(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();

@@ -45,6 +45,10 @@ describe("validate-env", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
     process.env.NEXUS_INTERNAL_API_KEY = "test-nexus-key";
+    // CF Access vars are required in production for JWT verification —
+    // they were promoted from optional in the 2026-06 audit.
+    process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
+    process.env.CF_ACCESS_AUD = "test-aud-tag";
 
     const { validateEnv } = await import("./utils/validate-env");
     // Should not throw — all required vars are set
@@ -87,15 +91,19 @@ describe("withObservability", () => {
 // ── API route shape checks ──────────────────────────────────────────────────
 
 describe("API route exports", () => {
+  // Routes transitively import `jose` for CF Access JWT verification,
+  // which is slow to cold-load (~3s). Bump the per-test timeout to keep
+  // the suite green without masking genuine hangs in the actual route
+  // code.
   it("compare route exports POST handler", async () => {
     const mod = await import("./app/api/properties/compare/route");
     expect(mod.POST).toBeDefined();
     expect(typeof mod.POST).toBe("function");
-  });
+  }, 30_000);
 
   it("sms/send route exports POST handler", async () => {
     const mod = await import("./app/api/sms/send/route");
     expect(mod.POST).toBeDefined();
     expect(typeof mod.POST).toBe("function");
-  });
+  }, 30_000);
 });

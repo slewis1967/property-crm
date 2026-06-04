@@ -371,7 +371,7 @@ function sanitizeHistory(raw: unknown): Anthropic.MessageParam[] {
 }
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { transcript, history } = await req.json();
@@ -379,7 +379,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "transcript required" }, { status: 400 });
     }
 
-    const senderEmail = userEmailFromRequest(req);
+    const senderEmail = await userEmailFromRequest(req);
     // Operator's custom instructions (Settings → AI instructions), appended as a
     // subordinate block — can't override confirm-before-send or compliance limits.
     const system = SYSTEM + aiInstructionsBlock(await getAiInstructions());

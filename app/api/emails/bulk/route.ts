@@ -28,7 +28,7 @@ const ALLOWED_BOOLS = [
 ] as const;
 
 export async function PATCH(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
   const ids: unknown = body?.ids;
   const patch: Record<string, unknown> = body?.patch ?? {};

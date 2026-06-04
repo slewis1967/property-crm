@@ -46,7 +46,7 @@ function extractJson(text: string): any | null {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   const { deal_packet_id, index, contract_type, land_price } = await req.json().catch(() => ({}));

@@ -20,7 +20,7 @@ Topics to scan: hot contacts that haven't been touched recently, new leads, oppo
 No greeting, no header, no closer. Just the bullets.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const nowIso = new Date().toISOString();
