@@ -14,7 +14,7 @@ interface EnvVar {
 
 const CRITICAL_VARS: EnvVar[] = [
   // Core — app doesn't function without these
-  { name: "ANTHROPIC_API_KEY", required: true, feature: "voice assistant + compliance review" },
+  { name: "OPENROUTER_API_KEY", required: true, feature: "all AI features (voice, compliance, deal-analyser, document extraction) — via OpenRouter" },
   { name: "NEXT_PUBLIC_SUPABASE_URL", required: true, feature: "property/contact data" },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", required: true, feature: "Supabase client" },
   { name: "SUPABASE_SERVICE_KEY", required: true, feature: "server-side Supabase (bypasses RLS)" },

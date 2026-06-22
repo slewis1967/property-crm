@@ -25,7 +25,8 @@
  * yes. The server enforces the rule — confirmed=false never actually fires.
  */
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import type OpenAI from "openai";
+import { openrouter, MODELS, orErrorMessage } from "../../../../utils/openrouter";
 import { supabase } from "../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../utils/brevo";
 import { defaultSignature } from "../../../../utils/email-signature";
@@ -37,81 +38,95 @@ import { getAiInstructions, aiInstructionsBlock } from "../../../../utils/ai-ins
 import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
-const client = new Anthropic();
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = MODELS.fast;
 const MAX_TOOL_ITERATIONS = 6;
 
-// ── Tool definitions (sent to Claude) ──────────────────────────────────────
-const TOOLS: Anthropic.Tool[] = [
+// ── Tool definitions (OpenAI/OpenRouter function-calling format) ────────────
+const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
-    name: "find_contact",
-    description:
-      "Look up a contact by name, phone number, or email. Returns the top match with id, full_name, phone, email, and a short summary of their last note. Use this first whenever the user mentions a person by name — you need their id before you can log calls, create tasks, or send messages to them.",
-    input_schema: {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Name, phone, or email to search." },
-      },
-      required: ["query"],
-    },
-  },
-  {
-    name: "log_call",
-    description:
-      "Append a dated call note to a contact. Use after the user describes a phone conversation they just had or wants to record. No confirmation needed — this is a low-risk write.",
-    input_schema: {
-      type: "object",
-      properties: {
-        contact_id: { type: "string", description: "UUID from find_contact." },
-        summary: { type: "string", description: "What was discussed, max ~500 chars." },
-      },
-      required: ["contact_id", "summary"],
-    },
-  },
-  {
-    name: "create_task",
-    description:
-      "Create a task / reminder. Can be attached to a contact (use contact_id) or standalone. Use when the user says 'remind me to…' or 'add a task to…'.",
-    input_schema: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "What to do." },
-        contact_id: { type: "string", description: "Optional contact this task relates to." },
-        due_date: {
-          type: "string",
-          description: "ISO date (YYYY-MM-DD) if the user specified one. Resolve relative phrases ('next Tuesday') to absolute dates yourself.",
+    type: "function",
+    function: {
+      name: "find_contact",
+      description:
+        "Look up a contact by name, phone number, or email. Returns the top match with id, full_name, phone, email, and a short summary of their last note. Use this first whenever the user mentions a person by name — you need their id before you can log calls, create tasks, or send messages to them.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Name, phone, or email to search." },
         },
+        required: ["query"],
       },
-      required: ["title"],
     },
   },
   {
-    name: "send_sms",
-    description:
-      "Send an SMS via ClickSend. ALWAYS call this twice when the user asks to send a text:\n  1. First with confirmed=false — this drafts only, does NOT send. Then speak back the draft and ask 'send it?'.\n  2. Once the user says yes/confirm/send, call again with confirmed=true. Otherwise abandon.\nIf the user says 'and send it' / 'just do it' in the initial request, you may skip step 1 and call with confirmed=true directly.",
-    input_schema: {
-      type: "object",
-      properties: {
-        contact_id: { type: "string", description: "UUID from find_contact." },
-        message: { type: "string", description: "The SMS body, max 320 chars." },
-        confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
+    type: "function",
+    function: {
+      name: "log_call",
+      description:
+        "Append a dated call note to a contact. Use after the user describes a phone conversation they just had or wants to record. No confirmation needed — this is a low-risk write.",
+      parameters: {
+        type: "object",
+        properties: {
+          contact_id: { type: "string", description: "UUID from find_contact." },
+          summary: { type: "string", description: "What was discussed, max ~500 chars." },
+        },
+        required: ["contact_id", "summary"],
       },
-      required: ["contact_id", "message", "confirmed"],
     },
   },
   {
-    name: "send_email",
-    description:
-      "Send an email via Brevo. Same two-step confirm pattern as send_sms — first call confirmed=false to draft + read back, second call confirmed=true to actually send.",
-    input_schema: {
-      type: "object",
-      properties: {
-        contact_id: { type: "string", description: "UUID from find_contact." },
-        subject: { type: "string" },
-        body: { type: "string", description: "Plain text — signature is appended server-side." },
-        confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
+    type: "function",
+    function: {
+      name: "create_task",
+      description:
+        "Create a task / reminder. Can be attached to a contact (use contact_id) or standalone. Use when the user says 'remind me to…' or 'add a task to…'.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "What to do." },
+          contact_id: { type: "string", description: "Optional contact this task relates to." },
+          due_date: {
+            type: "string",
+            description: "ISO date (YYYY-MM-DD) if the user specified one. Resolve relative phrases ('next Tuesday') to absolute dates yourself.",
+          },
+        },
+        required: ["title"],
       },
-      required: ["contact_id", "subject", "body", "confirmed"],
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_sms",
+      description:
+        "Send an SMS via ClickSend. ALWAYS call this twice when the user asks to send a text:\n  1. First with confirmed=false — this drafts only, does NOT send. Then speak back the draft and ask 'send it?'.\n  2. Once the user says yes/confirm/send, call again with confirmed=true. Otherwise abandon.\nIf the user says 'and send it' / 'just do it' in the initial request, you may skip step 1 and call with confirmed=true directly.",
+      parameters: {
+        type: "object",
+        properties: {
+          contact_id: { type: "string", description: "UUID from find_contact." },
+          message: { type: "string", description: "The SMS body, max 320 chars." },
+          confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
+        },
+        required: ["contact_id", "message", "confirmed"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_email",
+      description:
+        "Send an email via Brevo. Same two-step confirm pattern as send_sms — first call confirmed=false to draft + read back, second call confirmed=true to actually send.",
+      parameters: {
+        type: "object",
+        properties: {
+          contact_id: { type: "string", description: "UUID from find_contact." },
+          subject: { type: "string" },
+          body: { type: "string", description: "Plain text — signature is appended server-side." },
+          confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
+        },
+        required: ["contact_id", "subject", "body", "confirmed"],
+      },
     },
   },
 ];
@@ -340,32 +355,61 @@ Today's date: ${new Date().toLocaleDateString("en-AU", { weekday: "long", year: 
 
 // The history we accept back from the client is whatever we returned on the
 // previous turn — but the client can also tamper with it. Validating defends
-// against injecting fake tool_results (e.g. "user already confirmed the SMS")
-// that would prime Claude to call confirmed=true without a real verbal yes.
-const ALLOWED_BLOCK_TYPES = new Set(["text", "tool_use", "tool_result"]);
+// against injecting fake tool results (e.g. "user already confirmed the SMS")
+// that would prime the model to call confirmed=true without a real verbal yes.
+// We only admit the three OpenAI message shapes we ourselves emit, and require
+// each `tool` message to carry a tool_call_id (so a fabricated result can't
+// dangle without a matching assistant tool_call).
+type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
-function sanitizeHistory(raw: unknown): Anthropic.MessageParam[] {
+function sanitizeHistory(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
-  const out: Anthropic.MessageParam[] = [];
+  const out: ChatMessage[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const role = (item as { role?: unknown }).role;
-    if (role !== "user" && role !== "assistant") continue;
     const content = (item as { content?: unknown }).content;
-    if (typeof content === "string") {
-      out.push({ role, content });
+
+    if (role === "user") {
+      if (typeof content === "string" && content) out.push({ role, content });
       continue;
     }
-    if (!Array.isArray(content)) continue;
-    const blocks = content.filter(
-      (b): b is Record<string, unknown> =>
-        b !== null &&
-        typeof b === "object" &&
-        typeof (b as { type?: unknown }).type === "string" &&
-        ALLOWED_BLOCK_TYPES.has((b as { type: string }).type),
-    );
-    if (blocks.length === 0) continue;
-    out.push({ role, content: blocks as unknown as Anthropic.MessageParam["content"] });
+
+    if (role === "assistant") {
+      const rawCalls = (item as { tool_calls?: unknown }).tool_calls;
+      const tool_calls = Array.isArray(rawCalls)
+        ? rawCalls
+            .filter(
+              (c): c is { id: string; type: "function"; function: { name: string; arguments: string } } =>
+                c !== null &&
+                typeof c === "object" &&
+                typeof (c as { id?: unknown }).id === "string" &&
+                (c as { type?: unknown }).type === "function" &&
+                typeof (c as { function?: { name?: unknown } }).function?.name === "string" &&
+                typeof (c as { function?: { arguments?: unknown } }).function?.arguments === "string",
+            )
+            .map((c) => ({
+              id: c.id,
+              type: "function" as const,
+              function: { name: c.function.name, arguments: c.function.arguments },
+            }))
+        : [];
+      const text = typeof content === "string" ? content : null;
+      if (tool_calls.length > 0) {
+        out.push({ role, content: text, tool_calls });
+      } else if (text) {
+        out.push({ role, content: text });
+      }
+      continue;
+    }
+
+    if (role === "tool") {
+      const toolCallId = (item as { tool_call_id?: unknown }).tool_call_id;
+      if (typeof toolCallId === "string" && toolCallId && typeof content === "string") {
+        out.push({ role, tool_call_id: toolCallId, content });
+      }
+      continue;
+    }
   }
   return out;
 }
@@ -383,7 +427,8 @@ export async function POST(req: Request) {
     // Operator's custom instructions (Settings → AI instructions), appended as a
     // subordinate block — can't override confirm-before-send or compliance limits.
     const system = SYSTEM + aiInstructionsBlock(await getAiInstructions());
-    const messages: Anthropic.MessageParam[] = [
+    const messages: ChatMessage[] = [
+      { role: "system", content: system },
       ...sanitizeHistory(history),
       { role: "user", content: transcript },
     ];
@@ -392,59 +437,64 @@ export async function POST(req: Request) {
     let finalText = "";
 
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-      const response = await client.messages.create({
+      const response = await openrouter.chat.completions.create({
         model: MODEL,
         max_tokens: 1024,
-        system,
         tools: TOOLS,
         messages,
       });
 
-      // Append the assistant turn to history regardless of tool use — Anthropic's
-      // conversation history must include both the tool_use block and the matching
-      // tool_result on the next turn.
-      messages.push({ role: "assistant", content: response.content });
+      const msg = response.choices?.[0]?.message;
+      const toolCalls = msg?.tool_calls ?? [];
+      const turnText = (msg?.content ?? "").trim();
 
-      // Extract any text and tool_use blocks
-      const toolUses = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-      const textBlocks = response.content.filter((b): b is Anthropic.TextBlock => b.type === "text");
-      const turnText = textBlocks.map((b) => b.text).join(" ").trim();
+      // Append the assistant turn to history regardless of tool use — the
+      // conversation must include the assistant tool_calls and the matching
+      // `tool` messages on the next turn.
+      messages.push({
+        role: "assistant",
+        content: msg?.content ?? null,
+        ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
+      });
 
-      if (toolUses.length === 0) {
+      if (toolCalls.length === 0) {
         finalText = turnText;
         break;
       }
 
-      // Run all tool calls in this turn, then send results back to Claude
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const tu of toolUses) {
-        const result = await dispatchTool(tu.name, tu.input as Record<string, unknown>, senderEmail);
+      // Run all tool calls in this turn, then send results back to the model
+      for (const tc of toolCalls) {
+        if (tc.type !== "function") continue;
+        let input: Record<string, unknown> = {};
+        try {
+          input = JSON.parse(tc.function.arguments || "{}");
+        } catch {
+          input = {};
+        }
+        const result = await dispatchTool(tc.function.name, input, senderEmail);
         if (result.side_effect) sideEffects.push(result.side_effect);
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: tu.id,
+        messages.push({
+          role: "tool",
+          tool_call_id: tc.id,
           content: result.content,
         });
       }
-      messages.push({ role: "user", content: toolResults });
-
-      // Edge case: model stopped on max_tokens with tool calls pending — still
-      // loop in case the next iteration finishes the thought
-      if (response.stop_reason === "end_turn" && !toolUses.length) {
-        finalText = turnText;
-        break;
-      }
     }
+
+    // The returned history must NOT include the system prompt — the client
+    // sends it back next turn and we re-prepend a fresh one (with current
+    // AI instructions + date). Stripping it also keeps SYSTEM off the wire.
+    const returnedHistory = messages.filter((m) => m.role !== "system");
 
     return NextResponse.json({
       ok: true,
       reply: finalText || "Sorry, I didn't get that.",
-      history: messages,
+      history: returnedHistory,
       side_effects: sideEffects,
     });
   } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : String(e) },
+      { ok: false, error: orErrorMessage(e) },
       { status: 500 },
     );
   }

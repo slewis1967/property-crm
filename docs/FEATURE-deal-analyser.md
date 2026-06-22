@@ -31,7 +31,7 @@ confident investment decision. It must be accurate and compliant, or it does the
 | 5 | **Commission / internal figures** (e.g. "$55k comms") are redacted and can never reach a client document. |
 
 ## 3. Proven foundation (Phase 0, validated on the real `Co-Living Investments.eml`)
-- **PDF spec extraction** via Claude native PDF/vision (CRM `ANTHROPIC_API_KEY`) correctly reads price, land/build split, sizes, the **icon-encoded bed/bath/car config** (`5/5/2/1`, `3/3/1/1`), and the **co-living tag**. Land+Build = Total gives a free accuracy check.
+- **PDF spec extraction** via the OpenRouter `SMART` model's native PDF/vision (CRM `OPENROUTER_API_KEY`) correctly reads price, land/build split, sizes, the **icon-encoded bed/bath/car config** (`5/5/2/1`, `3/3/1/1`), and the **co-living tag**. Land+Build = Total gives a free accuracy check.
 - **Body parsing** structures per-suburb market data, **reconciles conflicting multi-source figures** (e.g. 3 Armstrong medians → mean + variance flag), and **redacts commission**.
 - **Verification** auto-flags: source disagreements, past-performance/disclaimer requirements on every growth/yield figure, planning projections stated as facts, stale census data, and "config looks co-living but no tag — confirm."
 > Do NOT reuse the NEXUS aggregator's Gemini path — its `GEMINI_API_KEY` is an

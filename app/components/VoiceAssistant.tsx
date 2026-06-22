@@ -54,7 +54,7 @@ export default function VoiceAssistant() {
   const [interim, setInterim] = useState("");
 
   const recogRef = useRef<Recognition | null>(null);
-  // Conversation history kept in Anthropic message-param shape; sent back on
+  // Conversation history kept in OpenAI chat message-param shape; sent back on
   // each turn so tool-use loops + confirm flows can pick up where they left off.
   const apiHistoryRef = useRef<Array<{ role: string; content: unknown }>>([]);
 

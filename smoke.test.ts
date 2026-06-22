@@ -16,7 +16,7 @@ describe("validate-env", () => {
   it("throws when required vars are missing", async () => {
     // Clear all CRM env vars to trigger the error
     const keys = [
-      "ANTHROPIC_API_KEY",
+      "OPENROUTER_API_KEY",
       "NEXT_PUBLIC_SUPABASE_URL",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY",
       "SUPABASE_SERVICE_KEY",
@@ -40,7 +40,7 @@ describe("validate-env", () => {
 
   it("warns on missing optional vars but does not throw", async () => {
     // Should warn about optional vars when critical ones are present
-    process.env.ANTHROPIC_API_KEY = "test-key";
+    process.env.OPENROUTER_API_KEY = "test-key";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";

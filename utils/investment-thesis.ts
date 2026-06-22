@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText } from "./openrouter";
 import { getCachedOrGenerate } from "./ai-cache";
 import type { MarketData } from "./deal-packet";
 
@@ -12,7 +12,7 @@ import type { MarketData } from "./deal-packet";
  * Cached 7 days by type+suburb+state (the case is stable per type+location), so
  * regenerating a report is free.
  */
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = MODELS.fast;
 
 const SYSTEM = `You write the persuasive INVESTMENT CASE — "why buy a [TYPE] in [SUBURB]" — for a
 NextKey Property Strategists client report. Goal: help the client see the opportunity and move toward
@@ -69,15 +69,14 @@ export async function getInvestmentThesis(args: {
       fingerprintInput: { v: 1, propertyType, suburb, state: state ?? null, week: weekBucket() },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
       generate: async () => {
-        const client = new Anthropic();
-        const resp = await client.messages.create({
+        let text = await orText({
           model: MODEL,
-          max_tokens: 1500,
+          maxTokens: 1500,
+          web: true,
+          thinking: false,
           system: SYSTEM,
-          tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 } as any],
-          messages: [{ role: "user", content: `Write the NextKey investment case for buying a ${propertyType} in ${suburb}${state ? `, ${state}` : ""}.\n\nKnown suburb data (verify/extend with web search):\n${grounding || "(none — research it)"}` }],
+          user: `Write the NextKey investment case for buying a ${propertyType} in ${suburb}${state ? `, ${state}` : ""}.\n\nKnown suburb data (verify/extend with web search):\n${grounding || "(none — research it)"}`,
         });
-        let text = resp.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n").trim();
         const firstHeading = text.indexOf("**");
         if (firstHeading > 0) text = text.slice(firstHeading);
         return text.replace(/^\s*-{3,}\s*$/gm, "").replace(/\n{3,}/g, "\n\n").trim();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText, orErrorMessage } from "@/utils/openrouter";
 
 const CRM_FIELDS = [
   { key: "full_name",       label: "Full Name",       desc: "Contact's full name (use if stored as one field)" },
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No headers provided" }, { status: 400 });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey || apiKey === "your_api_key_here") {
     // Fallback: best-guess heuristic mapping without AI
     const mapping: Record<string, string> = {};
@@ -44,8 +44,6 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ mapping, method: "heuristic" });
   }
-
-  const client = new Anthropic({ apiKey });
 
   const sampleText = sampleRows?.slice(0, 3).map((row: Record<string, string>, i: number) =>
     `Row ${i + 1}: ${JSON.stringify(row)}`
@@ -71,13 +69,13 @@ Instructions:
 Return ONLY a JSON object with no explanation: {"csv_header": "crm_field_key", ...}`;
 
   try {
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
+    const text = await orText({
+      model: MODELS.fast,
+      user: prompt,
+      maxTokens: 512,
+      thinking: false,
     });
 
-    const text = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const mapping = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
 
@@ -92,7 +90,7 @@ Return ONLY a JSON object with no explanation: {"csv_header": "crm_field_key", .
     }
 
     return NextResponse.json({ mapping, method: "ai" });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ error: orErrorMessage(e) }, { status: 500 });
   }
 }

@@ -1,29 +1,28 @@
 /**
- * Server-side wrapper around the Anthropic SDK for adviser-facing AI features.
+ * Server-side wrapper around OpenRouter for adviser-facing AI features.
  *
- * Defaults: claude-opus-4-7 + adaptive thinking + medium effort. Adaptive
- * thinking lets Claude decide how much to reason per request; medium is a
- * good cost/quality balance for advisor-facing text — bump to "high" or "max"
- * per call site if quality matters more than cost.
+ * Defaults: MODELS.smart (Claude Sonnet via OpenRouter) + reasoning at medium
+ * effort. Bump `effort` to "high"/"max" per call site if quality matters more
+ * than cost, or pass `thinking: false` to disable reasoning for trivial calls.
  *
- * All calls go through aiCall(); features pass their own system + user
- * prompts. Server-only (process.env.ANTHROPIC_API_KEY).
+ * All calls go through aiCall(); features pass their own system + user prompts.
+ * Server-only (process.env.OPENROUTER_API_KEY). The public API (aiCall /
+ * aiCallEnvelope / AICallOptions / AIEffort) is unchanged from the previous
+ * Anthropic implementation, so existing callers need no edits.
  */
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText, orErrorMessage, type AIEffort } from "./openrouter";
 
-const client = new Anthropic();
-
-export type AIEffort = "low" | "medium" | "high" | "xhigh" | "max";
+export type { AIEffort };
 
 export type AICallOptions = {
   system: string;
   user: string;
-  /** Cap on output tokens. Adaptive thinking shares this budget — leave
-   * generous headroom so the model has room to think AND respond. */
+  /** Cap on output tokens. Reasoning shares this budget — leave generous
+   * headroom so the model has room to think AND respond. */
   maxTokens?: number;
   /** Lower = faster + cheaper. Default "medium". */
   effort?: AIEffort;
-  /** Set false to disable thinking for very simple calls. Default true. */
+  /** Set false to disable reasoning for very simple calls. Default true. */
   thinking?: boolean;
 };
 
@@ -35,37 +34,16 @@ export async function aiCall({
   thinking = true,
 }: AICallOptions): Promise<string> {
   try {
-    const response = await client.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: maxTokens,
-      ...(thinking ? { thinking: { type: "adaptive" as const } } : {}),
-      output_config: { effort },
+    return await orText({
+      model: MODELS.smart,
       system,
-      messages: [{ role: "user", content: user }],
+      user,
+      maxTokens,
+      effort,
+      thinking,
     });
-
-    if (!response || !Array.isArray((response as any).content)) {
-      throw new Error(
-        `Unexpected Anthropic response shape: ${JSON.stringify(response).slice(0, 400)}`,
-      );
-    }
-    for (const block of response.content) {
-      if (block.type === "text") return block.text.trim();
-    }
-    // No text block — ran out of tokens or model returned thinking-only.
-    const reason = (response as any).stop_reason ?? "unknown";
-    throw new Error(`AI returned no text (stop_reason=${reason}). Try increasing maxTokens.`);
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      throw new Error("ANTHROPIC_API_KEY is missing or invalid");
-    }
-    if (error instanceof Anthropic.RateLimitError) {
-      throw new Error("AI rate-limited — try again in a moment");
-    }
-    if (error instanceof Anthropic.APIError) {
-      throw new Error(`AI request failed (${error.status}): ${error.message}`);
-    }
-    throw error;
+    throw new Error(orErrorMessage(error));
   }
 }
 
@@ -76,7 +54,7 @@ export async function aiCallEnvelope(opts: AICallOptions): Promise<
 > {
   try {
     return { ok: true, text: await aiCall(opts) };
-  } catch (e: any) {
-    return { ok: false, error: e?.message ?? "AI request failed" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "AI request failed" };
   }
 }

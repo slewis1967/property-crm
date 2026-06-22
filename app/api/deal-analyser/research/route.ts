@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText } from "@/utils/openrouter";
 import { supabase } from "@/utils/supabase";
 import { requireAuth } from "@/utils/cf-access";
 import type { DealPacket, AssumptionSource } from "@/utils/deal-packet";
@@ -16,7 +16,7 @@ import type { DealPacket, AssumptionSource } from "@/utils/deal-packet";
  * forward is the ACL s.18/29 risk the compliance split exists to avoid. Growth stays
  * the conservative house default unless the operator sets it by hand.
  */
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = MODELS.fast;
 
 const SYSTEM = `You research current Australian property-investment COST figures using web search,
 for use in a cashflow model. You never research or estimate capital growth, rental growth, or
@@ -74,17 +74,16 @@ export async function POST(req: NextRequest) {
     `${dutyClause} ` +
     `Research the current investment loan interest rate, that stamp duty, typical council rates, and typical landlord insurance. Output the strict JSON only.`;
 
-  const client = new Anthropic();
   let parsed: any = null;
   try {
-    const resp = await client.messages.create({
+    const text = await orText({
       model: MODEL,
-      max_tokens: 1500,
+      maxTokens: 1500,
+      web: true,
+      thinking: false,
       system: SYSTEM,
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 } as any],
-      messages: [{ role: "user", content: prompt }],
+      user: prompt,
     });
-    const text = resp.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
     parsed = extractJson(text);
   } catch (e: any) {
     return NextResponse.json({ error: `research failed: ${e?.message ?? "web search error"}` }, { status: 502 });
