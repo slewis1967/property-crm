@@ -112,7 +112,11 @@ export async function POST(req: Request) {
 
     const chatBody: Record<string, unknown> = {
       model: MODELS.smart,
-      max_tokens: 4000,
+      // Reasoning tokens share this budget on OpenRouter, so leave generous
+      // headroom — a dense multi-page PDF can spend a lot thinking before it
+      // emits the ~4k-token JSON, and a too-tight cap returns empty content
+      // (misreported as "document may be empty or unreadable").
+      max_tokens: 12000,
       reasoning: { effort: "medium" },
       messages: [
         { role: "system", content: SYSTEM },

@@ -357,30 +357,81 @@ Today's date: ${new Date().toLocaleDateString("en-AU", { weekday: "long", year: 
 // previous turn — but the client can also tamper with it. Validating defends
 // against injecting fake tool results (e.g. "user already confirmed the SMS")
 // that would prime the model to call confirmed=true without a real verbal yes.
-// We only admit the three OpenAI message shapes we ourselves emit, and require
-// each `tool` message to carry a tool_call_id (so a fabricated result can't
-// dangle without a matching assistant tool_call).
+//
+// Two passes:
+//   1. Per-message shape check — only the three OpenAI shapes we ourselves emit.
+//   2. Structural pairing (pairToolMessages) — an assistant `tool_calls` is kept
+//      only with the contiguous following `tool` messages that answer it, and a
+//      `tool` message survives only if it answers a kept call. This both keeps
+//      the OpenAI API contract ("every tool message must follow a matching
+//      assistant tool_call", and vice-versa) AND prevents a fabricated/dangling
+//      tool result from being smuggled in to prime a send.
 type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type AssistantToolCall = {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
+};
+
+function pairToolMessages(msgs: ChatMessage[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i];
+    // A `tool` message reached here was not consumed as a result below → orphan.
+    if (m.role === "tool") continue;
+
+    const calls = m.role === "assistant" ? (m.tool_calls ?? []) : [];
+    if (m.role === "assistant" && calls.length > 0) {
+      // Gather the contiguous run of following `tool` messages — these are the
+      // only legitimate answers to this assistant turn (matches how we emit).
+      const results: ChatMessage[] = [];
+      let j = i + 1;
+      while (j < msgs.length && msgs[j].role === "tool") {
+        results.push(msgs[j]);
+        j++;
+      }
+      const resultIds = new Set(
+        results.map((r) => (r as { tool_call_id: string }).tool_call_id),
+      );
+      const keptCalls = calls.filter((tc) => resultIds.has(tc.id));
+      if (keptCalls.length > 0) {
+        const keptIds = new Set(keptCalls.map((tc) => tc.id));
+        out.push({ ...m, tool_calls: keptCalls });
+        for (const r of results) {
+          if (keptIds.has((r as { tool_call_id: string }).tool_call_id)) out.push(r);
+        }
+      } else if (typeof m.content === "string" && m.content) {
+        // No call had a matching result — keep any spoken text, drop the calls.
+        out.push({ role: "assistant", content: m.content });
+      }
+      i = j - 1; // skip the tool messages we just consumed (or discarded)
+      continue;
+    }
+
+    out.push(m);
+  }
+  return out;
+}
 
 function sanitizeHistory(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
-  const out: ChatMessage[] = [];
+  const prelim: ChatMessage[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const role = (item as { role?: unknown }).role;
     const content = (item as { content?: unknown }).content;
 
     if (role === "user") {
-      if (typeof content === "string" && content) out.push({ role, content });
+      if (typeof content === "string" && content) prelim.push({ role, content });
       continue;
     }
 
     if (role === "assistant") {
       const rawCalls = (item as { tool_calls?: unknown }).tool_calls;
-      const tool_calls = Array.isArray(rawCalls)
+      const tool_calls: AssistantToolCall[] = Array.isArray(rawCalls)
         ? rawCalls
             .filter(
-              (c): c is { id: string; type: "function"; function: { name: string; arguments: string } } =>
+              (c): c is AssistantToolCall =>
                 c !== null &&
                 typeof c === "object" &&
                 typeof (c as { id?: unknown }).id === "string" &&
@@ -396,9 +447,9 @@ function sanitizeHistory(raw: unknown): ChatMessage[] {
         : [];
       const text = typeof content === "string" ? content : null;
       if (tool_calls.length > 0) {
-        out.push({ role, content: text, tool_calls });
+        prelim.push({ role, content: text, tool_calls });
       } else if (text) {
-        out.push({ role, content: text });
+        prelim.push({ role, content: text });
       }
       continue;
     }
@@ -406,12 +457,12 @@ function sanitizeHistory(raw: unknown): ChatMessage[] {
     if (role === "tool") {
       const toolCallId = (item as { tool_call_id?: unknown }).tool_call_id;
       if (typeof toolCallId === "string" && toolCallId && typeof content === "string") {
-        out.push({ role, tool_call_id: toolCallId, content });
+        prelim.push({ role, tool_call_id: toolCallId, content });
       }
       continue;
     }
   }
-  return out;
+  return pairToolMessages(prelim);
 }
 
 export async function POST(req: Request) {
