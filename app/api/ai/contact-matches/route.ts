@@ -23,7 +23,7 @@ Output STRICT JSON only — no preamble, no markdown fences. Format:
 If fewer than 5 candidates clearly fit, return only the ones that do. If none fit, return {"matches":[]}.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { contactId } = await req.json();

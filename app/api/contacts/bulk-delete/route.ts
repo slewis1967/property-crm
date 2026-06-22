@@ -11,7 +11,7 @@ const MAX_IDS = 500;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   if (isUnauthenticated(owner)) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }

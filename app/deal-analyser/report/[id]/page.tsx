@@ -5,6 +5,8 @@ import PrintButton from "./PrintButton";
 import ReportActions from "../../ReportActions";
 import { getSuburbIntel } from "../../../../utils/suburb-intel";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Client-facing PIA report — first-pass Apple-speak template.
  *

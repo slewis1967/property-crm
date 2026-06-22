@@ -23,7 +23,7 @@ Format STRICTLY (use ** for bold labels, • for bullets, plain prose otherwise)
 Total under 200 words. Plain text. No preamble, no closer.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { suburb, state } = await req.json();

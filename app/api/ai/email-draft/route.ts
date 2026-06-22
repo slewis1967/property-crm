@@ -12,6 +12,7 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are drafting an outbound email from Sean Lewis at NextKey Property Strategists. Use Australian English. Be concise and warm but professional — short paragraphs, no fluff.
@@ -29,7 +30,9 @@ Output format — STRICT JSON, no markdown fence:
 The body should be plain text (paragraph breaks via two newlines). End with the last sentence of the message — no closing salutation.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
+  const rateLimited = applyAiRateLimit(req, aiExpensive);
+  if (rateLimited) return rateLimited;
   if (auth instanceof NextResponse) return auth;
   const body = await req.json().catch(() => ({}));
   const { contact_id, instruction, parent_email_id } = body;

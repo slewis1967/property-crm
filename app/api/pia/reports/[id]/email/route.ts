@@ -16,7 +16,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
@@ -35,7 +35,7 @@ export async function POST(
   }
 
   // Append the logged-in user's email signature.
-  const sender = userEmailFromRequest(req);
+  const sender = await userEmailFromRequest(req);
   const sig = await defaultSignature(sender);
   const kind = (report.results as { kind?: string } | null)?.kind;
   const subject = body.subject || `Property Investment Analysis — ${report.title}`;

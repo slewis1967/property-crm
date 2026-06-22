@@ -4,6 +4,7 @@ import { aiCallEnvelope } from "../../../../utils/ai";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are drafting a reply on Sean's behalf. Sean is a property advisor at NextKey Property Strategists. He needs a reply he can send with one tap (or edit lightly first).
@@ -23,7 +24,9 @@ Voice rules:
 Output: just the reply body, ready to send. No preamble, no "Here's a draft:", no explanation.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
+  const rateLimited = applyAiRateLimit(req, aiExpensive);
+  if (rateLimited) return rateLimited;
   if (auth instanceof NextResponse) return auth;
   try {
     const body = await req.json();

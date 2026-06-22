@@ -25,7 +25,7 @@ Rules:
 - If the opp is fresh and progressing fine, set stuck=false and put a short positive read in diagnosis (e.g., "Active, last contacted 2 days ago — no intervention needed yet"). Leave unblock as "".`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { opportunityId } = await req.json();

@@ -47,7 +47,7 @@ export default function PropertyGrid({
   initialTotal = 0,
   initialPageSize = 50,
 }: {
-  properties: any[];
+  properties: PropertyGridItem[];
   /** Canonical type list from app_settings — drives the filter dropdown
    *  so newly-added types show up even before any property has them.
    *  Falls back to data-derived names when empty. */

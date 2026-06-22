@@ -91,15 +91,19 @@ describe("withObservability", () => {
 // ── API route shape checks ──────────────────────────────────────────────────
 
 describe("API route exports", () => {
+  // Routes transitively import `jose` for CF Access JWT verification,
+  // which is slow to cold-load (~3s). Bump the per-test timeout to keep
+  // the suite green without masking genuine hangs in the actual route
+  // code.
   it("compare route exports POST handler", async () => {
     const mod = await import("./app/api/properties/compare/route");
     expect(mod.POST).toBeDefined();
     expect(typeof mod.POST).toBe("function");
-  });
+  }, 30_000);
 
   it("sms/send route exports POST handler", async () => {
     const mod = await import("./app/api/sms/send/route");
     expect(mod.POST).toBeDefined();
     expect(typeof mod.POST).toBe("function");
-  });
+  }, 30_000);
 });

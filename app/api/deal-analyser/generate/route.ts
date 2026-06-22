@@ -25,9 +25,9 @@ import type { DealPacket } from "@/utils/deal-packet";
  * human still approves before a client sees them.
  */
 export async function POST(req: NextRequest) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
-  const user = userEmailFromRequest(req);
+  const user = await userEmailFromRequest(req);
 
   const { deal_packet_id } = await req.json().catch(() => ({}));
   if (!deal_packet_id || typeof deal_packet_id !== "string") {

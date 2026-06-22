@@ -20,7 +20,7 @@ Format STRICTLY:
 Plain text, no markdown beyond ** for bold labels and • for bullets. Keep the whole brief under 150 words. No preamble.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { appointmentId } = await req.json();

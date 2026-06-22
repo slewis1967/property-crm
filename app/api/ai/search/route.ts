@@ -63,7 +63,7 @@ Rules:
 - Respect the implicit limit from the query (e.g. "top 5" → at most 5 results). Default to 10.`;
 
 export async function POST(req: Request) {
-  const auth = requireAuth(req);
+  const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   try {
     const { query } = await req.json();

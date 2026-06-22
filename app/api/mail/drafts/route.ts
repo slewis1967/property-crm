@@ -14,7 +14,7 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const { data, error } = await supabase
     .from("email_drafts")
     .select("id,subject,to_addresses,updated_at,reply_to_email_id,thread_id")
@@ -37,7 +37,7 @@ function asArray(input: unknown): string[] {
 }
 
 export async function POST(req: Request) {
-  const owner = userEmailFromRequest(req);
+  const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
 
   const row = {

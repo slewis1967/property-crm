@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import { log, errInfo } from "@/utils/logger";
 
+export const dynamic = "force-dynamic";
+
 /** Match this lead to its GHL counterpart via email + pull notes/conversations
  * /tasks /appointments scoped to that contact. Returns nulls if no match. */
 async function resolveGhlArchiveForLead(email: string | null) {
