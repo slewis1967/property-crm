@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText } from "./openrouter";
 import { getCachedOrGenerate } from "./ai-cache";
 import type { MarketData } from "./deal-packet";
 import type { SuburbIntel } from "./suburb-intel";
@@ -14,7 +14,7 @@ import type { SuburbIntel } from "./suburb-intel";
  * general information only, growth shown as sourced/dated PAST performance, no
  * guarantees or personal financial advice. The report still appends its footer.
  */
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = MODELS.fast;
 
 const SYSTEM = `You write a COMPREHENSIVE, client-facing suburb profile for a property investment
 report prepared by NextKey Property Strategists. The reader is a prospective investor client.
@@ -77,15 +77,14 @@ export async function getSuburbNarrative(args: {
       fingerprintInput: { v: 2, suburb, state: state ?? null, week: weekBucket() },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
       generate: async () => {
-        const client = new Anthropic();
-        const resp = await client.messages.create({
+        let text = await orText({
           model: MODEL,
-          max_tokens: 1800,
+          maxTokens: 1800,
+          web: true,
+          thinking: false,
           system: SYSTEM,
-          tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 } as any],
-          messages: [{ role: "user", content: `Write the NextKey suburb profile for ${suburb}${state ? `, ${state}` : ""}.\n\nKnown data (verify/extend with web search):\n${grounding}` }],
+          user: `Write the NextKey suburb profile for ${suburb}${state ? `, ${state}` : ""}.\n\nKnown data (verify/extend with web search):\n${grounding}`,
         });
-        let text = resp.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n").trim();
         // Strip any web-search preamble before the first ** heading, and stray --- rules.
         const firstHeading = text.indexOf("**");
         if (firstHeading > 0) text = text.slice(firstHeading);

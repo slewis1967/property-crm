@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText } from "./openrouter";
 
 export type ViolationSeverity = "high" | "medium" | "low";
 
@@ -17,7 +17,7 @@ export interface ComplianceReviewResult {
   raw_response?: string;
 }
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = MODELS.fast;
 
 const SYSTEM = `You are a compliance reviewer for NextKey Property Strategists (Queensland-based,
 NOT licensed under NCCP, NOT a real estate agent, NOT a financial planner). You are reviewing
@@ -190,14 +190,13 @@ OUTPUT — STRICT JSON, no code fences, no commentary:
 {"violations":[{"law":"...","severity":"high"|"medium"|"low","snippet":"...","reason":"...","fix":"..."}],"suggestion":"<compliant rewrite or empty>"}`;
 
 export async function reviewDealNote(note: string): Promise<NoteReviewResult> {
-  const client = new Anthropic();
-  const resp = await client.messages.create({
+  const text = await orText({
     model: MODEL,
-    max_tokens: 1200,
+    maxTokens: 1200,
+    thinking: false,
     system: NOTE_SYSTEM,
-    messages: [{ role: "user", content: `NOTE TO REVIEW:\n${note.slice(0, 4000)}\n\nOutput strict JSON.` }],
+    user: `NOTE TO REVIEW:\n${note.slice(0, 4000)}\n\nOutput strict JSON.`,
   });
-  const text = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
   let suggestion = "";
   try {
     const s = text.startsWith("```") ? text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "") : text;
@@ -212,20 +211,13 @@ export async function reviewBroadcastCopy(args: {
   html_body: string;
   text_body: string;
 }): Promise<ComplianceReviewResult> {
-  const client = new Anthropic();
-  const resp = await client.messages.create({
+  const text = await orText({
     model: MODEL,
-    max_tokens: 2000,
+    maxTokens: 2000,
+    thinking: false,
     system: SYSTEM,
-    messages: [
-      { role: "user", content: buildUserMessage(args.subject, args.html_body, args.text_body) },
-    ],
+    user: buildUserMessage(args.subject, args.html_body, args.text_body),
   });
-
-  const text = resp.content
-    .map((b) => (b.type === "text" ? b.text : ""))
-    .join("")
-    .trim();
 
   return {
     violations: parseViolations(text),

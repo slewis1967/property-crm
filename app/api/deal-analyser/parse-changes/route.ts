@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orText } from "@/utils/openrouter";
 import { supabase } from "@/utils/supabase";
 import { requireAuth } from "@/utils/cf-access";
 import { reviewDealNote, type Violation } from "@/utils/compliance-review";
@@ -17,8 +17,6 @@ import type { DealPacket } from "@/utils/deal-packet";
  * Only rent (room_rent / weekly_rent) and price are editable by the AI; anything
  * non-numeric or unmatched is returned as `extra_info` to include as a report note.
  */
-const client = new Anthropic();
-const MODEL = "claude-haiku-4-5-20251001";
 const AUD = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 
@@ -75,15 +73,13 @@ export async function POST(req: NextRequest) {
 
   let parsed: { edits?: any[]; extra_info?: string };
   try {
-    const resp = await client.messages.create({
-      model: MODEL,
-      max_tokens: 700,
+    const text = await orText({
+      model: MODELS.fast,
+      maxTokens: 700,
+      thinking: false,
       system: SYSTEM,
-      messages: [
-        { role: "user", content: `PROPERTIES:\n${JSON.stringify(summary, null, 2)}\n\nINSTRUCTION:\n"${instruction.trim()}"` },
-      ],
+      user: `PROPERTIES:\n${JSON.stringify(summary, null, 2)}\n\nINSTRUCTION:\n"${instruction.trim()}"`,
     });
-    const text = resp.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("");
     parsed = JSON.parse(extractJson(text));
   } catch (e) {
     return NextResponse.json({ error: "Couldn't interpret that — try the editable fields, or reword." }, { status: 502 });

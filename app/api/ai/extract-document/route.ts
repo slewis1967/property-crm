@@ -23,7 +23,7 @@
  * — the advisor keeps the original locally; we just save the extraction.
  */
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, orChat, orErrorMessage } from "../../../../utils/openrouter";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
@@ -93,56 +93,46 @@ export async function POST(req: Request) {
       );
     }
 
-    const client = new Anthropic();
+    const dataUrl = `data:${mediaType};base64,${fileBase64}`;
+    const isPdf = mediaType === "application/pdf";
 
-    // PDF and image variants of the source block use the same shape.
-    const sourceBlock =
-      mediaType === "application/pdf"
-        ? {
-            type: "document" as const,
-            source: {
-              type: "base64" as const,
-              media_type: "application/pdf" as const,
-              data: fileBase64,
-            },
-          }
-        : {
-            type: "image" as const,
-            source: {
-              type: "base64" as const,
-              media_type: mediaType as
-                | "image/jpeg"
-                | "image/png"
-                | "image/webp",
-              data: fileBase64,
-            },
-          };
+    // OpenRouter multimodal content: images use `image_url`; PDFs use a `file`
+    // part + the file-parser plugin. `engine: "native"` defers to the model's
+    // own document support (the Claude default has it) and is the cheapest path.
+    const sourceBlock = isPdf
+      ? {
+          type: "file" as const,
+          file: { filename: "document.pdf", file_data: dataUrl },
+        }
+      : {
+          type: "image_url" as const,
+          image_url: { url: dataUrl },
+        };
 
     const userInstruction = hint
       ? `Hint from advisor: ${hint}\n\nExtract the structured data per the system prompt.`
       : `Extract the structured data per the system prompt.`;
 
-    const response = await client.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 4000,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "medium" },
-      system: SYSTEM,
+    const chatBody: Record<string, unknown> = {
+      model: MODELS.smart,
+      // Reasoning tokens share this budget on OpenRouter, so leave generous
+      // headroom — a dense multi-page PDF can spend a lot thinking before it
+      // emits the ~4k-token JSON, and a too-tight cap returns empty content
+      // (misreported as "document may be empty or unreadable").
+      max_tokens: 12000,
+      reasoning: { effort: "medium" },
       messages: [
+        { role: "system", content: SYSTEM },
         {
           role: "user",
           content: [sourceBlock, { type: "text", text: userInstruction }],
         },
       ],
-    });
+    };
+    if (isPdf) chatBody.plugins = [{ id: "file-parser", pdf: { engine: "native" } }];
 
-    let raw = "";
-    for (const block of response.content) {
-      if (block.type === "text") {
-        raw = block.text;
-        break;
-      }
-    }
+    const response = await orChat(chatBody);
+    const raw = response.choices?.[0]?.message?.content ?? "";
     if (!raw) {
       return NextResponse.json(
         { ok: false, error: "AI returned no text. The document may be empty or unreadable." },
@@ -179,28 +169,9 @@ export async function POST(req: Request) {
       suggested_notes_text:
         typeof parsed.suggested_notes_text === "string" ? parsed.suggested_notes_text : "",
     });
-  } catch (e: any) {
-    if (e instanceof Anthropic.AuthenticationError) {
-      return NextResponse.json(
-        { ok: false, error: "ANTHROPIC_API_KEY missing or invalid" },
-        { status: 500 },
-      );
-    }
-    if (e instanceof Anthropic.RateLimitError) {
-      return NextResponse.json(
-        { ok: false, error: "AI rate-limited — try again in a moment" },
-        { status: 429 },
-      );
-    }
-    if (e instanceof Anthropic.APIError) {
-      return NextResponse.json(
-        { ok: false, error: `AI error (${e.status}): ${e.message}` },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
-      { ok: false, error: e?.message ?? "Document extraction failed" },
-      { status: 500 },
-    );
+  } catch (e) {
+    const msg = orErrorMessage(e);
+    const status = /rate-limited/.test(msg) ? 429 : 500;
+    return NextResponse.json({ ok: false, error: msg }, { status });
   }
 }

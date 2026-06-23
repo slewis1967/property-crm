@@ -42,7 +42,7 @@ All property data comes from **Supabase `global_stock_pool`** — not DuckDB. Th
 PWA basics live in `public/manifest.json` + the `metadata`/`viewport` exports in `app/layout.tsx`: standalone display, theme/background `#0F4C5C` (brand teal), `en-AU`, `appleWebApp.capable`, and the favicon/android-chrome/apple-touch icon set wired through `metadata.icons`. The OG/Twitter cards are also declared there.
 
 ### Voice Assistant (`app/components/VoiceAssistant.tsx` + `app/api/voice/converse/route.ts`)
-Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a Claude Haiku (`claude-haiku-4-5-20251001`) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
+Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a `FAST`-model (Claude Haiku via OpenRouter) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
 
 Tool inventory (MVP):
 - `find_contact` — lookup by name/phone/email, returns top match (must be called before any contact-scoped tool)
@@ -64,7 +64,7 @@ Two-phase POST flow on `/api/broadcast`:
 
 **Compliance reviewer** (`utils/compliance-review.ts`) is purpose-built — does NOT call `senior_advisor.py`. Senior Advisor is a scheduled batch agent reviewing recommendations from a Veteran Advisor, not a generic copy reviewer. The reviewer here borrows Senior's AU-law lens but with a `(subject, body) → {violations: [...]}` interface tailored to broadcast copy.
 
-**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (Anthropic outage), the UI offers the same override under a softer warning.
+**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (OpenRouter/model outage), the UI offers the same override under a softer warning.
 
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
@@ -165,8 +165,21 @@ python3 /mnt/c/NEXUS-Memory/projects/enrich_images.py
 ```
 This scrapes PropMarket for estate images and fuzzy-matches to `builder_name`. ~7 of 149 properties currently have images; 25 builders are unmatched (not on PropMarket — came via email stocklists).
 
+## AI PROVIDER (OpenRouter)
+All server-side AI goes through **OpenRouter** (OpenAI-compatible API), via the
+shared client in `utils/openrouter.ts` — not the Anthropic SDK directly. Models
+are env-driven: `OPENROUTER_MODEL_SMART` (advisor text + document extraction,
+default `anthropic/claude-sonnet-4`) and `OPENROUTER_MODEL_FAST` (voice loop,
+compliance, deal-analyser parse/research, CSV mapping, default
+`anthropic/claude-haiku-4.5`). Web search uses OpenRouter's `:online` suffix, not
+Anthropic's `web_search` tool. References to "Claude Haiku/Opus" below mean the
+`FAST`/`SMART` models routed through OpenRouter (the defaults are Claude, but
+either can be repointed at any OpenRouter slug — e.g. `openai/gpt-4o-mini`).
+
 ## ENV VARS
 Stored in `.env.local` at project root:
+- `OPENROUTER_API_KEY` (required — all AI features; app fails env validation without it)
+- `OPENROUTER_MODEL_SMART` / `OPENROUTER_MODEL_FAST` (optional — override default model slugs)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
