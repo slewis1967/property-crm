@@ -55,11 +55,11 @@ async function handler(req: Request) {
       // Same column projection page.tsx used to fetch all of; the
       // * removed the unused PII/financial fields the property
       // detail page owns.
-      "id,builder_name,estate_name,lot_number,street_address,suburb,state,postcode," +
+      "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
         "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
         "land_price,build_price,house_price,total_package_price," +
         "status,pipeline_status,titled,created_at,updated_at," +
-        "brochure_url,description,confidence_score",
+        "brochure_url,confidence_score",
       { count: "exact" },
     )
     .neq("pipeline_status", "withdrawn")
