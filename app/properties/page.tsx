@@ -75,11 +75,11 @@ export default async function PropertiesPage() {
       // Same projection the API route uses. Kept here as a single
       // source of truth — if you add a column to the list view,
       // update both.
-      "id,builder_name,estate_name,lot_number,street_address,suburb,state,postcode," +
+      "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
         "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
         "land_price,build_price,house_price,total_package_price," +
         "status,pipeline_status,titled,created_at,updated_at," +
-        "brochure_url,description,confidence_score",
+        "brochure_url,confidence_score",
       { count: "exact" },
     )
     .neq("pipeline_status", "withdrawn")
