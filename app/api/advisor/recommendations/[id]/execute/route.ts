@@ -17,98 +17,10 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
+import { executeAndAudit } from "../../../../../../utils/advisor-actions";
 
 import { requireAuth } from "../../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
-
-const ALLOWED_BUILDER_FIELDS = new Set([
-  "extraction_notes", "contact_email", "contact_phone", "auto_outreach_enabled",
-]);
-
-type ExecResult =
-  | { ok: true; summary: string }
-  | { ok: false; error: string };
-
-async function executeAction(action: any): Promise<ExecResult> {
-  if (!action || typeof action !== "object") {
-    return { ok: false, error: "no machine_action on recommendation" };
-  }
-
-  const kind = action.kind;
-
-  if (kind === "set_app_setting") {
-    const key = String(action.key ?? "").trim();
-    if (!key) return { ok: false, error: "set_app_setting requires non-empty key" };
-    if (!("value" in action)) return { ok: false, error: "set_app_setting requires value" };
-    const { error } = await supabase
-      .from("app_settings")
-      .upsert(
-        {
-          key,
-          value: action.value,
-          updated_at: new Date().toISOString(),
-          updated_by: "advisor:auto-apply",
-        },
-        { onConflict: "key" },
-      );
-    if (error) return { ok: false, error: error.message };
-    return { ok: true, summary: `app_settings[${key}] updated` };
-  }
-
-  if (
-    kind === "deactivate_builder" ||
-    kind === "activate_builder" ||
-    kind === "confirm_builder_draft"
-  ) {
-    const builderId = String(action.builder_id ?? "");
-    if (builderId.length !== 36) {
-      return { ok: false, error: `${kind} requires uuid builder_id` };
-    }
-    const update: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-    if (kind === "deactivate_builder") update.active = false;
-    if (kind === "activate_builder") update.active = true;
-    if (kind === "confirm_builder_draft") update.draft = false;
-
-    const { data, error } = await supabase
-      .from("builders")
-      .update(update)
-      .eq("id", builderId)
-      .select("canonical_name")
-      .single();
-    if (error) return { ok: false, error: error.message };
-    return { ok: true, summary: `${kind} on '${data?.canonical_name ?? builderId}'` };
-  }
-
-  if (kind === "update_builder_field") {
-    const builderId = String(action.builder_id ?? "");
-    const field = String(action.field ?? "");
-    if (builderId.length !== 36) {
-      return { ok: false, error: "update_builder_field requires uuid builder_id" };
-    }
-    if (!ALLOWED_BUILDER_FIELDS.has(field)) {
-      return { ok: false, error: `field '${field}' not in allowlist` };
-    }
-    if (!("value" in action)) {
-      return { ok: false, error: "update_builder_field requires value" };
-    }
-    const update: Record<string, any> = {
-      [field]: action.value,
-      updated_at: new Date().toISOString(),
-    };
-    const { data, error } = await supabase
-      .from("builders")
-      .update(update)
-      .eq("id", builderId)
-      .select("canonical_name")
-      .single();
-    if (error) return { ok: false, error: error.message };
-    return { ok: true, summary: `${field} updated on '${data?.canonical_name ?? builderId}'` };
-  }
-
-  return { ok: false, error: `unknown machine_action.kind: ${kind}` };
-}
 
 export async function POST(
   req: Request,
@@ -160,16 +72,7 @@ export async function POST(
     );
   }
 
-  const result = await executeAction(rec.machine_action);
-
-  // Audit row regardless of outcome
-  await supabase.from("recommendation_action_log").insert({
-    recommendation_id: id,
-    action: rec.machine_action ?? null,
-    status: result.ok ? "success" : "failed",
-    error: result.ok ? null : result.error,
-    executed_by: "advisor:auto-apply",
-  });
+  const result = await executeAndAudit(id, rec.machine_action, "advisor:auto-apply");
 
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
