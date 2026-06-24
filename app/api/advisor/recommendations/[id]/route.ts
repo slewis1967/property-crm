@@ -16,6 +16,7 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
+import { executeAndAudit } from "../../../../../utils/advisor-actions";
 
 import { requireAuth } from "../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -34,6 +35,27 @@ export async function POST(
   const now = new Date().toISOString();
 
   if (action === "apply" || action === "complete") {
+    // If this recommendation carries a machine_action, "apply" must actually
+    // RUN it — not just flip the status label. Previously this path was
+    // status-only, so machine-actionable recs whose Auto-Apply was locked
+    // behind the Senior gate got marked applied while nothing happened
+    // (e.g. test builders that kept resurfacing every week). A human clicking
+    // Apply IS the authority, so we execute here without the Senior gate —
+    // but we still audit it and refuse to mark applied if execution fails.
+    const { data: rec } = await supabase
+      .from("recommendation_log")
+      .select("machine_action")
+      .eq("id", id)
+      .single();
+    if (rec?.machine_action) {
+      const result = await executeAndAudit(id, rec.machine_action, "advisor:manual-apply");
+      if (!result.ok) {
+        return NextResponse.json(
+          { ok: false, error: `Action failed — not marked applied: ${result.error}` },
+          { status: 400 },
+        );
+      }
+    }
     update.status = "applied";
     update.applied_at = now;
     update.applied_by = body.applied_by ?? "advisor";

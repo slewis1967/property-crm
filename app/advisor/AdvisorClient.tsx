@@ -366,12 +366,25 @@ export default function AdvisorClient() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => action(r.id, { action: "apply" })}
+                        onClick={() => {
+                          // If a machine_action exists, "apply" now RUNS it
+                          // server-side (the manual override that bypasses the
+                          // Senior gate). Confirm + show what it'll do so it's
+                          // never a silent no-op like it used to be.
+                          if (r.machine_action) {
+                            if (!confirm(
+                              `Apply this recommendation?\n\n${describeAction(r.machine_action)}\n\nThis runs the action immediately and is recorded in the audit log.`,
+                            )) return;
+                          }
+                          action(r.id, { action: "apply" });
+                        }}
                         disabled={isBusy}
                         className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 disabled:opacity-50"
-                        title="Mark applied (you'll do the actual change manually)"
+                        title={r.machine_action
+                          ? "Runs the structured action server-side, then marks applied"
+                          : "Mark applied (you'll do the actual change manually)"}
                       >
-                        ✓ Mark applied
+                        {r.machine_action ? "✓ Apply & run action" : "✓ Mark applied"}
                       </button>
                       <button
                         type="button"
