@@ -117,7 +117,10 @@ export async function POST(req: Request) {
             system: SYSTEM,
             user: userPrompt,
             maxTokens: 2000,
+            // Checks text against an enumerated, fully-specified rule
+            // checklist — rule lookup, not open-ended reasoning. Thinking off.
             effort: "medium",
+            thinking: false,
           }),
       });
       const parsed = parseResponse(result.text);
