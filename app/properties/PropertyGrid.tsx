@@ -212,8 +212,13 @@ export default function PropertyGrid({
     return Array.from(set).filter(Boolean).sort();
   }, [properties, propertyTypes]);
 
-  // Split (2-part / dual) contract is signalled by separate land + build prices.
-  const isSplit = (p: PropertyGridItem) => (Number(p.land_price) || 0) > 0 && (Number(p.build_price) || 0) > 0;
+  // Split (2-part / dual) contract = a SEPARATE land price AND a separate dwelling
+  // price (1-part / single = one bundled package figure with no land split). The
+  // aggregator folds build_price into house_price so the generated total stays
+  // correct, so the split signal now lives in land_price + house_price, not
+  // build_price (which is null on every row).
+  const isSplit = (p: PropertyGridItem) =>
+    (Number(p.land_price) || 0) > 0 && (Number(p.house_price) || 0) > 0;
 
   // Status is messy free-text (availability words mixed with ETAs/dates), so
   // bucket it into the handful that matter for a feed filter.
