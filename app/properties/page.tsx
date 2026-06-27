@@ -69,23 +69,30 @@ async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string |
 export default async function PropertiesPage() {
   const pageSize = await pageSizeFromCookies();
 
-  const { data: firstPage, count, error } = await supabase
-    .from("global_stock_pool")
-    .select(
-      // Same projection the API route uses. Kept here as a single
-      // source of truth — if you add a column to the list view,
-      // update both.
-      "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
-        "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
-        "land_price,build_price,house_price,total_package_price," +
-        "status,pipeline_status,titled,created_at,updated_at," +
-        "brochure_url,confidence_score",
-      { count: "exact" },
-    )
-    .neq("pipeline_status", "withdrawn")
-    .neq("pipeline_status", "legacy")
-    .order("created_at", { ascending: false })
-    .range(0, pageSize - 1);
+  // Same projection the API route uses. Kept here as a single source of truth —
+  // if you add a column to the list view, update both.
+  const BASE_COLS =
+    "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
+    "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
+    "land_price,build_price,house_price,total_package_price," +
+    "status,pipeline_status,titled,created_at,updated_at," +
+    "brochure_url,confidence_score";
+
+  const runQuery = (cols: string) =>
+    supabase
+      .from("global_stock_pool")
+      .select(cols, { count: "exact" })
+      .neq("pipeline_status", "withdrawn")
+      .neq("pipeline_status", "legacy")
+      .order("created_at", { ascending: false })
+      .range(0, pageSize - 1);
+
+  // Request contract_type, but fall back to the base projection if the column
+  // hasn't been added yet (ALTER pending) — keeps the page working either way.
+  let { data: firstPage, count, error } = await runQuery(BASE_COLS + ",contract_type");
+  if (error && /contract_type/i.test(error.message || "")) {
+    ({ data: firstPage, count, error } = await runQuery(BASE_COLS));
+  }
 
   if (error) {
     log.error("properties.page.query_failed", errInfo(error));
