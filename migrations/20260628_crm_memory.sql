@@ -48,8 +48,12 @@ create table if not exists public.crm_memory (
   -- 1536 dims = OpenAI text-embedding-3-small. Change the migration + util
   -- together if you swap embedding models.
   embedding     vector(1536),
+  -- NOTE: the config MUST be cast to regconfig (not the bare string 'english').
+  -- to_tsvector('english', …) resolves to the STABLE text-arg overload, which a
+  -- GENERATED column rejects ("generation expression is not immutable").
+  -- 'english'::regconfig pins it to a constant OID → IMMUTABLE → allowed.
   fts           tsvector generated always as (
-                  to_tsvector('english',
+                  to_tsvector('english'::regconfig,
                     coalesce(title,'') || ' ' || coalesce(body,'') || ' ' ||
                     coalesce(array_to_string(tags, ' '), ''))
                 ) stored,
