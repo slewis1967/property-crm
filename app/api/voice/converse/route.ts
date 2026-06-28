@@ -16,8 +16,14 @@
  *   - find_contact         lookup by name/phone/email, returns top match
  *   - log_call             append a dated note to a contact's notes field
  *   - create_task          add to tasks table with optional due_date
+ *   - remember_fact        store a durable fact/preference in long-term memory
  *   - send_sms             ClickSend — requires confirmed=true
  *   - send_email           Brevo — requires confirmed=true
+ *
+ * Long-term memory (utils/memory.ts): before each turn the server recalls
+ * memories relevant to the utterance and injects them into the system prompt;
+ * the remember_fact tool lets the assistant write new ones. Both are non-fatal
+ * — the assistant still works if the crm_memory migration hasn't been run yet.
  *
  * Confirm-before-send: send_* tools accept a `confirmed: boolean` param.
  * Claude is told to set confirmed=false on first call (which only DRAFTS
@@ -34,6 +40,7 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 import { resolveSender } from "../../../../utils/mail-owner";
 import { orSafe } from "../../../../utils/postgrest-safe";
 import { getAiInstructions, aiInstructionsBlock } from "../../../../utils/ai-instructions";
+import { recall, remember } from "../../../../utils/memory";
 
 import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -91,6 +98,24 @@ const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           },
         },
         required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remember_fact",
+      description:
+        "Save a durable fact, preference, or learning to long-term memory so you (and the rest of the CRM's AI) recall it in future conversations. Use when the user says 'remember that…', 'note that…', 'from now on…', or tells you a lasting business fact or preference (e.g. 'Glenn prefers SMS', 'builder X only does house-and-land in QLD'). Do NOT use this for one-off reminders with a date — use create_task for those.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short headline, e.g. 'Glenn prefers SMS over email'." },
+          detail: { type: "string", description: "The full fact in a sentence or two." },
+          contact_id: { type: "string", description: "Optional UUID from find_contact if the fact is about a specific contact." },
+          tags: { type: "array", items: { type: "string" }, description: "Optional keywords for retrieval." },
+        },
+        required: ["title", "detail"],
       },
     },
   },
@@ -220,6 +245,34 @@ async function createTask(args: { title: string; contact_id?: string; due_date?:
   };
 }
 
+async function rememberFact(
+  args: { title: string; detail: string; contact_id?: string; tags?: string[] },
+  who: string | null,
+): Promise<ToolResult> {
+  const title = args.title.trim();
+  if (!title) return { content: "Nothing to remember — no title given." };
+  // Non-fatal: if the memory table isn't migrated yet, tell the model plainly
+  // rather than crashing the whole voice turn.
+  try {
+    const mem = await remember({
+      kind: args.contact_id ? "contact_memory" : "learning",
+      title,
+      body: (args.detail ?? "").trim(),
+      source: "voice",
+      createdBy: who ?? "voice",
+      entityType: args.contact_id ? "contact" : undefined,
+      entityId: args.contact_id || undefined,
+      tags: Array.isArray(args.tags) ? args.tags : undefined,
+    });
+    return {
+      content: `Saved to long-term memory: "${mem.title}".`,
+      side_effect: { kind: "remember_fact", memory_id: mem.id, title: mem.title },
+    };
+  } catch (e) {
+    return { content: `Could not save to memory: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
 async function sendSms(args: { contact_id: string; message: string; confirmed: boolean }): Promise<ToolResult> {
   const { data: contact } = await supabase
     .from("contacts")
@@ -317,6 +370,12 @@ async function dispatchTool(name: string, input: Record<string, unknown>, sender
       contact_id: input.contact_id ? String(input.contact_id) : undefined,
       due_date: input.due_date ? String(input.due_date) : undefined,
     });
+    case "remember_fact": return rememberFact({
+      title: String(input.title ?? ""),
+      detail: String(input.detail ?? ""),
+      contact_id: input.contact_id ? String(input.contact_id) : undefined,
+      tags: Array.isArray(input.tags) ? (input.tags as unknown[]).map(String) : undefined,
+    }, senderEmail);
     case "send_sms":     return sendSms({
       contact_id: String(input.contact_id ?? ""),
       message: String(input.message ?? ""),
@@ -338,8 +397,8 @@ through their browser, and your replies are spoken aloud via the browser's
 text-to-speech. Keep replies short and conversational (1-2 sentences). No
 markdown, no bullet lists, no emojis — they sound terrible when read out.
 
-You have CRM tools for finding contacts, logging calls, creating tasks, and
-sending SMS / email. Workflow:
+You have CRM tools for finding contacts, logging calls, creating tasks,
+remembering durable facts, and sending SMS / email. Workflow:
   1. Find the contact first if the user mentions a name.
   2. For sends (SMS/email): call the tool with confirmed=false to draft.
      Read the draft back, ask "send it?" Wait for the user to confirm
@@ -475,9 +534,27 @@ export async function POST(req: Request) {
     }
 
     const senderEmail = await userEmailFromRequest(req);
+
+    // Long-term memory recall: pull what the CRM remembers that's relevant to
+    // this utterance and fold it into the system prompt. Non-fatal — if the
+    // memory table isn't migrated yet (or recall errors) the assistant still
+    // answers, just without recall.
+    let memoryBlock = "";
+    try {
+      const memories = await recall(transcript, { limit: 5, feature: "voice" });
+      if (memories.length) {
+        memoryBlock =
+          "\n\nWHAT YOU REMEMBER (long-term memory from past conversations and Sean's " +
+          "knowledge base — draw on it when relevant, don't recite it verbatim):\n" +
+          memories.map((m) => `- ${m.title}: ${m.body}`).join("\n");
+      }
+    } catch (e) {
+      console.error("[voice] memory recall failed (non-fatal):", e);
+    }
+
     // Operator's custom instructions (Settings → AI instructions), appended as a
     // subordinate block — can't override confirm-before-send or compliance limits.
-    const system = SYSTEM + aiInstructionsBlock(await getAiInstructions());
+    const system = SYSTEM + aiInstructionsBlock(await getAiInstructions()) + memoryBlock;
     const messages: ChatMessage[] = [
       { role: "system", content: system },
       ...sanitizeHistory(history),
