@@ -109,7 +109,10 @@ async function sb(method, pathAndQuery, body, extraHeaders = {}) {
   if (!res.ok) {
     throw new Error(`Supabase ${method} ${pathAndQuery} → ${res.status} ${await res.text()}`);
   }
-  return res.status === 204 ? null : res.json();
+  // Don't assume a JSON body: Prefer:return=minimal yields 201/204 with an EMPTY
+  // body, and res.json() on empty input throws "Unexpected end of JSON input".
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function embed(text) {
