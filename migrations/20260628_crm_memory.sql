@@ -20,6 +20,22 @@
 create extension if not exists pg_trgm;
 create extension if not exists vector;     -- pgvector; harmless if already present
 
+-- ── 0. Immutable FTS builder ────────────────────────────────────────────────
+-- A GENERATED column requires an IMMUTABLE expression. to_tsvector with a named
+-- config ('english') is only STABLE — even 'english'::regconfig is, because the
+-- name→OID cast is a catalog lookup. We wrap it in a function we DECLARE
+-- immutable (the config is hardcoded, so it's safe to assert) and call that from
+-- the generated column. This is the standard Postgres workaround.
+create or replace function public.crm_memory_fts(
+  p_title text, p_body text, p_tags text[]
+) returns tsvector language sql immutable as $$
+  select to_tsvector(
+    'english',
+    coalesce(p_title, '') || ' ' || coalesce(p_body, '') || ' ' ||
+    coalesce(array_to_string(p_tags, ' '), '')
+  );
+$$;
+
 -- ── 1. The memory store ──────────────────────────────────────────────────────
 create table if not exists public.crm_memory (
   id            uuid primary key default gen_random_uuid(),
@@ -48,14 +64,10 @@ create table if not exists public.crm_memory (
   -- 1536 dims = OpenAI text-embedding-3-small. Change the migration + util
   -- together if you swap embedding models.
   embedding     vector(1536),
-  -- NOTE: the config MUST be cast to regconfig (not the bare string 'english').
-  -- to_tsvector('english', …) resolves to the STABLE text-arg overload, which a
-  -- GENERATED column rejects ("generation expression is not immutable").
-  -- 'english'::regconfig pins it to a constant OID → IMMUTABLE → allowed.
+  -- Built by the IMMUTABLE wrapper above (see § 0) so the GENERATED column is
+  -- accepted. Searchable via .textSearch('fts', …) in utils/memory.ts.
   fts           tsvector generated always as (
-                  to_tsvector('english'::regconfig,
-                    coalesce(title,'') || ' ' || coalesce(body,'') || ' ' ||
-                    coalesce(array_to_string(tags, ' '), ''))
+                  public.crm_memory_fts(title, body, tags)
                 ) stored,
   archived      boolean default false,
   -- Obsidian mirror bookkeeping.
