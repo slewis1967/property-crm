@@ -9,9 +9,11 @@
  * DELETE — hard delete (prefer PATCH { archived: true } for soft delete).
  */
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../utils/supabase";
+import { getDb } from "../../../../utils/db";
 import { getMemory, remember, reinforce, type MemoryKind } from "../../../../utils/memory";
 import { requireAuth } from "../../../../utils/cf-access";
+
+const supabase = getDb();
 
 export const dynamic = "force-dynamic";
 

@@ -1,0 +1,58 @@
+name: CI
+
+# Gate every PR (and pushes to master) on the checks that matter for the
+# multi-tenant refactor: types must compile, tests must pass, and any file you
+# touch must be lint-clean. ESLint runs on CHANGED FILES ONLY — the repo carries
+# ~400 legacy lint issues in source, so a wholesale gate would be red forever;
+# changed-files linting stops NEW debt without forcing a big-bang cleanup first.
+# Burn the legacy debt down separately, then switch to a full `eslint .` gate.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so we can diff against the PR base
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22+ (not 20): @supabase/supabase-js needs native global WebSocket,
+          # which is only stable from Node 22. Node 20 fails at client import.
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        # `npm install` (not `npm ci`): the committed lock drifts on platform-
+        # specific optional deps (@emnapi / wasm bindings) across npm versions,
+        # which makes strict `npm ci` flaky. install reconciles it. Switch back
+        # to `npm ci` once the lock is regenerated on a Linux/CI-matched npm.
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck (blocking)
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Tests (blocking)
+        run: npx vitest run
+
+      - name: Lint changed files (blocking)
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          # Added/Copied/Modified/Renamed .ts/.tsx files vs the PR base (skip deletions).
+          FILES=$(git diff --diff-filter=ACMR --name-only "$BASE" HEAD -- '*.ts' '*.tsx')
+          if [ -z "$FILES" ]; then
+            echo "No changed TS/TSX files to lint."
+            exit 0
+          fi
+          echo "Linting changed files:"; echo "$FILES"
+          npx eslint $FILES
