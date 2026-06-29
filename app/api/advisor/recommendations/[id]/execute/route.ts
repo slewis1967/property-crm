@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { executeAndAudit } from "../../../../../../utils/advisor-actions";
+import { needsHumanApproval } from "../../../../../../utils/advisor-policy";
 
 import { requireAuth } from "../../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -45,10 +46,9 @@ export async function POST(
     );
   }
 
-  // Senior gate: Auto-Apply only fires when the Senior Advisor has
-  // approved AND the risk level isn't 'high'. Anything high-risk needs
-  // Sean to review manually (he can still hit "Mark applied" — that
-  // path is human-only and bypasses this gate).
+  // Senior gate: Auto-Apply fires once the Senior Advisor has approved.
+  // Per Sean (2026-06-29) risk_level no longer blocks — only destructive or
+  // money-spending actions (APPROVAL_REQUIRED_KINDS) still need manual review.
   if (rec.senior_status !== "approved") {
     const labels: Record<string, string> = {
       pending_review: "still awaiting Senior Advisor review",
@@ -61,12 +61,12 @@ export async function POST(
       { status: 409 },
     );
   }
-  if (rec.risk_level === "high") {
+  if (needsHumanApproval(rec.machine_action)) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "Auto-Apply blocked — high-risk action requires manual review by Sean. Use 'Mark applied' if you've reviewed and accepted.",
+          "Auto-Apply blocked — this action is destructive or spends money, so it needs your manual approval. Use 'Mark applied' once you've reviewed and accepted.",
       },
       { status: 409 },
     );

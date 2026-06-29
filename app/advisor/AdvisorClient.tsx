@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { needsHumanApproval } from "../../utils/advisor-policy";
 
 type Rec = {
   id: string;
@@ -180,11 +181,12 @@ export default function AdvisorClient() {
           const inFlightDays = isInProgress && r.started_at
             ? Math.floor((Date.now() - new Date(r.started_at).getTime()) / (1000 * 60 * 60 * 24))
             : null;
-          // Auto-Apply only when Senior approved AND risk isn't high.
+          // Auto-Apply once Senior approves. risk_level no longer blocks
+          // (Sean 2026-06-29) — only destructive / money-spending actions do.
           const autoApplyAllowed =
             !!r.machine_action &&
             r.senior_status === "approved" &&
-            r.risk_level !== "high";
+            !needsHumanApproval(r.machine_action);
 
           return (
             <div
@@ -335,8 +337,8 @@ export default function AdvisorClient() {
                               "✗ Auto-Apply blocked — Senior rejected this recommendation."}
                             {r.senior_status === "deferred" &&
                               "⏸ Auto-Apply requires your call — use Mark applied if you accept."}
-                            {r.senior_status === "approved" && r.risk_level === "high" &&
-                              "⚠ Auto-Apply blocked — high-risk action requires your manual review."}
+                            {r.senior_status === "approved" && needsHumanApproval(r.machine_action) &&
+                              "⚠ Auto-Apply blocked — destructive or paid action requires your manual approval."}
                           </span>
                         )}
                       </p>
