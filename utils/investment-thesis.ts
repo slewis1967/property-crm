@@ -1,5 +1,6 @@
 import { MODELS, orText } from "./openrouter";
 import { getCachedOrGenerate } from "./ai-cache";
+import { recall } from "./memory";
 import type { MarketData } from "./deal-packet";
 
 /**
@@ -62,11 +63,40 @@ export async function getInvestmentThesis(args: {
     market?.population ? `population: ${market.population.toLocaleString("en-AU")}` : "",
   ].filter(Boolean).join("\n");
 
+  // Fold Sean's CURATED KNOWLEDGE for this type/location into the prompt so the
+  // case reflects NextKey's house positioning and accumulated angles. Knowledge
+  // ONLY — never raw learnings / contact memory in a client-facing document. The
+  // compliance HARD RULES in SYSTEM still bind. Best-effort; empty on any error.
+  let knowledge: { title: string; body: string }[] = [];
+  try {
+    const mems = await recall(`${propertyType} ${suburb}${state ? ` ${state}` : ""}`, {
+      kind: "knowledge",
+      limit: 4,
+      feature: "investment-thesis",
+    });
+    knowledge = mems.map((m) => ({ title: m.title, body: m.body }));
+  } catch {
+    /* non-fatal — generate without it */
+  }
+  const knowledgeBlock = knowledge.length
+    ? "\n\nNextKey positioning notes (internal — use to inform angle/tone, keep compliant, " +
+      "do NOT quote verbatim):\n" +
+      knowledge.map((k) => `- ${k.title}: ${k.body}`).join("\n")
+    : "";
+
   try {
     const res = await getCachedOrGenerate({
       kind: "investment-thesis",
       refId: `${propertyType}:${state ?? ""}:${suburb}`.toLowerCase(),
-      fingerprintInput: { v: 1, propertyType, suburb, state: state ?? null, week: weekBucket() },
+      // knowledgeKey busts the 7-day cache when the relevant curated knowledge changes.
+      fingerprintInput: {
+        v: 1,
+        propertyType,
+        suburb,
+        state: state ?? null,
+        week: weekBucket(),
+        knowledgeKey: knowledge.map((k) => k.title).join("|"),
+      },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
       generate: async () => {
         let text = await orText({
@@ -75,7 +105,7 @@ export async function getInvestmentThesis(args: {
           web: true,
           thinking: false,
           system: SYSTEM,
-          user: `Write the NextKey investment case for buying a ${propertyType} in ${suburb}${state ? `, ${state}` : ""}.\n\nKnown suburb data (verify/extend with web search):\n${grounding || "(none — research it)"}`,
+          user: `Write the NextKey investment case for buying a ${propertyType} in ${suburb}${state ? `, ${state}` : ""}.\n\nKnown suburb data (verify/extend with web search):\n${grounding || "(none — research it)"}${knowledgeBlock}`,
         });
         const firstHeading = text.indexOf("**");
         if (firstHeading > 0) text = text.slice(firstHeading);
