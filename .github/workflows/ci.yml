@@ -30,7 +30,11 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm ci
+        # `npm install` (not `npm ci`): the committed lock drifts on platform-
+        # specific optional deps (@emnapi / wasm bindings) across npm versions,
+        # which makes strict `npm ci` flaky. install reconciles it. Switch back
+        # to `npm ci` once the lock is regenerated on a Linux/CI-matched npm.
+        run: npm install --no-audit --no-fund
 
       - name: Typecheck (blocking)
         run: npx tsc --noEmit -p tsconfig.json
