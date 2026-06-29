@@ -11,8 +11,12 @@
  *
  * Server-only (imports the service-role Supabase client).
  */
-import { supabase } from "./supabase";
+import { getDb } from "./db";
 import { embed, embeddingsEnabled } from "./embeddings";
+
+// Single data-access chokepoint (see utils/db.ts). Same service client today;
+// becomes org-scoped in tenancy Phase 1 without touching the call sites below.
+const supabase = getDb();
 
 export type MemoryKind =
   | "learning"

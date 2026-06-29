@@ -8,9 +8,11 @@
  * Auth: protected by Cloudflare Access at the edge like the rest of the CRM.
  */
 import { NextResponse } from "next/server";
-import { supabase } from "../../../utils/supabase";
+import { getDb } from "../../../utils/db";
 import { remember, type MemoryKind } from "../../../utils/memory";
 import { requireAuth } from "../../../utils/cf-access";
+
+const supabase = getDb();
 
 export const dynamic = "force-dynamic";
 
