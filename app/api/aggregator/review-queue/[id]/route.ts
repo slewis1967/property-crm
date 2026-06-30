@@ -105,6 +105,28 @@ export async function POST(
       }
     }
 
+    // PRICE GUARD: total_package_price is the generated column
+    // COALESCE(house_price,0)+COALESCE(land_price,0). If both components are
+    // empty the listing publishes at $0 — a broken, misleading entry on the
+    // live sales feed. Approving with no price was the exact leak that put
+    // ~27 $0 listings (One Park Lane units, partial SPM rows) onto the feed.
+    // Block it: the reviewer must supply a house_price and/or land_price.
+    const houseP = Number(row.house_price) || 0;
+    const landP = Number(row.land_price) || 0;
+    if (houseP + landP <= 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Cannot approve: no price. The displayed total is computed from " +
+            "house_price + land_price and both are empty, so this would publish " +
+            "a $0 listing. Edit the price (house_price for a single bundled " +
+            "figure, or land_price + build_price for House & Land) and re-approve.",
+        },
+        { status: 422 },
+      );
+    }
+
     // UPSERT not INSERT — global_stock_pool has a unique constraint on
     // (builder_name, lot_number, estate_name) and the aggregator may
     // already have written this row from the same ingestion run with a
