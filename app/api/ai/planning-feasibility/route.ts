@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type OpenAI from "openai";
 import { orText, MODELS } from "../../../../utils/openrouter";
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
@@ -31,11 +32,14 @@ Ground rules:
 - Australia-wide. Identify the responsible local government (council/LGA) and its planning scheme from the address, and apply the correct STATE planning framework and terminology (e.g. QLD: planning scheme zones, Reconfiguring a Lot, code/impact assessable, accepted development; NSW: LEP/DCP, minimum lot size, Development Application vs Complying Development; VIC: planning scheme zones/overlays, VicSmart, ResCode/Clause 55, subdivision; SA: Planning & Design Code; WA: R-Codes / local planning scheme; TAS/ACT/NT equivalents).
 - Use web search to ground zone, overlays, minimum lot size, and assessment pathways in the actual local scheme where you can, but NEVER invent specific figures. If a figure is not confirmed, say it must be verified with council.
 - This is PRELIMINARY planning information for a professional advisor — NOT legal advice, NOT certified town-planning advice, NOT financial or investment advice. Flag clearly what needs a town planner, a survey, a title search, and a Council pre-lodgement enquiry.
+- Where a street address is available, use satellite/aerial imagery (e.g. Google Maps/Earth, Nearmap, Esri World Imagery) together with the cadastre to read the lot shape and dimensions, existing buildings and roof footprints, driveways and access, setbacks, vacant/backyard area, vegetation and the surrounding development pattern. A current satellite image of the site may be attached directly for you to analyse.
 - Australian English and units (m², metres). Be practical, specific and honest about risk.`;
 
 const INTERVIEW_SYS = `${COMMON_RULES}
 
 TASK (interview phase): Based on the conversation so far, decide whether you have enough to write a comprehensive feasibility report, or whether you need more from the advisor. Use web search to pre-identify the council, planning scheme and likely zone from the address so your questions are sharp and you can pre-fill best-guesses.
+
+When a full street address is provided, RESEARCH the publicly determinable facts yourself (council/LGA, zone, minimum lot size, overlays, and the lot size, dimensions and existing site layout from the cadastre and satellite/aerial imagery) — do NOT ask the advisor for anything you can research. Only ask about the advisor's development objective if it is genuinely unclear, or about private matters you cannot determine (e.g. an approval the advisor already holds, or the internal condition of a building). If the objective is clear or can be reasonably assumed (assess subdivision and additional-dwelling potential), return "status":"ready" with no questions and let the report do the work.
 
 Ask ONLY for what you cannot reliably determine yourself or that depends on the advisor's objective — e.g. the development goal (subdivision / dual occupancy / additional or secondary dwelling / knock-down-rebuild), lot size & dimensions if not public, existing improvements or approvals, and any known constraints (easements, sewer/stormwater mains, flooding, heritage, slope, bushfire). Never ask more than 6 questions at once. Prefer 3-5.
 
@@ -57,7 +61,7 @@ If you already have enough, return "status":"ready" with an empty "questions" ar
 
 const REPORT_SYS = `${COMMON_RULES}
 
-TASK (report phase): Produce a comprehensive PRELIMINARY planning feasibility report from everything gathered in the conversation. Use web search to ground the zone, overlays, minimum lot size / frontage / density controls, and the assessment pathway in the correct local scheme. Cover every objective the advisor raised (e.g. subdivision potential and likely yield, dual occupancy / duplex, subdividing an existing/approved duplex, additional or secondary dwellings, the assessment category and process, servicing, infrastructure charges, and the key site constraints and risks). Give a clear recommended pathway. Where a figure is not confirmed, state it must be verified with Council.
+TASK (report phase): Produce a comprehensive PRELIMINARY planning feasibility report from everything gathered in the conversation. If a current satellite/aerial image of the site is attached to this conversation, analyse it and reflect what it shows — lot shape, existing buildings and roof footprints, driveways and access, setbacks, available vacant/backyard area, vegetation, and the surrounding development pattern — in the Subject Property and analysis sections. Use web search to ground the zone, overlays, minimum lot size / frontage / density controls, and the assessment pathway in the correct local scheme. Cover every objective the advisor raised (e.g. subdivision potential and likely yield, dual occupancy / duplex, subdividing an existing/approved duplex, additional or secondary dwellings, the assessment category and process, servicing, infrastructure charges, and the key site constraints and risks). Give a clear recommended pathway. Where a figure is not confirmed, state it must be verified with Council.
 
 Respond with ONLY a JSON object (no markdown, no prose, no code fences) matching EXACTLY this shape:
 {
@@ -105,6 +109,54 @@ function extractJson(text: string): unknown {
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+async function fetchWithTimeout(url: string, init: RequestInit = {}, ms = 6000): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/** Best-effort geocode of an Australian address via OpenStreetMap Nominatim. */
+async function geocodeAU(address: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+      address,
+    )}&format=json&limit=1&countrycodes=au`;
+    const res = await fetchWithTimeout(url, {
+      headers: { "User-Agent": "NextKey-CRM-PlanningFeasibility/1.0 (sean.l@nextkey.com.au)" },
+    });
+    if (!res.ok) return null;
+    const arr = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+    const hit = arr?.[0];
+    if (!hit?.lat || !hit?.lon) return null;
+    const lat = parseFloat(hit.lat);
+    const lng = parseFloat(hit.lon);
+    return isFinite(lat) && isFinite(lng) ? { lat, lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch a current satellite tile (Esri World Imagery, keyless) as a data URL
+ * so a vision-capable model can read the site. ~180 m span, centred on the lot. */
+async function fetchSatelliteDataUrl(lat: number, lng: number): Promise<string | null> {
+  try {
+    const d = 0.0016;
+    const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`;
+    const url = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${bbox}&bboxSR=4326&imageSR=4326&size=800,600&format=jpg&f=image`;
+    const res = await fetchWithTimeout(url, {}, 7000);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < 1000) return null; // guard against tiny error responses
+    return `data:image/jpeg;base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -122,13 +174,41 @@ export async function POST(req: Request) {
     }
 
     const system = phase === "report" ? REPORT_SYS : INTERVIEW_SYS;
+    const address = typeof body?.address === "string" ? body.address.trim() : "";
+
+    // For the report, geocode the address and pull a current satellite image so
+    // the (vision-capable) model can read the site directly. Best-effort — if
+    // any step fails we fall back to web-search-only research.
+    let location: { lat: number; lng: number } | null = null;
+    let satelliteDataUrl: string | null = null;
+    if (phase === "report" && address) {
+      location = await geocodeAU(address);
+      if (location) satelliteDataUrl = await fetchSatelliteDataUrl(location.lat, location.lng);
+    }
+
+    const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "system", content: system },
+      ...messages,
+    ];
+    if (satelliteDataUrl) {
+      chatMessages.push({
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Current satellite/aerial image of the subject site (Esri World Imagery). Analyse it to assess lot shape, existing buildings and roof footprints, driveways and access, setbacks, vacant/backyard area, vegetation and the surrounding development pattern.",
+          },
+          { type: "image_url", image_url: { url: satelliteDataUrl } },
+        ],
+      });
+    }
 
     const text = await orText({
       model: MODELS.smart,
       web: true,
       effort: phase === "report" ? "high" : "medium",
       maxTokens: phase === "report" ? 9000 : 1500,
-      messages: [{ role: "system", content: system }, ...messages],
+      messages: chatMessages,
     });
 
     let parsed: unknown;
@@ -143,7 +223,10 @@ export async function POST(req: Request) {
     }
 
     if (phase === "report") {
-      return NextResponse.json({ ok: true, report: parsed });
+      const report =
+        parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+      if (location) report.location = location; // authoritative coords for the map
+      return NextResponse.json({ ok: true, report });
     }
     const p = (parsed ?? {}) as {
       status?: string;

@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function FeasibilityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ address?: string }>;
+  searchParams: Promise<{ address?: string; auto?: string }>;
 }) {
   const sp = await searchParams;
-  return <FeasibilityClient initialAddress={sp.address ?? ""} />;
+  return <FeasibilityClient initialAddress={sp.address ?? ""} auto={sp.auto === "1"} />;
 }
