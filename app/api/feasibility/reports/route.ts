@@ -5,6 +5,13 @@ import { log, errInfo } from "../../../../utils/logger";
 
 export const dynamic = "force-dynamic";
 
+/** Human message from an Error or a Supabase PostgrestError (plain object). */
+function errMessage(e: unknown, fallback: string): string {
+  if (e instanceof Error) return e.message;
+  const o = e as { message?: string; details?: string; hint?: string; code?: string } | null;
+  return o?.message || o?.details || o?.hint || o?.code || fallback;
+}
+
 /** True when the failure is just "table not created yet" (migration not run).
  * Covers both direct Postgres (42P01) and PostgREST's schema-cache miss
  * (PGRST205 → "Could not find the table … in the schema cache"). */
@@ -64,11 +71,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true, id: data.id });
   } catch (e) {
-    log.error("feasibility_reports.save_failed", { ...errInfo(e) });
-    return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : "Save failed" },
-      { status: 500 },
-    );
+    log.error("feasibility_reports.save_failed", { detail: errMessage(e, ""), ...errInfo(e) });
+    return NextResponse.json({ ok: false, error: errMessage(e, "Save failed") }, { status: 500 });
   }
 }
 
@@ -94,10 +98,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ ok: true, reports: data ?? [] });
   } catch (e) {
-    log.error("feasibility_reports.list_failed", { ...errInfo(e) });
-    return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : "List failed" },
-      { status: 500 },
-    );
+    log.error("feasibility_reports.list_failed", { detail: errMessage(e, ""), ...errInfo(e) });
+    return NextResponse.json({ ok: false, error: errMessage(e, "List failed") }, { status: 500 });
   }
 }
