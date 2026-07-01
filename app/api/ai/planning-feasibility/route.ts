@@ -91,7 +91,7 @@ Rules for the report JSON:
 
 /** Extract the first balanced JSON object from a model response (handles
  * stray prose or code fences around the JSON). */
-function extractJson(text: string): any {
+function extractJson(text: string): unknown {
   const cleaned = text.replace(/```json/gi, "```").trim();
   const fenced = cleaned.match(/```\s*([\s\S]*?)```/);
   const candidate = fenced ? fenced[1] : cleaned;
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
       messages: [{ role: "system", content: system }, ...messages],
     });
 
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = extractJson(text);
     } catch (e) {
@@ -145,11 +145,16 @@ export async function POST(req: Request) {
     if (phase === "report") {
       return NextResponse.json({ ok: true, report: parsed });
     }
+    const p = (parsed ?? {}) as {
+      status?: string;
+      understanding?: string;
+      questions?: unknown;
+    };
     return NextResponse.json({
       ok: true,
-      status: parsed.status === "ready" ? "ready" : "questions",
-      understanding: parsed.understanding ?? "",
-      questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+      status: p.status === "ready" ? "ready" : "questions",
+      understanding: typeof p.understanding === "string" ? p.understanding : "",
+      questions: Array.isArray(p.questions) ? p.questions : [],
     });
   } catch (e) {
     log.error("planning_feasibility.failed", { ...errInfo(e) });

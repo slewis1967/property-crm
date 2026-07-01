@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "../../../utils/supabase";
@@ -340,7 +341,7 @@ export default async function PropertyDetailPage({
   );
 }
 
-function Detail({ label, value }: { label: string; value: any }) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-[11px] text-gray-400 uppercase tracking-wide font-medium">{label}</p>
