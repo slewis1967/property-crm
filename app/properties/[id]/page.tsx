@@ -83,7 +83,7 @@ export default async function PropertyDetailPage({
           <Link
             href={`/feasibility?address=${encodeURIComponent(
               [address, property.suburb, property.state].filter(Boolean).join(", "),
-            )}&auto=1`}
+            )}&auto=1&property=${encodeURIComponent(String(property.id))}`}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0F4C5C] hover:bg-[#0B3D4A] transition"
           >
             🗺️ Planning Feasibility

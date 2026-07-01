@@ -39,6 +39,16 @@ type Report = {
   location?: { lat: number; lng: number };
 };
 
+type SavedRow = {
+  id: string;
+  address?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  property_id?: string | null;
+};
+
 const TEAL = "#0F4C5C";
 
 const CALLOUT: Record<Tone, string> = {
@@ -71,9 +81,11 @@ async function callApi(phase: "interview" | "report", messages: Msg[], address: 
 export default function FeasibilityClient({
   initialAddress = "",
   auto = false,
+  propertyId = "",
 }: {
   initialAddress?: string;
   auto?: boolean;
+  propertyId?: string;
 }) {
   const [stage, setStage] = useState<"start" | "interview" | "generating" | "report">(
     auto && initialAddress ? "generating" : "start",
@@ -87,6 +99,9 @@ export default function FeasibilityClient({
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedList, setSavedList] = useState<SavedRow[]>([]);
   const startedRef = useRef(false);
 
   // Launched from a property record (?auto=1 + address): research everything
@@ -103,6 +118,13 @@ export default function FeasibilityClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load saved reports for the start screen.
+  useEffect(() => {
+    if (auto) return;
+    void loadSavedList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function reset() {
     setStage("start");
     setTranscript([]);
@@ -111,6 +133,67 @@ export default function FeasibilityClient({
     setAnswers({});
     setReport(null);
     setError("");
+    setSavedId(null);
+    void loadSavedList();
+  }
+
+  async function loadSavedList() {
+    try {
+      const res = await fetch("/api/feasibility/reports");
+      const json = await res.json();
+      if (json.ok) setSavedList(json.reports || []);
+    } catch {
+      /* non-fatal — list just stays empty */
+    }
+  }
+
+  async function saveReport() {
+    if (!report || saving || savedId) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/feasibility/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, property_id: propertyId, report, transcript }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || "Save failed");
+      setSavedId(json.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function openSaved(id: string) {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/feasibility/reports/${id}`);
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || "Could not open report");
+      setReport(json.report);
+      setAddress(json.address || "");
+      setTranscript(Array.isArray(json.transcript) ? json.transcript : []);
+      setSavedId(id);
+      setStage("report");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open report");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteSaved(id: string) {
+    if (!window.confirm("Delete this saved report?")) return;
+    try {
+      await fetch(`/api/feasibility/reports/${id}`, { method: "DELETE" });
+      setSavedList((list) => list.filter((r) => r.id !== id));
+    } catch {
+      /* non-fatal */
+    }
   }
 
   async function runInterview(msgs: Msg[]) {
@@ -192,7 +275,16 @@ export default function FeasibilityClient({
   // ---------- Render ----------
 
   if (stage === "report" && report) {
-    return <ReportView report={report} address={address} onReset={reset} />;
+    return (
+      <ReportView
+        report={report}
+        address={address}
+        onReset={reset}
+        onSave={saveReport}
+        saving={saving}
+        saved={!!savedId}
+      />
+    );
   }
 
   return (
@@ -237,6 +329,40 @@ export default function FeasibilityClient({
           >
             {loading ? "Analysing…" : "Start assessment"}
           </button>
+        </div>
+      )}
+
+      {stage === "start" && savedList.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">Saved reports</h2>
+          <div className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+            {savedList.map((r) => (
+              <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {r.address || r.title || "Untitled report"}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {new Date(r.created_at).toLocaleString("en-AU")}
+                    {r.created_by ? ` · ${r.created_by}` : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => openSaved(r.id)}
+                  disabled={loading}
+                  className="text-sm font-semibold text-[#0F4C5C] hover:underline disabled:opacity-50"
+                >
+                  Open
+                </button>
+                <button
+                  onClick={() => deleteSaved(r.id)}
+                  className="text-sm text-gray-400 hover:text-red-600 transition"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -316,10 +442,16 @@ function ReportView({
   report,
   address,
   onReset,
+  onSave,
+  saving,
+  saved,
 }: {
   report: Report;
   address: string;
   onReset: () => void;
+  onSave: () => void;
+  saving: boolean;
+  saved: boolean;
 }) {
   return (
     <div>
@@ -339,6 +471,13 @@ function ReportView({
           className="px-4 py-2 text-sm font-semibold bg-[#0F4C5C] text-white rounded-lg hover:bg-[#0B3D4A] transition"
         >
           Export PDF
+        </button>
+        <button
+          onClick={onSave}
+          disabled={saving || saved}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border border-[#0F4C5C] text-[#0F4C5C] hover:bg-[#E0F2F1] disabled:opacity-60 transition"
+        >
+          {saved ? "Saved ✓" : saving ? "Saving…" : "Save to CRM"}
         </button>
         <button
           onClick={onReset}
