@@ -2,9 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   ALLOWED_PAGE_SIZES,
   DEFAULT_PAGE_SIZE,
+  MAX_PROPERTIES_PAGE_SIZE,
   coercePageSize,
+  coercePropertiesPageSize,
   coercePage,
   paginate,
+  propertyPageSizeOptions,
   type PageSize,
 } from "./pagination";
 
@@ -45,6 +48,46 @@ describe("coercePageSize", () => {
     // pass through as "50".
     expect(coercePageSize(26)).toBe(DEFAULT_PAGE_SIZE);
     expect(coercePageSize(101)).toBe(DEFAULT_PAGE_SIZE);
+  });
+});
+
+describe("propertyPageSizeOptions", () => {
+  it("steps by 50 and ends on the exact total", () => {
+    expect(propertyPageSizeOptions(217)).toEqual([50, 100, 150, 200, 217]);
+  });
+
+  it("returns a single option equal to the total when total <= one step", () => {
+    expect(propertyPageSizeOptions(30)).toEqual([50]);
+    expect(propertyPageSizeOptions(50)).toEqual([50]);
+    expect(propertyPageSizeOptions(0)).toEqual([50]);
+  });
+
+  it("does not duplicate the final option when total is a multiple of 50", () => {
+    expect(propertyPageSizeOptions(150)).toEqual([50, 100, 150]);
+  });
+
+  it("caps at MAX_PROPERTIES_PAGE_SIZE", () => {
+    const opts = propertyPageSizeOptions(5000);
+    expect(opts[opts.length - 1]).toBe(MAX_PROPERTIES_PAGE_SIZE);
+    expect(opts.every((n) => n <= MAX_PROPERTIES_PAGE_SIZE)).toBe(true);
+  });
+});
+
+describe("coercePropertiesPageSize", () => {
+  it("accepts any positive integer", () => {
+    expect(coercePropertiesPageSize(150)).toBe(150);
+    expect(coercePropertiesPageSize("217")).toBe(217);
+  });
+
+  it("clamps to MAX_PROPERTIES_PAGE_SIZE", () => {
+    expect(coercePropertiesPageSize(99999)).toBe(MAX_PROPERTIES_PAGE_SIZE);
+  });
+
+  it("falls back to DEFAULT_PAGE_SIZE for garbage", () => {
+    expect(coercePropertiesPageSize(0)).toBe(DEFAULT_PAGE_SIZE);
+    expect(coercePropertiesPageSize(-5)).toBe(DEFAULT_PAGE_SIZE);
+    expect(coercePropertiesPageSize("nope")).toBe(DEFAULT_PAGE_SIZE);
+    expect(coercePropertiesPageSize(null)).toBe(DEFAULT_PAGE_SIZE);
   });
 });
 
