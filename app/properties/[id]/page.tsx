@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "../../../utils/supabase";
@@ -79,6 +80,14 @@ export default async function PropertyDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href={`/feasibility?address=${encodeURIComponent(
+              [address, property.suburb, property.state].filter(Boolean).join(", "),
+            )}`}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0F4C5C] hover:bg-[#0B3D4A] transition"
+          >
+            🗺️ Planning Feasibility
+          </Link>
           {property.status && (
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(property.status)}`}
@@ -332,7 +341,7 @@ export default async function PropertyDetailPage({
   );
 }
 
-function Detail({ label, value }: { label: string; value: any }) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-[11px] text-gray-400 uppercase tracking-wide font-medium">{label}</p>

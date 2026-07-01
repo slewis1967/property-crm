@@ -3,6 +3,7 @@ import "./globals.css";
 import { supabase } from "../utils/supabase";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
+import Link from "next/link";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -98,9 +99,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-2 pb-1">Command</p>
-            <a href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+            <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🎯</span> War Room
-            </a>
+            </Link>
             <a href="/advisor" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🎩</span> Advisor
             </a>
@@ -119,12 +120,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/pia" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📊</span> PIA Modeller
             </a>
+            <a href="/feasibility" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🗺️</span> Planning Feasibility
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
-            <a href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+            <Link href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🗂️</span> Opportunities
-            </a>
-            <a href="/deal-analyser" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+            </Link>
+            <Link href="/deal-analyser" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📑</span>
               <span className="flex-1">Deal Analyser</span>
               {counts.dealPackets > 0 && (
@@ -132,13 +136,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   {counts.dealPackets}
                 </span>
               )}
-            </a>
+            </Link>
             <a href="/leads" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🔥</span> Leads Pipeline
             </a>
-            <a href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+            <Link href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>👥</span> Contacts
-            </a>
+            </Link>
             <a href="/appointments" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📅</span> Appointments
             </a>
@@ -162,9 +166,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Stock</p>
-            <a href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+            <Link href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🏘️</span> Aggregator Feed
-            </a>
+            </Link>
             <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🔍</span>
               <span className="flex-1">Review Queue</span>
