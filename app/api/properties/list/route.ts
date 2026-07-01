@@ -26,12 +26,24 @@ import { userEmailFromRequest } from "../../../../utils/cf-access";
 import { withObservability } from "../../../../utils/observability";
 import {
   coercePage,
-  coercePageSize,
+  coercePropertiesPageSize,
   paginate,
 } from "../../../../utils/pagination";
+import { interleaveByBuilder } from "../../../../utils/feed-order";
 import { log, errInfo } from "../../../../utils/logger";
 
 export const dynamic = "force-dynamic";
+
+// Cap for the interleave path — we fetch all matching rows, round-robin them
+// across builders, then slice the page. The active feed is a few hundred rows;
+// this bounds the work if it ever grows unexpectedly.
+const INTERLEAVE_CAP = 3000;
+
+function num(v: string | null): number | null {
+  if (v == null || v.trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 async function handler(req: Request) {
   // Sentinel auth — same pattern the rest of the CRM uses for
@@ -44,46 +56,90 @@ async function handler(req: Request) {
 
   const url = new URL(req.url);
   const page = coercePage(url.searchParams.get("page"));
-  const pageSize = coercePageSize(url.searchParams.get("pageSize"));
+  const pageSize = coercePropertiesPageSize(url.searchParams.get("pageSize"));
+  const sp = url.searchParams;
 
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  // Server-side filters — so the Builder dropdown (and the rest) query the whole
+  // database instead of only the rows already loaded on screen. Categorical +
+  // range filters are applied here; the client still refines by the bucketed
+  // contract/status/titled filters on the returned set.
+  const builder = sp.get("builder")?.trim() || null;
+  const q = sp.get("q")?.trim() || null;
+  const state = sp.get("state")?.trim() || null;
+  const type = sp.get("type")?.trim() || null;
+  const priceMin = num(sp.get("priceMin"));
+  const priceMax = num(sp.get("priceMax"));
+  const bedsMin = num(sp.get("bedsMin"));
+  const bathsMin = num(sp.get("bathsMin"));
+  const carsMin = num(sp.get("carsMin"));
 
-  const { data, count, error } = await supabase
+  const COLS =
+    "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
+    "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
+    "land_price,build_price,house_price,total_package_price," +
+    "status,pipeline_status,titled,created_at,updated_at," +
+    "brochure_url,confidence_score";
+
+  let query = supabase
     .from("global_stock_pool")
-    .select(
-      // Same column projection page.tsx used to fetch all of; the
-      // * removed the unused PII/financial fields the property
-      // detail page owns.
-      "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
-        "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
-        "land_price,build_price,house_price,total_package_price," +
-        "status,pipeline_status,titled,created_at,updated_at," +
-        "brochure_url,confidence_score",
-      { count: "exact" },
-    )
+    .select(COLS, { count: "exact" })
     .neq("pipeline_status", "withdrawn")
-    .neq("pipeline_status", "legacy")
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .neq("pipeline_status", "legacy");
 
-  if (error) {
-    log.error("properties.list.query_failed", errInfo(error));
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  if (builder) query = query.eq("builder_name", builder);
+  if (state) query = query.eq("state", state);
+  if (type) query = query.eq("property_type", type);
+  if (priceMin != null) query = query.gte("total_package_price", priceMin);
+  if (priceMax != null) query = query.lte("total_package_price", priceMax);
+  if (bedsMin != null) query = query.gte("bedrooms", bedsMin);
+  if (bathsMin != null) query = query.gte("bathrooms", bathsMin);
+  if (carsMin != null) query = query.gte("car_spaces", carsMin);
+  if (q) {
+    const like = `%${q.replace(/[%,()]/g, " ")}%`;
+    query = query.or(
+      `suburb.ilike.${like},builder_name.ilike.${like},estate_name.ilike.${like},` +
+        `street_address.ilike.${like},lot_number.ilike.${like}`,
+    );
   }
 
-  // Normalise field names so PropertyGrid's `??` fallbacks line up
-  // with the snake_case columns Supabase returns. Mirrors page.tsx.
-  const rows = (data ?? []).map((p: any) => ({
+  const normalise = (p: any) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,
     address_suburb: p.suburb ?? p.address_suburb,
     address_state: p.state ?? p.address_state,
     image_url: p.brochure_url ?? p.image_url,
-  }));
+  });
 
-  return NextResponse.json(paginate(rows, page, pageSize, count ?? 0));
+  // When a single builder is selected there is nothing to interleave, so keep
+  // the fast DB-paginated newest-first path. Otherwise fetch the matching set,
+  // round-robin it across builders (so no bulk import dominates the feed), then
+  // slice the requested page.
+  if (builder) {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    const { data, count, error } = await query
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (error) {
+      log.error("properties.list.query_failed", errInfo(error));
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+    const rows = (data ?? []).map(normalise);
+    return NextResponse.json(paginate(rows, page, pageSize, count ?? 0));
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(INTERLEAVE_CAP);
+  if (error) {
+    log.error("properties.list.query_failed", errInfo(error));
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  }
+  const all = interleaveByBuilder((data ?? []).map(normalise));
+  const from = (page - 1) * pageSize;
+  const pageRows = all.slice(from, from + pageSize);
+  return NextResponse.json(paginate(pageRows, page, pageSize, all.length));
 }
 
 export const GET = withObservability("GET /api/properties/list", handler);

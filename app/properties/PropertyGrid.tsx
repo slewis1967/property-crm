@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
 import type { PropertyGridItem } from "./types";
-import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
+import { propertyPageSizeOptions } from "../../utils/pagination";
 
 // Deterministic gradient palette so cards from the same builder share a
 // visual identity instead of all looking like the same "No Image" tile.
@@ -44,6 +44,7 @@ type SettingsPropertyType = { name: string; icon?: string | null; description?: 
 export default function PropertyGrid({
   properties: initialProperties,
   propertyTypes = [],
+  allBuilders = [],
   initialTotal = 0,
   initialPageSize = 50,
 }: {
@@ -52,6 +53,10 @@ export default function PropertyGrid({
    *  so newly-added types show up even before any property has them.
    *  Falls back to data-derived names when empty. */
   propertyTypes?: SettingsPropertyType[];
+  /** Full list of builder names across the active feed (server-provided) so
+   *  every builder is selectable in the dropdown even when its stock isn't on
+   *  the current page. */
+  allBuilders?: string[];
   /** Total active stock at the time of the initial server render. The
    *  grid will recount as more pages are loaded and use the larger of
    *  the two for the "X of Y" counter. */
@@ -59,7 +64,7 @@ export default function PropertyGrid({
   /** Page size the server component used for the first page; the grid
    *  preserves it so changing the dropdown triggers a refetch that
    *  matches the new chunk size. */
-  initialPageSize?: PageSize;
+  initialPageSize?: number;
 }) {
   // --- PAGINATION STATE ---
   // The Aggregator Feed used to render every active row at once —
@@ -67,15 +72,29 @@ export default function PropertyGrid({
   // the RSC payload heavy. Now we ship the first page from the
   // server component and let the user pull more on demand.
   const [properties, setProperties] = useState<PropertyGridItem[]>(initialProperties);
-  const [pageSize, setPageSize] = useState<PageSize>(initialPageSize);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(initialTotal);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasMore = properties.length < total;
   const fetchSeq = useRef(0); // discard stale responses on rapid clicks
+  // Current server-side filter query string (builder/search/price/etc). Held in
+  // a ref so the fetch callbacks read the latest value without being re-created.
+  const filterQSRef = useRef("");
+  const didMountRef = useRef(false);
 
-  const setPageSizeAndReset = useCallback((next: PageSize) => {
+  // "Show N per page" options: 50, 100, 150 … up to the live total, with
+  // the last option = total ("show all"). We union in the current pageSize
+  // so a persisted value that isn't on a 50-boundary (e.g. an old 75) still
+  // renders as the selected option instead of falling back to the first.
+  const pageSizeOptions = useMemo(() => {
+    const opts = new Set(propertyPageSizeOptions(total));
+    opts.add(pageSize);
+    return Array.from(opts).sort((a, b) => a - b);
+  }, [total, pageSize]);
+
+  const setPageSizeAndReset = useCallback((next: number) => {
     // Persist preference so the next server render uses the same size.
     try { localStorage.setItem("properties.pageSize", String(next)); } catch {}
     setPageSize(next);
@@ -84,13 +103,14 @@ export default function PropertyGrid({
     setLoadError(null);
     fetchSeq.current += 1;
     const seq = fetchSeq.current;
-    fetch(`/api/properties/list?page=1&pageSize=${next}`)
+    const qs = filterQSRef.current ? `&${filterQSRef.current}` : "";
+    fetch(`/api/properties/list?page=1&pageSize=${next}${qs}`)
       .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
-      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: number }) => {
         if (seq !== fetchSeq.current) return; // a newer request superseded us
         setProperties(data.rows);
         setTotal(data.total);
-        setPageSize(data.pageSize as PageSize);
+        setPageSize(data.pageSize);
         setPage(1);
         setCheckedIds(new Set());
         setSelectedProperty(null);
@@ -109,9 +129,9 @@ export default function PropertyGrid({
   // the server sent).
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("properties.pageSize");
-      if (saved && (ALLOWED_PAGE_SIZES as readonly number[]).includes(Number(saved))) {
-        setPageSize(Number(saved) as PageSize);
+      const saved = Number(localStorage.getItem("properties.pageSize"));
+      if (Number.isFinite(saved) && saved >= 1) {
+        setPageSize(saved);
       }
     } catch {}
   }, []);
@@ -123,9 +143,10 @@ export default function PropertyGrid({
     fetchSeq.current += 1;
     const seq = fetchSeq.current;
     const nextPage = page + 1;
-    fetch(`/api/properties/list?page=${nextPage}&pageSize=${pageSize}`)
+    const qs = filterQSRef.current ? `&${filterQSRef.current}` : "";
+    fetch(`/api/properties/list?page=${nextPage}&pageSize=${pageSize}${qs}`)
       .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
-      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: PageSize }) => {
+      .then((data: { rows: PropertyGridItem[]; total: number; pageSize: number }) => {
         if (seq !== fetchSeq.current) return;
         setProperties((prev) => [...prev, ...data.rows]);
         setTotal(data.total);
@@ -187,13 +208,16 @@ export default function PropertyGrid({
   }, [properties]);
 
   const builderOptions = useMemo(() => {
-    const set = new Set<string>();
+    // Prefer the full server-provided builder list so EVERY builder is
+    // selectable, not just the ones on the current page; union with whatever
+    // is loaded as a fallback.
+    const set = new Set<string>(allBuilders.filter(Boolean));
     for (const p of properties) {
       const b = (p.builder_name || "").toString().trim();
       if (b) set.add(b);
     }
     return Array.from(set).sort();
-  }, [properties]);
+  }, [properties, allBuilders]);
 
   // Settings list takes precedence so newly-added types are visible
   // even before any property has been classified as them yet. Fall
@@ -243,6 +267,57 @@ export default function PropertyGrid({
     for (const p of properties) set.add(statusBucket(p.status));
     return Array.from(set).sort();
   }, [properties]);
+
+  // Server-side filter query string. The categorical/range filters are pushed to
+  // the API so the Builder dropdown (and search/price/beds/etc.) query the WHOLE
+  // database — not just rows already loaded on screen. Bucketed contract/status/
+  // titled filters stay client-side (below) since they don't map to a column.
+  const serverFilterQS = useMemo(() => {
+    const p = new URLSearchParams();
+    if (search.trim()) p.set("q", search.trim());
+    if (builderFilter) p.set("builder", builderFilter);
+    if (stateFilter) p.set("state", stateFilter);
+    if (propertyTypeFilter) p.set("type", propertyTypeFilter);
+    if (priceMin) p.set("priceMin", priceMin);
+    if (priceMax) p.set("priceMax", priceMax);
+    if (bedsMin > 0) p.set("bedsMin", String(bedsMin));
+    if (bathsMin > 0) p.set("bathsMin", String(bathsMin));
+    if (carsMin > 0) p.set("carsMin", String(carsMin));
+    return p.toString();
+  }, [search, builderFilter, stateFilter, propertyTypeFilter, priceMin, priceMax, bedsMin, bathsMin, carsMin]);
+
+  // Refetch page 1 (debounced) whenever the server-side filters change.
+  useEffect(() => {
+    filterQSRef.current = serverFilterQS;
+    if (!didMountRef.current) {
+      didMountRef.current = true; // first render already has server-provided page 1
+      return;
+    }
+    const t = setTimeout(() => {
+      fetchSeq.current += 1;
+      const seq = fetchSeq.current;
+      setLoadingMore(true);
+      setLoadError(null);
+      const qs = serverFilterQS ? `&${serverFilterQS}` : "";
+      fetch(`/api/properties/list?page=1&pageSize=${pageSize}${qs}`)
+        .then((r) => (r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`)))))
+        .then((data: { rows: PropertyGridItem[]; total: number }) => {
+          if (seq !== fetchSeq.current) return;
+          setProperties(data.rows);
+          setTotal(data.total);
+          setPage(1);
+          setCheckedIds(new Set());
+        })
+        .catch((e: unknown) => {
+          if (seq !== fetchSeq.current) return;
+          setLoadError(e instanceof Error ? e.message : "Failed to filter properties");
+        })
+        .finally(() => {
+          if (seq === fetchSeq.current) setLoadingMore(false);
+        });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [serverFilterQS, pageSize]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -472,12 +547,14 @@ export default function PropertyGrid({
           <select
             id="properties-page-size"
             value={pageSize}
-            onChange={(e) => setPageSizeAndReset(Number(e.target.value) as PageSize)}
+            onChange={(e) => setPageSizeAndReset(Number(e.target.value))}
             disabled={loadingMore}
             className="text-xs px-2 py-1 border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
           >
-            {ALLOWED_PAGE_SIZES.map((n) => (
-              <option key={n} value={n}>{n} per page</option>
+            {pageSizeOptions.map((n) => (
+              <option key={n} value={n}>
+                {n >= total ? `All (${n})` : `${n} per page`}
+              </option>
             ))}
           </select>
           {loadingMore && <span className="text-xs text-gray-400">loading…</span>}

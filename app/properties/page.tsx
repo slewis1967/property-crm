@@ -2,7 +2,12 @@ import { cookies } from "next/headers";
 import { supabase } from "../../utils/supabase";
 import { log, errInfo } from "../../utils/logger";
 import PropertyGrid from "./PropertyGrid";
-import { ALLOWED_PAGE_SIZES, DEFAULT_PAGE_SIZE, type PageSize } from "../../utils/pagination";
+import { DEFAULT_PAGE_SIZE, coercePropertiesPageSize } from "../../utils/pagination";
+import { interleaveByBuilder } from "../../utils/feed-order";
+
+// Upper bound on rows pulled for the first-page interleave (mirrors the API
+// route). The active feed is a few hundred rows; this bounds the work.
+const FEED_INTERLEAVE_CAP = 3000;
 
 // The Aggregator Feed must reflect live stock on every load — without this,
 // Next.js serves a cached build snapshot, so withdrawn/edited rows (e.g. the
@@ -32,14 +37,11 @@ const DEFAULT_PROPERTY_TYPES = [
  *
  * In Next 16 the cookies() helper is async.
  */
-async function pageSizeFromCookies(): Promise<PageSize> {
+async function pageSizeFromCookies(): Promise<number> {
   try {
     const jar = await cookies();
     const raw = jar.get("properties_pageSize")?.value;
-    if (raw) {
-      const n = Number(raw);
-      if ((ALLOWED_PAGE_SIZES as readonly number[]).includes(n)) return n as PageSize;
-    }
+    if (raw) return coercePropertiesPageSize(raw);
   } catch {
     // cookies() throws if called from a context where it isn't
     // available; treat that as "no preference" and use the default.
@@ -78,6 +80,10 @@ export default async function PropertiesPage() {
     "status,pipeline_status,titled,created_at,updated_at," +
     "brochure_url,confidence_score";
 
+  // Fetch the whole active set (bounded) so we can interleave builders for the
+  // first page — otherwise a single bulk import (e.g. 200+ rows added the same
+  // day) floods newest-first and buries every other builder. The "Load more"
+  // API applies the same interleave for subsequent pages.
   const runQuery = (cols: string) =>
     supabase
       .from("global_stock_pool")
@@ -85,7 +91,7 @@ export default async function PropertiesPage() {
       .neq("pipeline_status", "withdrawn")
       .neq("pipeline_status", "legacy")
       .order("created_at", { ascending: false })
-      .range(0, pageSize - 1);
+      .range(0, FEED_INTERLEAVE_CAP - 1);
 
   // Request contract_type, but fall back to the base projection if the column
   // hasn't been added yet (ALTER pending) — keeps the page working either way.
@@ -103,7 +109,7 @@ export default async function PropertiesPage() {
 
   // Normalise field names so PropertyGrid's `??` fallbacks line up
   // with the snake_case columns Supabase returns.
-  const properties = (firstPage ?? []).map((p: any) => ({
+  const allNormalised = (firstPage ?? []).map((p: any) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,
@@ -112,7 +118,15 @@ export default async function PropertiesPage() {
     image_url: p.brochure_url ?? p.image_url,
   }));
 
-  const total = count ?? 0;
+  // First page = the interleaved set sliced to pageSize (builder variety).
+  const properties = interleaveByBuilder(allNormalised).slice(0, pageSize);
+  // Full builder list for the dropdown, so every builder is selectable even
+  // when its stock isn't on the current page.
+  const allBuilders = Array.from(
+    new Set(allNormalised.map((p) => (p.builder_name || "").toString().trim()).filter(Boolean)),
+  ).sort();
+
+  const total = count ?? allNormalised.length;
 
   return (
     <div>
@@ -128,6 +142,7 @@ export default async function PropertiesPage() {
       <PropertyGrid
         properties={properties}
         propertyTypes={propertyTypes}
+        allBuilders={allBuilders}
         initialTotal={total}
         initialPageSize={pageSize}
       />
