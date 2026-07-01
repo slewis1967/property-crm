@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 
 /**
  * Planning Feasibility — AI-led, Australia-wide.
@@ -36,6 +36,7 @@ type Report = {
   keyStats?: { n: string; l: string }[];
   sections?: Section[];
   disclaimer?: string;
+  location?: { lat: number; lng: number };
 };
 
 const TEAL = "#0F4C5C";
@@ -54,11 +55,11 @@ const PILL: Record<Tone, string> = {
   info: "bg-[#E0F2F1] text-[#0F4C5C]",
 };
 
-async function callApi(phase: "interview" | "report", messages: Msg[]) {
+async function callApi(phase: "interview" | "report", messages: Msg[], address: string) {
   const res = await fetch("/api/ai/planning-feasibility", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phase, messages }),
+    body: JSON.stringify({ phase, messages, address }),
   });
   const json = await res.json();
   if (!res.ok || !json.ok) {
@@ -67,8 +68,16 @@ async function callApi(phase: "interview" | "report", messages: Msg[]) {
   return json;
 }
 
-export default function FeasibilityClient({ initialAddress = "" }: { initialAddress?: string }) {
-  const [stage, setStage] = useState<"start" | "interview" | "generating" | "report">("start");
+export default function FeasibilityClient({
+  initialAddress = "",
+  auto = false,
+}: {
+  initialAddress?: string;
+  auto?: boolean;
+}) {
+  const [stage, setStage] = useState<"start" | "interview" | "generating" | "report">(
+    auto && initialAddress ? "generating" : "start",
+  );
   const [address, setAddress] = useState(initialAddress);
   const [brief, setBrief] = useState("");
   const [transcript, setTranscript] = useState<Msg[]>([]);
@@ -78,6 +87,21 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const startedRef = useRef(false);
+
+  // Launched from a property record (?auto=1 + address): research everything
+  // from the address and go straight to the report — no questions asked.
+  useEffect(() => {
+    if (!auto || !initialAddress || startedRef.current) return;
+    startedRef.current = true;
+    const content =
+      `Property address: ${initialAddress}\n\n` +
+      `Objective: comprehensive preliminary development feasibility — assess subdivision potential and likely yield, dual occupancy / duplex (including subdividing a duplex into separate titles), and any additional or secondary dwelling opportunity, plus the assessment pathway. Research everything publicly determinable yourself from the address (council/LGA, zone, minimum lot size, overlays, and the lot size, dimensions and existing site layout from the cadastre and satellite/aerial imagery). Do not ask me questions for anything you can research — only flag genuine unknowns in the report as items to verify.`;
+    const msgs: Msg[] = [{ role: "user", content }];
+    setTranscript(msgs);
+    void generateReport(msgs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function reset() {
     setStage("start");
@@ -93,7 +117,7 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
     setLoading(true);
     setError("");
     try {
-      const json = await callApi("interview", msgs);
+      const json = await callApi("interview", msgs, address);
       setUnderstanding(json.understanding || "");
       if (json.status === "ready" || !json.questions?.length) {
         await generateReport(msgs);
@@ -123,7 +147,7 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
     setLoading(true);
     setError("");
     try {
-      const json = await callApi("report", msgs);
+      const json = await callApi("report", msgs, address);
       setReport(json.report);
       setStage("report");
     } catch (e) {
@@ -168,7 +192,7 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
   // ---------- Render ----------
 
   if (stage === "report" && report) {
-    return <ReportView report={report} onReset={reset} />;
+    return <ReportView report={report} address={address} onReset={reset} />;
   }
 
   return (
@@ -271,11 +295,11 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
       {stage === "generating" && (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <div className="animate-pulse text-[#0F4C5C] font-semibold">
-            Generating comprehensive report…
+            Researching the site &amp; generating the report…
           </div>
           <p className="text-sm text-gray-500 mt-2">
-            Researching the council planning scheme and preparing the assessment. This can take up to
-            a minute.
+            Checking the council planning scheme, cadastre and satellite imagery of the site, then
+            preparing the assessment. This can take up to a minute.
           </p>
         </div>
       )}
@@ -283,7 +307,20 @@ export default function FeasibilityClient({ initialAddress = "" }: { initialAddr
   );
 }
 
-function ReportView({ report, onReset }: { report: Report; onReset: () => void }) {
+function esriSatUrl(lat: number, lng: number, d = 0.0016): string {
+  const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`;
+  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${bbox}&bboxSR=4326&imageSR=4326&size=800,500&format=jpg&f=image`;
+}
+
+function ReportView({
+  report,
+  address,
+  onReset,
+}: {
+  report: Report;
+  address: string;
+  onReset: () => void;
+}) {
   return (
     <div>
       <style>{`
@@ -364,6 +401,37 @@ function ReportView({ report, onReset }: { report: Report; onReset: () => void }
               </div>
             ))}
           </div>
+        )}
+
+        {(report.location || address) && (
+          <figure
+            className="my-5 border border-gray-200 rounded-md overflow-hidden"
+            style={{ breakInside: "avoid" }}
+          >
+            {report.location && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={esriSatUrl(report.location.lat, report.location.lng)}
+                alt={`Satellite view of ${address || "the site"}`}
+                className="w-full block"
+              />
+            )}
+            <figcaption className="text-[11px] text-gray-500 px-3 py-2 flex flex-wrap gap-2 justify-between items-center">
+              <span>
+                Satellite view{address ? ` — ${address}` : ""} · Imagery: Esri World Imagery
+              </span>
+              {address && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#0F4C5C] font-semibold no-print"
+                >
+                  Open live in Google Maps ↗
+                </a>
+              )}
+            </figcaption>
+          </figure>
         )}
 
         {report.sections?.map((sec, si) => (
