@@ -66,6 +66,13 @@ Two-phase POST flow on `/api/broadcast`:
 
 **Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (OpenRouter/model outage), the UI offers the same override under a softer warning.
 
+### Planning Feasibility (`app/feasibility/` + `app/api/ai/planning-feasibility/route.ts`)
+AI-led, Australia-wide development-feasibility tool. The advisor describes a property + objective; the tool **interviews** them (a small batch of targeted questions, grounded in the council planning scheme via OpenRouter web search and pre-filled with best-guesses), then **generates** a comprehensive preliminary report. The route runs `orText` (`MODELS.smart`, `web:true`) over a shared `messages` transcript in two phases:
+- `phase:"interview"` → returns `{ status:"questions"|"ready", understanding, questions[] }`
+- `phase:"report"` → returns `{ report }` as structured JSON (`title/subtitle/meta/keyStats/sections[blocks]/disclaimer`)
+
+`FeasibilityClient.tsx` renders the report in the **NextKey letterhead** and exports to PDF via `window.print()` with a print-isolation `@media print` block (only `#feasibility-report` is visible). Stateless (no DB persistence yet). The model adapts to the correct **state** planning framework (QLD RaL/code-vs-impact, NSW LEP/DA, VIC ResCode/VicSmart, etc.) and is prompted to mark unverified figures as "to be confirmed with Council" — it's preliminary planning info, **not** legal/financial/certified advice. Entry points: the **Command** sidebar link and a **Planning Feasibility** button on `/properties/[id]` (deep-links `?address=`).
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
@@ -96,6 +103,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/analytics` | Charts / stats |
 | `/activity` | Activity log |
 | `/pia` | PIA Modeller (Property Investment Analysis) |
+| `/feasibility` | Planning Feasibility — AI-led, Australia-wide development feasibility (interview → report). Accepts `?address=` to prefill from a property |
 
 **CRM**
 | Route | Description |
