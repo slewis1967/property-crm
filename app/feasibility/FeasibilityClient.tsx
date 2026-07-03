@@ -1,6 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, type CSSProperties } from "react";
+import dynamic from "next/dynamic";
+import type { SiteData } from "../../utils/planning/types";
+import type { FeasibilityResult } from "../../utils/feasibility/types";
+
+// three.js massing explorer — client-only, kept out of the initial bundle.
+const MassingExplorer = dynamic(() => import("./MassingExplorer"), {
+  ssr: false,
+  loading: () => (
+    <div className="text-center text-xs text-gray-400 py-16">Loading 3D massing…</div>
+  ),
+});
 
 /**
  * Planning Feasibility — AI-led, Australia-wide.
@@ -37,6 +48,8 @@ type Report = {
   sections?: Section[];
   disclaimer?: string;
   location?: { lat: number; lng: number };
+  siteData?: SiteData;
+  feasibility?: FeasibilityResult;
 };
 
 type SavedRow = {
@@ -65,13 +78,40 @@ const PILL: Record<Tone, string> = {
   info: "bg-[#E0F2F1] text-[#0F4C5C]",
 };
 
-async function callApi(phase: "interview" | "report", messages: Msg[], address: string) {
+async function callApi(
+  phase: "interview" | "report" | "prepare",
+  messages: Msg[],
+  address: string,
+  prepared?: unknown,
+) {
   const res = await fetch("/api/ai/planning-feasibility", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phase, messages, address }),
+    body: JSON.stringify({ phase, messages, address, prepared }),
   });
-  const json = await res.json();
+  // The server can return an HTML error page (e.g. a function timeout) rather
+  // than JSON — parse defensively so the user gets a clear message.
+  const raw = await res.text();
+  let json: {
+    ok?: boolean;
+    error?: string;
+    understanding?: string;
+    status?: string;
+    questions?: Question[];
+    report?: Report;
+    site?: unknown;
+    location?: { lat: number; lng: number } | null;
+    satellite?: string | null;
+  };
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      res.status >= 500
+        ? "The server hit an error or timeout — please try again."
+        : `Request failed (${res.status}).`,
+    );
+  }
   if (!res.ok || !json.ok) {
     throw new Error(json?.error || `Request failed (${res.status})`);
   }
@@ -230,7 +270,15 @@ export default function FeasibilityClient({
     setLoading(true);
     setError("");
     try {
-      const json = await callApi("report", msgs, address);
+      // Two-step so each request stays under the serverless timeout: a fast
+      // "prepare" (government site data + satellite), then the AI-only report.
+      const prep = await callApi("prepare", msgs, address);
+      const json = await callApi("report", msgs, address, {
+        site: prep.site,
+        location: prep.location,
+        satellite: prep.satellite,
+      });
+      if (!json.report) throw new Error("The report came back empty. Please try again.");
       setReport(json.report);
       setStage("report");
     } catch (e) {
@@ -283,6 +331,7 @@ export default function FeasibilityClient({
         onSave={saveReport}
         saving={saving}
         saved={!!savedId}
+        reportId={savedId}
       />
     );
   }
@@ -445,6 +494,7 @@ function ReportView({
   onSave,
   saving,
   saved,
+  reportId,
 }: {
   report: Report;
   address: string;
@@ -452,7 +502,50 @@ function ReportView({
   onSave: () => void;
   saving: boolean;
   saved: boolean;
+  reportId?: string | null;
 }) {
+  // The 3D massing explorer needs the authoritative parcel geometry and the
+  // resolved density/controls; render it only when both are present.
+  const geom = report.siteData?.parcel?.geometry ?? null;
+  const showMassing = !!(geom && report.feasibility?.envelope);
+
+  // Add-to-watchlist (Development Watchlist / dev_opportunities).
+  const [watchState, setWatchState] = useState<"idle" | "saving" | "saved">("idle");
+  async function addToWatchlist() {
+    if (watchState !== "idle") return;
+    setWatchState("saving");
+    const sd = report.siteData;
+    const f = report.feasibility;
+    const sub = f?.scenarios?.find((s) => s.key === "subdivision");
+    try {
+      const res = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "feasibility",
+          address: address || report.subtitle || null,
+          lotPlan: sd?.parcel?.lotPlan ?? null,
+          lga: sd?.parcel?.lga ?? null,
+          state: sd?.state ?? null,
+          zoneCode: sd?.controls?.zoneCode ?? null,
+          areaSqm: sd?.parcel?.areaSqm ?? null,
+          minLotSqm: sd?.controls?.minLotSizeSqm ?? null,
+          estLots: sub?.yield ?? null,
+          extraLots: sub?.yield != null ? Math.max(0, sub.yield - 1) : null,
+          center: report.location ? { lng: report.location.lng, lat: report.location.lat } : null,
+          stage: "Feasibility done",
+          feasibilityReportId: reportId ?? null,
+          data: { title: report.title, densityClass: f?.densityClass },
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
+      setWatchState("saved");
+    } catch {
+      setWatchState("idle");
+    }
+  }
+
   return (
     <div>
       <style>{`
@@ -478,6 +571,14 @@ function ReportView({
           className="px-4 py-2 text-sm font-semibold rounded-lg border border-[#0F4C5C] text-[#0F4C5C] hover:bg-[#E0F2F1] disabled:opacity-60 transition"
         >
           {saved ? "Saved ✓" : saving ? "Saving…" : "Save to CRM"}
+        </button>
+        <button
+          onClick={addToWatchlist}
+          disabled={watchState !== "idle"}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border border-[#0F4C5C] text-[#0F4C5C] hover:bg-[#E0F2F1] disabled:opacity-60 transition"
+          title="Track this site in the Development Watchlist"
+        >
+          {watchState === "saved" ? "★ On watchlist" : watchState === "saving" ? "Adding…" : "☆ Add to watchlist"}
         </button>
         <button
           onClick={onReset}
@@ -570,6 +671,17 @@ function ReportView({
                 </a>
               )}
             </figcaption>
+          </figure>
+        )}
+
+        {showMassing && geom && (
+          <figure className="no-print my-5 border border-gray-200 rounded-md overflow-hidden">
+            <MassingExplorer
+              geometry={geom}
+              controls={report.siteData?.controls ?? null}
+              density={report.feasibility?.densityClass ?? "unknown"}
+              siteAreaSqm={report.siteData?.parcel?.areaSqm ?? null}
+            />
           </figure>
         )}
 

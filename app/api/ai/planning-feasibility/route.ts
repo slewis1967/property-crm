@@ -3,6 +3,9 @@ import type OpenAI from "openai";
 import { orText, MODELS } from "../../../../utils/openrouter";
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
+import { resolveSite, siteToPromptBlock } from "../../../../utils/planning";
+import type { SiteData } from "../../../../utils/planning/types";
+import { computeFeasibility, feasibilityToPromptBlock } from "../../../../utils/feasibility";
 
 export const dynamic = "force-dynamic";
 // Web search + reasoning for a full report can run long; give it headroom.
@@ -119,27 +122,6 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, ms = 6000):
   }
 }
 
-/** Best-effort geocode of an Australian address via OpenStreetMap Nominatim. */
-async function geocodeAU(address: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-      address,
-    )}&format=json&limit=1&countrycodes=au`;
-    const res = await fetchWithTimeout(url, {
-      headers: { "User-Agent": "NextKey-CRM-PlanningFeasibility/1.0 (sean.l@nextkey.com.au)" },
-    });
-    if (!res.ok) return null;
-    const arr = (await res.json()) as Array<{ lat?: string; lon?: string }>;
-    const hit = arr?.[0];
-    if (!hit?.lat || !hit?.lon) return null;
-    const lat = parseFloat(hit.lat);
-    const lng = parseFloat(hit.lon);
-    return isFinite(lat) && isFinite(lng) ? { lat, lng } : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Fetch a current satellite tile (Esri World Imagery, keyless) as a data URL
  * so a vision-capable model can read the site. ~180 m span, centred on the lot. */
 async function fetchSatelliteDataUrl(lat: number, lng: number): Promise<string | null> {
@@ -163,10 +145,12 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const phase: "interview" | "report" = body?.phase === "report" ? "report" : "interview";
+    const phase: "interview" | "report" | "prepare" =
+      body?.phase === "report" ? "report" : body?.phase === "prepare" ? "prepare" : "interview";
     const messages: Msg[] = Array.isArray(body?.messages) ? body.messages : [];
 
-    if (messages.length === 0) {
+    // "prepare" gathers site data with no messages; interview/report need them.
+    if (phase !== "prepare" && messages.length === 0) {
       return NextResponse.json(
         { ok: false, error: "messages required" },
         { status: 400 },
@@ -176,38 +160,77 @@ export async function POST(req: Request) {
     const system = phase === "report" ? REPORT_SYS : INTERVIEW_SYS;
     const address = typeof body?.address === "string" ? body.address.trim() : "";
 
-    // For the report, geocode the address and pull a current satellite image so
-    // the (vision-capable) model can read the site directly. Best-effort — if
-    // any step fails we fall back to web-search-only research.
-    let location: { lat: number; lng: number } | null = null;
+    // The slow parts (government site lookup + satellite fetch) are gathered in a
+    // separate fast "prepare" call and passed back in `body.prepared`, so the
+    // "report" request is AI-only and each request stays under Netlify Pro's
+    // ~26s function cap. When `prepared` is absent we compute them inline
+    // (backward-compatible / interview phase).
+    const prepared = body?.prepared as
+      | {
+          site?: SiteData | null;
+          location?: { lat: number; lng: number } | null;
+          satellite?: string | null;
+        }
+      | undefined;
+
+    // Resolve authoritative site facts (parcel, zone, height, FSR, min lot,
+    // overlays) from state government spatial services. Best-effort — degrades
+    // to AI-only research.
+    const site: SiteData | null =
+      prepared && "site" in prepared
+        ? (prepared.site ?? null)
+        : address
+          ? await resolveSite(address)
+          : null;
+    const location =
+      prepared && "location" in prepared ? (prepared.location ?? null) : (site?.location ?? null);
+
+    // Pull a current satellite image so the (vision-capable) model can read the
+    // site directly. Best-effort. Skipped for the interview phase.
     let satelliteDataUrl: string | null = null;
-    if (phase === "report" && address) {
-      location = await geocodeAU(address);
-      if (location) satelliteDataUrl = await fetchSatelliteDataUrl(location.lat, location.lng);
+    if (prepared && "satellite" in prepared) {
+      satelliteDataUrl = prepared.satellite ?? null;
+    } else if (phase !== "interview" && location) {
+      satelliteDataUrl = await fetchSatelliteDataUrl(location.lat, location.lng);
+    }
+
+    // "prepare": return the gathered context for the client to hand to the
+    // AI-only "report" call. No model call — fast.
+    if (phase === "prepare") {
+      return NextResponse.json({ ok: true, site, location, satellite: satelliteDataUrl });
     }
 
     const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: system },
       ...messages,
     ];
-    if (satelliteDataUrl) {
-      chatMessages.push({
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Current satellite/aerial image of the subject site (Esri World Imagery). Analyse it to assess lot shape, existing buildings and roof footprints, driveways and access, setbacks, vacant/backyard area, vegetation and the surrounding development pattern.",
-          },
-          { type: "image_url", image_url: { url: satelliteDataUrl } },
-        ],
-      });
+    // Inject the authoritative government data so the model uses verified figures
+    // instead of guessing them from imagery or memory.
+    if (site) {
+      chatMessages.push({ role: "user", content: siteToPromptBlock(site) });
     }
+    // Report phase: compute the deterministic feasibility (envelope, yield,
+    // indicative financials) in code and hand the model the numbers to narrate,
+    // so the report never relies on the LLM's arithmetic. Pure + synchronous —
+    // adds no network latency.
+    const feasibility =
+      phase === "report" && site && site.parcel?.areaSqm != null ? computeFeasibility(site) : null;
+    if (feasibility) {
+      chatMessages.push({ role: "user", content: feasibilityToPromptBlock(feasibility) });
+    }
+    // Note: the satellite image is returned to the client (map + prepare) but is
+    // deliberately NOT sent to the report model — vision on a 185KB image added
+    // ~10s and the authoritative resolveSite data already grounds the report.
 
     const text = await orText({
       model: MODELS.smart,
-      web: true,
-      effort: phase === "report" ? "high" : "medium",
-      maxTokens: phase === "report" ? 9000 : 1500,
+      // Report is AI-only (site + satellite pre-fetched in "prepare") and grounded
+      // by authoritative resolveSite data + deterministic feasibility figures, so:
+      // no web search and no satellite vision image on the report (both added big
+      // latency), keeping it under the ~26s cap. Interview keeps web search.
+      web: phase !== "report",
+      effort: "medium",
+      maxTokens: phase === "report" ? 6000 : 1500,
       messages: chatMessages,
     });
 
@@ -226,6 +249,8 @@ export async function POST(req: Request) {
       const report =
         parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
       if (location) report.location = location; // authoritative coords for the map
+      if (site) report.siteData = site; // parcel + controls + overlays + sources
+      if (feasibility) report.feasibility = feasibility; // deterministic yield + financials
       return NextResponse.json({ ok: true, report });
     }
     const p = (parsed ?? {}) as {

@@ -17,6 +17,10 @@ import path from "path";
  * Tighten further once we know we never load third-party widgets — the
  * 'unsafe-inline' on style-src is the only place we'd want to revisit.
  */
+// Turbopack/React dev mode requires eval() for HMR + debugging; production
+// never uses eval, so 'unsafe-eval' is added to script-src in development only.
+const isDev = process.env.NODE_ENV !== "production";
+
 const SECURITY_HEADERS = [
   {
     key: "Content-Security-Policy",
@@ -24,7 +28,7 @@ const SECURITY_HEADERS = [
       "default-src 'self'",
       // Supabase REST/Auth/Realtime + Cloudflare Access team domain
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com",
-      "script-src 'self' 'unsafe-inline' https://*.brevo.com",
+      `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ""}https://*.brevo.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
