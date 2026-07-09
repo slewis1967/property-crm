@@ -3,6 +3,7 @@ import {
   applicantSummary,
   computeTotals,
   emptyFactFind,
+  factFindErrMessage,
   factFindsTableMissing,
   formatMoney,
   hydrateFactFind,
@@ -192,6 +193,24 @@ describe("hydrateFactFind", () => {
     const d = emptyFactFind();
     d.securities.push({ ...d.securities[0], address: "3rd security" });
     expect(hydrateFactFind(JSON.parse(JSON.stringify(d))).securities).toHaveLength(3);
+  });
+});
+
+describe("factFindErrMessage", () => {
+  it("reads a Supabase PostgrestError, which is a plain object not an Error", () => {
+    // The shared errMessage() only handles Error/string; on its own it would
+    // return the fallback here and throw away what the database said.
+    expect(factFindErrMessage({ message: "duplicate key value" }, "Save failed")).toBe("duplicate key value");
+    expect(factFindErrMessage({ details: "Key (id) already exists" }, "Save failed")).toBe("Key (id) already exists");
+    expect(factFindErrMessage({ hint: "Perhaps you meant id" }, "Save failed")).toBe("Perhaps you meant id");
+    expect(factFindErrMessage({ code: "23505" }, "Save failed")).toBe("23505");
+  });
+
+  it("delegates Errors and unknown values to the shared helper", () => {
+    expect(factFindErrMessage(new Error("boom"), "Save failed")).toBe("boom");
+    expect(factFindErrMessage(null, "Save failed")).toBe("Save failed");
+    expect(factFindErrMessage(undefined, "Save failed")).toBe("Save failed");
+    expect(factFindErrMessage(42, "Save failed")).toBe("Save failed");
   });
 });
 

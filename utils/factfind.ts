@@ -14,6 +14,8 @@
  * as legal copy — do not paraphrase it without sign-off from the Licensor.
  */
 
+import { errMessage } from "./errors";
+
 /* ── Enumerations ────────────────────────────────────────────────────────── */
 
 export const FACT_FIND_STATUSES = ["Draft", "In review", "Complete"] as const;
@@ -483,11 +485,18 @@ export function outstandingSections(data: FactFindData): string[] {
 
 /* ── Supabase plumbing ───────────────────────────────────────────────────── */
 
-/** Human message from an Error or a Supabase PostgrestError (plain object). */
+/**
+ * Human message from a Supabase PostgrestError, falling back to `errMessage`.
+ *
+ * Not a second copy of `errMessage` — a delegation to it. A PostgrestError is a
+ * plain object, not an `Error`, so `errMessage` alone returns the fallback and
+ * discards what the database actually said (the regression cc4fc7b fixed).
+ * Read the Postgrest fields first; hand everything else to the shared helper.
+ */
 export function factFindErrMessage(e: unknown, fallback: string): string {
-  if (e instanceof Error) return e.message;
+  if (e instanceof Error) return errMessage(e, fallback);
   const o = e as { message?: string; details?: string; hint?: string; code?: string } | null;
-  return o?.message || o?.details || o?.hint || o?.code || fallback;
+  return o?.message || o?.details || o?.hint || o?.code || errMessage(e, fallback);
 }
 
 /**
