@@ -503,6 +503,9 @@ export function outstandingSections(data: FactFindData): string[] {
   if (!a.family_name.trim() || !a.given_names.trim()) missing.push("Applicant 1 name");
   if (!a.date_of_birth) missing.push("Applicant 1 date of birth");
   if (!a.address.trim()) missing.push("Applicant 1 home address");
+  // No income, no servicing assessment — a fact find without it can't be
+  // submitted for credit, and the capacity panel refuses to show a number.
+  if (a.annual_income == null) missing.push("Applicant 1 annual income");
   if (data.loan.amount_required == null) missing.push("Loan amount required");
   if (!data.loan.purpose.trim()) missing.push("Loan purpose");
   if (!data.loan.repayment_strategy.trim()) missing.push("Loan repayment strategy");

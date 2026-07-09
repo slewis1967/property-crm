@@ -6,7 +6,7 @@ import {
   factFindToCapacityInputs,
   stateFromPostcode,
 } from "./factfind-capacity";
-import { computeCapacity } from "./finance";
+import { computeCapacity, CURRENT_TAX_YEAR, TAX_YEARS } from "./finance";
 
 /** A fact find filled in enough to service. */
 function filled(): FactFindData {
@@ -260,5 +260,30 @@ describe("factFindToCapacityInputs", () => {
     expect(inputs.hasHecs).toBe(false);
     expect(missing).toContain("applicant_income");
     expect(missing).toContain("dependents");
+  });
+});
+
+describe("taxYear override", () => {
+  it("defaults to the current tax year", () => {
+    expect(factFindToCapacityInputs(filled()).inputs.taxYear).toBe(CURRENT_TAX_YEAR);
+  });
+
+  it("passes an overridden year through to the engine", () => {
+    // Backs the CapacityPanel assessment-year selector. If overrides stopped
+    // reaching `inputs`, the selector would silently be decorative.
+    for (const y of TAX_YEARS) {
+      expect(factFindToCapacityInputs(filled(), { taxYear: y }).inputs.taxYear).toBe(y);
+    }
+  });
+
+  it("changes the answer for an established dwelling in 2027-28", () => {
+    // Negative gearing is limited to new builds from 1 Jul 2027, so an
+    // established-dwelling purchase services differently across the cutover.
+    const d = filled();
+    const before = computeCapacity(factFindToCapacityInputs(d, { taxYear: "2026-27" }).inputs);
+    const after = computeCapacity(factFindToCapacityInputs(d, { taxYear: "2027-28" }).inputs);
+    expect(before.maxLoan).toBeGreaterThan(0);
+    expect(after.maxLoan).toBeGreaterThan(0);
+    expect(after.maxLoan).not.toBe(before.maxLoan);
   });
 });

@@ -21,6 +21,7 @@ function completeFactFind(): FactFindData {
     given_names: "John",
     date_of_birth: "1980-04-01",
     address: "12 Example St, Brisbane",
+    annual_income: 120_000,
   };
   d.loan.amount_required = 750_000;
   d.loan.purpose = "Purchase of investment property";
@@ -141,6 +142,20 @@ describe("outstandingSections", () => {
     expect(outstandingSections(completeFactFind())).toEqual([]);
   });
 
+  it("flags a missing applicant income", () => {
+    // Without income there is no servicing assessment, so the fact find can't
+    // go to credit even though every field the paper form asks for is filled.
+    const d = completeFactFind();
+    d.applicants[0].annual_income = null;
+    expect(outstandingSections(d)).toEqual(["Applicant 1 annual income"]);
+  });
+
+  it("accepts a zero income as answered rather than missing", () => {
+    const d = completeFactFind();
+    d.applicants[0].annual_income = 0;
+    expect(outstandingSections(d)).toEqual([]);
+  });
+
   it("still flags an unanswered disclosure", () => {
     const d = completeFactFind();
     d.disclosures.bankruptcy = { answer: null, details: "" };
@@ -193,6 +208,61 @@ describe("hydrateFactFind", () => {
     const d = emptyFactFind();
     d.securities.push({ ...d.securities[0], address: "3rd security" });
     expect(hydrateFactFind(JSON.parse(JSON.stringify(d))).securities).toHaveLength(3);
+  });
+});
+
+describe("servicing fields (added after the paper form)", () => {
+  it("emptyFactFind defaults every servicing field", () => {
+    const d = emptyFactFind();
+    for (const a of d.applicants) {
+      expect(a.annual_income).toBeNull();
+      expect(a.has_hecs).toBe(false);
+      expect(a.hecs_balance).toBeNull();
+    }
+    expect(d.financials.servicing).toEqual({ dependents: null, monthly_living_expenses: null });
+  });
+
+  it("hydrates a row saved BEFORE the servicing fields existed", () => {
+    // The exact failure mode this guards: a pre-bridge blob has no
+    // `financials.servicing` and no `annual_income`. If hydrate leaves them
+    // undefined, the form reads `.dependents` off undefined and crashes.
+    const legacy = {
+      referred_by: "Glenn Mays",
+      applicants: [
+        { family_name: "Smith", given_names: "John" },
+        { family_name: "Smith", given_names: "Jane" },
+      ],
+      financials: { statement_for: "John & Jane", liabilities: [], assets: [] },
+    };
+    const d = hydrateFactFind(legacy);
+
+    expect(d.financials.servicing).toEqual({ dependents: null, monthly_living_expenses: null });
+    expect(d.applicants[0].annual_income).toBeNull();
+    expect(d.applicants[0].has_hecs).toBe(false);
+    expect(d.applicants[1].hecs_balance).toBeNull();
+    // and it didn't clobber what the legacy row did have
+    expect(d.applicants[0].given_names).toBe("John");
+    expect(d.referred_by).toBe("Glenn Mays");
+  });
+
+  it("preserves stored servicing values through a round-trip", () => {
+    const d = emptyFactFind();
+    d.applicants[0].annual_income = 120_000;
+    d.applicants[0].has_hecs = true;
+    d.applicants[0].hecs_balance = 24_000;
+    d.financials.servicing = { dependents: 2, monthly_living_expenses: 3_000 };
+
+    const back = hydrateFactFind(JSON.parse(JSON.stringify(d)));
+    expect(back.applicants[0].annual_income).toBe(120_000);
+    expect(back.applicants[0].has_hecs).toBe(true);
+    expect(back.applicants[0].hecs_balance).toBe(24_000);
+    expect(back.financials.servicing).toEqual({ dependents: 2, monthly_living_expenses: 3_000 });
+  });
+
+  it("keeps a zero dependents count distinct from 'not answered'", () => {
+    const d = hydrateFactFind({ financials: { servicing: { dependents: 0, monthly_living_expenses: 0 } } });
+    expect(d.financials.servicing.dependents).toBe(0);
+    expect(d.financials.servicing.monthly_living_expenses).toBe(0);
   });
 });
 
