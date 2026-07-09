@@ -146,6 +146,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/leads" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🔥</span> Leads Pipeline
             </a>
+            <Link href="/fact-find" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📋</span> Fact Find
+            </Link>
             <Link href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>👥</span> Contacts
             </Link>

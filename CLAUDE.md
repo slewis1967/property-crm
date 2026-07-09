@@ -99,6 +99,14 @@ Wired into the report phase of `planning-feasibility/route.ts` (adds no latency 
 
 **Massing option sweep (`utils/envelope/sweep.ts` + `app/feasibility/MassingExplorer.tsx`).** Phase 4: the honest "hundreds of schemes". `generateMassingOptions()` (pure, vitest-tested `sweep.test.ts`) is a bounded generate-and-rank over storey count (up to the height limit) × setback stance (standard/minimum), filtered by zone density (low/rural → house/duplex only; medium/high → townhouses/apartments), each option scored by objective (`yield` | `gfa` | `margin`), deduped and returned top-N. Financial maths shared with the engine via `utils/feasibility/finance.ts` (extracted from `engine.ts`). `MassingExplorer.tsx` (client, loaded via `next/dynamic({ssr:false})`) runs the sweep, shows ranked option chips (top badged), a yield/floor-area re-rank toggle, and drives `MassingViewer` for the selected option — all client-side, no server round-trip. Replaces the single-massing card in the report; still `no-print`, captioned as an envelope/yield explorer, not compliant designs.
 
+### Borrower Fact Find (`app/fact-find/` + `app/api/fact-finds/` + `utils/factfind.ts`)
+A digital rebuild of the seven-page paper "Generic Borrower Fact Finder Form", section for section: applicants → companies/trusts → advisors → loan required → security offered → personal financial statements → disclosures → declarations → privacy consent. Sidebar link **Fact Find** under CRM.
+- `utils/factfind.ts` — the single source of truth for the document: `FactFindData` shape, enums, `emptyFactFind()`, `hydrateFactFind()` (merges a stored blob over the current template so older rows still open), `computeTotals()` (liabilities/assets/surplus/monthly commitments), `outstandingSections()` (advisory completeness check — never blocks a save). Pure + vitest-tested (`utils/factfind.test.ts`).
+- `app/api/fact-finds/route.ts` (GET list, POST create) + `app/api/fact-finds/[id]/route.ts` (GET one, PATCH, DELETE) — `requireAuth`, service-key Supabase, graceful when the table is absent. The list route selects explicit columns, never `*`, because `data` holds borrower PII (DOB, licence number, income).
+- `FactFindForm.tsx` — one form; PATCH sends the whole `data` blob (the denormalised columns are re-derived server-side so they can't drift). "Export PDF" prints the form itself: an `@media print` block flattens inputs to underlined text, so there is no separate print view to keep in sync.
+
+**Table is `borrower_fact_finds`, NOT `fact_finds`** (`migrations/20260709_borrower_fact_finds.sql`). An unrelated `fact_finds` table already exists in this Supabase project (`lead_id` → `smart_leads.id`, `financial_data`, `verified_capacity`, `ai_verification_status`) — `create table if not exists fact_finds` would silently no-op against it. Relatedly, `factFindsTableMissing()` is deliberately narrower than `dealsTableMissing()`: the latter's loose `schema cache` / `does not exist` substring test also matches *column*-level errors (PGRST204 / 42703), which would tell the operator to re-run a migration they'd already run.
+
 ### Region Prospecting (`app/prospecting/` + `utils/prospecting/` + `app/api/prospecting/`)
 Comb a whole region for parcels with subdivision headroom, then hand any candidate to the feasibility tool. Sidebar link under **Command**. NSW-only (minimum lot size — needed to test subdivision — is the one subdivision control published statewide as queryable data).
 - `utils/prospecting/geocodeRegion.ts` — region name → bounding box (Nominatim `boundingbox`), clamped to a ~27 km window (`MAX_SPAN_DEG`) so a scan can't pull a whole state.
@@ -152,6 +160,8 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/opportunities` | GHL pipeline |
 | `/opportunities/[id]` | Opportunity detail |
 | `/leads` | Inbound leads pipeline |
+| `/fact-find` | Borrower Fact Find — list of fact finds |
+| `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
 | `/contacts` | GHL contacts (client-side tag filter dropdown on `ContactsClient.tsx`) |
 | `/contacts/[id]` | Contact detail |
 | `/appointments` | Appointments |
