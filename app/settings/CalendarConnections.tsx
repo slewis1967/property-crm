@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { SCHEDULING_HOSTS, BRAND_LABEL } from "../../utils/scheduling-hosts";
 
 type Connection = {
   host_email: string;
@@ -16,11 +17,6 @@ type Connection = {
   connected_at: string;
   updated_at: string;
 };
-
-const HOSTS = [
-  { email: "sean.l@nextkey.com.au",     label: "Sean Lewis" },
-  { email: "glenn.m@nextkey.com.au",  label: "Glenn Mooney" },
-];
 
 export default function CalendarConnections() {
   const searchParams = useSearchParams();
@@ -61,23 +57,35 @@ export default function CalendarConnections() {
         </div>
       )}
 
-      {HOSTS.map((h) => {
+      {SCHEDULING_HOSTS.map((h) => {
         const conn = connections[h.email.toLowerCase()];
         const connected = !!conn;
         return (
           <div
             key={h.email}
-            className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3"
+            className={`flex items-center gap-3 bg-white border rounded-xl px-4 py-3 ${
+              !loading && !connected ? "border-amber-300 bg-amber-50/40" : "border-gray-200"
+            }`}
           >
             <span className="text-2xl">📅</span>
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{h.label}</div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-900">{h.displayName}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-600">
+                  {BRAND_LABEL[h.brand]}
+                </span>
+              </div>
               <div className="text-xs text-gray-500">
                 {h.email}
                 {connected && conn.connected_at && (
                   <> · connected {new Date(conn.connected_at).toLocaleDateString("en-AU")}</>
                 )}
               </div>
+              {!loading && !connected && (
+                <div className="text-[11px] text-amber-700 mt-0.5">
+                  Not connected — meetings booked with this host save to the CRM but send no invite.
+                </div>
+              )}
             </div>
             {loading ? (
               <span className="text-xs text-gray-400">…</span>
@@ -111,7 +119,7 @@ export default function CalendarConnections() {
       <p className="text-[11px] text-gray-400 mt-2">
         When you click Connect, sign in to Google with the account matching the listed email.
         The CRM stores a refresh token only — no password. Used to create calendar events from
-        the opportunity page on this user's behalf.
+        the opportunity page on this user&rsquo;s behalf.
       </p>
     </div>
   );

@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { requireAuth } from "../../../../utils/cf-access";
 
-export async function GET() {
+/**
+ * Both handlers are gated on requireAuth. Cloudflare Access sits in front of
+ * the app, but these routes were the only calendar endpoints not enforcing it
+ * themselves — leaving an unauthenticated request that reached the origin
+ * directly able to enumerate host emails or disconnect a calendar.
+ */
+
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { data, error } = await supabase
     .from("calendar_credentials")
     .select("host_email, display_name, scope, connected_at, updated_at");
@@ -10,6 +21,9 @@ export async function GET() {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const host = req.nextUrl.searchParams.get("host");
   if (!host) return NextResponse.json({ error: "host is required" }, { status: 400 });
   const { error } = await supabase

@@ -105,6 +105,39 @@ export async function fetchUserInfo(accessToken: string): Promise<{ email: strin
   return { email: data.email, name: data.name };
 }
 
+/**
+ * Reminders are set explicitly rather than left to `useDefault: true`, which
+ * would inherit whatever each host happens to have configured on their own
+ * calendar — so a client's reminder would silently depend on who booked them.
+ *
+ * Google delivers these itself, to the host and every attendee. That is why
+ * the CRM has no reminder cron: there is nothing to build.
+ */
+const DEFAULT_REMINDERS = [
+  { method: "email" as const, minutes: 24 * 60 },
+  { method: "popup" as const, minutes: 30 },
+];
+
+/** The subset of Google's events.insert request body we actually send. */
+type CalendarEventBody = {
+  summary: string;
+  description?: string;
+  location?: string;
+  start: { dateTime: string; timeZone: string };
+  end: { dateTime: string; timeZone: string };
+  attendees?: Array<{ email: string; displayName?: string }>;
+  reminders: {
+    useDefault: boolean;
+    overrides: Array<{ method: "email" | "popup"; minutes: number }>;
+  };
+  conferenceData: {
+    createRequest: {
+      requestId: string;
+      conferenceSolutionKey: { type: "hangoutsMeet" };
+    };
+  };
+};
+
 export async function createCalendarEvent(
   accessToken: string,
   event: {
@@ -116,15 +149,20 @@ export async function createCalendarEvent(
     timeZone?: string;
     attendees?: Array<{ email: string; displayName?: string }>;
     sendUpdates?: "all" | "externalOnly" | "none";
+    reminders?: Array<{ method: "email" | "popup"; minutes: number }>;
   },
 ): Promise<{ id: string; htmlLink: string; hangoutLink?: string }> {
-  const body: any = {
+  const body: CalendarEventBody = {
     summary: event.summary,
     description: event.description,
     location: event.location,
     start: { dateTime: event.start, timeZone: event.timeZone || "Australia/Brisbane" },
     end: { dateTime: event.end, timeZone: event.timeZone || "Australia/Brisbane" },
     attendees: event.attendees,
+    reminders: {
+      useDefault: false,
+      overrides: event.reminders ?? DEFAULT_REMINDERS,
+    },
     conferenceData: {
       createRequest: {
         requestId: `nextkey-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

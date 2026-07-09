@@ -1,8 +1,9 @@
 "use client";
 
 /**
- * OpportunityAppointments — small read-only list of Cal.com bookings
- * matching this lead's email. Goes through /api/opportunities/{id}/appointments
+ * OpportunityAppointments — small read-only list of bookings matching this
+ * lead's email: meetings scheduled from the CRM, plus any legacy rows from the
+ * old Cal.com feed. Goes through /api/opportunities/{id}/appointments
  * (server-side Supabase query) since the supabase util is service-role only
  * and can't be imported into a "use client" bundle.
  */
@@ -37,10 +38,13 @@ export default function OpportunityAppointments({
   leadEmail: string | null;
 }) {
   const [rows, setRows] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  // With no lead email there is nothing to fetch, so start settled rather than
+  // starting true and immediately clearing it from inside the effect. The
+  // component renders null in that case anyway.
+  const [loading, setLoading] = useState(!!leadEmail);
 
   useEffect(() => {
-    if (!leadEmail) { setLoading(false); return; }
+    if (!leadEmail) return;
     let cancelled = false;
     (async () => {
       try {

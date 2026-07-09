@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { requireAuth, userEmailFromRequest } from "../../../utils/cf-access";
+import { findHost } from "../../../utils/scheduling-hosts";
+import { errMessage } from "../../../utils/errors";
 import {
   createCalendarEvent,
   getOAuthConfig,
@@ -148,9 +150,9 @@ export async function POST(req: NextRequest) {
       calendarLink = event.htmlLink;
       hangoutLink = event.hangoutLink ?? null;
     }
-  } catch (e: any) {
+  } catch (e) {
     // Don't fail the request — fall back to CRM-only and report the warning
-    calendarWarning = `Google Calendar step failed (${e.message || "unknown"}). Appointment saved to CRM only.`;
+    calendarWarning = `Google Calendar step failed (${errMessage(e, "unknown")}). Appointment saved to CRM only.`;
   }
 
   // --- Step 2: Supabase appointments row (authoritative for the CRM) ---
@@ -160,9 +162,13 @@ export async function POST(req: NextRequest) {
   //     opportunity detail pages, ContactDetail's appointments prop, etc.
   //   - event_title + status — used by OpportunityAppointments (the panel
   //     directly under the opp summary) which queries Cal.com-shaped rows.
+  const host = findHost(host_email);
   const insertRow: Record<string, unknown> = {
     contact_id: body.contact_id,
     contact_email: body.contact_email,
+    // Read by /api/ai/dashboard-brief but never written until now, so every
+    // CRM-created booking showed up in the brief with a null contact name.
+    contact_name: body.contact_name ?? null,
     title,
     event_title: title,
     start_time: startISO,
@@ -171,7 +177,10 @@ export async function POST(req: NextRequest) {
     location: location ?? hangoutLink ?? null,
     appointment_status: "scheduled",
     status: "scheduled",
-    host_name: host_email,
+    // host_email is read by the contact detail page; host_name carries the
+    // human label where we have one, rather than repeating the address.
+    host_email: host_email,
+    host_name: host?.displayName ?? host_email,
     calendar_id: calendarId,
   };
 
@@ -191,11 +200,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // The caller cannot infer this from calendar_event alone: an event may exist
+  // while no invite went out (sendUpdates:"none", or no attendees). The UI
+  // needs to know whether the client was actually emailed before it claims so.
+  const inviteRequested = sendUpdates !== "none" && !!attendees?.length;
+  const inviteSent = inviteRequested && !!calendarId;
+
   return NextResponse.json({
     appointment: inserted,
     calendar_event: calendarId
       ? { id: calendarId, htmlLink: calendarLink, hangoutLink }
       : null,
+    invite_requested: inviteRequested,
+    invite_sent: inviteSent,
     calendar_warning: calendarWarning,
   });
 }

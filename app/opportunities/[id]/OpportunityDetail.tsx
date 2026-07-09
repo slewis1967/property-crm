@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
@@ -10,27 +10,11 @@ import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
   "Proposal Sent", "Negotiating", "Closed Won", "Closed Lost",
-];
-
-// Hosts who can schedule meetings from the CRM. Email is the key —
-// the server looks up the corresponding refresh_token in
-// public.calendar_credentials. Add a new entry once that host has
-// connected their calendar via Settings → Calendar connections.
-const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: string }> = [
-  {
-    label: "Sean",
-    email: "sean.l@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/19ocFJGhcTHSFKBg7",
-  },
-  {
-    label: "Glenn",
-    email: "glenn.m@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/tyLLhLCA7k686t5L9",
-  },
 ];
 
 const stageStyle: Record<string, string> = {
@@ -225,10 +209,8 @@ export default function OpportunityDetail({
     try { return lead.linked_contact_ids ? JSON.parse(lead.linked_contact_ids) : []; }
     catch { return []; }
   });
-  const [linkedContacts, setLinkedContacts] = useState<Contact[]>([]);
   const [allContacts, setAllContacts] = useState<Contact[]>([]);
   const [contactQuery, setContactQuery] = useState("");
-  const [filtered, setFiltered] = useState<Contact[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [savingContacts, setSavingContacts] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -240,20 +222,21 @@ export default function OpportunityDetail({
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!allContacts.length) return;
-    setLinkedContacts(allContacts.filter((c) => linkedIds.includes(c.id)));
-  }, [allContacts, linkedIds]);
+  // Both of these are pure functions of state we already hold, so they are
+  // derived during render rather than mirrored into state from an effect —
+  // which cost an extra render pass on every keystroke.
+  const linkedContacts = useMemo(
+    () => allContacts.filter((c) => linkedIds.includes(c.id)),
+    [allContacts, linkedIds],
+  );
 
-  useEffect(() => {
-    if (!contactQuery.trim()) { setFiltered([]); setShowDropdown(false); return; }
+  const filtered = useMemo(() => {
+    if (!contactQuery.trim()) return [];
     const q = contactQuery.toLowerCase();
-    const matches = allContacts
+    return allContacts
       .filter((c) => !linkedIds.includes(c.id))
       .filter((c) => [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)))
       .slice(0, 8);
-    setFiltered(matches);
-    setShowDropdown(matches.length > 0);
   }, [contactQuery, allContacts, linkedIds]);
 
   useEffect(() => {
@@ -376,7 +359,7 @@ export default function OpportunityDetail({
             </button>
             {showBookingLinks && (
               <div className="absolute right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
-                {SCHEDULING_HOSTS.map((host) => (
+                {SCHEDULING_HOSTS.filter((h) => h.bookingPageUrl).map((host) => (
                   <a
                     key={host.email}
                     href={host.bookingPageUrl}
@@ -663,10 +646,13 @@ export default function OpportunityDetail({
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="＋ Search to add a contact…"
                 value={contactQuery}
-                onChange={(e) => setContactQuery(e.target.value)}
+                onChange={(e) => {
+                  setContactQuery(e.target.value);
+                  setShowDropdown(e.target.value.trim().length > 0);
+                }}
                 onFocus={() => filtered.length > 0 && setShowDropdown(true)}
               />
-              {showDropdown && (
+              {showDropdown && filtered.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
                   {filtered.map((c) => (
                     <button

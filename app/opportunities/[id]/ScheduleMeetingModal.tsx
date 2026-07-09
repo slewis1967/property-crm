@@ -13,7 +13,8 @@
  * calendar yet (or OAuth env isn't configured), the appointment is
  * still saved to the CRM and the modal surfaces a soft warning.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { errMessage } from "../../../utils/errors";
 
 type Lead = {
   lead_id: string;
@@ -80,7 +81,7 @@ export default function ScheduleMeetingModal({
    * the appointments panel without a full page reload. */
   onCreated?: () => void;
 }) {
-  const def = useMemo(defaultStart, []);
+  const def = useMemo(() => defaultStart(), []);
   const [hostEmail, setHostEmail] = useState(hosts[0]?.email ?? "");
   const [date, setDate] = useState(def.date);
   const [time, setTime] = useState(def.time);
@@ -101,7 +102,12 @@ export default function ScheduleMeetingModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null); // calendar_warning from API
-  const [success, setSuccess] = useState<{ htmlLink?: string; hangoutLink?: string } | null>(null);
+  const [success, setSuccess] = useState<{
+    htmlLink?: string;
+    hangoutLink?: string;
+    inviteRequested: boolean;
+    inviteSent: boolean;
+  } | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,16 +151,19 @@ export default function ScheduleMeetingModal({
       if (!res.ok) {
         throw new Error(data.error || `Failed (${res.status})`);
       }
-      // Soft warning surfaces when the calendar leg couldn't run (no host
-      // creds, OAuth not configured, etc.) — the Supabase row still landed.
+      // Surfaces when the calendar leg couldn't run (no host creds, OAuth not
+      // configured, etc.) — the Supabase row still landed, but if we promised
+      // the attendee an invite, nobody sent one. The result panel says so.
       if (data.calendar_warning) setWarning(data.calendar_warning);
       setSuccess({
         htmlLink: data.calendar_event?.htmlLink,
         hangoutLink: data.calendar_event?.hangoutLink,
+        inviteRequested: !!data.invite_requested,
+        inviteSent: !!data.invite_sent,
       });
       onCreated?.();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -170,11 +179,30 @@ export default function ScheduleMeetingModal({
 
         {success ? (
           <div className="p-6 space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-              {success.htmlLink
-                ? <>✓ Meeting scheduled. Invite sent to {attendeeEmail || "you only"}.</>
-                : <>✓ Saved to CRM. Calendar invite was NOT sent — see below.</>}
-            </div>
+            {success.inviteSent ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                ✓ Meeting scheduled. Invite sent to {attendeeEmail}.
+              </div>
+            ) : success.inviteRequested ? (
+              // The row saved, but we told the user we'd email the attendee and
+              // didn't. Never dress this as a success — it needs manual follow-up.
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <div className="font-semibold">Invite NOT sent to {attendeeEmail}.</div>
+                <div className="mt-1 text-xs">
+                  The meeting is saved in the CRM, but nothing reached the attendee.
+                  Connect this host&rsquo;s calendar in Settings, then send the invite
+                  manually or reschedule.
+                </div>
+              </div>
+            ) : success.htmlLink ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                ✓ Meeting added to the calendar. No invite was sent, as requested.
+              </div>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+                Saved to CRM only — no calendar event was created.
+              </div>
+            )}
             {warning && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
                 ⚠ {warning}

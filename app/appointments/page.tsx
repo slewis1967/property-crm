@@ -62,8 +62,13 @@ const fmtDateTime = (s: string | null | undefined) =>
   s ? new Date(s).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—";
 
 export default async function AppointmentsPage() {
-  const nowIso = new Date().toISOString();
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400_000).toISOString();
+  // Stamp "now" once and thread it down, rather than each row calling Date.now()
+  // mid-render — that made a row's past/upcoming styling depend on when React
+  // happened to render it.
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const nowMs = now.getTime();
+  const thirtyDaysAgo = new Date(nowMs - 30 * 86400_000).toISOString();
 
   const [
     { data: upcoming },
@@ -110,7 +115,7 @@ export default async function AppointmentsPage() {
 
   // Resolve archive contact names in one batch
   const archContactIds = Array.from(
-    new Set((archiveAppts ?? []).map((a: any) => a.contact_id).filter(Boolean))
+    new Set((archiveAppts ?? []).map((a) => a.contact_id).filter(Boolean))
   );
   let archContactsById: Record<string, { name: string; email: string }> = {};
   if (archContactIds.length > 0) {
@@ -120,7 +125,7 @@ export default async function AppointmentsPage() {
       .in("id", archContactIds);
     if (contacts) {
       archContactsById = Object.fromEntries(
-        contacts.map((c: any) => [
+        contacts.map((c) => [
           c.id,
           {
             name:
@@ -135,14 +140,15 @@ export default async function AppointmentsPage() {
   }
 
   const archCalsById: Record<string, string> = Object.fromEntries(
-    (archiveCalendars ?? []).map((c: any) => [c.id, c.name || "(unnamed)"])
+    (archiveCalendars ?? []).map((c) => [c.id, c.name || "(unnamed)"])
   );
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Appointments</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Live Cal.com bookings (updated automatically via the booking webhook) plus the GHL archive of historical calendar bookings.
+        Meetings scheduled from the CRM and legacy Cal.com bookings, plus the GHL archive of historical calendar bookings.
+        Bookings made outside the CRM are not synced back here.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
@@ -152,12 +158,12 @@ export default async function AppointmentsPage() {
         <StatCard label="Archive (recent 100)" value={archiveAppts?.length ?? 0} accent="bg-purple-50 text-purple-700 border-purple-200" />
       </div>
 
-      <Section title={`Upcoming (${upcoming?.length ?? 0})`} rows={upcoming as AppointmentRow[] | null} emptyText="No upcoming bookings." showBrief />
+      <Section title={`Upcoming (${upcoming?.length ?? 0})`} rows={upcoming as AppointmentRow[] | null} emptyText="No upcoming bookings." nowMs={nowMs} showBrief />
 
-      <Section title={`Past 30 days (${past?.length ?? 0})`} rows={past as AppointmentRow[] | null} emptyText="No bookings in the last 30 days." pastView />
+      <Section title={`Past 30 days (${past?.length ?? 0})`} rows={past as AppointmentRow[] | null} emptyText="No bookings in the last 30 days." nowMs={nowMs} pastView />
 
       {cancelled && cancelled.length > 0 && (
-        <Section title={`Cancelled (${cancelled.length})`} rows={cancelled as AppointmentRow[] | null} emptyText="" pastView />
+        <Section title={`Cancelled (${cancelled.length})`} rows={cancelled as AppointmentRow[] | null} emptyText="" nowMs={nowMs} pastView />
       )}
 
       {/* GHL archive calendars + appointments — historical record */}
@@ -169,7 +175,7 @@ export default async function AppointmentsPage() {
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex flex-wrap gap-2">
-              {archiveCalendars.map((c: any) => (
+              {archiveCalendars.map((c) => (
                 <span
                   key={c.id}
                   className={`px-3 py-1 rounded-lg text-sm ${
@@ -243,7 +249,7 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function Section({ title, rows, emptyText, pastView = false, showBrief = false }: { title: string; rows: AppointmentRow[] | null; emptyText: string; pastView?: boolean; showBrief?: boolean }) {
+function Section({ title, rows, emptyText, nowMs, pastView = false, showBrief = false }: { title: string; rows: AppointmentRow[] | null; emptyText: string; nowMs: number; pastView?: boolean; showBrief?: boolean }) {
   return (
     <section className="mb-8">
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">{title}</h2>
@@ -253,7 +259,7 @@ function Section({ title, rows, emptyText, pastView = false, showBrief = false }
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
           {rows.map((a) => {
             const start = new Date(a.start_time);
-            const isPast = start.getTime() < Date.now();
+            const isPast = start.getTime() < nowMs;
             return (
               <div key={a.id} className="flex items-start justify-between gap-3 px-4 py-3 text-sm">
                 <div className="flex-1 min-w-0">
