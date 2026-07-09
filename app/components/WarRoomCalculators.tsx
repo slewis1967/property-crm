@@ -40,10 +40,70 @@ import {
 // computed outputs). Callers — like the opportunity detail page's
 // "Calculations" section — use those to load + save scenarios.
 
-export type CalcSnapshot = { inputs: Record<string, any>; outputs: Record<string, any> };
+// A calculator snapshot is a heterogeneous, JSON-serialisable bag: the values
+// are the primitives each calculator reads/writes plus the borrowing
+// calculator's existing-property array. Persisted as-is to the
+// opportunity_calculations table, so it stays deliberately loose but typed.
+type CalcValue = number | string | boolean | null | ExistingProperty[];
+export type CalcInputs = Record<string, CalcValue>;
+export type CalcOutputs = Record<string, CalcValue>;
+
+export type CalcSnapshot = { inputs: CalcInputs; outputs: CalcOutputs };
+
+// Every field any calculator can be pre-filled from (a saved scenario's inputs
+// or a lead prefill). All optional — each calculator reads only the keys it
+// knows and falls back to its own default for the rest.
+export type CalcInitial = {
+  // Rental yield
+  price?: number;
+  weekly?: number;
+  costsPct?: number;
+  // Stamp duty
+  state?: AusState;
+  isFhb?: boolean;
+  // Borrowing capacity
+  taxYear?: TaxYear;
+  income?: number;
+  partner?: number;
+  otherIncome?: number;
+  hasHecs?: boolean;
+  partnerHasHecs?: boolean;
+  hecsBalance?: number;
+  claimsStandardDeduction?: boolean;
+  dependents?: number;
+  declaredExpenses?: number;
+  deposit?: number;
+  closingCosts?: number;
+  newWeeklyRent?: number;
+  newPropertyIsNewBuild?: boolean;
+  properties?: ExistingProperty[];
+  creditLimit?: number;
+  personalLoan?: number;
+  carLoan?: number;
+  otherDebts?: number;
+  consumerDebtBalance?: number;
+  rate?: number;
+  buffer?: number;
+  loanTerm?: number;
+  rentShading?: number;
+  dtiCap?: number;
+  negativeGearing?: boolean;
+  // Legacy single-mortgage fields, folded into `properties` on load
+  existingMortgageBalance?: number;
+  existingMortgageRate?: number;
+  existingMortgageTerm?: number;
+  // Capital growth
+  pv?: number;
+  // First Home Guarantee
+  region?: "capital" | "regional";
+  partnerIncome?: number;
+  // Loan repayments
+  loan?: number;
+  years?: number;
+};
 
 export type CalcProps = {
-  initial?: Record<string, any>;
+  initial?: CalcInitial;
   onChange?: (snapshot: CalcSnapshot) => void;
 };
 
@@ -57,10 +117,6 @@ function useCalcSync(snapshot: CalcSnapshot, onChange: CalcProps["onChange"]) {
   }, [sig, !!onChange]);
 }
 
-const fmt = (n: number, opts: Intl.NumberFormatOptions = {}) =>
-  new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0, ...opts }).format(
-    isFinite(n) ? n : 0,
-  );
 const fmtCurrency = (n: number) =>
   new Intl.NumberFormat("en-AU", {
     style: "currency",
@@ -220,7 +276,7 @@ function migrateProperties(initial: CalcProps["initial"]): ExistingProperty[] {
       {
         ...emptyProperty(newPropertyId(), "Existing home"),
         use: "owner_occupied",
-        loanBalance: initial!.existingMortgageBalance,
+        loanBalance: initial!.existingMortgageBalance ?? 0,
         rate: initial!.existingMortgageRate ?? 6.5,
         termRemaining: initial!.existingMortgageTerm ?? 25,
       },

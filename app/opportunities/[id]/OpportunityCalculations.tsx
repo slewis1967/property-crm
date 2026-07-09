@@ -11,7 +11,7 @@
  * are re-used as-is via their exported components + onChange callback.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   YieldCalculator,
   StampDutyCalculator,
@@ -20,6 +20,8 @@ import {
   FhgEligibilityCalculator,
   LoanRepaymentCalculator,
   type CalcSnapshot,
+  type CalcInitial,
+  type CalcOutputs,
 } from "../../components/WarRoomCalculators";
 
 type CalcType = "yield" | "stamp_duty" | "borrowing" | "growth" | "fhg" | "repayment";
@@ -28,32 +30,32 @@ type Calculation = {
   id: string;
   calculator_type: CalcType;
   name: string;
-  inputs: Record<string, any>;
-  outputs: Record<string, any> | null;
+  inputs: CalcInitial;
+  outputs: CalcOutputs | null;
   created_at: string;
   updated_at: string;
 };
 
-const CALC_META: Record<CalcType, { label: string; emoji: string; headline: (out: any) => string }> = {
+const CALC_META: Record<CalcType, { label: string; emoji: string; headline: (out: CalcOutputs) => string }> = {
   yield: {
     label: "Rental yield",
     emoji: "🧮",
-    headline: (o) => `${(o?.netYield ?? 0).toFixed(2)}% net`,
+    headline: (o) => `${Number(o?.netYield ?? 0).toFixed(2)}% net`,
   },
   stamp_duty: {
     label: "Stamp duty",
     emoji: "📋",
-    headline: (o) => `${fmtCurrency(o?.payable ?? 0)} payable`,
+    headline: (o) => `${fmtCurrency(Number(o?.payable ?? 0))} payable`,
   },
   borrowing: {
     label: "Borrowing capacity",
     emoji: "💰",
-    headline: (o) => `${fmtCurrency(o?.maxLoan ?? 0)} max loan`,
+    headline: (o) => `${fmtCurrency(Number(o?.maxLoan ?? 0))} max loan`,
   },
   growth: {
     label: "Capital growth",
     emoji: "📈",
-    headline: (o) => `${fmtCurrency(o?.in10 ?? 0)} in 10y`,
+    headline: (o) => `${fmtCurrency(Number(o?.in10 ?? 0))} in 10y`,
   },
   fhg: {
     label: "First Home Guarantee",
@@ -63,7 +65,7 @@ const CALC_META: Record<CalcType, { label: string; emoji: string; headline: (out
   repayment: {
     label: "Loan repayments",
     emoji: "🏠",
-    headline: (o) => `${fmtCurrency(o?.piMonthly ?? 0)}/mo P&I`,
+    headline: (o) => `${fmtCurrency(Number(o?.piMonthly ?? 0))}/mo P&I`,
   },
 };
 
@@ -81,7 +83,7 @@ function CalculatorByType({
   onChange,
 }: {
   type: CalcType;
-  initial?: Record<string, any>;
+  initial?: CalcInitial;
   onChange: (s: CalcSnapshot) => void;
 }) {
   switch (type) {
@@ -107,7 +109,7 @@ type BorrowingPrefill = {
   existing_savings?: number | null;
 };
 
-function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): Record<string, any> | undefined {
+function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): CalcInitial | undefined {
   if (!lead) return undefined;
   const has =
     lead.annual_income != null ||
@@ -144,20 +146,28 @@ export default function OpportunityCalculations({
     existing: Calculation | null;
   } | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const res = await fetch(`/api/opportunities/${opportunityId}/calculations`, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Load failed (${res.status})`);
       setCalcs(data.calculations || []);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Load failed");
     } finally {
       setLoading(false);
     }
-  };
+  }, [opportunityId]);
 
-  useEffect(() => { refresh(); }, [opportunityId]);
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      if (active) await refresh();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [refresh]);
 
   const remove = async (id: string) => {
     if (!window.confirm("Delete this calculation?")) return;
@@ -194,7 +204,7 @@ export default function OpportunityCalculations({
         <p className="text-xs text-gray-400">Loading…</p>
       ) : calcs.length === 0 ? (
         <p className="text-xs text-gray-400">
-          No calculations saved yet. Click "+ New scenario" to run one and save it here.
+          No calculations saved yet. Click &quot;+ New scenario&quot; to run one and save it here.
         </p>
       ) : (
         <div className="space-y-1.5">
@@ -288,7 +298,7 @@ function CalculatorEditor({
   /** Used as `initial` for a brand-new scenario when the lead row has
    *  financial data on it. Existing scenarios always use their own
    *  saved inputs (so a user-edited "what if" isn't blown away). */
-  leadPrefill?: Record<string, any>;
+  leadPrefill?: CalcInitial;
   onClose: () => void;
   onSaved: (saved: Calculation) => void;
 }) {
@@ -323,8 +333,8 @@ function CalculatorEditor({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
       onSaved(data.calculation);
-    } catch (e: any) {
-      setErr(e.message);
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Save failed");
       setSaving(false);
     }
   };
@@ -348,7 +358,7 @@ function CalculatorEditor({
         <div className="px-6 py-5">
           {!existing && leadPrefill && (
             <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-800">
-              Pre-filled from this opportunity's saved profile (income, partner income,
+              Pre-filled from this opportunity&apos;s saved profile (income, partner income,
               dependents, HECS). Adjust below as needed.
             </div>
           )}
