@@ -5,6 +5,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## WHAT THIS IS
 Next.js 15 property CRM for NextKey Property Strategists. Displays and manages property listings from Supabase. Runs on port 3000.
 
+## CRITICAL: THIS IS A SHARED CHECKOUT — NEVER stash/reset/checkout HERE
+Multiple Claude sessions work in `C:\Users\Seans GP\property-crm` at once. A
+session has already **destroyed another session's uncommitted work** by running
+`git stash` / `git reset --hard` / `git checkout` in this shared tree.
+
+This is now an **enforced control, not a request.** `scripts/guard-git.sh`
+installs a `git` shim that REFUSES `stash`, `reset --hard`, `checkout`,
+`switch`, `restore`, and `clean -f` whenever the marker file
+`.shared-checkout-guard` is present (it is, in this checkout only). You will see
+a red `BLOCKED` message.
+
+- **Need to change branches / discard / experiment?** Make your own throwaway
+  worktree — the safe path is one command:
+  ```bash
+  bash scripts/agent-worktree.sh my-task
+  # prints:  cd <scratchpad>/wt-my-task   (destructive git is fine THERE)
+  ```
+- **First-time activation on a machine:** `bash scripts/install-guard.sh`
+- **Genuine emergency:** opt in loudly, it is logged:
+  `ALLOW_DESTRUCTIVE=1 git reset --hard <ref>`
+
+Why a shim and not a git hook: git has no pre-stash/pre-reset/pre-checkout hook,
+and the only hook that fires (`reference-transaction`) fires *after* the working
+tree is already clobbered — aborting it during `git stash` loses the data. The
+shim is the only thing that can stop the command before it runs.
+
 ## CRITICAL: WSL / TURBOPACK FILE-WATCH ISSUE
 Turbopack's file watcher does not detect changes made from WSL. **After editing any CRM file from WSL, you must restart `next dev` from the Windows terminal** — otherwise the browser serves stale compiled chunks. The symptom is correct source code but wrong runtime behaviour (old field names, missing UI changes).
 

@@ -56,3 +56,8 @@ __pycache__/
 # Voice test recordings (PII risk)
 output.wav
 *.wav
+
+# shared-checkout destructive-git guard (scripts/guard-git.sh)
+.shared-checkout-guard
+.git/guard-overrides.log
+.worktrees/
