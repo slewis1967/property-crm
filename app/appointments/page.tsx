@@ -142,7 +142,8 @@ export default async function AppointmentsPage() {
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Appointments</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Live Cal.com bookings (updated automatically via the booking webhook) plus the GHL archive of historical calendar bookings.
+        Meetings scheduled from the CRM and legacy Cal.com bookings, plus the GHL archive of historical calendar bookings.
+        Bookings made outside the CRM are not synced back here.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">

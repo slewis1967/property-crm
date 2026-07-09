@@ -10,27 +10,11 @@ import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
   "Proposal Sent", "Negotiating", "Closed Won", "Closed Lost",
-];
-
-// Hosts who can schedule meetings from the CRM. Email is the key —
-// the server looks up the corresponding refresh_token in
-// public.calendar_credentials. Add a new entry once that host has
-// connected their calendar via Settings → Calendar connections.
-const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: string }> = [
-  {
-    label: "Sean",
-    email: "sean.l@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/19ocFJGhcTHSFKBg7",
-  },
-  {
-    label: "Glenn",
-    email: "glenn.m@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/tyLLhLCA7k686t5L9",
-  },
 ];
 
 const stageStyle: Record<string, string> = {
@@ -376,7 +360,7 @@ export default function OpportunityDetail({
             </button>
             {showBookingLinks && (
               <div className="absolute right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
-                {SCHEDULING_HOSTS.map((host) => (
+                {SCHEDULING_HOSTS.filter((h) => h.bookingPageUrl).map((host) => (
                   <a
                     key={host.email}
                     href={host.bookingPageUrl}

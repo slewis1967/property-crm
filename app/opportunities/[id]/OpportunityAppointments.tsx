@@ -1,8 +1,9 @@
 "use client";
 
 /**
- * OpportunityAppointments — small read-only list of Cal.com bookings
- * matching this lead's email. Goes through /api/opportunities/{id}/appointments
+ * OpportunityAppointments — small read-only list of bookings matching this
+ * lead's email: meetings scheduled from the CRM, plus any legacy rows from the
+ * old Cal.com feed. Goes through /api/opportunities/{id}/appointments
  * (server-side Supabase query) since the supabase util is service-role only
  * and can't be imported into a "use client" bundle.
  */
