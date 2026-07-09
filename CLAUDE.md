@@ -87,6 +87,18 @@ A digital rebuild of the seven-page paper "Generic Borrower Fact Finder Form", s
 
 **`factFindsTableMissing()` is deliberately narrow.** The obvious guard — testing the error message for `schema cache` or `does not exist` — also matches *column*-level errors (PGRST204 / 42703), so a schema mismatch reports itself as "run the migration" for a migration you have already run. Match the table-level codes (`42P01` / `PGRST205`) instead. Any other table-missing guard added to this repo should do the same.
 
+### Borrowing capacity engine (`utils/finance/`)
+Pure, tax-year-aware servicing model behind the War Room **Borrowing capacity** card (`app/components/WarRoomCalculators.tsx`) and the opportunity **Calculations** section. The component is a thin UI over it; all arithmetic lives here and is vitest-tested (`tax.test.ts`, `capacity.test.ts`).
+- `tax.ts` — `incomeTax`/`marginalTaxRate` (bracket tables per `TaxYear`), `lito`, `medicareLevy` (**household**: singles vs family thresholds + per-child steps — never call it per applicant), `hecsRepayment` (marginal bands **plus** a flat 10%-of-total band above the top threshold), `standardDeduction`, `personalTax` (returns `netBeforeMedicare` on purpose).
+- `stampDuty.ts` — `standardDuty` / `fhbDuty` / `dutyPayable` by state, moved out of the component so `capacity.ts` can net duty off the deposit without importing a client component.
+- `capacity.ts` — `computeCapacity`, `assessProperty`, `autoAnnualCosts`, `solvePurchasePrice`, `negativeGearingAllowed`.
+
+**Three tax years are live** (`TaxYear` = `2025-26 | 2026-27 | 2027-28`, default `CURRENT_TAX_YEAR`), because two reform packages are law: the lowest marginal rate steps 16c → 15c (1 Jul 2026) → 14c (1 Jul 2027); the $1,000 standard work-expense deduction starts 2026-27; and **negative gearing is limited to new builds from 1 Jul 2027**, with property held at 7:30pm AEST 12 May 2026 grandfathered. Hence `ExistingProperty.heldBeforeNgCutoff` / `.isNewBuild` and `CapacityInputs.newPropertyIsNewBuild`. Changing `taxYear` legitimately changes the answer — that is not a bug.
+
+**Two fixed points, both deliberate.** (1) Stamp duty depends on the purchase price, which depends on the duty-reduced deposit — `solvePurchasePrice` iterates (duty's ~5% marginal rate makes it a contraction). (2) The new property's rental loss depends on its interest, which depends on the loan being solved for — `computeCapacity` iterates and reports `converged`.
+
+**Gotchas.** A rental loss is applied as a *deduction inside `personalTax`*, not as a separate income add-back: the cash drag is already in `portfolioNetMonthly`, so adding it again would double-count. It IS added back for HELP repayment income (net investment losses), so gearing never discounts HECS. Losses are attributed to the higher earner. DTI counts *balances* (mortgages, card limits at face value, `consumerDebtBalance`) while servicing counts *repayments* — a consumer balance must move `maxLoanByDti` and leave `maxLoanByServicing` untouched. The 2026-27 Medicare thresholds aren't published yet, so 2025-26 figures are carried forward. Depreciation and capital works are not modelled, so the negative-gearing benefit is understated.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
