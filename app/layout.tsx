@@ -123,6 +123,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/feasibility" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🗺️</span> Planning Feasibility
             </a>
+            <a href="/prospecting" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🧭</span> Region Prospecting
+            </a>
+            <a href="/deals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>⭐</span> Dev Watchlist
+            </a>
 
             <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
             <Link href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
