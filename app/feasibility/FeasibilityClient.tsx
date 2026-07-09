@@ -65,13 +65,40 @@ const PILL: Record<Tone, string> = {
   info: "bg-[#E0F2F1] text-[#0F4C5C]",
 };
 
-async function callApi(phase: "interview" | "report", messages: Msg[], address: string) {
+async function callApi(
+  phase: "interview" | "report" | "prepare",
+  messages: Msg[],
+  address: string,
+  prepared?: unknown,
+) {
   const res = await fetch("/api/ai/planning-feasibility", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phase, messages, address }),
+    body: JSON.stringify({ phase, messages, address, prepared }),
   });
-  const json = await res.json();
+  // On a serverless timeout the platform returns a truncated HTML error page,
+  // not JSON — parse defensively so the user gets a clear, actionable message
+  // instead of a raw "Unexpected token <" JSON.parse exception.
+  const raw = await res.text();
+  let json: {
+    ok?: boolean;
+    error?: string;
+    understanding?: string;
+    status?: string;
+    questions?: Question[];
+    report?: Report;
+    location?: { lat: number; lng: number } | null;
+    satellite?: string | null;
+  };
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      res.status >= 500
+        ? "The server hit an error or timeout — please try again."
+        : `Request failed (${res.status}).`,
+    );
+  }
   if (!res.ok || !json.ok) {
     throw new Error(json?.error || `Request failed (${res.status})`);
   }
@@ -230,7 +257,14 @@ export default function FeasibilityClient({
     setLoading(true);
     setError("");
     try {
-      const json = await callApi("report", msgs, address);
+      // Two-step so each request stays under the serverless function cap: a fast
+      // "prepare" (geocode + satellite, no model call), then the AI-only report.
+      const prep = await callApi("prepare", msgs, address);
+      const json = await callApi("report", msgs, address, {
+        location: prep.location,
+        satellite: prep.satellite,
+      });
+      if (!json.report) throw new Error("The report came back empty. Please try again.");
       setReport(json.report);
       setStage("report");
     } catch (e) {

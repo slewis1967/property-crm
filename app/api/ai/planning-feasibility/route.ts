@@ -11,14 +11,18 @@ export const maxDuration = 120;
 /**
  * Planning Feasibility — AI-led, Australia-wide.
  *
- * Two phases over one shared transcript (`messages`):
+ * Phases over one shared transcript (`messages`):
  *  - phase "interview": the AI identifies the LGA / planning scheme from the
  *    address (web search) and asks the advisor a small batch of targeted
  *    questions, or signals it has enough. Returns { status, understanding,
  *    questions[] }.
- *  - phase "report": the AI produces a comprehensive preliminary planning
- *    feasibility report as structured JSON (rendered client-side into the
- *    NextKey letterhead + print-to-PDF).
+ *  - phase "prepare": runs the slow site I/O only (geocode + satellite tile),
+ *    no model call, so the report request stays under the serverless function
+ *    time cap. Returns { location, satellite } for the client to hand back.
+ *  - phase "report": AI-only. Consumes `prepared` (location + satellite) and
+ *    produces a comprehensive preliminary planning feasibility report as
+ *    structured JSON (rendered client-side into the NextKey letterhead +
+ *    print-to-PDF).
  *
  * Australian context: the model adapts to the relevant state's planning system
  * (QLD City Plans / Reconfiguring a Lot; NSW LEP+DCP / DA+CDC / min lot size;
@@ -163,53 +167,81 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const phase: "interview" | "report" = body?.phase === "report" ? "report" : "interview";
+    const phase: "interview" | "report" | "prepare" =
+      body?.phase === "report" ? "report" : body?.phase === "prepare" ? "prepare" : "interview";
     const messages: Msg[] = Array.isArray(body?.messages) ? body.messages : [];
 
-    if (messages.length === 0) {
+    // "prepare" only needs the address; interview/report need the transcript.
+    if (phase !== "prepare" && messages.length === 0) {
       return NextResponse.json(
         { ok: false, error: "messages required" },
         { status: 400 },
       );
     }
 
-    const system = phase === "report" ? REPORT_SYS : INTERVIEW_SYS;
     const address = typeof body?.address === "string" ? body.address.trim() : "";
 
-    // For the report, geocode the address and pull a current satellite image so
-    // the (vision-capable) model can read the site directly. Best-effort — if
-    // any step fails we fall back to web-search-only research.
+    // The slow site I/O (geocode + satellite fetch) is gathered in a separate,
+    // fast "prepare" call and handed back into the "report" call via
+    // `body.prepared`, so the report request is AI-only and each request stays
+    // under Netlify's ~26s function cap. When `prepared` is absent (older client)
+    // we still compute inline for backward compatibility.
+    const prepared = body?.prepared as
+      | { location?: { lat: number; lng: number } | null; satellite?: string | null }
+      | undefined;
+
+    // "prepare": geocode the address + pull a current satellite tile. No model
+    // call — fast. Timed so production logs show the real site-I/O cost.
+    if (phase === "prepare") {
+      const t0 = Date.now();
+      let location: { lat: number; lng: number } | null = null;
+      let satellite: string | null = null;
+      if (address) {
+        location = await geocodeAU(address);
+        if (location) satellite = await fetchSatelliteDataUrl(location.lat, location.lng);
+      }
+      log.info("planning_feasibility.prepare_ms", {
+        ms: Date.now() - t0,
+        hasLocation: !!location,
+        hasSatellite: !!satellite,
+      });
+      return NextResponse.json({ ok: true, location, satellite });
+    }
+
+    const system = phase === "report" ? REPORT_SYS : INTERVIEW_SYS;
+
+    // Report: reuse the prepared site data; fall back to inline geocode only if
+    // an older client didn't send it. The satellite image is returned to the
+    // client for the map but is deliberately NOT sent to the report model —
+    // vision on the ~180KB tile added ~10s of latency on its own.
     let location: { lat: number; lng: number } | null = null;
-    let satelliteDataUrl: string | null = null;
-    if (phase === "report" && address) {
-      location = await geocodeAU(address);
-      if (location) satelliteDataUrl = await fetchSatelliteDataUrl(location.lat, location.lng);
+    if (phase === "report") {
+      if (prepared && "location" in prepared) {
+        location = prepared.location ?? null;
+      } else if (address) {
+        location = await geocodeAU(address);
+      }
     }
 
     const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: system },
       ...messages,
     ];
-    if (satelliteDataUrl) {
-      chatMessages.push({
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Current satellite/aerial image of the subject site (Esri World Imagery). Analyse it to assess lot shape, existing buildings and roof footprints, driveways and access, setbacks, vacant/backyard area, vegetation and the surrounding development pattern.",
-          },
-          { type: "image_url", image_url: { url: satelliteDataUrl } },
-        ],
-      });
-    }
 
+    // Report is AI-only (site I/O pre-fetched in "prepare"). We keep web search
+    // on — it is the report's only grounding, and an ungrounded report that
+    // invents planning figures is worse than a slow one. To claw back latency we
+    // drop the satellite vision image (~10s) and lower effort/tokens. Interview
+    // keeps its lighter settings.
+    const modelT0 = Date.now();
     const text = await orText({
       model: MODELS.smart,
       web: true,
-      effort: phase === "report" ? "high" : "medium",
-      maxTokens: phase === "report" ? 9000 : 1500,
+      effort: "medium",
+      maxTokens: phase === "report" ? 6000 : 1500,
       messages: chatMessages,
     });
+    log.info("planning_feasibility.model_ms", { phase, ms: Date.now() - modelT0 });
 
     let parsed: unknown;
     try {
