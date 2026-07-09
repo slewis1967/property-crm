@@ -110,6 +110,13 @@ Pure, tax-year-aware servicing model behind the War Room **Borrowing capacity** 
 **Two fixed points, both deliberate.** (1) Stamp duty depends on the purchase price, which depends on the duty-reduced deposit — `solvePurchasePrice` iterates (duty's ~5% marginal rate makes it a contraction). (2) The new property's rental loss depends on its interest, which depends on the loan being solved for — `computeCapacity` iterates and reports `converged`.
 
 **Gotchas.** A rental loss is applied as a *deduction inside `personalTax`*, not as a separate income add-back: the cash drag is already in `portfolioNetMonthly`, so adding it again would double-count. It IS added back for HELP repayment income (net investment losses), so gearing never discounts HECS. Losses are attributed to the higher earner. DTI counts *balances* (mortgages, card limits at face value, `consumerDebtBalance`) while servicing counts *repayments* — a consumer balance must move `maxLoanByDti` and leave `maxLoanByServicing` untouched. The 2026-27 Medicare thresholds aren't published yet, so 2025-26 figures are carried forward. Depreciation and capital works are not modelled, so the negative-gearing benefit is understated.
+### Borrower Fact Find (`app/fact-find/` + `app/api/fact-finds/` + `utils/factfind.ts`)
+A digital rebuild of the seven-page paper "Generic Borrower Fact Finder Form", section for section: applicants → companies/trusts → advisors → loan required → security offered → personal financial statements → disclosures → declarations → privacy consent. Sidebar link **Fact Find** under CRM.
+- `utils/factfind.ts` — the single source of truth for the document: `FactFindData` shape, enums, `emptyFactFind()`, `hydrateFactFind()` (merges a stored blob over the current template so older rows still open), `computeTotals()` (liabilities/assets/surplus/monthly commitments), `outstandingSections()` (advisory completeness check — never blocks a save). Pure + vitest-tested (`utils/factfind.test.ts`).
+- `app/api/fact-finds/route.ts` (GET list, POST create) + `app/api/fact-finds/[id]/route.ts` (GET one, PATCH, DELETE) — `requireAuth`, service-key Supabase, graceful when the table is absent. The list route selects explicit columns, never `*`, because `data` holds borrower PII (DOB, licence number, income).
+- `FactFindForm.tsx` — one form; PATCH sends the whole `data` blob (the denormalised columns are re-derived server-side so they can't drift). "Export PDF" prints the form itself: an `@media print` block flattens inputs to underlined text, so there is no separate print view to keep in sync.
+
+**Table is `borrower_fact_finds`, NOT `fact_finds`** (`migrations/20260709_borrower_fact_finds.sql`). An unrelated `fact_finds` table already exists in this Supabase project (`lead_id` → `smart_leads.id`, `financial_data`, `verified_capacity`, `ai_verification_status`) — `create table if not exists fact_finds` would silently no-op against it. Relatedly, `factFindsTableMissing()` is deliberately narrower than `dealsTableMissing()`: the latter's loose `schema cache` / `does not exist` substring test also matches *column*-level errors (PGRST204 / 42703), which would tell the operator to re-run a migration they'd already run.
 
 ### Region Prospecting (`app/prospecting/` + `utils/prospecting/` + `app/api/prospecting/`)
 Comb a whole region for parcels with subdivision headroom, then hand any candidate to the feasibility tool. Sidebar link under **Command**. NSW-only (minimum lot size — needed to test subdivision — is the one subdivision control published statewide as queryable data).
@@ -164,6 +171,8 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/opportunities` | GHL pipeline |
 | `/opportunities/[id]` | Opportunity detail |
 | `/leads` | Inbound leads pipeline |
+| `/fact-find` | Borrower Fact Find — list of fact finds |
+| `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
 | `/contacts` | GHL contacts (client-side tag filter dropdown on `ContactsClient.tsx`) |
 | `/contacts/[id]` | Contact detail |
 | `/appointments` | Appointments |
