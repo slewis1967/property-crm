@@ -77,6 +77,16 @@ AI-led, Australia-wide development-feasibility tool. The advisor describes a pro
 
 **Persistence** (`app/api/feasibility/reports/` + `migrations/20260701_feasibility_reports.sql`). "Save to CRM" in the report toolbar POSTs the report + transcript to `feasibility_reports` (jsonb, `created_by`, optional `property_id`); the start screen lists saved reports (GET) with open/delete. The routes degrade gracefully if the table doesn't exist yet (list returns empty; save returns a "run the migration" message), so the code is safe to deploy before the SQL is applied in the Supabase editor.
 
+### Borrower Fact Find (`app/fact-find/` + `app/api/fact-finds/` + `utils/factfind.ts`)
+A digital rebuild of the seven-page paper "Generic Borrower Fact Finder Form", section for section: applicants → companies/trusts → advisors → loan required → security offered → personal financial statements → disclosures → declarations → privacy consent. Sidebar link **Fact Find** under CRM.
+- `utils/factfind.ts` — the single source of truth for the document: `FactFindData` shape, enums, `emptyFactFind()`, `hydrateFactFind()` (merges a stored blob over the current template so older rows still open), `computeTotals()` (liabilities/assets/surplus/monthly commitments), `formatMoney()`, `outstandingSections()` (advisory completeness check — never blocks a save). Pure + vitest-tested (`utils/factfind.test.ts`).
+- `app/api/fact-finds/route.ts` (GET list, POST create) + `app/api/fact-finds/[id]/route.ts` (GET one, PATCH, DELETE) — `requireAuth`, service-key Supabase, graceful when the table is absent. The list route selects explicit columns, never `*`, because `data` holds borrower PII (DOB, licence number, income).
+- `FactFindForm.tsx` — one form; PATCH sends the whole `data` blob (the denormalised columns are re-derived server-side so they can't drift). "Export PDF" prints the form itself: an `@media print` block flattens inputs to underlined text and swaps each money `<input type=number>` for a formatted twin (`$400,000`, not `400000`), so there is no separate print view to keep in sync. The privacy notice is a scroll box on screen and is explicitly unclipped for print — without that, the page the applicant signs shows only the first screenful of a legally required notice.
+
+**Table is `borrower_fact_finds`, NOT `fact_finds`** (`migrations/20260709_borrower_fact_finds.sql`). An unrelated `fact_finds` table already exists in this Supabase project (`lead_id` → `smart_leads.id`, `financial_data`, `verified_capacity`, `ai_verification_status`) — `create table if not exists fact_finds` would silently no-op against it and leave the feature broken.
+
+**`factFindsTableMissing()` is deliberately narrow.** The obvious guard — testing the error message for `schema cache` or `does not exist` — also matches *column*-level errors (PGRST204 / 42703), so a schema mismatch reports itself as "run the migration" for a migration you have already run. Match the table-level codes (`42P01` / `PGRST205`) instead. Any other table-missing guard added to this repo should do the same.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
@@ -115,6 +125,8 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/opportunities` | GHL pipeline |
 | `/opportunities/[id]` | Opportunity detail |
 | `/leads` | Inbound leads pipeline |
+| `/fact-find` | Borrower Fact Find — list of fact finds |
+| `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
 | `/contacts` | GHL contacts (client-side tag filter dropdown on `ContactsClient.tsx`) |
 | `/contacts/[id]` | Contact detail |
 | `/appointments` | Appointments |
