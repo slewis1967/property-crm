@@ -97,6 +97,15 @@ export type Applicant = {
   date_of_birth: string;
   drivers_licence: string;
   occupation: string;
+  /**
+   * Servicing fields. The paper form doesn't ask for income — it only ever fed
+   * a credit submission, where income arrived on payslips. Captured here so the
+   * fact find can drive the borrowing-capacity engine (`utils/factfind-capacity.ts`).
+   */
+  annual_income: number | null;
+  has_hecs: boolean;
+  /** Outstanding HELP balance. Caps the compulsory repayment. */
+  hecs_balance: number | null;
 };
 
 export type Entity = {
@@ -169,6 +178,20 @@ export type Asset = {
   value: number | null;
 };
 
+/**
+ * Household servicing inputs. Lenders assess living expenses against the
+ * higher of declared and the HEM benchmark, so leaving `monthly_living_expenses`
+ * null is safe — the capacity engine falls back to HEM.
+ */
+export type Servicing = {
+  dependents: number | null;
+  monthly_living_expenses: number | null;
+};
+
+export function emptyServicing(): Servicing {
+  return { dependents: null, monthly_living_expenses: null };
+}
+
 export type Disclosure = {
   answer: "yes" | "no" | null;
   details: string;
@@ -188,6 +211,8 @@ export type FactFindData = {
     statement_for: string;
     liabilities: Liability[];
     assets: Asset[];
+    /** Household figures a lender needs but the paper form never asked for. */
+    servicing: Servicing;
   };
   disclosures: Record<string, Disclosure>;
   declarations: {
@@ -237,6 +262,9 @@ function emptyApplicant(): Applicant {
     date_of_birth: "",
     drivers_licence: "",
     occupation: "",
+    annual_income: null,
+    has_hecs: false,
+    hecs_balance: null,
   };
 }
 
@@ -354,6 +382,7 @@ export function emptyFactFind(): FactFindData {
       statement_for: "",
       liabilities: defaultLiabilities(),
       assets: defaultAssets(),
+      servicing: emptyServicing(),
     },
     disclosures: Object.fromEntries(
       DISCLOSURE_QUESTIONS.map((q) => [q.key, { answer: null, details: "" } as Disclosure]),
@@ -411,6 +440,8 @@ export function hydrateFactFind(raw: unknown): FactFindData {
         ? d.financials.liabilities
         : base.financials.liabilities,
       assets: Array.isArray(d.financials?.assets) ? d.financials.assets : base.financials.assets,
+      // Rows saved before servicing existed merge over the empty template.
+      servicing: { ...base.financials.servicing, ...(d.financials?.servicing ?? {}) },
     },
     disclosures,
     declarations: {
