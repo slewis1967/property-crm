@@ -34,6 +34,7 @@ import {
   type FactFindData,
   type LiabilityKind,
 } from "../../../utils/factfind";
+import CapacityPanel from "./CapacityPanel";
 
 const TEAL = "#0F4C5C";
 
@@ -470,6 +471,25 @@ export default function FactFindForm({ id }: { id: string }) {
                   value={a.occupation}
                   onChange={(v) => update((d) => void (d.applicants[i].occupation = v))}
                 />
+                {/* Not on the paper form. Without income the fact find can't
+                    service, and the whole point of a fact find is to service. */}
+                <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                  <Money
+                    label="Gross annual income"
+                    value={a.annual_income}
+                    onChange={(v) => update((d) => void (d.applicants[i].annual_income = v))}
+                  />
+                  <Money
+                    label="HECS/HELP balance owing"
+                    value={a.hecs_balance}
+                    onChange={(v) =>
+                      update((d) => {
+                        d.applicants[i].hecs_balance = v;
+                        d.applicants[i].has_hecs = (v ?? 0) > 0;
+                      })
+                    }
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -694,11 +714,23 @@ export default function FactFindForm({ id }: { id: string }) {
 
         {/* 6. Financial position */}
         <Section title="Personal financial statements">
-          <div className="max-w-md mb-5">
+          <div className="grid sm:grid-cols-3 gap-3 mb-5 max-w-3xl">
             <Text
               label="Statement for"
               value={data.financials.statement_for}
               onChange={(v) => update((d) => void (d.financials.statement_for = v))}
+            />
+            <Num
+              label="Dependents"
+              value={data.financials.servicing.dependents}
+              onChange={(v) => update((d) => void (d.financials.servicing.dependents = v))}
+            />
+            <Money
+              label="Monthly living expenses"
+              value={data.financials.servicing.monthly_living_expenses}
+              onChange={(v) =>
+                update((d) => void (d.financials.servicing.monthly_living_expenses = v))
+              }
             />
           </div>
 
@@ -1093,6 +1125,9 @@ export default function FactFindForm({ id }: { id: string }) {
             ))}
           </div>
         </Section>
+
+        {/* Servicing estimate off the captured data — screen only. */}
+        <CapacityPanel data={data} />
 
         {/* Completeness helper — screen only. */}
         {missing.length > 0 && (
