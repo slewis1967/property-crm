@@ -17,14 +17,19 @@ import {
   AUS_STATES,
   autoAnnualCosts,
   computeCapacity,
+  CURRENT_TAX_YEAR,
   emptyProperty,
   fhbDuty,
   hecsEffectiveRate,
+  ngRestrictionApplies,
+  standardDeduction,
   standardDuty,
+  TAX_YEARS,
   type AssessedProperty,
   type AusState,
   type ExistingProperty,
   type PropertyUse,
+  type TaxYear,
 } from "../../utils/finance";
 
 // ─── Reusability props ─────────────────────────────────────────────────────
@@ -225,6 +230,10 @@ function migrateProperties(initial: CalcProps["initial"]): ExistingProperty[] {
 }
 
 export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
+  // Assessment year — drives the marginal rates, the standard deduction, and
+  // whether the 2027-28 negative-gearing restriction applies.
+  const [taxYear, setTaxYear] = useState<TaxYear>(initial?.taxYear ?? CURRENT_TAX_YEAR);
+
   // Income
   const [income, setIncome] = useState<number>(initial?.income ?? 120000);
   const [partner, setPartner] = useState<number>(initial?.partner ?? 0);
@@ -232,6 +241,9 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [hasHecs, setHasHecs] = useState<boolean>(initial?.hasHecs ?? false);
   const [partnerHasHecs, setPartnerHasHecs] = useState<boolean>(initial?.partnerHasHecs ?? false);
   const [hecsBalance, setHecsBalance] = useState<number>(initial?.hecsBalance ?? 0);
+  const [claimsStandardDeduction, setClaimsStandardDeduction] = useState<boolean>(
+    initial?.claimsStandardDeduction ?? true,
+  );
 
   // Household
   const [dependents, setDependents] = useState<number>(initial?.dependents ?? 0);
@@ -245,6 +257,9 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [isFhb, setIsFhb] = useState<boolean>(initial?.isFhb ?? false);
   const [closingCosts, setClosingCosts] = useState<number>(initial?.closingCosts ?? 3000);
   const [newWeeklyRent, setNewWeeklyRent] = useState<number>(initial?.newWeeklyRent ?? 0);
+  const [newPropertyIsNewBuild, setNewPropertyIsNewBuild] = useState<boolean>(
+    initial?.newPropertyIsNewBuild ?? false,
+  );
 
   // Existing portfolio
   const [properties, setProperties] = useState<ExistingProperty[]>(() => migrateProperties(initial));
@@ -254,6 +269,9 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [personalLoan, setPersonalLoan] = useState<number>(initial?.personalLoan ?? 0);
   const [carLoan, setCarLoan] = useState<number>(initial?.carLoan ?? 0);
   const [otherDebts, setOtherDebts] = useState<number>(initial?.otherDebts ?? 0);
+  const [consumerDebtBalance, setConsumerDebtBalance] = useState<number>(
+    initial?.consumerDebtBalance ?? 0,
+  );
 
   // Loan parameters
   const [rate, setRate] = useState<number>(initial?.rate ?? 6.5);
@@ -261,15 +279,18 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [loanTerm, setLoanTerm] = useState<number>(initial?.loanTerm ?? 30);
   const [rentShading, setRentShading] = useState<number>(initial?.rentShading ?? 0.8);
   const [dtiCap, setDtiCap] = useState<number>(initial?.dtiCap ?? 6);
+  const [negativeGearing, setNegativeGearing] = useState<boolean>(initial?.negativeGearing ?? true);
 
   const inputs = {
+    taxYear,
     income, partner, otherIncome, hasHecs, partnerHasHecs,
     hecsBalance: hecsBalance > 0 ? hecsBalance : null,
+    claimsStandardDeduction,
     dependents, declaredExpenses,
-    deposit, state, isFhb, closingCosts, newWeeklyRent,
+    deposit, state, isFhb, closingCosts, newWeeklyRent, newPropertyIsNewBuild,
     properties,
-    creditLimit, personalLoan, carLoan, otherDebts,
-    rate, buffer, loanTerm, rentShading, dtiCap,
+    creditLimit, personalLoan, carLoan, otherDebts, consumerDebtBalance,
+    rate, buffer, loanTerm, rentShading, dtiCap, negativeGearing,
   };
 
   // Inputs is rebuilt every render, so memoise on its serialised value rather
@@ -282,18 +303,23 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
     {
       inputs,
       outputs: {
+        taxYear: r.taxYear,
         maxLoan: r.maxLoan,
         maxLoanByServicing: r.maxLoanByServicing,
         maxLoanByDti: r.maxLoanByDti,
         bindingConstraint: r.bindingConstraint,
         dtiAtMax: r.dtiAtMax,
         monthlyNet: r.monthlyNet,
+        medicareLevy: r.medicareLevy,
         livingExp: r.livingExp,
         hem: r.hem,
         consumerDebtCommit: r.consumerDebtCommit,
         portfolioNetMonthly: r.portfolioNetMonthly,
         portfolioDebt: r.portfolioDebt,
         portfolioEquity: r.portfolioEquity,
+        deductibleLoss: r.deductibleLoss,
+        disallowedLoss: r.disallowedLoss,
+        negativeGearingBenefitMonthly: r.negativeGearingBenefitMonthly,
         surplus: r.surplus,
         purchasePrice: r.purchasePrice,
         stampDuty: r.stampDuty,
@@ -318,6 +344,28 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
 
   return (
     <Card title="Borrowing capacity" emoji="💰">
+      <Field label="Assessment year">
+        <select
+          value={taxYear}
+          onChange={(e) => setTaxYear(e.target.value as TaxYear)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+        >
+          {TAX_YEARS.map((y) => (
+            <option key={y} value={y}>
+              {y}
+              {y === CURRENT_TAX_YEAR ? " (current)" : ""}
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-gray-500 mt-1">
+          {taxYear === "2025-26" && "16c lowest bracket. No standard deduction."}
+          {taxYear === "2026-27" &&
+            "15c lowest bracket, $1,000 standard deduction. Negative gearing unrestricted."}
+          {taxYear === "2027-28" &&
+            "14c lowest bracket. Negative gearing limited to new builds and grandfathered property."}
+        </p>
+      </Field>
+
       <SubHeading>Income</SubHeading>
       <Field label="Your gross annual income">
         <NumberInput value={income} onChange={setIncome} prefix="$" step={5000} />
@@ -325,7 +373,7 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <CheckboxRow
         checked={hasHecs}
         onChange={setHasHecs}
-        label={`HECS/HELP debt (repays ~${fmtCurrency(r.applicantNet.hecs)}/yr, ${(hecsEffectiveRate(income) * 100).toFixed(1)}% of income)`}
+        label={`HECS/HELP debt (repays ~${fmtCurrency(r.applicantTax.hecs)}/yr, ${(hecsEffectiveRate(income, taxYear) * 100).toFixed(1)}% of income)`}
       />
       {hasHecs && (
         <Field label="HECS/HELP balance owing (optional — caps the repayment)">
@@ -345,6 +393,13 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <Field label="Other annual income (dividends, trust — shaded 80%)">
         <NumberInput value={otherIncome} onChange={setOtherIncome} prefix="$" step={1000} />
       </Field>
+      {standardDeduction(taxYear) > 0 && (
+        <CheckboxRow
+          checked={claimsStandardDeduction}
+          onChange={setClaimsStandardDeduction}
+          label={`Claims the ${fmtCurrency(standardDeduction(taxYear))} standard work-expense deduction`}
+        />
+      )}
 
       <SubHeading>Household</SubHeading>
       <Field label="Dependents">
@@ -385,6 +440,20 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <Field label="Expected weekly rent on the new property (0 = owner-occupied)">
         <NumberInput value={newWeeklyRent} onChange={setNewWeeklyRent} prefix="$" step={10} />
       </Field>
+      {newWeeklyRent > 0 && (
+        <>
+          <CheckboxRow
+            checked={newPropertyIsNewBuild}
+            onChange={setNewPropertyIsNewBuild}
+            label="New build"
+          />
+          <p className="text-[11px] text-gray-500 -mt-1 mb-1">
+            From 1 Jul 2027 negative gearing on residential investments is limited to new builds.
+            A property bought today is not grandfathered, so on an established dwelling the rental
+            loss stops being deductible against wage income.
+          </p>
+        </>
+      )}
 
       <SubHeading>Existing properties</SubHeading>
       {properties.length === 0 && (
@@ -399,6 +468,7 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
             key={p.id}
             property={p}
             assessed={r.assessed[idx]}
+            taxYear={taxYear}
             onChange={(patch) => updateProperty(p.id, patch)}
             onRemove={() => removeProperty(p.id)}
           />
@@ -437,6 +507,12 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <Field label="Other monthly commitments (BNPL, child support, etc)">
         <NumberInput value={otherDebts} onChange={setOtherDebts} prefix="$" step={50} />
       </Field>
+      <Field label="Total personal / car / other loan balances owing">
+        <NumberInput value={consumerDebtBalance} onChange={setConsumerDebtBalance} prefix="$" step={1000} />
+        <p className="text-[11px] text-gray-500 mt-1">
+          Balances feed the DTI ceiling; the monthly figures above feed servicing. Both matter.
+        </p>
+      </Field>
 
       <SubHeading>New loan parameters</SubHeading>
       <Field label={`Interest rate — ${rate.toFixed(2)}%`}>
@@ -462,6 +538,14 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
             onChange={(e) => setDtiCap(Number(e.target.value))} className="w-full" />
         </Field>
       </div>
+      <CheckboxRow
+        checked={negativeGearing}
+        onChange={setNegativeGearing}
+        label="Recognise negative-gearing tax benefit"
+      />
+      <p className="text-[11px] text-gray-500 -mt-1">
+        Lenders vary on whether they add this back. Untick for the conservative view.
+      </p>
 
       <Output>
         <Stat label="Estimated max loan" value={fmtCurrency(r.maxLoan)} highlight />
@@ -503,6 +587,24 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
         {newWeeklyRent > 0 && (
           <Stat label="New property rent (shaded)" value={fmtCurrency(r.newPropertyMonthlyRent)} />
         )}
+        {r.negativeGearingBenefitMonthly > 0 && (
+          <Stat
+            label="Negative-gearing tax benefit"
+            value={`${fmtCurrency(r.negativeGearingBenefitMonthly)}/mo`}
+            className="text-green-600"
+          />
+        )}
+        {r.disallowedLoss > 0 && (
+          <p className="text-[11px] text-amber-700 mt-1">
+            {fmtCurrency(r.disallowedLoss)}/yr of rental losses are{" "}
+            {negativeGearing
+              ? "not deductible against wage income in " +
+                taxYear +
+                " — established dwellings acquired after 12 May 2026 lose negative gearing."
+              : "being ignored (negative-gearing benefit switched off)."}
+          </p>
+        )}
+        <Stat label="Household Medicare levy" value={`${fmtCurrency(r.medicareLevy / 12)}/mo`} />
         <Stat label="Living expenses (HEM/declared)" value={fmtCurrency(r.livingExp)} />
         <Stat label="Consumer debt commitments" value={fmtCurrency(r.consumerDebtCommit)} />
         <Stat
@@ -521,10 +623,12 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
         )}
       </Output>
       <Disclaimer>
-        Indicative only. Negative-gearing tax benefits are not added back (lenders vary), personal
-        and car loan balances don&apos;t reach the DTI numerator, and Medicare uses the singles
-        threshold. Real capacity also turns on postcode caps, casual-income shading and FBT
-        grossing. Always confirm with a licensed broker.
+        Indicative only. Rates are current to {CURRENT_TAX_YEAR}; the 2026-27 Medicare thresholds
+        aren&apos;t published yet, so 2025-26 figures are carried forward. Depreciation and capital
+        works aren&apos;t modelled, so the negative-gearing benefit is understated. Rental losses
+        are assumed to attach to the higher earner. Real capacity also turns on postcode caps,
+        casual-income shading and FBT grossing. Always confirm with a licensed broker — and on the
+        negative-gearing and CGT changes, a tax adviser.
       </Disclaimer>
     </Card>
   );
@@ -539,15 +643,20 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
 function PropertyRow({
   property: p,
   assessed,
+  taxYear,
   onChange,
   onRemove,
 }: {
   property: ExistingProperty;
   assessed?: AssessedProperty;
+  taxYear: TaxYear;
   onChange: (patch: Partial<ExistingProperty>) => void;
   onRemove: () => void;
 }) {
   const net = assessed?.netMonthly ?? 0;
+  // The grandfathering / new-build flags only change the answer once the
+  // restriction is live, so don't clutter the row before then.
+  const ngMatters = ngRestrictionApplies(taxYear) && p.use === "investment";
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
       <div className="flex items-center gap-2 mb-2">
@@ -618,6 +727,29 @@ function PropertyRow({
         <Field label="Weekly rent">
           <NumberInput value={p.weeklyRent} onChange={(v) => onChange({ weeklyRent: v })} prefix="$" step={10} />
         </Field>
+      )}
+
+      {ngMatters && (
+        <div className="mt-1 mb-1">
+          <CheckboxRow
+            checked={p.heldBeforeNgCutoff}
+            onChange={(v) => onChange({ heldBeforeNgCutoff: v })}
+            label="Held at 12 May 2026 (grandfathered)"
+          />
+          {!p.heldBeforeNgCutoff && (
+            <CheckboxRow
+              checked={p.isNewBuild}
+              onChange={(v) => onChange({ isNewBuild: v })}
+              label="New build"
+            />
+          )}
+          {assessed && assessed.annualTaxLoss > 0 && !assessed.negativeGearingAllowed && (
+            <p className="text-[11px] text-amber-700 mt-1">
+              {fmtCurrency(assessed.annualTaxLoss)}/yr loss not deductible against wage income in{" "}
+              {taxYear}.
+            </p>
+          )}
+        </div>
       )}
 
       <Field label="Annual running costs — rates, insurance, maintenance, strata, land tax, management">
