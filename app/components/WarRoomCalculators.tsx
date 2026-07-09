@@ -13,6 +13,19 @@
  * property scenarios, depreciation schedules, and tax outcomes.
  */
 import { useEffect, useMemo, useState } from "react";
+import {
+  AUS_STATES,
+  autoAnnualCosts,
+  computeCapacity,
+  emptyProperty,
+  fhbDuty,
+  hecsEffectiveRate,
+  standardDuty,
+  type AssessedProperty,
+  type AusState,
+  type ExistingProperty,
+  type PropertyUse,
+} from "../../utils/finance";
 
 // ─── Reusability props ─────────────────────────────────────────────────────
 //
@@ -105,116 +118,6 @@ export function YieldCalculator({ initial, onChange }: CalcProps = {}) {
 
 // ─── Calculator 2: Stamp Duty by State ─────────────────────────────────────
 
-type AusState = "NSW" | "VIC" | "QLD" | "WA" | "SA" | "ACT" | "TAS" | "NT";
-
-// Simplified 2026 standard duty (investor / non-FHB, owner-occupier).
-// Source: state revenue offices. Approximations — verify before signing.
-function standardDuty(state: AusState, price: number): number {
-  // Brackets are [upper-bound (or Infinity), base, rate-on-excess-over-prev]
-  const brackets: Record<AusState, [number, number, number][]> = {
-    NSW: [
-      [16000, 0, 0.0125],
-      [35000, 200, 0.015],
-      [97000, 485, 0.0175],
-      [364000, 1570, 0.035],
-      [1212000, 10915, 0.045],
-      [Infinity, 49075, 0.055],
-    ],
-    VIC: [
-      [25000, 0, 0.014],
-      [130000, 350, 0.024],
-      [960000, 2870, 0.06],
-      [Infinity, 52670, 0.065],
-    ],
-    QLD: [
-      [5000, 0, 0],
-      [75000, 0, 0.015],
-      [540000, 1050, 0.035],
-      [1000000, 17325, 0.045],
-      [Infinity, 38025, 0.0575],
-    ],
-    WA: [
-      [120000, 0, 0.019],
-      [150000, 2280, 0.0285],
-      [360000, 3135, 0.0375],
-      [725000, 11115, 0.0475],
-      [Infinity, 28453, 0.0515],
-    ],
-    SA: [
-      [12000, 0, 0.01],
-      [30000, 120, 0.02],
-      [50000, 480, 0.03],
-      [100000, 1080, 0.035],
-      [200000, 2830, 0.04],
-      [250000, 6830, 0.0425],
-      [300000, 8955, 0.0475],
-      [500000, 11330, 0.05],
-      [Infinity, 21330, 0.055],
-    ],
-    ACT: [
-      [200000, 0, 0.0149],
-      [300000, 2980, 0.027],
-      [500000, 5680, 0.0316],
-      [750000, 13580, 0.0411],
-      [1000000, 23855, 0.0497],
-      [1455000, 36280, 0.0573],
-      [Infinity, 62402, 0.07],
-    ],
-    TAS: [
-      [3000, 0, 0],
-      [25000, 50, 0.0175],
-      [75000, 435, 0.0225],
-      [200000, 1560, 0.035],
-      [375000, 5935, 0.04],
-      [725000, 12935, 0.0425],
-      [Infinity, 27810, 0.045],
-    ],
-    NT: [
-      [Infinity, 0, 0.04949], // simplified flat-ish — NT uses a complex formula
-    ],
-  };
-  const table = brackets[state];
-  let prevUpper = 0;
-  for (const [upper, base, rate] of table) {
-    if (price <= upper) return base + (price - prevUpper) * rate;
-    prevUpper = upper;
-  }
-  return 0;
-}
-
-// FHB concession thresholds — 2026 indicative
-const FHB_FULL_CAP: Record<AusState, number> = {
-  NSW: 800000,
-  VIC: 600000,
-  QLD: 700000,
-  WA: 530000,
-  SA: 650000,
-  ACT: 1000000, // ACT income-tested; cap shown is approximate property cap for new builds
-  TAS: 600000,
-  NT: 650000,
-};
-const FHB_PARTIAL_CAP: Record<AusState, number> = {
-  NSW: 1000000,
-  VIC: 750000,
-  QLD: 800000,
-  WA: 601000,
-  SA: 700000,
-  ACT: 1455000,
-  TAS: 750000,
-  NT: 750000,
-};
-
-function fhbDuty(state: AusState, price: number): number {
-  if (price <= FHB_FULL_CAP[state]) return 0;
-  if (price >= FHB_PARTIAL_CAP[state]) return standardDuty(state, price);
-  // Linear taper between full cap (0 duty) and partial cap (full duty)
-  const standard = standardDuty(state, price);
-  const taper =
-    (price - FHB_FULL_CAP[state]) /
-    (FHB_PARTIAL_CAP[state] - FHB_FULL_CAP[state]);
-  return standard * taper;
-}
-
 export function StampDutyCalculator({ initial, onChange }: CalcProps = {}) {
   const [price, setPrice] = useState<number>(initial?.price ?? 700000);
   const [state, setState] = useState<AusState>(initial?.state ?? "QLD");
@@ -279,94 +182,46 @@ export function StampDutyCalculator({ initial, onChange }: CalcProps = {}) {
 
 // ─── Calculator 3: Borrowing Capacity ──────────────────────────────────────
 //
-// Models the four big things Australian lenders actually look at:
-//   1. Net income (PAYG tax + Medicare levy + HELP/HECS deductions, plus
-//      partner and shaded "other" income at 80%)
-//   2. Living expenses — max(declared, HEM benchmark) by household
-//      composition + income tier
-//   3. Existing debts — credit card limits assessed at 3.8%/month per
-//      APG 223, existing home loans P&I-amortised at the current rate,
-//      explicit personal/car loan and other monthly commitments
-//   4. Loan capacity — surplus capitalised into a 30yr P&I loan at the
-//      assessment rate (current rate + APRA's +3% buffer)
+// Thin UI over `utils/finance` — all the maths (tax, HEM, portfolio
+// assessment, DTI, duty-adjusted purchase price) lives there and is
+// unit-tested. This file only collects inputs and renders outputs.
 //
-// All numbers indicative — lender DTI caps, postcode policy, FBT-grossed
-// income etc. vary. Disclaimer at the bottom of the card.
+// The portfolio section takes each existing property at a deliberately high
+// level: one pooled "annual running costs" number rather than a dozen line
+// items, because an advisor on a 30-minute call has the loan balance and the
+// rent to hand, not the strata invoice. Leave costs on Auto and the engine
+// estimates them from rent (investments) or value (owner-occupied).
 
-// HEM benchmark approximation (monthly, AUD). Real HEM is the Melbourne
-// Institute's quarterly HES survey — this is a simplified table good
-// enough for an advisor sanity check.
-function hemMonthly(adults: 1 | 2, kids: number, grossHousehold: number): number {
-  const tier = grossHousehold >= 200000 ? "high" : grossHousehold >= 100000 ? "mid" : "low";
-  // Base for adults
-  const base =
-    adults === 1
-      ? { low: 1640, mid: 1880, high: 2200 }[tier]
-      : { low: 2700, mid: 3200, high: 3800 }[tier];
-  const perKid =
-    tier === "high" ? 700 : tier === "mid" ? 540 : 420;
-  return base + Math.max(0, kids) * perKid;
+let propertyIdCounter = 0;
+function newPropertyId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `p${++propertyIdCounter}`;
 }
 
-// HECS/HELP repayment rate (2024-25 thresholds, applied to repayment
-// income — gross is a close-enough proxy for this use case).
-function hecsRate(income: number): number {
-  if (income < 54435) return 0;
-  if (income < 62851) return 0.01;
-  if (income < 66621) return 0.02;
-  if (income < 70619) return 0.025;
-  if (income < 74856) return 0.03;
-  if (income < 79347) return 0.035;
-  if (income < 84108) return 0.04;
-  if (income < 89155) return 0.045;
-  if (income < 94504) return 0.05;
-  if (income < 100175) return 0.055;
-  if (income < 106186) return 0.06;
-  if (income < 112557) return 0.065;
-  if (income < 119310) return 0.07;
-  if (income < 126468) return 0.075;
-  if (income < 134057) return 0.08;
-  if (income < 142101) return 0.085;
-  if (income < 150627) return 0.09;
-  if (income < 159664) return 0.095;
-  return 0.10;
-}
-
-// PAYG income tax incl. 2% Medicare levy (singles, no LITO modelled).
-function netAfterTax(gross: number): number {
-  const tax =
-    gross <= 18200 ? 0 :
-    gross <= 45000 ? (gross - 18200) * 0.16 :
-    gross <= 135000 ? 4288 + (gross - 45000) * 0.30 :
-    gross <= 190000 ? 31288 + (gross - 135000) * 0.37 :
-                      51638 + (gross - 190000) * 0.45;
-  const medicare = gross > 26000 ? gross * 0.02 : 0;
-  return gross - tax - medicare;
-}
-
-// P&I monthly repayment for a given balance, rate %, term in years.
-function pAndIMonthly(balance: number, ratePct: number, years: number): number {
-  if (balance <= 0) return 0;
-  const r = ratePct / 100 / 12;
-  const n = years * 12;
-  if (r === 0) return balance / n;
-  return (balance * r) / (1 - Math.pow(1 + r, -n));
-}
-
-// Approximate Australian LMI premium as a fraction of the loan amount.
-// Real numbers vary by lender / Genworth-QBE schedule / borrower tier;
-// these are mid-band averages from public LMI calculators 2025-2026.
-// Returns 0 when LVR ≤ 80%. Anyone using these for an actual settlement
-// should pull a live quote — see Disclaimer in BorrowingCalculator.
-function lmiRateForLvr(lvr: number): number {
-  if (lvr <= 80) return 0;
-  if (lvr <= 82) return 0.0050;
-  if (lvr <= 85) return 0.0098;
-  if (lvr <= 87) return 0.0156;
-  if (lvr <= 90) return 0.0224;
-  if (lvr <= 92) return 0.0307;
-  if (lvr <= 95) return 0.0450;
-  return 0.0560; // > 95% LVR — most lenders won't go here without specials
+/**
+ * Saved snapshots predate the portfolio array — they stored a single existing
+ * home loan as three flat fields. Fold that into one property so an opportunity
+ * saved last month reopens with its numbers intact.
+ */
+function migrateProperties(initial: CalcProps["initial"]): ExistingProperty[] {
+  if (Array.isArray(initial?.properties)) {
+    return initial.properties.map((p: Partial<ExistingProperty>) => ({
+      ...emptyProperty(p.id ?? newPropertyId()),
+      ...p,
+    }));
+  }
+  if ((initial?.existingMortgageBalance ?? 0) > 0) {
+    return [
+      {
+        ...emptyProperty(newPropertyId(), "Existing home"),
+        use: "owner_occupied",
+        loanBalance: initial!.existingMortgageBalance,
+        rate: initial!.existingMortgageRate ?? 6.5,
+        termRemaining: initial!.existingMortgageTerm ?? 25,
+      },
+    ];
+  }
+  return [];
 }
 
 export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
@@ -376,20 +231,26 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [otherIncome, setOtherIncome] = useState<number>(initial?.otherIncome ?? 0);
   const [hasHecs, setHasHecs] = useState<boolean>(initial?.hasHecs ?? false);
   const [partnerHasHecs, setPartnerHasHecs] = useState<boolean>(initial?.partnerHasHecs ?? false);
+  const [hecsBalance, setHecsBalance] = useState<number>(initial?.hecsBalance ?? 0);
 
   // Household
   const [dependents, setDependents] = useState<number>(initial?.dependents ?? 0);
   const [declaredExpenses, setDeclaredExpenses] = useState<number>(initial?.declaredExpenses ?? 0);
 
-  // Deposit / savings — auto-fills from contact.existing_savings via
-  // borrowingInitialFromLead. Used to compute max purchase price + LVR.
+  // Deposit + purchase. Deposit auto-fills from contact.existing_savings via
+  // borrowingInitialFromLead; duty and closing costs come off it before any
+  // of it reaches the purchase price.
   const [deposit, setDeposit] = useState<number>(initial?.deposit ?? 0);
+  const [state, setState] = useState<AusState>(initial?.state ?? "QLD");
+  const [isFhb, setIsFhb] = useState<boolean>(initial?.isFhb ?? false);
+  const [closingCosts, setClosingCosts] = useState<number>(initial?.closingCosts ?? 3000);
+  const [newWeeklyRent, setNewWeeklyRent] = useState<number>(initial?.newWeeklyRent ?? 0);
 
-  // Existing debts
+  // Existing portfolio
+  const [properties, setProperties] = useState<ExistingProperty[]>(() => migrateProperties(initial));
+
+  // Consumer debts
   const [creditLimit, setCreditLimit] = useState<number>(initial?.creditLimit ?? 0);
-  const [existingMortgageBalance, setExistingMortgageBalance] = useState<number>(initial?.existingMortgageBalance ?? 0);
-  const [existingMortgageRate, setExistingMortgageRate] = useState<number>(initial?.existingMortgageRate ?? 6.5);
-  const [existingMortgageTerm, setExistingMortgageTerm] = useState<number>(initial?.existingMortgageTerm ?? 25);
   const [personalLoan, setPersonalLoan] = useState<number>(initial?.personalLoan ?? 0);
   const [carLoan, setCarLoan] = useState<number>(initial?.carLoan ?? 0);
   const [otherDebts, setOtherDebts] = useState<number>(initial?.otherDebts ?? 0);
@@ -398,73 +259,62 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const [rate, setRate] = useState<number>(initial?.rate ?? 6.5);
   const [buffer, setBuffer] = useState<number>(initial?.buffer ?? 3);
   const [loanTerm, setLoanTerm] = useState<number>(initial?.loanTerm ?? 30);
+  const [rentShading, setRentShading] = useState<number>(initial?.rentShading ?? 0.8);
+  const [dtiCap, setDtiCap] = useState<number>(initial?.dtiCap ?? 6);
 
-  const adults = partner > 0 ? 2 : 1;
-  const grossHousehold = income + partner + otherIncome;
+  const inputs = {
+    income, partner, otherIncome, hasHecs, partnerHasHecs,
+    hecsBalance: hecsBalance > 0 ? hecsBalance : null,
+    dependents, declaredExpenses,
+    deposit, state, isFhb, closingCosts, newWeeklyRent,
+    properties,
+    creditLimit, personalLoan, carLoan, otherDebts,
+    rate, buffer, loanTerm, rentShading, dtiCap,
+  };
 
-  // Net income (incl. HECS deductions)
-  const hecsApplicant = hasHecs ? income * hecsRate(income) : 0;
-  const hecsPartner = partnerHasHecs ? partner * hecsRate(partner) : 0;
-  const netAnnual =
-    netAfterTax(income) - hecsApplicant +
-    netAfterTax(partner) - hecsPartner +
-    otherIncome * 0.8; // 80% shading on rental/dividend/etc
-  const monthlyNet = netAnnual / 12;
-
-  // Living expenses — max of declared and HEM benchmark
-  const hem = hemMonthly(adults as 1 | 2, dependents, grossHousehold);
-  const livingExp = Math.max(hem, declaredExpenses);
-
-  // Existing debt servicing
-  const creditCardCommit = creditLimit * 0.038; // APG 223 standard
-  const existingMortgageRepayment = pAndIMonthly(
-    existingMortgageBalance,
-    existingMortgageRate + buffer, // assess at stressed rate too
-    existingMortgageTerm,
-  );
-  const totalDebtCommit =
-    creditCardCommit +
-    existingMortgageRepayment +
-    personalLoan +
-    carLoan +
-    otherDebts;
-
-  // Surplus → max new loan at stress rate
-  const surplus = monthlyNet - livingExp - totalDebtCommit;
-  const stressRate = (rate + buffer) / 100;
-  const months = loanTerm * 12;
-  const r = stressRate / 12;
-  const maxLoan =
-    surplus > 0
-      ? (surplus * (1 - Math.pow(1 + r, -months))) / r
-      : 0;
-
-  // Purchase price + LVR — only meaningful with a deposit input.
-  // Treats deposit as full equity contribution; doesn't account for
-  // stamp duty + closing costs (which would reduce effective deposit).
-  const maxPurchasePrice = maxLoan + deposit;
-  const lvr = maxPurchasePrice > 0 ? (maxLoan / maxPurchasePrice) * 100 : 0;
-  const lmiRate = lmiRateForLvr(lvr);
-  const lmiPremium = lmiRate * maxLoan;
-  const needsLmi = lvr > 80 && maxLoan > 0 && deposit > 0;
+  // Inputs is rebuilt every render, so memoise on its serialised value rather
+  // than its identity — same trick useCalcSync uses.
+  const inputsSig = JSON.stringify(inputs);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const r = useMemo(() => computeCapacity(inputs), [inputsSig]);
 
   useCalcSync(
     {
-      inputs: {
-        income, partner, otherIncome, hasHecs, partnerHasHecs,
-        dependents, declaredExpenses,
-        deposit,
-        creditLimit, existingMortgageBalance, existingMortgageRate, existingMortgageTerm,
-        personalLoan, carLoan, otherDebts,
-        rate, buffer, loanTerm,
-      },
+      inputs,
       outputs: {
-        maxLoan, monthlyNet, livingExp, totalDebtCommit, surplus, hem,
-        maxPurchasePrice, lvr, lmiPremium, needsLmi,
+        maxLoan: r.maxLoan,
+        maxLoanByServicing: r.maxLoanByServicing,
+        maxLoanByDti: r.maxLoanByDti,
+        bindingConstraint: r.bindingConstraint,
+        dtiAtMax: r.dtiAtMax,
+        monthlyNet: r.monthlyNet,
+        livingExp: r.livingExp,
+        hem: r.hem,
+        consumerDebtCommit: r.consumerDebtCommit,
+        portfolioNetMonthly: r.portfolioNetMonthly,
+        portfolioDebt: r.portfolioDebt,
+        portfolioEquity: r.portfolioEquity,
+        surplus: r.surplus,
+        purchasePrice: r.purchasePrice,
+        stampDuty: r.stampDuty,
+        depositShortfall: r.depositShortfall,
+        lvr: r.lvr,
+        lmiPremium: r.lmiPremium,
+        needsLmi: r.needsLmi,
       },
     },
     onChange,
   );
+
+  const updateProperty = (id: string, patch: Partial<ExistingProperty>) =>
+    setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const addProperty = () =>
+    setProperties((prev) => [
+      ...prev,
+      { ...emptyProperty(newPropertyId(), `Property ${prev.length + 1}`) },
+    ]);
+  const removeProperty = (id: string) =>
+    setProperties((prev) => prev.filter((p) => p.id !== id));
 
   return (
     <Card title="Borrowing capacity" emoji="💰">
@@ -475,8 +325,13 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <CheckboxRow
         checked={hasHecs}
         onChange={setHasHecs}
-        label={`HECS/HELP debt (~${(hecsRate(income) * 100).toFixed(1)}% of income)`}
+        label={`HECS/HELP debt (repays ~${fmtCurrency(r.applicantNet.hecs)}/yr, ${(hecsEffectiveRate(income) * 100).toFixed(1)}% of income)`}
       />
+      {hasHecs && (
+        <Field label="HECS/HELP balance owing (optional — caps the repayment)">
+          <NumberInput value={hecsBalance} onChange={setHecsBalance} prefix="$" step={1000} />
+        </Field>
+      )}
       <Field label="Partner gross income (optional)">
         <NumberInput value={partner} onChange={setPartner} prefix="$" step={5000} />
       </Field>
@@ -484,10 +339,10 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
         <CheckboxRow
           checked={partnerHasHecs}
           onChange={setPartnerHasHecs}
-          label={`Partner HECS/HELP (~${(hecsRate(partner) * 100).toFixed(1)}%)`}
+          label={`Partner HECS/HELP (~${(hecsEffectiveRate(partner) * 100).toFixed(1)}%)`}
         />
       )}
-      <Field label="Other annual income (rental, dividends — shaded 80%)">
+      <Field label="Other annual income (dividends, trust — shaded 80%)">
         <NumberInput value={otherIncome} onChange={setOtherIncome} prefix="$" step={1000} />
       </Field>
 
@@ -495,60 +350,84 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
       <Field label="Dependents">
         <NumberInput value={dependents} onChange={setDependents} step={1} />
       </Field>
-      <Field label={`Declared monthly living expenses (HEM benchmark: ${fmtCurrency(hem)})`}>
+      <Field label={`Declared monthly living expenses (HEM benchmark: ${fmtCurrency(r.hem)})`}>
         <NumberInput value={declaredExpenses} onChange={setDeclaredExpenses} prefix="$" step={50} />
         <p className="text-[11px] text-gray-500 mt-1">
           Lenders assess against the higher of declared or HEM.
         </p>
       </Field>
 
-      <SubHeading>Deposit</SubHeading>
+      <SubHeading>The purchase</SubHeading>
       <Field label="Savings / deposit available">
         <NumberInput value={deposit} onChange={setDeposit} prefix="$" step={5000} />
         <p className="text-[11px] text-gray-500 mt-1">
-          Auto-fills from contact's saved profile. Drives max purchase price + LVR + LMI estimate.
-          Doesn't account for stamp duty / closing costs.
+          Auto-fills from contact&apos;s saved profile. Stamp duty and closing costs come out of
+          this before it reaches the purchase price.
         </p>
       </Field>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="State (for duty)">
+          <select
+            value={state}
+            onChange={(e) => setState(e.target.value as AusState)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+          >
+            {AUS_STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Legal / inspections / fees">
+          <NumberInput value={closingCosts} onChange={setClosingCosts} prefix="$" step={500} />
+        </Field>
+      </div>
+      <CheckboxRow checked={isFhb} onChange={setIsFhb} label="First-home buyer (duty concession)" />
+      <Field label="Expected weekly rent on the new property (0 = owner-occupied)">
+        <NumberInput value={newWeeklyRent} onChange={setNewWeeklyRent} prefix="$" step={10} />
+      </Field>
 
-      <SubHeading>Existing debts</SubHeading>
+      <SubHeading>Existing properties</SubHeading>
+      {properties.length === 0 && (
+        <p className="text-[11px] text-gray-500 -mt-1">
+          None. Add each property the client already owns — its loan, rent and running costs all
+          move the number.
+        </p>
+      )}
+      <div className="space-y-3">
+        {properties.map((p, idx) => (
+          <PropertyRow
+            key={p.id}
+            property={p}
+            assessed={r.assessed[idx]}
+            onChange={(patch) => updateProperty(p.id, patch)}
+            onRemove={() => removeProperty(p.id)}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addProperty}
+        className="mt-2 w-full py-2 text-xs font-medium text-blue-600 border border-dashed border-blue-300 rounded-md hover:bg-blue-50"
+      >
+        + Add existing property
+      </button>
+      {properties.length > 0 && (
+        <div className="mt-2 flex justify-between text-[11px] text-gray-500">
+          <span>
+            Portfolio: {properties.length} {properties.length === 1 ? "property" : "properties"},{" "}
+            {fmtCurrency(r.portfolioDebt)} debt, {fmtCurrency(r.portfolioEquity)} equity
+          </span>
+          <span className={r.portfolioNetMonthly < 0 ? "text-red-600" : "text-green-600"}>
+            {r.portfolioNetMonthly < 0 ? "−" : "+"}
+            {fmtCurrency(Math.abs(r.portfolioNetMonthly))}/mo
+          </span>
+        </div>
+      )}
+
+      <SubHeading>Consumer debts</SubHeading>
       <Field label="Total credit card limits (assessed at 3.8%/month)">
         <NumberInput value={creditLimit} onChange={setCreditLimit} prefix="$" step={500} />
       </Field>
-      <Field label="Existing home loan balance">
-        <NumberInput
-          value={existingMortgageBalance}
-          onChange={setExistingMortgageBalance}
-          prefix="$"
-          step={10000}
-        />
-      </Field>
-      {existingMortgageBalance > 0 && (
-        <div className="grid grid-cols-2 gap-2">
-          <Field label={`Rate — ${existingMortgageRate.toFixed(2)}%`}>
-            <input
-              type="range"
-              min={3}
-              max={10}
-              step={0.25}
-              value={existingMortgageRate}
-              onChange={(e) => setExistingMortgageRate(Number(e.target.value))}
-              className="w-full"
-            />
-          </Field>
-          <Field label={`Years remaining — ${existingMortgageTerm}`}>
-            <input
-              type="range"
-              min={1}
-              max={30}
-              step={1}
-              value={existingMortgageTerm}
-              onChange={(e) => setExistingMortgageTerm(Number(e.target.value))}
-              className="w-full"
-            />
-          </Field>
-        </div>
-      )}
       <Field label="Personal loan repayments (monthly)">
         <NumberInput value={personalLoan} onChange={setPersonalLoan} prefix="$" step={50} />
       </Field>
@@ -561,79 +440,229 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
 
       <SubHeading>New loan parameters</SubHeading>
       <Field label={`Interest rate — ${rate.toFixed(2)}%`}>
-        <input
-          type="range"
-          min={3}
-          max={10}
-          step={0.25}
-          value={rate}
-          onChange={(e) => setRate(Number(e.target.value))}
-          className="w-full"
-        />
+        <input type="range" min={3} max={10} step={0.25} value={rate}
+          onChange={(e) => setRate(Number(e.target.value))} className="w-full" />
       </Field>
       <Field label={`Assessment buffer — +${buffer.toFixed(1)}% (assess @ ${(rate + buffer).toFixed(2)}%)`}>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          step={0.5}
-          value={buffer}
-          onChange={(e) => setBuffer(Number(e.target.value))}
-          className="w-full"
-        />
+        <input type="range" min={1} max={5} step={0.5} value={buffer}
+          onChange={(e) => setBuffer(Number(e.target.value))} className="w-full" />
         <p className="text-[11px] text-gray-500 mt-1">APRA mandates +3% minimum.</p>
       </Field>
       <Field label={`Loan term — ${loanTerm} years`}>
-        <input
-          type="range"
-          min={10}
-          max={30}
-          step={1}
-          value={loanTerm}
-          onChange={(e) => setLoanTerm(Number(e.target.value))}
-          className="w-full"
-        />
+        <input type="range" min={10} max={30} step={1} value={loanTerm}
+          onChange={(e) => setLoanTerm(Number(e.target.value))} className="w-full" />
       </Field>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label={`Rent shading — ${(rentShading * 100).toFixed(0)}%`}>
+          <input type="range" min={0.6} max={0.9} step={0.05} value={rentShading}
+            onChange={(e) => setRentShading(Number(e.target.value))} className="w-full" />
+        </Field>
+        <Field label={`DTI cap — ${dtiCap.toFixed(1)}×`}>
+          <input type="range" min={4} max={9} step={0.5} value={dtiCap}
+            onChange={(e) => setDtiCap(Number(e.target.value))} className="w-full" />
+        </Field>
+      </div>
 
       <Output>
-        <Stat label="Estimated max loan" value={fmtCurrency(maxLoan)} highlight />
-        {deposit > 0 && maxLoan > 0 && (
+        <Stat label="Estimated max loan" value={fmtCurrency(r.maxLoan)} highlight />
+        {r.maxLoan > 0 && (
+          <p className="text-[11px] text-gray-500 -mt-0.5">
+            {r.bindingConstraint === "dti"
+              ? `Capped by the ${dtiCap}× DTI ceiling — servicing alone would allow ${fmtCurrency(r.maxLoanByServicing)}.`
+              : `Limited by servicing. DTI at this loan is ${r.dtiAtMax.toFixed(1)}× (cap ${dtiCap}×).`}
+          </p>
+        )}
+        {deposit > 0 && r.maxLoan > 0 && (
           <>
-            <Stat
-              label="Max purchase price (loan + deposit)"
-              value={fmtCurrency(maxPurchasePrice)}
-              highlight
-            />
-            <Stat label={`LVR — ${lvr.toFixed(1)}%`} value={lvr <= 80 ? "no LMI" : "LMI applies"} />
-            {needsLmi && (
+            <Stat label="Max purchase price" value={fmtCurrency(r.purchasePrice)} highlight />
+            <Stat label={`Stamp duty (${state}${isFhb ? ", FHB" : ""})`} value={fmtCurrency(r.stampDuty)} />
+            <Stat label="Legal / inspections / fees" value={fmtCurrency(closingCosts)} />
+            <Stat label={`LVR — ${r.lvr.toFixed(1)}%`} value={r.lvr <= 80 ? "no LMI" : "LMI applies"} />
+            {r.needsLmi && (
               <Stat
-                label={`Indicative LMI premium (${(lmiRate * 100).toFixed(2)}%)`}
-                value={fmtCurrency(lmiPremium)}
+                label={`Indicative LMI premium (${(r.lmiRate * 100).toFixed(2)}%)`}
+                value={fmtCurrency(r.lmiPremium)}
               />
+            )}
+            {r.depositShortfall > 0 && (
+              <p className="text-[11px] text-red-600 mt-1">
+                Deposit is {fmtCurrency(r.depositShortfall)} short of stamp duty plus closing costs
+                — before a single dollar goes toward the property.
+              </p>
             )}
           </>
         )}
-        <Stat label="Monthly net income" value={fmtCurrency(monthlyNet)} />
-        <Stat label="Living expenses (HEM/declared)" value={fmtCurrency(livingExp)} />
-        <Stat label="Existing debt commitments" value={fmtCurrency(totalDebtCommit)} />
-        <Stat label="Monthly surplus" value={fmtCurrency(surplus)} />
-        {maxLoan > 0 && deposit === 0 && (
+        <Stat label="Monthly net income" value={fmtCurrency(r.monthlyNet)} />
+        {properties.length > 0 && (
+          <Stat
+            label="Portfolio net (rent − repayments − costs)"
+            value={fmtCurrency(r.portfolioNetMonthly)}
+            className={r.portfolioNetMonthly < 0 ? "text-red-600" : "text-green-600"}
+          />
+        )}
+        {newWeeklyRent > 0 && (
+          <Stat label="New property rent (shaded)" value={fmtCurrency(r.newPropertyMonthlyRent)} />
+        )}
+        <Stat label="Living expenses (HEM/declared)" value={fmtCurrency(r.livingExp)} />
+        <Stat label="Consumer debt commitments" value={fmtCurrency(r.consumerDebtCommit)} />
+        <Stat
+          label="Monthly surplus"
+          value={fmtCurrency(r.surplus)}
+          className={r.surplus < 0 ? "text-red-600" : ""}
+        />
+        {r.maxLoan > 0 && deposit === 0 && (
           <>
-            <Stat label="Indicative deposit @ 80% LVR" value={fmtCurrency(maxLoan * 0.25)} />
-            <Stat label="Indicative deposit @ 90% LVR" value={fmtCurrency(maxLoan * 0.111)} />
-            <p className="text-[11px] text-gray-500 col-span-full mt-1">
-              Enter actual deposit above for max purchase price + LMI estimate.
+            <Stat label="Indicative deposit @ 80% LVR" value={fmtCurrency(r.maxLoan * 0.25)} />
+            <Stat label="Indicative deposit @ 90% LVR" value={fmtCurrency(r.maxLoan * 0.111)} />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Enter an actual deposit above for max purchase price, duty and LMI.
             </p>
           </>
         )}
       </Output>
       <Disclaimer>
-        Indicative only. Real lender capacity depends on policy quirks
-        (postcode caps, casual income shading, FBT grossing, DTI ceilings,
-        existing IP cash-flow treatment). Always confirm with a licensed
-        broker before relying on this number.
+        Indicative only. Negative-gearing tax benefits are not added back (lenders vary), personal
+        and car loan balances don&apos;t reach the DTI numerator, and Medicare uses the singles
+        threshold. Real capacity also turns on postcode caps, casual-income shading and FBT
+        grossing. Always confirm with a licensed broker.
       </Disclaimer>
     </Card>
+  );
+}
+
+/**
+ * One existing property. Collapsed to essentials: what it's worth, what's
+ * owed, what it earns, what it costs. Running costs default to Auto — the
+ * engine derives them from rent (investment) or value (owner-occupied) —
+ * and the advisor can override with a real figure when they have one.
+ */
+function PropertyRow({
+  property: p,
+  assessed,
+  onChange,
+  onRemove,
+}: {
+  property: ExistingProperty;
+  assessed?: AssessedProperty;
+  onChange: (patch: Partial<ExistingProperty>) => void;
+  onRemove: () => void;
+}) {
+  const net = assessed?.netMonthly ?? 0;
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          value={p.label}
+          onChange={(e) => onChange({ label: e.target.value })}
+          placeholder="Address or nickname"
+          className="flex-1 px-2 py-1 text-xs font-medium border border-gray-300 rounded bg-white"
+        />
+        <select
+          value={p.use}
+          onChange={(e) => onChange({ use: e.target.value as PropertyUse })}
+          className="px-2 py-1 text-xs border border-gray-300 rounded bg-white"
+        >
+          <option value="investment">Investment</option>
+          <option value="owner_occupied">Owner-occupied</option>
+        </select>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${p.label}`}
+          className="text-gray-400 hover:text-red-600 px-1 text-sm"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Value">
+          <NumberInput value={p.value} onChange={(v) => onChange({ value: v })} prefix="$" step={10000} />
+        </Field>
+        <Field label="Loan balance">
+          <NumberInput value={p.loanBalance} onChange={(v) => onChange({ loanBalance: v })} prefix="$" step={10000} />
+        </Field>
+      </div>
+
+      {p.loanBalance > 0 && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={`Rate — ${p.rate.toFixed(2)}%`}>
+              <input type="range" min={3} max={10} step={0.25} value={p.rate}
+                onChange={(e) => onChange({ rate: Number(e.target.value) })} className="w-full" />
+            </Field>
+            <Field label={`Years remaining — ${p.termRemaining}`}>
+              <input type="range" min={1} max={30} step={1} value={p.termRemaining}
+                onChange={(e) => onChange({ termRemaining: Number(e.target.value) })} className="w-full" />
+            </Field>
+          </div>
+          <CheckboxRow
+            checked={p.interestOnly}
+            onChange={(v) => onChange({ interestOnly: v })}
+            label="Interest-only"
+          />
+          {p.interestOnly && (
+            <Field label={`Interest-only years left — ${p.ioYearsRemaining}`}>
+              <input type="range" min={1} max={10} step={1} value={p.ioYearsRemaining}
+                onChange={(e) => onChange({ ioYearsRemaining: Number(e.target.value) })} className="w-full" />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Assessed P&amp;I over the {Math.max(1, p.termRemaining - p.ioYearsRemaining)} years
+                left after IO expires — which is why IO hurts capacity.
+              </p>
+            </Field>
+          )}
+        </>
+      )}
+
+      {p.use === "investment" && (
+        <Field label="Weekly rent">
+          <NumberInput value={p.weeklyRent} onChange={(v) => onChange({ weeklyRent: v })} prefix="$" step={10} />
+        </Field>
+      )}
+
+      <Field label="Annual running costs — rates, insurance, maintenance, strata, land tax, management">
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <NumberInput
+              value={p.autoCosts ? Math.round(autoAnnualCosts(p)) : p.annualCosts}
+              onChange={(v) => onChange({ annualCosts: v, autoCosts: false })}
+              prefix="$"
+              step={500}
+            />
+          </div>
+          <label className="flex items-center gap-1 text-[11px] text-gray-600 whitespace-nowrap cursor-pointer">
+            <input
+              type="checkbox"
+              checked={p.autoCosts}
+              onChange={(e) => onChange({ autoCosts: e.target.checked })}
+              className="rounded border-gray-300"
+            />
+            Auto
+          </label>
+        </div>
+        <p className="text-[11px] text-gray-500 mt-1">
+          {p.autoCosts
+            ? p.use === "investment"
+              ? "Estimated at 25% of gross rent (mgmt, vacancy, rates, insurance, maintenance), floored at 0.9% of value."
+              : "Estimated at 0.9% of value — rates, insurance, maintenance."
+            : "Using your figure. Tick Auto to re-estimate."}
+        </p>
+      </Field>
+
+      {assessed && (
+        <div className="mt-2 pt-2 border-t border-gray-200 flex justify-between text-[11px]">
+          <span className="text-gray-500">
+            Assessed repayment {fmtCurrency(assessed.monthlyRepayment)}/mo
+            {assessed.assessedMonthlyRent > 0 &&
+              ` · rent ${fmtCurrency(assessed.assessedMonthlyRent)}/mo`}
+          </span>
+          <span className={net < 0 ? "text-red-600 font-medium" : "text-green-600 font-medium"}>
+            {net < 0 ? "−" : "+"}
+            {fmtCurrency(Math.abs(net))}/mo
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
