@@ -118,6 +118,26 @@ const DEFAULT_REMINDERS = [
   { method: "popup" as const, minutes: 30 },
 ];
 
+/** The subset of Google's events.insert request body we actually send. */
+type CalendarEventBody = {
+  summary: string;
+  description?: string;
+  location?: string;
+  start: { dateTime: string; timeZone: string };
+  end: { dateTime: string; timeZone: string };
+  attendees?: Array<{ email: string; displayName?: string }>;
+  reminders: {
+    useDefault: boolean;
+    overrides: Array<{ method: "email" | "popup"; minutes: number }>;
+  };
+  conferenceData: {
+    createRequest: {
+      requestId: string;
+      conferenceSolutionKey: { type: "hangoutsMeet" };
+    };
+  };
+};
+
 export async function createCalendarEvent(
   accessToken: string,
   event: {
@@ -132,7 +152,7 @@ export async function createCalendarEvent(
     reminders?: Array<{ method: "email" | "popup"; minutes: number }>;
   },
 ): Promise<{ id: string; htmlLink: string; hangoutLink?: string }> {
-  const body: any = {
+  const body: CalendarEventBody = {
     summary: event.summary,
     description: event.description,
     location: event.location,

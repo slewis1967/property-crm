@@ -38,10 +38,13 @@ export default function OpportunityAppointments({
   leadEmail: string | null;
 }) {
   const [rows, setRows] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  // With no lead email there is nothing to fetch, so start settled rather than
+  // starting true and immediately clearing it from inside the effect. The
+  // component renders null in that case anyway.
+  const [loading, setLoading] = useState(!!leadEmail);
 
   useEffect(() => {
-    if (!leadEmail) { setLoading(false); return; }
+    if (!leadEmail) return;
     let cancelled = false;
     (async () => {
       try {

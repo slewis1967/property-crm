@@ -13,7 +13,8 @@
  * calendar yet (or OAuth env isn't configured), the appointment is
  * still saved to the CRM and the modal surfaces a soft warning.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { errMessage } from "../../../utils/errors";
 
 type Lead = {
   lead_id: string;
@@ -80,7 +81,7 @@ export default function ScheduleMeetingModal({
    * the appointments panel without a full page reload. */
   onCreated?: () => void;
 }) {
-  const def = useMemo(defaultStart, []);
+  const def = useMemo(() => defaultStart(), []);
   const [hostEmail, setHostEmail] = useState(hosts[0]?.email ?? "");
   const [date, setDate] = useState(def.date);
   const [time, setTime] = useState(def.time);
@@ -161,8 +162,8 @@ export default function ScheduleMeetingModal({
         inviteSent: !!data.invite_sent,
       });
       onCreated?.();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
     } finally {
       setSubmitting(false);
     }

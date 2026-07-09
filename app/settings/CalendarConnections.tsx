@@ -119,7 +119,7 @@ export default function CalendarConnections() {
       <p className="text-[11px] text-gray-400 mt-2">
         When you click Connect, sign in to Google with the account matching the listed email.
         The CRM stores a refresh token only — no password. Used to create calendar events from
-        the opportunity page on this user's behalf.
+        the opportunity page on this user&rsquo;s behalf.
       </p>
     </div>
   );

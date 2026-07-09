@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { requireAuth, userEmailFromRequest } from "../../../utils/cf-access";
 import { findHost } from "../../../utils/scheduling-hosts";
+import { errMessage } from "../../../utils/errors";
 import {
   createCalendarEvent,
   getOAuthConfig,
@@ -149,9 +150,9 @@ export async function POST(req: NextRequest) {
       calendarLink = event.htmlLink;
       hangoutLink = event.hangoutLink ?? null;
     }
-  } catch (e: any) {
+  } catch (e) {
     // Don't fail the request — fall back to CRM-only and report the warning
-    calendarWarning = `Google Calendar step failed (${e.message || "unknown"}). Appointment saved to CRM only.`;
+    calendarWarning = `Google Calendar step failed (${errMessage(e, "unknown")}). Appointment saved to CRM only.`;
   }
 
   // --- Step 2: Supabase appointments row (authoritative for the CRM) ---
