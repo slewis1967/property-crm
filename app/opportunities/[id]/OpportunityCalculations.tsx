@@ -121,6 +121,9 @@ function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): Record<st
     partner: lead.partner_annual_income ?? 0,
     dependents: lead.dependents_count ?? 0,
     hasHecs: (lead.hecs_balance ?? 0) > 0,
+    // Passing the balance too caps the compulsory repayment — a client with
+    // $800 left owing shouldn't be assessed as if they repay $8k a year.
+    hecsBalance: lead.hecs_balance ?? 0,
     deposit: lead.existing_savings ?? 0,
   };
 }
