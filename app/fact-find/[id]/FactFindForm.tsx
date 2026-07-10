@@ -13,6 +13,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { factFindToNeedsAnalysis } from "../../../utils/factFindToNeedsAnalysis";
 import {
   APPLICANT_CAPACITIES,
   ASSET_KINDS,
@@ -211,13 +213,18 @@ function SignatureBlock({
 /* ── The form ────────────────────────────────────────────────────────────── */
 
 export default function FactFindForm({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<FactFindData>(emptyFactFind());
   const [status, setStatus] = useState<string>("Draft");
+  const [contactId, setContactId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState<string>("");
+  // Needs Analysis pre-fill state.
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -229,6 +236,7 @@ export default function FactFindForm({ id }: { id: string }) {
         if (cancelled) return;
         setData(json.factFind.data);
         setStatus(json.factFind.status);
+        setContactId(json.factFind.contact_id ?? null);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Load failed");
       } finally {
@@ -281,6 +289,37 @@ export default function FactFindForm({ id }: { id: string }) {
     },
     [id, data, status],
   );
+
+  /**
+   * Seed a fresh NCCP Needs Analysis from this Fact Find's current data. The
+   * seeded document opens as a reviewable Draft. When the mapping made any
+   * assumptions, we surface them here (banner with a link) rather than
+   * navigating straight off, so the advisor sees what needs checking.
+   */
+  const createNeedsAnalysis = useCallback(async () => {
+    setSeeding(true);
+    setError("");
+    try {
+      const { data: naData, notes } = factFindToNeedsAnalysis(data);
+      const res = await fetch("/api/needs-analyses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, data: naData }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not create Needs Analysis");
+      if (notes.length) {
+        // Let the advisor read the review notes, then click through.
+        setSeedResult({ naId: json.id, notes });
+      } else {
+        router.push(`/needs-analysis/${json.id}`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create Needs Analysis");
+    } finally {
+      setSeeding(false);
+    }
+  }, [data, contactId, router]);
 
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading fact find…</p>;
 
@@ -348,6 +387,15 @@ export default function FactFindForm({ id }: { id: string }) {
           ))}
         </select>
         <button
+          onClick={() => void createNeedsAnalysis()}
+          disabled={seeding}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+          title="Create an NCCP Needs Analysis pre-filled from this Fact Find"
+        >
+          {seeding ? "Creating…" : "→ Create Needs Analysis"}
+        </button>
+        <button
           onClick={() => window.print()}
           className="px-4 py-2 text-sm font-semibold rounded-lg border transition"
           style={{ borderColor: TEAL, color: TEAL }}
@@ -367,6 +415,44 @@ export default function FactFindForm({ id }: { id: string }) {
       {error && (
         <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
           {error}
+        </div>
+      )}
+
+      {seedResult && (
+        <div className="no-print mx-4 mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">
+                Needs Analysis created as a Draft — carried over with {seedResult.notes.length}{" "}
+                {seedResult.notes.length === 1 ? "item" : "items"} to review
+              </p>
+              <p className="text-xs text-amber-800 mt-1">
+                The seeded values are a reviewable draft. Please confirm each of the following before completing:
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => router.push(`/needs-analysis/${seedResult.naId}`)}
+                className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
+                style={{ backgroundColor: TEAL }}
+              >
+                Open Needs Analysis →
+              </button>
+              <button
+                onClick={() => setSeedResult(null)}
+                className="text-amber-700 hover:text-amber-900 px-1"
+                title="Dismiss"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <ul className="mt-3 ml-5 list-disc text-sm text-amber-900 space-y-0.5">
+            {seedResult.notes.map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
         </div>
       )}
 
