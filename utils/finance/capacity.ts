@@ -6,11 +6,19 @@
  *   1. Net income      — PAYG tax + LITO + standard deduction + HECS marginal
  *                        repayment per applicant, then ONE household Medicare
  *                        levy on family income.
- *   2. Portfolio       — every existing property contributes shaded rent and
- *                        subtracts its stressed repayment + holding costs.
+ *   2. Portfolio       — every property (existing AND the one being bought) adds
+ *                        rent SHADED to ~80% and subtracts its stressed
+ *                        repayment. The 20% shade IS the holding-cost allowance
+ *                        (management, rates, insurance, maintenance, vacancy);
+ *                        holding costs are NOT subtracted from servicing on top
+ *                        of the shade — doing both is a double-dip. Costs feed
+ *                        only the tax/negative-gearing view (item 3).
  *   3. Negative gearing— a property's tax loss (rent − interest − costs) is a
- *                        deduction, lifting net income. Subject to the 2027-28
- *                        new-build restriction. See NEGATIVE GEARING below.
+ *                        deduction, lifting net income. This is why holding
+ *                        costs are still computed: they set the TRUE tax
+ *                        position even though servicing shades rather than
+ *                        deducts them. Subject to the 2027-28 new-build
+ *                        restriction. See NEGATIVE GEARING below.
  *   4. Living expenses — max(declared, HEM benchmark).
  *   5. Consumer debt   — card limits at 3.8%/month (APG 223), plus stated
  *                        monthly personal/car/other commitments.
@@ -30,6 +38,11 @@
  * The loss is applied as a DEDUCTION inside `personalTax`, not bolted on as a
  * separate income line. That avoids double-counting: the property's cash drag
  * lands in `portfolioNetMonthly`, and the tax it saves lands in net income.
+ *
+ * The shade-only servicing model matches standard Australian lender practice.
+ * The minority "actuals method" (some lenders assess real declared rent net of
+ * itemised holding costs instead of a flat shade) and separate strata /
+ * body-corporate loading are NOT modelled.
  *
  * Everything here is indicative. Lender policy (postcode caps, casual-income
  * shading, FBT grossing) varies materially.
@@ -182,7 +195,9 @@ export type AssessedProperty = {
   assessedMonthlyRent: number;
   monthlyCosts: number;
   costsWereEstimated: boolean;
-  /** assessedRent − repayment − costs. Negative = the property drags capacity. */
+  /** Servicing contribution: shaded rent − stressed repayment. Holding costs
+   *  are NOT subtracted here — the 80% shade already embeds them (see the
+   *  top-of-file doc). Negative = the property drags capacity. */
   netMonthly: number;
   equity: number;
   /** Interest at the ACTUAL rate — the deductible portion, not the stressed one. */
@@ -228,7 +243,7 @@ export function assessProperty(
     assessedMonthlyRent,
     monthlyCosts,
     costsWereEstimated,
-    netMonthly: assessedMonthlyRent - monthlyRepayment - monthlyCosts,
+    netMonthly: assessedMonthlyRent - monthlyRepayment,
     equity: Math.max(0, p.value - p.loanBalance),
     annualInterest,
     annualTaxLoss,
@@ -408,8 +423,10 @@ function assessAtLoan(i: CapacityInputs, newLoan: number) {
   const assessed = i.properties.map((p) => assessProperty(p, i.buffer, rentShading, year));
   const portfolioRent = assessed.reduce((s, a) => s + a.assessedMonthlyRent, 0);
   const portfolioRepayments = assessed.reduce((s, a) => s + a.monthlyRepayment, 0);
+  // Costs are still rolled up for the tax/NG view and for reporting, but they
+  // are NOT deducted from servicing — the 80% rent shade already covers them.
   const portfolioCosts = assessed.reduce((s, a) => s + a.monthlyCosts, 0);
-  const portfolioNetMonthly = portfolioRent - portfolioRepayments - portfolioCosts;
+  const portfolioNetMonthly = portfolioRent - portfolioRepayments;
   const portfolioDebt = i.properties.reduce((s, p) => s + Math.max(0, p.loanBalance), 0);
   const portfolioEquity = assessed.reduce((s, a) => s + a.equity, 0);
   const portfolioGrossAnnualRent = assessed.reduce((s, a) => s + a.grossMonthlyRent * 12, 0);
@@ -499,16 +516,14 @@ function assessAtLoan(i: CapacityInputs, newLoan: number) {
 
   // Surplus → servicing capacity. The new property is treated like every
   // existing investment: shaded rent in, stressed repayment (via
-  // maxLoanByServicing) out, AND its holding costs out. `newCosts` is annual,
-  // so bring it to monthly. Omitting it (the prior behaviour) only ever moved
-  // capacity up, overstating borrowing power — the dangerous direction here.
+  // maxLoanByServicing) out. Holding costs are NOT subtracted — the 80% shade
+  // already embeds them, so deducting them again would be a double-dip.
+  // `newCosts` still feeds `newPropertyTaxLoss` for the negative-gearing view.
   const newPropertyMonthlyRent = (newGrossAnnualRent * rentShading) / 12;
-  const newPropertyMonthlyCosts = newCosts / 12;
   const surplus =
     monthlyNet +
     portfolioNetMonthly +
     newPropertyMonthlyRent -
-    newPropertyMonthlyCosts -
     livingExp -
     consumerDebtCommit;
 
