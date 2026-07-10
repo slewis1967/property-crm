@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   assessProperty,
   autoAnnualCosts,
-  AUTO_COST_RENT_RATIO,
   computeCapacity,
   emptyProperty,
   lmiRateForLvr,
@@ -450,17 +449,19 @@ describe("computeCapacity", () => {
     expect(computeCapacity(base).newPropertyTaxLoss).toBe(0);
   });
 
-  // ── Regression: investment holding costs in new-purchase serviceability ──
+  // ── Regression: new-vs-existing consistency, shade-only servicing ──
   //
-  // Bug (now fixed): an investment property's holding costs were subtracted
-  // from serviceability when it was an EXISTING portfolio property, but NOT
-  // when it was the NEW property being purchased. So the same $/wk property
-  // contributed differently to borrowing capacity depending only on "new" vs
-  // "existing" — and the new-property path only ever moved capacity UP,
-  // overstating borrowing power (the dangerous direction for a credit-licensed
-  // tool). These tests pin the two paths to the SAME rent-net-of-costs
-  // treatment; both fail on pre-fix code, where they diverge by newCosts/12.
-  describe("new-property holding costs (regression)", () => {
+  // Standard AU lender practice (owner-confirmed): shade gross rent to ~80% and
+  // ADD it to servicing income; the 20% haircut IS the holding-cost allowance,
+  // so holding costs are NOT subtracted from servicing on top of the shade.
+  //
+  // The property being bought must be assessed for servicing the SAME way as an
+  // identical existing portfolio property. PR #50 first made the two paths
+  // consistent, but at the double-dip baseline (costs deducted from servicing on
+  // both). This suite keeps that consistency property while pinning both paths
+  // to the correct SHADE-ONLY baseline: each adds 80% of gross rent with NO cost
+  // deduction, so a property's holding costs do not move the servicing surplus.
+  describe("new-vs-existing consistency (shade-only)", () => {
     // Negative gearing OFF so no tax effect muddies a pure servicing
     // comparison; a high DTI cap so servicing (not DTI) is what these exercise.
     const cfg = { ...base, negativeGearing: false, dtiCap: 20 };
@@ -476,21 +477,47 @@ describe("computeCapacity", () => {
       properties: [investment({ loanBalance: 0, value: 600000, weeklyRent: WEEKLY })],
     });
 
-    it("treats rent net of costs the same whether the property is new or existing", () => {
+    it("contributes the same to serviceability whether the property is new or existing", () => {
       // Net income, living expenses and consumer debt are identical across the
       // two runs, so equal surplus ⇒ the property's servicing treatment is
-      // consistent. Pre-fix these diverged by newCosts/12 ≈ $542/mo (~$64k of
-      // capacity on this $500/wk example).
+      // consistent between the new-purchase and existing-portfolio paths.
       expect(asNew.surplus).toBeCloseTo(asExisting.surplus, 2);
     });
 
-    it("subtracts the new property's holding costs from serviceability", () => {
+    it("adds 80% shaded rent to serviceability, with holding costs NOT deducted", () => {
       const oo = computeCapacity(cfg); // owner-occ baseline: same income & expenses
       const monthlyRent = (WEEKLY * 52 * base.rentShading) / 12;
-      const monthlyCosts = (WEEKLY * 52 * AUTO_COST_RENT_RATIO) / 12;
-      // The new property lifts the surplus by rent NET OF COSTS, not gross
-      // shaded rent. Pre-fix the delta was the full rent (costs omitted).
-      expect(asNew.surplus - oo.surplus).toBeCloseTo(monthlyRent - monthlyCosts, 2);
+      // The new property lifts the surplus by the full 80% shaded rent. The
+      // shade IS the holding-cost allowance, so costs are NOT subtracted on top.
+      expect(asNew.surplus - oo.surplus).toBeCloseTo(monthlyRent, 2);
+    });
+
+    it("does not let a property's holding costs reduce the servicing surplus", () => {
+      // Same property, but force much larger declared holding costs. Under
+      // shade-only servicing this must NOT change the surplus (costs only feed
+      // the tax/NG view, which is off here) — it only changes the reported
+      // portfolioCosts figure.
+      const cheap = computeCapacity({
+        ...cfg,
+        properties: [
+          investment({ loanBalance: 0, value: 600000, weeklyRent: WEEKLY, autoCosts: true }),
+        ],
+      });
+      const costly = computeCapacity({
+        ...cfg,
+        properties: [
+          investment({
+            loanBalance: 0,
+            value: 600000,
+            weeklyRent: WEEKLY,
+            autoCosts: false,
+            annualCosts: 40000,
+          }),
+        ],
+      });
+      expect(costly.portfolioCosts).toBeGreaterThan(cheap.portfolioCosts);
+      expect(costly.surplus).toBeCloseTo(cheap.surplus, 5);
+      expect(costly.maxLoanByServicing).toBeCloseTo(cheap.maxLoanByServicing, 5);
     });
   });
 
