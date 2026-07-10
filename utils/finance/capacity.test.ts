@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assessProperty,
   autoAnnualCosts,
+  AUTO_COST_RENT_RATIO,
   computeCapacity,
   emptyProperty,
   lmiRateForLvr,
@@ -447,6 +448,50 @@ describe("computeCapacity", () => {
 
   it("has no new-property loss for an owner-occupied purchase", () => {
     expect(computeCapacity(base).newPropertyTaxLoss).toBe(0);
+  });
+
+  // ── Regression: investment holding costs in new-purchase serviceability ──
+  //
+  // Bug (now fixed): an investment property's holding costs were subtracted
+  // from serviceability when it was an EXISTING portfolio property, but NOT
+  // when it was the NEW property being purchased. So the same $/wk property
+  // contributed differently to borrowing capacity depending only on "new" vs
+  // "existing" — and the new-property path only ever moved capacity UP,
+  // overstating borrowing power (the dangerous direction for a credit-licensed
+  // tool). These tests pin the two paths to the SAME rent-net-of-costs
+  // treatment; both fail on pre-fix code, where they diverge by newCosts/12.
+  describe("new-property holding costs (regression)", () => {
+    // Negative gearing OFF so no tax effect muddies a pure servicing
+    // comparison; a high DTI cap so servicing (not DTI) is what these exercise.
+    const cfg = { ...base, negativeGearing: false, dtiCap: 20 };
+    const WEEKLY = 500;
+
+    // The SAME property, once as the new purchase, once as an existing
+    // unencumbered investment. loanBalance 0 → no repayment drag; value chosen
+    // so the 25%-of-rent auto-cost dominates the value floor, exactly matching
+    // the new property's auto-cost. The only difference is new vs existing.
+    const asNew = computeCapacity({ ...cfg, newWeeklyRent: WEEKLY });
+    const asExisting = computeCapacity({
+      ...cfg,
+      properties: [investment({ loanBalance: 0, value: 600000, weeklyRent: WEEKLY })],
+    });
+
+    it("treats rent net of costs the same whether the property is new or existing", () => {
+      // Net income, living expenses and consumer debt are identical across the
+      // two runs, so equal surplus ⇒ the property's servicing treatment is
+      // consistent. Pre-fix these diverged by newCosts/12 ≈ $542/mo (~$64k of
+      // capacity on this $500/wk example).
+      expect(asNew.surplus).toBeCloseTo(asExisting.surplus, 2);
+    });
+
+    it("subtracts the new property's holding costs from serviceability", () => {
+      const oo = computeCapacity(cfg); // owner-occ baseline: same income & expenses
+      const monthlyRent = (WEEKLY * 52 * base.rentShading) / 12;
+      const monthlyCosts = (WEEKLY * 52 * AUTO_COST_RENT_RATIO) / 12;
+      // The new property lifts the surplus by rent NET OF COSTS, not gross
+      // shaded rent. Pre-fix the delta was the full rent (costs omitted).
+      expect(asNew.surplus - oo.surplus).toBeCloseTo(monthlyRent - monthlyCosts, 2);
+    });
   });
 
   // ── HECS ──

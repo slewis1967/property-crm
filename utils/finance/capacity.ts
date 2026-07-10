@@ -497,10 +497,20 @@ function assessAtLoan(i: CapacityInputs, newLoan: number) {
     Math.max(0, i.carLoan) +
     Math.max(0, i.otherDebts);
 
-  // Surplus → servicing capacity
+  // Surplus → servicing capacity. The new property is treated like every
+  // existing investment: shaded rent in, stressed repayment (via
+  // maxLoanByServicing) out, AND its holding costs out. `newCosts` is annual,
+  // so bring it to monthly. Omitting it (the prior behaviour) only ever moved
+  // capacity up, overstating borrowing power — the dangerous direction here.
   const newPropertyMonthlyRent = (newGrossAnnualRent * rentShading) / 12;
+  const newPropertyMonthlyCosts = newCosts / 12;
   const surplus =
-    monthlyNet + portfolioNetMonthly + newPropertyMonthlyRent - livingExp - consumerDebtCommit;
+    monthlyNet +
+    portfolioNetMonthly +
+    newPropertyMonthlyRent -
+    newPropertyMonthlyCosts -
+    livingExp -
+    consumerDebtCommit;
 
   const stressRate = i.rate + i.buffer;
   const maxLoanByServicing = surplus > 0 ? loanFromMonthly(surplus, stressRate, i.loanTerm) : 0;
