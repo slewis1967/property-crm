@@ -223,6 +223,49 @@ export default function OpportunityDetail({
     }
   };
 
+  // Needs Analysis — open (or create) this borrower's NCCP Client Needs
+  // Analysis, linked to their primary contact. Same open-most-recent-by-contact-
+  // else-create-with-{contactId} pattern as openFactFind above.
+  const [needsAnalysisLoading, setNeedsAnalysisLoading] = useState(false);
+  const [needsAnalysisError, setNeedsAnalysisError] = useState("");
+
+  const openNeedsAnalysis = async () => {
+    setNeedsAnalysisLoading(true);
+    setNeedsAnalysisError("");
+    try {
+      const contactId = lead.primary_contact_id;
+      if (contactId) {
+        const listRes = await fetch("/api/needs-analyses", { cache: "no-store" });
+        const listJson = await listRes.json();
+        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load needs analyses");
+        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
+          listJson.needsAnalyses ?? [];
+        const existing = rows
+          .filter((r) => r.contact_id === contactId)
+          .sort(
+            (a, b) =>
+              new Date(b.updated_at || b.created_at || 0).getTime() -
+              new Date(a.updated_at || a.created_at || 0).getTime(),
+          )[0];
+        if (existing) {
+          router.push(`/needs-analysis/${existing.id}`);
+          return; // keep loading state through navigation
+        }
+      }
+      const createRes = await fetch("/api/needs-analyses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactId ? { contactId } : {}),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create a needs analysis");
+      router.push(`/needs-analysis/${createJson.id}`);
+    } catch (e) {
+      setNeedsAnalysisError(e instanceof Error ? e.message : "Needs analysis failed");
+      setNeedsAnalysisLoading(false);
+    }
+  };
+
   // Pipeline switcher — load available pipelines, allow moving the
   // opportunity between them. Stage buttons below now reflect whichever
   // pipeline is currently selected (falls back to the legacy 8-stage
@@ -452,6 +495,19 @@ export default function OpportunityDetail({
           {factFindError && (
             <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={factFindError}>
               {factFindError}
+            </span>
+          )}
+          <button
+            onClick={openNeedsAnalysis}
+            disabled={needsAnalysisLoading}
+            title={needsAnalysisError || "Open this borrower's NCCP Needs Analysis"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            🧭 {needsAnalysisLoading ? "Opening…" : "Needs Analysis"}
+          </button>
+          {needsAnalysisError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={needsAnalysisError}>
+              {needsAnalysisError}
             </span>
           )}
           <button
