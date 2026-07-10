@@ -16,6 +16,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AUS_STATES,
   autoAnnualCosts,
+  capacityLevers,
+  CAPACITY_LEVER_DISCLAIMER,
   computeCapacity,
   CURRENT_TAX_YEAR,
   emptyProperty,
@@ -31,6 +33,7 @@ import {
   type PropertyUse,
   type TaxYear,
 } from "../../utils/finance";
+import CapacityLevers from "./CapacityLevers";
 
 // ─── Reusability props ─────────────────────────────────────────────────────
 //
@@ -354,6 +357,9 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
   const inputsSig = JSON.stringify(inputs);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const r = useMemo(() => computeCapacity(inputs), [inputsSig]);
+  // Quantified "ways to increase capacity" suggestions, derived from the result.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const levers = useMemo(() => capacityLevers(inputs, r), [inputsSig, r]);
 
   useCalcSync(
     {
@@ -678,6 +684,7 @@ export function BorrowingCalculator({ initial, onChange }: CalcProps = {}) {
           </>
         )}
       </Output>
+      <CapacityLevers levers={levers} disclaimer={CAPACITY_LEVER_DISCLAIMER} />
       <Disclaimer>
         Indicative only. Rates are current to {CURRENT_TAX_YEAR}; the 2026-27 Medicare thresholds
         aren&apos;t published yet, so 2025-26 figures are carried forward. Depreciation and capital
