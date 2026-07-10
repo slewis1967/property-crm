@@ -130,6 +130,54 @@ export default function OpportunityDetail({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Fact Find — open (or create) this borrower's Borrower Fact Find, linked to
+  // their primary contact. Mirrors the create-then-navigate pattern in
+  // app/fact-find/FactFindClient.tsx so we never spawn a duplicate when one
+  // already exists for the contact.
+  const [factFindLoading, setFactFindLoading] = useState(false);
+  const [factFindError, setFactFindError] = useState("");
+
+  const openFactFind = async () => {
+    setFactFindLoading(true);
+    setFactFindError("");
+    try {
+      const contactId = lead.primary_contact_id;
+      // If we know the borrower's contact, reuse an existing fact find rather
+      // than creating a new one. Newest (by updated_at, then created_at) wins.
+      if (contactId) {
+        const listRes = await fetch("/api/fact-finds", { cache: "no-store" });
+        const listJson = await listRes.json();
+        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load fact finds");
+        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
+          listJson.factFinds ?? [];
+        const existing = rows
+          .filter((r) => r.contact_id === contactId)
+          .sort(
+            (a, b) =>
+              new Date(b.updated_at || b.created_at || 0).getTime() -
+              new Date(a.updated_at || a.created_at || 0).getTime(),
+          )[0];
+        if (existing) {
+          router.push(`/fact-find/${existing.id}`);
+          return; // keep loading state through navigation, like FactFindClient
+        }
+      }
+      // None yet (or no contact) — create one. With a contact it links + prefills;
+      // with none it opens a blank form.
+      const createRes = await fetch("/api/fact-finds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactId ? { contactId } : {}),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create a fact find");
+      router.push(`/fact-find/${createJson.id}`);
+    } catch (e) {
+      setFactFindError(e instanceof Error ? e.message : "Fact find failed");
+      setFactFindLoading(false);
+    }
+  };
+
   // Pipeline switcher — load available pipelines, allow moving the
   // opportunity between them. Stage buttons below now reflect whichever
   // pipeline is currently selected (falls back to the legacy 8-stage
@@ -348,6 +396,19 @@ export default function OpportunityDetail({
           >
             ✅ Add task
           </button>
+          <button
+            onClick={openFactFind}
+            disabled={factFindLoading}
+            title={factFindError || "Open this borrower's Fact Find"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            📋 {factFindLoading ? "Opening…" : "Fact Find"}
+          </button>
+          {factFindError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={factFindError}>
+              {factFindError}
+            </span>
+          )}
           <div ref={bookingLinkRef} className="relative">
             <button
               onClick={() => setShowBookingLinks((s) => !s)}
