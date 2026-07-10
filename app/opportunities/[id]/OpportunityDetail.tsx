@@ -178,6 +178,51 @@ export default function OpportunityDetail({
     }
   };
 
+  // Credit Authorisation — open (or create) this borrower's Equifax Access
+  // Seeker consent form, linked to their primary contact. Mirrors openFactFind:
+  // reuse the most recent authorisation for the contact rather than spawning a
+  // duplicate; note the create route reads `contactId` (and prefills from it).
+  const [creditAuthLoading, setCreditAuthLoading] = useState(false);
+  const [creditAuthError, setCreditAuthError] = useState("");
+
+  const openCreditAuthorisation = async () => {
+    setCreditAuthLoading(true);
+    setCreditAuthError("");
+    try {
+      const contactId = lead.primary_contact_id;
+      if (contactId) {
+        const listRes = await fetch("/api/credit-authorisations", { cache: "no-store" });
+        const listJson = await listRes.json();
+        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load credit authorisations");
+        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
+          listJson.creditAuthorisations ?? [];
+        const existing = rows
+          .filter((r) => r.contact_id === contactId)
+          .sort(
+            (a, b) =>
+              new Date(b.updated_at || b.created_at || 0).getTime() -
+              new Date(a.updated_at || a.created_at || 0).getTime(),
+          )[0];
+        if (existing) {
+          router.push(`/credit-authorisation/${existing.id}`);
+          return; // keep loading state through navigation
+        }
+      }
+      // None yet (or no contact) — create one. With a contact it links + prefills.
+      const createRes = await fetch("/api/credit-authorisations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactId ? { contactId } : {}),
+      });
+      const createJson = await createRes.json();
+      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create an authorisation");
+      router.push(`/credit-authorisation/${createJson.id}`);
+    } catch (e) {
+      setCreditAuthError(e instanceof Error ? e.message : "Credit authorisation failed");
+      setCreditAuthLoading(false);
+    }
+  };
+
   // Pipeline switcher — load available pipelines, allow moving the
   // opportunity between them. Stage buttons below now reflect whichever
   // pipeline is currently selected (falls back to the legacy 8-stage
@@ -407,6 +452,19 @@ export default function OpportunityDetail({
           {factFindError && (
             <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={factFindError}>
               {factFindError}
+            </span>
+          )}
+          <button
+            onClick={openCreditAuthorisation}
+            disabled={creditAuthLoading}
+            title={creditAuthError || "Open this borrower's Credit File Authorisation"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            🔏 {creditAuthLoading ? "Opening…" : "Credit Authorisation"}
+          </button>
+          {creditAuthError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={creditAuthError}>
+              {creditAuthError}
             </span>
           )}
           <div ref={bookingLinkRef} className="relative">
