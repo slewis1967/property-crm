@@ -6,9 +6,12 @@
  * be signed and filed against the original.
  *
  * The whole document is one `data` blob (utils/needsAnalysis.ts). Editing is
- * local; "Save" PATCHes the entire blob. "Export PDF" prints the form itself —
- * inputs are flattened to underlined text by the @media print block, so there
- * is one rendering to maintain rather than a separate print view that can drift.
+ * local; "Save" PATCHes the entire blob. The editable form is for data ENTRY
+ * only — it is `print:hidden`. "Export PDF" (window.print) instead prints the
+ * dedicated `NeedsAnalysisPrintDocument` (a `hidden print:block` sibling), which
+ * reproduces Your Loan Assist's original six-page PDF layout. The Licensor only
+ * accepts submissions in their own format, so the print output must look like a
+ * filled-in copy of the YLA document, not this flattened web form.
  *
  * Mirrors app/fact-find/[id]/FactFindForm.tsx.
  */
@@ -38,6 +41,7 @@ import {
   type Applicant,
   type NeedsAnalysisData,
 } from "../../../utils/needsAnalysis";
+import NeedsAnalysisPrintDocument from "./NeedsAnalysisPrintDocument";
 
 const TEAL = "#0F4C5C";
 
@@ -659,37 +663,9 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
   const money = formatMoney;
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          #needs-document, #needs-document * { visibility: visible !important; }
-          #needs-document { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-          /* Flatten controls into printable lines. */
-          #needs-document input, #needs-document select, #needs-document textarea {
-            border: none !important; border-bottom: 1px solid #999 !important;
-            border-radius: 0 !important; background: transparent !important;
-            padding-left: 0 !important; -webkit-appearance: none; appearance: none;
-          }
-          #needs-document input[type="checkbox"], #needs-document input[type="radio"] {
-            border: 1px solid #333 !important; border-radius: 2px !important;
-          }
-          #needs-document input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
-          /* Swap each money <input type=number> for its formatted twin. */
-          #needs-document .print-hide { display: none !important; }
-          #needs-document .print-value {
-            display: block !important;
-            border-bottom: 1px solid #999;
-            padding: 2px 0;
-            font-size: 0.875rem;
-            min-height: 1.5em;
-          }
-          #needs-document section { border: 1px solid #ddd !important; page-break-inside: avoid; }
-          @page { size: A4; margin: 14mm 12mm; }
-        }
-      `}</style>
-
+    <>
+      {/* Screen: the editable form (hidden when printing). */}
+      <div className="h-full overflow-y-auto bg-gray-50 print:hidden">
       {/* Toolbar */}
       <div className="no-print sticky top-0 z-10 bg-gray-50/90 backdrop-blur border-b border-gray-200 px-4 py-3 flex gap-3 items-center flex-wrap">
         <Link href="/needs-analysis" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">
@@ -1135,6 +1111,17 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+
+      {/*
+        Print: the YLA-format document. Hidden on screen, shown only under
+        @media print (`hidden print:block`). "Export PDF" (window.print) then
+        reproduces the Your Loan Assist original layout — YLA only accepts
+        submissions in their own format.
+      */}
+      <div className="hidden print:block">
+        <NeedsAnalysisPrintDocument data={data} />
+      </div>
+    </>
   );
 }
