@@ -905,6 +905,7 @@ export default function OpportunityDetail({
           {/* War Room calculator scenarios */}
           <OpportunityCalculations
             opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
             lead={{
               annual_income: lead.annual_income,
               partner_annual_income: lead.partner_annual_income,

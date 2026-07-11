@@ -23,6 +23,10 @@ import {
   type CalcInitial,
   type CalcOutputs,
 } from "../../components/WarRoomCalculators";
+import { emptyFactFind, type FactFindData } from "../../../utils/factfind";
+import { factFindToCapacityInputs, MISSING_FIELD_LABELS } from "../../../utils/factfind-capacity";
+import { capacityInputsToFactFind } from "../../../utils/capacityToFactFind";
+import type { CapacityInputs } from "../../../utils/finance";
 
 type CalcType = "yield" | "stamp_duty" | "borrowing" | "growth" | "fhg" | "repayment";
 
@@ -130,11 +134,75 @@ function borrowingInitialFromLead(lead: BorrowingPrefill | undefined): CalcIniti
   };
 }
 
+/** Map a CapacityInputs bag onto the borrowing calculator's `initial` prop. */
+function capacityInputsToCalcInitial(i: CapacityInputs): CalcInitial {
+  return {
+    taxYear: i.taxYear,
+    income: i.income,
+    partner: i.partner,
+    otherIncome: i.otherIncome,
+    hasHecs: i.hasHecs,
+    partnerHasHecs: i.partnerHasHecs,
+    hecsBalance: i.hecsBalance ?? 0,
+    claimsStandardDeduction: i.claimsStandardDeduction,
+    dependents: i.dependents,
+    declaredExpenses: i.declaredExpenses,
+    deposit: i.deposit,
+    state: i.state,
+    isFhb: i.isFhb,
+    closingCosts: i.closingCosts,
+    newWeeklyRent: i.newWeeklyRent,
+    newPropertyIsNewBuild: i.newPropertyIsNewBuild,
+    properties: i.properties,
+    creditLimit: i.creditLimit,
+    personalLoan: i.personalLoan,
+    carLoan: i.carLoan,
+    otherDebts: i.otherDebts,
+    consumerDebtBalance: i.consumerDebtBalance,
+    rate: i.rate,
+    buffer: i.buffer,
+    loanTerm: i.loanTerm,
+    rentShading: i.rentShading,
+    dtiCap: i.dtiCap,
+    negativeGearing: i.negativeGearing,
+  };
+}
+
+/**
+ * The contact's most-recent Borrower Fact Find (full `data` blob), or null if
+ * they have none. Mirrors the newest-by-updated_at pattern OpportunityDetail
+ * uses to open a fact find, so both agree on which one is "current".
+ */
+async function loadLatestFactFind(
+  contactId: string,
+): Promise<{ id: string; data: FactFindData } | null> {
+  const listRes = await fetch("/api/fact-finds", { cache: "no-store" });
+  const listJson = await listRes.json();
+  if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load fact finds");
+  const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
+    listJson.factFinds ?? [];
+  const latest = rows
+    .filter((r) => r.contact_id === contactId)
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at || 0).getTime() -
+        new Date(a.updated_at || a.created_at || 0).getTime(),
+    )[0];
+  if (!latest) return null;
+  const oneRes = await fetch(`/api/fact-finds/${latest.id}`, { cache: "no-store" });
+  const oneJson = await oneRes.json();
+  if (!oneRes.ok || !oneJson.ok) throw new Error(oneJson.error || "Could not load the fact find");
+  return { id: latest.id, data: oneJson.factFind.data as FactFindData };
+}
+
 export default function OpportunityCalculations({
   opportunityId,
+  contactId,
   lead,
 }: {
   opportunityId: string;
+  /** The opportunity's primary contact — the fact find both buttons sync with. */
+  contactId?: string | null;
   lead?: BorrowingPrefill;
 }) {
   const [calcs, setCalcs] = useState<Calculation[]>([]);
@@ -269,6 +337,7 @@ export default function OpportunityCalculations({
           type={openCalc.type}
           existing={openCalc.existing}
           opportunityId={opportunityId}
+          contactId={contactId}
           leadPrefill={openCalc.type === "borrowing" ? borrowingInitialFromLead(lead) : undefined}
           onClose={() => setOpenCalc(null)}
           onSaved={(saved) => {
@@ -288,6 +357,7 @@ function CalculatorEditor({
   type,
   existing,
   opportunityId,
+  contactId,
   leadPrefill,
   onClose,
   onSaved,
@@ -295,6 +365,8 @@ function CalculatorEditor({
   type: CalcType;
   existing: Calculation | null;
   opportunityId: string;
+  /** The opportunity's primary contact — drives the Fact Find sync buttons. */
+  contactId?: string | null;
   /** Used as `initial` for a brand-new scenario when the lead row has
    *  financial data on it. Existing scenarios always use their own
    *  saved inputs (so a user-edited "what if" isn't blown away). */
@@ -309,6 +381,83 @@ function CalculatorEditor({
   const [snapshot, setSnapshot] = useState<CalcSnapshot | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // ── Two-way Fact Find sync (borrowing calculator only) ────────────────────
+  // Seeding the live calculator means re-mounting it with a fresh `initial`;
+  // `seededInitial` + a `seedNonce` key bump do exactly that.
+  const [seededInitial, setSeededInitial] = useState<CalcInitial | null>(null);
+  const [seedNonce, setSeedNonce] = useState(0);
+  const [ffBusy, setFfBusy] = useState<"populate" | "save" | null>(null);
+  const [ffMessage, setFfMessage] = useState<{ kind: "info" | "success" | "error"; text: string } | null>(null);
+  const [ffNotes, setFfNotes] = useState<string[]>([]);
+  const [ffMissing, setFfMissing] = useState<string[]>([]);
+
+  const populateFromFactFind = async () => {
+    if (!contactId) return;
+    setFfBusy("populate");
+    setFfMessage(null);
+    setFfNotes([]);
+    setFfMissing([]);
+    try {
+      const ff = await loadLatestFactFind(contactId);
+      if (!ff) {
+        setFfMessage({ kind: "info", text: "This contact has no Borrower Fact Find yet." });
+        return;
+      }
+      const { inputs, missing, notes } = factFindToCapacityInputs(ff.data);
+      setSeededInitial(capacityInputsToCalcInitial(inputs));
+      setSeedNonce((n) => n + 1);
+      setFfNotes(notes);
+      setFfMissing(missing.map((m) => MISSING_FIELD_LABELS[m]));
+      setFfMessage({ kind: "success", text: "Calculator seeded from the most recent fact find." });
+    } catch (e: unknown) {
+      setFfMessage({ kind: "error", text: e instanceof Error ? e.message : "Populate failed" });
+    } finally {
+      setFfBusy(null);
+    }
+  };
+
+  const saveToFactFind = async () => {
+    if (!contactId) return;
+    if (!snapshot) {
+      setFfMessage({ kind: "error", text: "Configure the calculator before saving." });
+      return;
+    }
+    setFfBusy("save");
+    setFfMessage(null);
+    setFfNotes([]);
+    setFfMissing([]);
+    try {
+      const inputs = snapshot.inputs as unknown as CapacityInputs;
+      const existingFf = await loadLatestFactFind(contactId);
+      const base = existingFf ? existingFf.data : emptyFactFind();
+      const { data, notes } = capacityInputsToFactFind(inputs, base);
+      const res = existingFf
+        ? await fetch(`/api/fact-finds/${existingFf.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data }),
+          })
+        : await fetch(`/api/fact-finds`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contactId, data }),
+          });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || `Save failed (${res.status})`);
+      setFfNotes(notes);
+      setFfMessage({
+        kind: "success",
+        text: existingFf
+          ? "Financials saved onto the contact's existing fact find (identity & disclosures untouched)."
+          : "Created a new fact find for this contact from the calculator.",
+      });
+    } catch (e: unknown) {
+      setFfMessage({ kind: "error", text: e instanceof Error ? e.message : "Save failed" });
+    } finally {
+      setFfBusy(null);
+    }
+  };
 
   const persist = async (mode: "save" | "save_as_new") => {
     if (!snapshot) return;
@@ -356,15 +505,89 @@ function CalculatorEditor({
         </div>
 
         <div className="px-6 py-5">
-          {!existing && leadPrefill && (
+          {!existing && leadPrefill && !seededInitial && (
             <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-800">
               Pre-filled from this opportunity&apos;s saved profile (income, partner income,
               dependents, HECS). Adjust below as needed.
             </div>
           )}
+
+          {/* Two-way Fact Find sync — borrowing calculator only. */}
+          {type === "borrowing" && (
+            <div className="mb-3">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={populateFromFactFind}
+                  disabled={!contactId || ffBusy !== null}
+                  title={
+                    contactId
+                      ? "Load this contact's most recent Borrower Fact Find into the calculator"
+                      : "Link a primary contact to this opportunity first"
+                  }
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 transition"
+                >
+                  {ffBusy === "populate" ? "Populating…" : "↓ Populate from Fact Find"}
+                </button>
+                <button
+                  type="button"
+                  onClick={saveToFactFind}
+                  disabled={!contactId || ffBusy !== null}
+                  title={
+                    contactId
+                      ? "Write these figures back onto the contact's Borrower Fact Find (financials only)"
+                      : "Link a primary contact to this opportunity first"
+                  }
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 transition"
+                >
+                  {ffBusy === "save" ? "Saving…" : "↑ Save to Fact Find"}
+                </button>
+              </div>
+              {!contactId && (
+                <p className="mt-1 text-[11px] text-gray-400">
+                  This opportunity has no linked contact, so there&apos;s no fact find to sync with.
+                </p>
+              )}
+              {ffMessage && (
+                <div
+                  className={`mt-2 px-3 py-2 rounded-lg text-xs border ${
+                    ffMessage.kind === "error"
+                      ? "bg-red-50 border-red-200 text-red-700"
+                      : ffMessage.kind === "success"
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : "bg-blue-50 border-blue-100 text-blue-800"
+                  }`}
+                >
+                  {ffMessage.text}
+                </div>
+              )}
+              {ffMissing.length > 0 && (
+                <div className="mt-2 px-3 py-2 rounded-lg text-xs bg-amber-50 border border-amber-200 text-amber-800">
+                  <p className="font-semibold mb-0.5">Fact find is missing:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {ffMissing.map((m, i) => (
+                      <li key={i}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {ffNotes.length > 0 && (
+                <div className="mt-2 px-3 py-2 rounded-lg text-xs bg-gray-50 border border-gray-200 text-gray-600">
+                  <p className="font-semibold mb-0.5">Mapping notes:</p>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {ffNotes.map((nt, i) => (
+                      <li key={i}>{nt}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           <CalculatorByType
+            key={seedNonce}
             type={type}
-            initial={existing?.inputs ?? leadPrefill}
+            initial={seededInitial ?? existing?.inputs ?? leadPrefill}
             onChange={setSnapshot}
           />
           {err && (
