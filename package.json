@@ -11,12 +11,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^133.0.0",
     "@supabase/supabase-js": "^2.97.0",
     "isomorphic-dompurify": "^3.12.0",
     "jose": "^6.2.3",
     "jspdf": "^4.2.0",
     "next": "^16.2.6",
     "openai": "^6.44.0",
+    "puppeteer-core": "^24.43.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

@@ -1,0 +1,16 @@
+# Netlify configuration.
+#
+# The build command / publish dir are configured in the Netlify UI and the
+# @netlify/plugin-nextjs runtime; this file only adds what code needs at
+# RUNTIME inside the serverless functions.
+#
+# Server-side PDF generation (app/api/needs-analyses/[id]/pdf) launches headless
+# Chromium via @sparticuz/chromium. `serverExternalPackages` (next.config.ts)
+# keeps the package unbundled, but the compressed Chromium binary and the YLA
+# logo are loaded by PATH at runtime, so they must be force-included in the
+# function bundle — nft won't trace a path it never sees as a require().
+[functions]
+  included_files = [
+    "node_modules/@sparticuz/chromium/bin/**",
+    "public/yla-logo.png",
+  ]
