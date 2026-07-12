@@ -155,11 +155,18 @@ export default function BroadcastHistory() {
   }, []);
 
   useEffect(() => {
-    void load();
+    // Defer the initial fetch into a timer callback rather than calling
+    // load() (which setState's loading=true) synchronously in the effect
+    // body — matches the useAutosave pattern and satisfies
+    // react-hooks/set-state-in-effect.
+    const t = setTimeout(() => void load(), 0);
     // Refetch when the composer reports a successful queue.
     const onSent = () => void load();
     window.addEventListener("broadcast:sent", onSent);
-    return () => window.removeEventListener("broadcast:sent", onSent);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("broadcast:sent", onSent);
+    };
   }, [load]);
 
   return (

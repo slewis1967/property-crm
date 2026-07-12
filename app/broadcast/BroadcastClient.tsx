@@ -177,7 +177,7 @@ export default function BroadcastClient({
       <p className="text-gray-500 text-sm mb-6">
         Send a one-off email to every eligible contact (or a tagged subset). Runs through AU
         compliance review before any DB writes. The runner applies the Spam-Act footer +
-        unsubscribe filter on every send — you don't need to add either to the body.
+        unsubscribe filter on every send — you don&apos;t need to add either to the body.
       </p>
 
       {/* Audience picker */}
@@ -286,7 +286,7 @@ export default function BroadcastClient({
               checked={ackViolations}
               onChange={(e) => setAckViolations(e.target.checked)}
             />
-            I'll skip the automated compliance review for this send.
+            I&apos;ll skip the automated compliance review for this send.
           </label>
           {ackViolations && (
             <button
@@ -320,7 +320,7 @@ export default function BroadcastClient({
                     {v.severity}
                   </span>
                 </div>
-                <p className="text-xs italic mb-1">"{v.snippet}"</p>
+                <p className="text-xs italic mb-1">&ldquo;{v.snippet}&rdquo;</p>
                 <p className="text-xs mb-1">
                   <strong>Why:</strong> {v.reason}
                 </p>
@@ -336,7 +336,7 @@ export default function BroadcastClient({
               checked={ackViolations}
               onChange={(e) => setAckViolations(e.target.checked)}
             />
-            I've read these warnings and want to send anyway.
+            I&apos;ve read these warnings and want to send anyway.
           </label>
           <div className="flex gap-2 mt-3">
             <button
@@ -367,7 +367,7 @@ export default function BroadcastClient({
             {sending ? "Reviewing..." : `Review & send to ${audienceCount.toLocaleString()}`}
           </button>
           <p className="text-xs text-gray-400">
-            Runs through compliance review first — you'll see flags before any send fires.
+            Runs through compliance review first — you&apos;ll see flags before any send fires.
           </p>
         </div>
       )}
