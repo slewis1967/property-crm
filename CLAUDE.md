@@ -115,8 +115,8 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 
 ### API routes (`app/api/`)
 - `properties/delete` — DELETE from Supabase by ID array
-- `duckdb/` — queries to NEXUS DuckDB via port 8765 API
-- `contacts/`, `opportunities/`, `pipelines/` — GHL CRM proxy
+- `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot. Not a GHL proxy.
+- `opportunities/`, `pipelines/` — proxy to the **NEXUS API** (`utils/nexus-api.ts` → Flask app on `localhost:8765` / `api.nextkey.com.au`, DuckDB-backed) at `/api/leads` + `/api/pipelines`. "GHL" here is legacy naming only — GoHighLevel was decommissioned; this is NextKey's own nexus-api. (There is no separate `app/api/duckdb/` route; the DuckDB backend is reached through these proxies and the suburbs/appointments pages.)
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
 - `broadcast` — two-phase bulk-email send: Phase 1 compliance review (Haiku), Phase 2 sequence + enrolment writes (see *Broadcast* above)
 
@@ -137,19 +137,19 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 **CRM**
 | Route | Description |
 |-------|-------------|
-| `/opportunities` | GHL pipeline |
+| `/opportunities` | Opportunities Kanban — live leads + pipelines from the **NEXUS API** (`/api/leads`, `/api/pipelines`), plus a read-only `ghl_archive_opportunities` snapshot below the board ("GHL" = legacy naming) |
 | `/opportunities/[id]` | Opportunity detail |
 | `/leads` | Inbound leads pipeline |
 | `/fact-find` | Borrower Fact Find — list of fact finds |
 | `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
-| `/contacts` | GHL contacts (client-side tag filter dropdown on `ContactsClient.tsx`) |
+| `/contacts` | Contacts — Supabase `contacts` (live) merged with the `ghl_archive_contacts` snapshot (client-side tag filter dropdown on `ContactsClient.tsx`) |
 | `/contacts/[id]` | Contact detail |
 | `/appointments` | Appointments |
 | `/inbox` | Email inbox |
 | `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
 | `/broadcast` | Bulk email composer — runs through compliance review, then writes a one-step sequence + enrolments. See *Broadcast* in ARCHITECTURE |
-| `/conversations` | Conversations archive (GHL historical, read-only) |
-| `/notes` | Notes archive (GHL historical, read-only) |
+| `/conversations` | Conversations archive — read-only Supabase `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection; GHL was decommissioned) |
+| `/notes` | Notes archive — read-only Supabase `ghl_archive_notes` snapshot (frozen GoHighLevel export; new notes go via Quick Log on the contact detail page) |
 | `/tasks` | Tasks list |
 | `/media` | Media library |
 
