@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 export default function AIDashboardBrief() {
   const [state, setState] = useState<
@@ -19,8 +20,8 @@ export default function AIDashboardBrief() {
         const json = await res.json();
         if (json.ok) setState({ phase: "ready", text: json.text });
         else setState({ phase: "error", error: json.error || "AI brief unavailable" });
-      } catch (e: any) {
-        setState({ phase: "error", error: e?.message ?? "AI brief unavailable" });
+      } catch (e) {
+        setState({ phase: "error", error: errMessage(e, "AI brief unavailable") });
       }
     })();
   }, []);
@@ -29,7 +30,7 @@ export default function AIDashboardBrief() {
     <div className="bg-gradient-to-br from-indigo-50 via-white to-blue-50 border border-indigo-100 rounded-xl p-5 mb-6 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-          ✨ Elvis · Today's brief
+          ✨ Elvis · Today&apos;s brief
         </span>
         {state.phase === "loading" && (
           <span className="text-xs text-gray-400 italic">thinking…</span>

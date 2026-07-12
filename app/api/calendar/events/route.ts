@@ -4,6 +4,7 @@ import {
   createCalendarEvent,
   refreshAccessToken,
 } from "../../../../utils/google-oauth";
+import { errMessage } from "../../../../utils/errors";
 
 type Body = {
   host_email: string;                                    // calendar owner
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
       sendUpdates: body.sendUpdates,
     });
     return NextResponse.json({ event });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "calendar_failed" }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ error: errMessage(e, "calendar_failed") }, { status: 500 });
   }
 }

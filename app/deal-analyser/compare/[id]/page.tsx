@@ -28,7 +28,7 @@ export default async function ComparisonReportPage({ params }: { params: Promise
   const { data: report } = await supabase.from("pia_reports").select("*").eq("id", id).maybeSingle();
   if (!report) return notFound();
 
-  const r = (report.results ?? {}) as any;
+  const r = (report.results ?? {}) as { kind?: string; comparison?: DealComparison; deal_packet_id?: string | null };
   if (r.kind !== "comparison" || !r.comparison) return notFound();
   const cmp = r.comparison as DealComparison;
   const props = cmp.properties ?? [];

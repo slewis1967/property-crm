@@ -7,7 +7,43 @@ import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface LeadRow {
+  id?: string | null;
+  full_name?: string | null;
+  name?: string | null;
+  email?: string | null;
+  state?: string | null;
+  buyer_type?: string | null;
+  temperature?: string | null;
+  score?: number | null;
+  stage?: string | null;
+  match_status?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  notes?: string | null;
+  error?: unknown;
+  _archive?: boolean;
+}
+interface NoteRow {
+  body: string | null;
+  date_added: string | null;
+}
+interface ConversationRow {
+  type: string | null;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+}
+interface TaskRow {
+  title: string | null;
+  due_date: string | null;
+  completed: boolean | null;
+  date_added: string | null;
+}
 
 const SYSTEM = `You diagnose stuck opportunities in a property advisor's pipeline. Sean opens an opportunity and wants to know: is it stuck, and if so, why, and what should I do?
 
@@ -34,7 +70,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch the lead from NEXUS API
-    let lead: any = null;
+    let lead: LeadRow | null = null;
     try {
       const res = await nexusApi(`/api/leads/${opportunityId}`, { cache: "no-store" });
       if (res.ok) lead = await res.json();
@@ -85,7 +121,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as NoteRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_conversations")
@@ -93,7 +129,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("last_message_date", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as ConversationRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_tasks")
@@ -101,7 +137,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as TaskRow[] }),
     ]);
 
     const userPrompt = [
@@ -122,7 +158,7 @@ export async function POST(req: Request) {
       ...((notes?.length ?? 0) > 0
         ? [
             "RECENT NOTES:",
-            ...(notes ?? []).map((n: any) => `- ${n.date_added}: ${truncate(stripHtml(n.body), 300)}`),
+            ...(notes ?? []).map((n: NoteRow) => `- ${n.date_added}: ${truncate(stripHtml(n.body), 300)}`),
             "",
           ]
         : []),
@@ -130,7 +166,7 @@ export async function POST(req: Request) {
         ? [
             "RECENT CONVERSATIONS:",
             ...(conversations ?? []).map(
-              (c: any) =>
+              (c: ConversationRow) =>
                 `- ${c.last_message_type || c.type} · ${c.last_message_date}: ${truncate(stripHtml(c.last_message_body), 200)}`,
             ),
             "",
@@ -140,7 +176,7 @@ export async function POST(req: Request) {
         ? [
             "TASKS:",
             ...(tasks ?? []).map(
-              (t: any) =>
+              (t: TaskRow) =>
                 `- [${t.completed ? "done" : "open"}] ${t.title || "?"} · due ${t.due_date} · added ${t.date_added}`,
             ),
           ]
@@ -174,15 +210,15 @@ export async function POST(req: Request) {
       });
       const parsed = parseDiagnosis(result.text);
       return NextResponse.json({ ok: true, diagnosis: parsed, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to diagnose" },
+      { ok: false, error: errMessage(e, "Failed to diagnose") },
       { status: 500 },
     );
   }
@@ -208,12 +244,12 @@ function truncate(s: string | null | undefined, n: number) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
-function latestDate(rows: any[] | null | undefined, field: string): string | null {
+function latestDate(rows: readonly unknown[] | null | undefined, field: string): string | null {
   if (!rows || rows.length === 0) return null;
   let max: string | null = null;
   for (const r of rows) {
-    const v = r?.[field];
-    if (v && (!max || v > max)) max = v;
+    const v = (r as Record<string, unknown>)?.[field];
+    if (v && (!max || (v as string) > max)) max = v as string;
   }
   return max;
 }

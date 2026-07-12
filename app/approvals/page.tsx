@@ -15,6 +15,19 @@ async function getPendingContent() {
   return { pending: [] };
 }
 
+type PendingContent = {
+  content_type?: string | null;
+  id?: string | number | null;
+  content?: string | null;
+};
+
+type ApprovalHistory = {
+  action: string;
+  content_type?: string | null;
+  id?: string | number | null;
+  actioned_at?: string | null;
+};
+
 const actionIcon = (action: string) => {
   if (action === "approved") return "✅";
   if (action === "rejected") return "❌";
@@ -40,7 +53,7 @@ export default async function ApprovalsPage() {
       .limit(50),
   ]);
 
-  const pending: any[] = pendingData.pending || [];
+  const pending: PendingContent[] = pendingData.pending || [];
 
   return (
     <div>
@@ -64,7 +77,7 @@ export default async function ApprovalsPage() {
         </h2>
         {pending.length > 0 ? (
           <div className="space-y-3">
-            {pending.map((p: any, i: number) => (
+            {pending.map((p: PendingContent, i: number) => (
               <div key={i} className="border border-orange-200 bg-orange-50 rounded-lg p-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -93,7 +106,7 @@ export default async function ApprovalsPage() {
         <h2 className="text-lg font-semibold mb-4">Approval History</h2>
         {history && history.length > 0 ? (
           <div className="space-y-2">
-            {history.map((h: any, i: number) => (
+            {history.map((h: ApprovalHistory, i: number) => (
               <div key={i} className={`border rounded-lg px-4 py-3 flex justify-between items-center ${actionBg(h.action)}`}>
                 <div className="flex items-center gap-3">
                   <span>{actionIcon(h.action)}</span>

@@ -1,5 +1,6 @@
 import { nexusApi } from "@/utils/nexus-api";
 import { NextRequest, NextResponse } from "next/server";
+import { errMessage } from "@/utils/errors";
 
 export async function GET(
   _req: NextRequest,
@@ -11,8 +12,8 @@ export async function GET(
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
     return NextResponse.json(data);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 503 });
+  } catch (e) {
+    return NextResponse.json({ error: errMessage(e) }, { status: 503 });
   }
 }
 
@@ -32,8 +33,8 @@ export async function PATCH(
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
     return NextResponse.json(data);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 503 });
+  } catch (e) {
+    return NextResponse.json({ error: errMessage(e) }, { status: 503 });
   }
 }
 
@@ -47,7 +48,7 @@ export async function DELETE(
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
     return NextResponse.json(data);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 503 });
+  } catch (e) {
+    return NextResponse.json({ error: errMessage(e) }, { status: 503 });
   }
 }

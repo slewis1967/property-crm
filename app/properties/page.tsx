@@ -56,7 +56,7 @@ async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string |
       .select("value")
       .eq("key", "property_types")
       .maybeSingle();
-    const list = (data?.value as any)?.types;
+    const list = (data?.value as { types?: Array<{ name: string; icon?: string | null }> } | null)?.types;
     if (Array.isArray(list) && list.length > 0) return list;
   } catch {
     // fall through to defaults
@@ -108,8 +108,25 @@ export default async function PropertiesPage() {
   const propertyTypes = await getPropertyTypes();
 
   // Normalise field names so PropertyGrid's `??` fallbacks line up
-  // with the snake_case columns Supabase returns.
-  const allNormalised = (firstPage ?? []).map((p: any) => ({
+  // with the snake_case columns Supabase returns. `firstPage` is typed as
+  // Supabase's GenericStringError[] because the projection is a runtime string;
+  // the raw rows are real records, so narrow to the fields we read here.
+  type RawRow = {
+    id: string;
+    builder_name?: string | null;
+    total_package_price?: number | null;
+    house_price?: number | null;
+    price_total?: number | null;
+    street_address?: string | null;
+    address_street?: string | null;
+    suburb?: string | null;
+    address_suburb?: string | null;
+    state?: string | null;
+    address_state?: string | null;
+    brochure_url?: string | null;
+    image_url?: string | null;
+  };
+  const allNormalised = ((firstPage ?? []) as unknown as RawRow[]).map((p) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,

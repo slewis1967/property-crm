@@ -32,7 +32,7 @@ export default function AppShell({
   // new page → pathname changes → drawer closes so the user doesn't have to
   // dismiss it manually.
   useEffect(() => {
-    setDrawerOpen(false);
+    queueMicrotask(() => setDrawerOpen(false));
   }, [pathname]);
 
   // Lock body scroll while the drawer is open so the underlying page doesn't

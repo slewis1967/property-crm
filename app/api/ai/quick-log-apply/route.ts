@@ -22,6 +22,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 
 type Task = { title: string; due_date: string | null };
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
     }
 
     const now = new Date().toISOString();
-    const summary: Record<string, any> = {
+    const summary: Record<string, number | boolean> = {
       taskCount: 0,
       tagsAdded: 0,
       summarySaved: false,
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
     }
 
     // Build the contacts UPDATE payload
-    const update: Record<string, any> = {};
+    const update: Record<string, string | string[]> = {};
 
     // 3. Tags (merge with existing, dedup, lowercase)
     if (applied.tags && Array.isArray(payload.tags) && payload.tags.length > 0) {
@@ -161,9 +162,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: errors.join("; "), applied: summary }, { status: 500 });
     }
     return NextResponse.json({ ok: true, applied: summary });
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to apply quick log" },
+      { ok: false, error: errMessage(e, "Failed to apply quick log") },
       { status: 500 },
     );
   }

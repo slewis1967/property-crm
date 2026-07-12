@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AIComplianceCheck from "./AIComplianceCheck";
+import { errMessage } from "../../utils/errors";
 
 type Extraction = {
   summary: string;
@@ -22,6 +23,15 @@ type ApplyState = {
   taskIndexes: Set<number>;
 };
 
+type ApplyResult = {
+  taskCount: number;
+  followUpCreated: boolean;
+  tagsAdded: number;
+  temperatureSet: boolean;
+  statusSet: boolean;
+  summarySaved: boolean;
+};
+
 const defaultApply = (e: Extraction): ApplyState => ({
   // Default to ON for the things the AI clearly extracted — advisor can untick.
   summary: !!e.summary,
@@ -40,7 +50,7 @@ export default function AIQuickLog({ contactId }: { contactId: string }) {
     | { phase: "loading" }
     | { phase: "ready"; extraction: Extraction; apply: ApplyState }
     | { phase: "applying" }
-    | { phase: "done"; summary: any }
+    | { phase: "done"; summary: ApplyResult }
     | { phase: "error"; error: string }
   >({ phase: "idle" });
 
@@ -61,8 +71,8 @@ export default function AIQuickLog({ contactId }: { contactId: string }) {
       } else {
         setState({ phase: "error", error: json.error || "Failed to extract" });
       }
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to extract" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to extract") });
     }
   };
 
@@ -90,8 +100,8 @@ export default function AIQuickLog({ contactId }: { contactId: string }) {
       const json = await res.json();
       if (json.ok) setState({ phase: "done", summary: json.applied });
       else setState({ phase: "error", error: json.error || "Failed to apply" });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to apply" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to apply") });
     }
   };
 

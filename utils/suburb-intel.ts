@@ -20,12 +20,24 @@ export interface SuburbIntel {
   summary: string | null;
 }
 
+type SuburbApiRow = {
+  suburb: string;
+  state: string;
+  median_price?: number | string | null;
+  price_growth_pct?: number | string | null;
+  population?: number | string | null;
+  last_updated?: string | null;
+  key_infrastructure?: string | null;
+  demographics?: string | null;
+  summary?: string | null;
+};
+
 export async function getSuburbIntel(suburb: string | null, state: string | null): Promise<SuburbIntel | null> {
   if (!suburb) return null;
   try {
     const res = await nexusApi("/api/suburbs", { cache: "no-store" });
     if (!res.ok) return null;
-    const list = ((await res.json()).suburbs ?? []) as any[];
+    const list = ((await res.json()).suburbs ?? []) as SuburbApiRow[];
     const m = list.find(
       (s) =>
         String(s.suburb ?? "").toLowerCase() === suburb.toLowerCase() &&

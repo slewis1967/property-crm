@@ -12,6 +12,23 @@ async function getActivity() {
   return { events: [], error: "NEXUS API offline" };
 }
 
+type ActivityEvent = {
+  action: string;
+  content_type?: string | null;
+  content_preview?: string | null;
+  actioned_at?: string | null;
+  id?: string | number | null;
+};
+
+type PipelineRun = {
+  started_at?: string | null;
+  errors?: boolean | number | null;
+  listings_processed?: number | null;
+  content_generated?: number | null;
+  research_completed?: number | null;
+  posted?: number | null;
+};
+
 const actionIcon = (action: string) => {
   if (action === "approved") return "✅";
   if (action === "rejected") return "❌";
@@ -34,8 +51,8 @@ export default async function ActivityPage() {
     nexusApi("/api/pipeline", { cache: "no-store" }).then(r => r.ok ? r.json() : { runs: [] }).catch(() => ({ runs: [] })),
   ]);
 
-  const events: any[] = activityData.events || [];
-  const runs: any[] = pipelineData.runs || [];
+  const events: ActivityEvent[] = activityData.events || [];
+  const runs: PipelineRun[] = pipelineData.runs || [];
 
   return (
     <div>
@@ -59,7 +76,7 @@ export default async function ActivityPage() {
             <h2 className="text-lg font-semibold mb-4">Content Approvals</h2>
             {events.length > 0 ? (
               <div className="space-y-3">
-                {events.map((e: any, i: number) => (
+                {events.map((e: ActivityEvent, i: number) => (
                   <div key={i} className={`border rounded-lg p-4 ${actionColor(e.action)}`}>
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-3">
@@ -94,7 +111,7 @@ export default async function ActivityPage() {
             <h2 className="text-lg font-semibold mb-4">Pipeline Runs</h2>
             {runs.length > 0 ? (
               <div className="space-y-3">
-                {runs.map((r: any, i: number) => (
+                {runs.map((r: PipelineRun, i: number) => (
                   <div key={i} className="border border-gray-100 rounded-lg p-3">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-semibold text-gray-500">

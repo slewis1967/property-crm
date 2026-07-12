@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { errMessage } from "../../../utils/errors";
+
+type ExtractionRow = Record<string, string | number | null>;
 
 type QueueItem = {
   id: string;
-  raw_extraction: Record<string, any>;
+  raw_extraction: ExtractionRow;
   builder_name: string | null;
   estate_name: string | null;
   lot_number: string | null;
@@ -48,7 +51,7 @@ export default function ReviewQueueClient() {
   const [items, setItems] = useState<QueueItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [edits, setEdits] = useState<Record<string, Record<string, any>>>({});
+  const [edits, setEdits] = useState<Record<string, ExtractionRow>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
   const [sortMode, setSortMode] = useState<SortMode>("confidence_desc");
@@ -64,13 +67,13 @@ export default function ReviewQueueClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error ?? "Load failed");
       setItems(json.items ?? []);
-    } catch (e: any) {
-      setError(e?.message ?? "Load failed");
+    } catch (e) {
+      setError(errMessage(e, "Load failed"));
     }
   };
 
   useEffect(() => {
-    load(statusFilter);
+    queueMicrotask(() => load(statusFilter));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
@@ -95,7 +98,7 @@ export default function ReviewQueueClient() {
     }
   };
 
-  const updateField = (id: string, key: string, value: any) => {
+  const updateField = (id: string, key: string, value: string | number) => {
     setEdits((prev) => ({
       ...prev,
       [id]: { ...prev[id], [key]: value === "" ? null : value },
@@ -129,8 +132,8 @@ export default function ReviewQueueClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       await load();
-    } catch (e: any) {
-      alert(`Approve failed: ${e?.message ?? e}`);
+    } catch (e) {
+      alert(`Approve failed: ${errMessage(e)}`);
     } finally {
       setBusy(null);
     }
@@ -148,8 +151,8 @@ export default function ReviewQueueClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       await load();
-    } catch (e: any) {
-      alert(`Reject failed: ${e?.message ?? e}`);
+    } catch (e) {
+      alert(`Reject failed: ${errMessage(e)}`);
     } finally {
       setBusy(null);
     }

@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     price: p.specs?.total_price ?? null,
   }));
 
-  let parsed: { edits?: any[]; extra_info?: string };
+  let parsed: { edits?: Array<{ property_index?: number; field: string; value?: number }>; extra_info?: string };
   try {
     const text = await orText({
       model: MODELS.fast,
@@ -81,12 +81,18 @@ export async function POST(req: NextRequest) {
       user: `PROPERTIES:\n${JSON.stringify(summary, null, 2)}\n\nINSTRUCTION:\n"${instruction.trim()}"`,
     });
     parsed = JSON.parse(extractJson(text));
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Couldn't interpret that — try the editable fields, or reword." }, { status: 502 });
   }
 
   // Validate + enrich. Drop anything that doesn't map cleanly onto a real field.
-  const edits: any[] = [];
+  const edits: Array<{
+    property_index: number;
+    label: string;
+    field: string;
+    detail: string;
+    apply: { index: number; per_room_rent?: number; weekly_rent?: number; price?: number };
+  }> = [];
   for (const e of parsed.edits ?? []) {
     const i = Number(e?.property_index);
     const field = e?.field;

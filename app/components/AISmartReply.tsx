@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 type Compliance = {
   severity: "clean" | "warn" | "block";
@@ -47,18 +48,18 @@ export default function AISmartReply({ contactId }: { contactId: string }) {
       } else {
         setState({ phase: "error", error: json.error || "Failed to draft reply" });
       }
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to draft reply" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to draft reply") });
     }
   };
 
   // Whenever a draft is ready (or edited), debounce a compliance check
   useEffect(() => {
     if (state.phase !== "ready" || !text.trim()) {
-      setCompliance({ phase: "idle" });
+      queueMicrotask(() => setCompliance({ phase: "idle" }));
       return;
     }
-    setCompliance({ phase: "checking" });
+    queueMicrotask(() => setCompliance({ phase: "checking" }));
     const handle = setTimeout(async () => {
       try {
         const res = await fetch("/api/ai/compliance-check", {
@@ -79,8 +80,8 @@ export default function AISmartReply({ contactId }: { contactId: string }) {
         } else {
           setCompliance({ phase: "error", error: json.error || "Compliance check failed" });
         }
-      } catch (e: any) {
-        setCompliance({ phase: "error", error: e?.message ?? "Compliance check failed" });
+      } catch (e) {
+        setCompliance({ phase: "error", error: errMessage(e, "Compliance check failed") });
       }
     }, 600);
     return () => clearTimeout(handle);
@@ -285,7 +286,7 @@ function ComplianceBanner({
           <li key={i}>
             <p className="font-medium">{v.type}</p>
             {v.snippet && (
-              <p className="text-[11px] italic mt-0.5">"{v.snippet}"</p>
+              <p className="text-[11px] italic mt-0.5">&quot;{v.snippet}&quot;</p>
             )}
             <p className="text-[11px] mt-0.5 opacity-80">{v.why}</p>
             {v.fix && (

@@ -5,7 +5,42 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  id?: string | null;
+  ghl_contact_id?: string | null;
+  email?: string | null;
+  full_name?: string | null;
+  name?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  budget_max?: string | number | null;
+  budget?: string | number | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+  temperature?: string | null;
+  lead_score?: number | null;
+  notes?: string | null;
+  updated_at?: string | null;
+}
+interface NoteRow {
+  body: string | null;
+  date_added: string | null;
+}
+interface ConversationRow {
+  type: string | null;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+}
+interface OpportunityRow {
+  name: string | null;
+  status: string | null;
+  monetary_value: number | null;
+  date_added: string | null;
+}
 
 const SYSTEM = `You write a 60-second pre-meeting brief for a property advisor.
 
@@ -38,7 +73,7 @@ export async function POST(req: Request) {
     }
 
     // Resolve associated contact (live first, archive fallback by email)
-    let contact: any = null;
+    let contact: ContactRow | null = null;
     if (appt.contact_id) {
       const { data } = await supabase
         .from("contacts")
@@ -79,7 +114,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as NoteRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_conversations")
@@ -87,7 +122,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("last_message_date", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as ConversationRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_opportunities")
@@ -95,7 +130,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(3)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as OpportunityRow[] }),
     ]);
 
     const userPrompt = [
@@ -122,7 +157,7 @@ export async function POST(req: Request) {
         ? [
             "OPEN/RECENT OPPORTUNITIES:",
             ...(opportunities ?? []).map(
-              (o: any) =>
+              (o: OpportunityRow) =>
                 `- ${o.name || "?"} · ${o.status || "?"} · ${o.monetary_value ? `$${Number(o.monetary_value).toLocaleString()}` : "?"} (${o.date_added})`,
             ),
             "",
@@ -132,7 +167,7 @@ export async function POST(req: Request) {
         ? [
             "RECENT CONVERSATIONS:",
             ...(conversations ?? []).map(
-              (c: any) =>
+              (c: ConversationRow) =>
                 `- ${c.last_message_type || c.type} ${c.last_message_date}: ${truncate(stripHtml(c.last_message_body), 250)}`,
             ),
             "",
@@ -142,7 +177,7 @@ export async function POST(req: Request) {
         ? [
             "RECENT NOTES:",
             ...(notes ?? []).map(
-              (n: any) => `- ${n.date_added}: ${truncate(stripHtml(n.body), 300)}`,
+              (n: NoteRow) => `- ${n.date_added}: ${truncate(stripHtml(n.body), 300)}`,
             ),
           ]
         : []),
@@ -173,15 +208,15 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to build pre-meeting brief" },
+      { ok: false, error: errMessage(e, "Failed to build pre-meeting brief") },
       { status: 500 },
     );
   }
@@ -191,12 +226,12 @@ function truncate(s: string | null | undefined, n: number) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
-function latestDate(rows: any[] | null | undefined, field: string): string | null {
+function latestDate(rows: readonly unknown[] | null | undefined, field: string): string | null {
   if (!rows || rows.length === 0) return null;
   let max: string | null = null;
   for (const r of rows) {
-    const v = r?.[field];
-    if (v && (!max || v > max)) max = v;
+    const v = (r as Record<string, unknown>)?.[field];
+    if (v && (!max || (v as string) > max)) max = v as string;
   }
   return max;
 }

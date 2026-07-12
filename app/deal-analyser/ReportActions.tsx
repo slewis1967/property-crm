@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 /**
  * Toolbar actions for a generated report. "Update" jumps back to the packet hub;
@@ -25,8 +26,8 @@ export default function ReportActions({ reportId, dealPacketId }: { reportId: st
       const res = await fetch(`/api/pia/reports/${reportId}`, { method: "DELETE" });
       if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
       window.location.href = hubHref;
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      alert(errMessage(e));
       setBusy(false);
     }
   }
@@ -47,8 +48,8 @@ export default function ReportActions({ reportId, dealPacketId }: { reportId: st
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j.error || "Send failed");
       setSent({ ok: true, msg: `Sent to ${to.trim()}` });
-    } catch (e: any) {
-      setSent({ ok: false, msg: e.message });
+    } catch (e) {
+      setSent({ ok: false, msg: errMessage(e) });
     } finally {
       setSending(false);
     }

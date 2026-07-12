@@ -20,7 +20,40 @@ import { aiCall } from "../../../../utils/ai";
 import { orSafe } from "../../../../utils/postgrest-safe";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface SearchFilters {
+  state?: string | null;
+  buyer_type?: string | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  temperature?: string | null;
+  tags_any?: string[] | null;
+  tags_all?: string[] | null;
+  min_days_since_contact?: number | null;
+  max_days_since_contact?: number | null;
+  free_text?: string | null;
+  limit?: number | null;
+}
+interface CandidateRow {
+  id?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget?: string | number | null;
+  budget_max?: string | number | null;
+  temperature?: string | null;
+  lead_score?: number | null;
+  status?: string | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+  tags?: string[] | null;
+  updated_at?: string | null;
+  notes?: string | null;
+}
 
 const PARSE_SYSTEM = `You translate a property advisor's natural-language search query into structured filters for the CRM contacts table.
 
@@ -73,7 +106,7 @@ export async function POST(req: Request) {
     const q = query.trim();
 
     // Stage 1: parse to filters
-    let filters: any = {};
+    let filters: SearchFilters = {};
     try {
       const parseRaw = await aiCall({
         system: PARSE_SYSTEM,
@@ -83,9 +116,9 @@ export async function POST(req: Request) {
       });
       const m = parseRaw.match(/\{[\s\S]*\}/);
       if (m) filters = JSON.parse(m[0]);
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: `Failed to parse query: ${e?.message ?? "unknown"}` },
+        { ok: false, error: `Failed to parse query: ${errMessage(e, "unknown")}` },
         { status: 500 },
       );
     }
@@ -162,7 +195,7 @@ export async function POST(req: Request) {
       `Return up to ${requestedLimit} matches.`,
       "",
       `CANDIDATES (${candidates.length}):`,
-      ...candidates.map((c: any) =>
+      ...candidates.map((c: CandidateRow) =>
         [
           `- id: ${c.id}`,
           `  name: ${c.full_name || c.name || "(unnamed)"}`,
@@ -193,11 +226,11 @@ export async function POST(req: Request) {
         const parsed = JSON.parse(m[0]);
         if (Array.isArray(parsed?.results)) results = parsed.results;
       }
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
         {
           ok: false,
-          error: `Rank stage failed: ${e?.message ?? "unknown"}`,
+          error: `Rank stage failed: ${errMessage(e, "unknown")}`,
           filters_applied: filters,
           candidate_count: candidates.length,
         },
@@ -211,9 +244,9 @@ export async function POST(req: Request) {
       filters_applied: filters,
       candidate_count: candidates.length,
     });
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Search failed" },
+      { ok: false, error: errMessage(e, "Search failed") },
       { status: 500 },
     );
   }

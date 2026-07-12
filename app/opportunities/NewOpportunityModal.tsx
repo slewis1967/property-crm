@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { errMessage } from "../../utils/errors";
 
 type Contact = {
   id: string;
@@ -32,9 +33,31 @@ type Contact = {
 
 type Pipeline = { id: string; name: string; stages: string[]; color: string };
 
+// Shape passed to onCreated: the API response spread together with the form
+// values the parent re-reads to build a board card. All fields optional/nullable
+// since callers may ignore the payload entirely.
+type CreatedLead = {
+  id?: string;
+  lead_id?: string;
+  full_name?: string | null;
+  email?: string | null;
+  buyer_type?: string | null;
+  state?: string | null;
+  budget?: string | null;
+  score?: number | null;
+  temperature?: string | null;
+  _stage?: string;
+  match_status?: string | null;
+  top_match_name?: string | null;
+  top_match_price?: string | null;
+  created_at?: string | null;
+  pipeline_id?: string | null;
+  tags?: string | null;
+};
+
 type Props = {
   onClose: () => void;
-  onCreated: (lead: any) => void;
+  onCreated: (lead: CreatedLead) => void;
   prefillContact?: Contact | null;
   pipelines?: Pipeline[];
   defaultPipelineId?: string;
@@ -121,18 +144,17 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
 
   // Filter primary dropdown
   useEffect(() => {
-    if (!contactQuery.trim()) { setFilteredContacts([]); setShowDropdown(false); return; }
+    if (!contactQuery.trim()) { queueMicrotask(() => { setFilteredContacts([]); setShowDropdown(false); }); return; }
     const q = contactQuery.toLowerCase();
     const matches = allContacts.filter((c) =>
       [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q))
     ).slice(0, 8);
-    setFilteredContacts(matches);
-    setShowDropdown(matches.length > 0);
+    queueMicrotask(() => { setFilteredContacts(matches); setShowDropdown(matches.length > 0); });
   }, [contactQuery, allContacts]);
 
   // Filter additional contacts dropdown (exclude already-linked + primary)
   useEffect(() => {
-    if (!addQuery.trim()) { setAddFiltered([]); setShowAddDropdown(false); return; }
+    if (!addQuery.trim()) { queueMicrotask(() => { setAddFiltered([]); setShowAddDropdown(false); }); return; }
     const q = addQuery.toLowerCase();
     const excludeIds = new Set([
       ...(primaryContact ? [primaryContact.id] : []),
@@ -142,8 +164,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       .filter((c) => !excludeIds.has(c.id))
       .filter((c) => [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)))
       .slice(0, 8);
-    setAddFiltered(matches);
-    setShowAddDropdown(matches.length > 0);
+    queueMicrotask(() => { setAddFiltered(matches); setShowAddDropdown(matches.length > 0); });
   }, [addQuery, allContacts, primaryContact, linkedContacts]);
 
   // Close dropdowns on outside click
@@ -276,8 +297,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           } else if (apptData.calendar_warning) {
             warnings.push(`Appointment: ${apptData.calendar_warning}`);
           }
-        } catch (apptErr: any) {
-          warnings.push(`Appointment: ${apptErr.message || "request failed"}.`);
+        } catch (apptErr) {
+          warnings.push(`Appointment: ${errMessage(apptErr, "request failed")}.`);
         }
       }
 
@@ -297,8 +318,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           if (!taskRes.ok) {
             warnings.push(`Task: ${taskData.error || `HTTP ${taskRes.status}`}.`);
           }
-        } catch (taskErr: any) {
-          warnings.push(`Task: ${taskErr.message || "request failed"}.`);
+        } catch (taskErr) {
+          warnings.push(`Task: ${errMessage(taskErr, "request failed")}.`);
         }
       }
 
@@ -323,8 +344,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           created_at: new Date().toISOString(),
         });
       }, warnings.length > 0 ? 3000 : 800);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errMessage(err));
       setSaving(false);
     }
   };
@@ -528,8 +549,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
               {requiresPreferredLocation && (
                 <p className="text-[11px] text-gray-400 mt-1.5">
                   For owner-occupiers and first-home buyers, the matchmaker biases
-                  property suggestions toward this location (or the contact's current
-                  state if blank). Write a city, suburb, region, or "{state || "anywhere"}".
+                  property suggestions toward this location (or the contact&apos;s current
+                  state if blank). Write a city, suburb, region, or &quot;{state || "anywhere"}&quot;.
                 </p>
               )}
             </div>
@@ -710,7 +731,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                       onChange={(e) => setTaskDueDate(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact's detail page.</p>
+                    <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact&apos;s detail page.</p>
                   </div>
                 </div>
               )}

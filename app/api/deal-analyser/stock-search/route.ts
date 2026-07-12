@@ -31,7 +31,17 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const results = (data ?? []).map((r: any) => ({
+  const results = (data ?? []).map((r: {
+    id?: string | null;
+    builder_name?: string | null;
+    street_address?: string | null;
+    suburb?: string | null;
+    state?: string | null;
+    total_package_price?: number | null;
+    house_price?: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
+  }) => ({
     id: r.id,
     label: [r.street_address, r.suburb, r.state].filter(Boolean).join(", ") || r.builder_name || "Listing",
     price: r.total_package_price ?? r.house_price ?? null,

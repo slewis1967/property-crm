@@ -3,6 +3,21 @@ import { fetchAllRows } from "../../utils/supabase-paginate";
 
 export const dynamic = "force-dynamic";
 
+type LeadRow = {
+  full_name: string | null;
+  email: string | null;
+  buyer_type: string | null;
+  state: string | null;
+  budget: string | number | null;
+  score: string | number | null;
+  temperature: string | null;
+  match_status: string | null;
+  top_match_name: string | null;
+  top_match_price: string | number | null;
+  source: string | null;
+  created_at: string | null;
+};
+
 const tempColor = (t: string | null) => {
   if (t === "hot") return "bg-red-100 text-red-700";
   if (t === "warm") return "bg-yellow-100 text-yellow-700";
@@ -87,7 +102,7 @@ export default async function LeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((l: any, i: number) => (
+                {leads.map((l: LeadRow, i: number) => (
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium whitespace-nowrap">{l.full_name || "—"}</td>
                     <td className="px-4 py-3 text-gray-500">{l.email || "—"}</td>

@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { needsHumanApproval } from "../../utils/advisor-policy";
+import { errMessage } from "../../utils/errors";
+
+type MachineAction = {
+  kind: string;
+  key?: string | null;
+  value?: string | number | boolean | null;
+  builder_id?: string | null;
+  field?: string | null;
+};
 
 type Rec = {
   id: string;
@@ -24,7 +33,7 @@ type Rec = {
    * confirm_builder_draft, update_builder_field). Non-null = "🤖 Auto-apply"
    * button shows; one click runs it via /execute endpoint.
    */
-  machine_action: Record<string, any> | null;
+  machine_action: MachineAction | null;
   /**
    * Senior Advisor's verdict on the Veteran's recommendation. Auto-Apply
    * only fires when senior_status='approved' AND risk_level!='high'.
@@ -70,13 +79,19 @@ export default function AdvisorClient() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   // Deep-link from Telegram alerts: /advisor?id=<uuid> auto-expands that rec
   // so Sean lands directly on the high-impact thing without scrolling.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const linkedId = params.get("id");
-    if (linkedId) setExpandedId(linkedId);
+    if (linkedId) queueMicrotask(() => setExpandedId(linkedId));
   }, []);
 
   const load = async () => {
@@ -87,17 +102,17 @@ export default function AdvisorClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       setItems(json.items ?? []);
-    } catch (e: any) {
-      setError(e?.message ?? "Load failed");
+    } catch (e) {
+      setError(errMessage(e, "Load failed"));
     }
   };
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => load());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  const action = async (id: string, body: any) => {
+  const action = async (id: string, body: { action: string; reason?: string; snooze_days?: number }) => {
     setBusy(id);
     try {
       const res = await fetch(`/api/advisor/recommendations/${id}`, {
@@ -108,8 +123,8 @@ export default function AdvisorClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       await load();
-    } catch (e: any) {
-      alert(e?.message ?? "Action failed");
+    } catch (e) {
+      alert(errMessage(e, "Action failed"));
     } finally {
       setBusy(null);
     }
@@ -131,8 +146,8 @@ export default function AdvisorClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       await load();
-    } catch (e: any) {
-      alert(`Auto-apply failed: ${e?.message ?? e}`);
+    } catch (e) {
+      alert(`Auto-apply failed: ${errMessage(e)}`);
     } finally {
       setBusy(null);
     }
@@ -179,7 +194,7 @@ export default function AdvisorClient() {
           const isInProgress = r.status === "in_progress";
           // How long has this been in flight? Useful pressure on stale work.
           const inFlightDays = isInProgress && r.started_at
-            ? Math.floor((Date.now() - new Date(r.started_at).getTime()) / (1000 * 60 * 60 * 24))
+            ? Math.floor((now - new Date(r.started_at).getTime()) / (1000 * 60 * 60 * 24))
             : null;
           // Auto-Apply once Senior approves. risk_level no longer blocks
           // (Sean 2026-06-29) — only destructive / money-spending actions do.
@@ -458,7 +473,7 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
   );
 }
 
-function describeAction(a: Record<string, any> | null): string {
+function describeAction(a: MachineAction | null): string {
   if (!a) return "(no machine action)";
   switch (a.kind) {
     case "set_app_setting":

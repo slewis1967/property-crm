@@ -27,6 +27,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You're a compliance reviewer for an Australian property advisor (Sean, NextKey Property Strategists). You read draft outbound text — emails, SMS, ad copy, social posts — and flag risky language BEFORE it reaches a client.
@@ -128,15 +129,15 @@ export async function POST(req: Request) {
         );
       }
       return NextResponse.json({ ok: true, ...parsed, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "Compliance check failed" },
+        { ok: false, error: errMessage(e, "Compliance check failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Compliance check failed" },
+      { ok: false, error: errMessage(e, "Compliance check failed") },
       { status: 500 },
     );
   }
@@ -155,7 +156,7 @@ function parseResponse(raw: string):
     const obj = JSON.parse(m[0]);
     const sev = ["clean", "warn", "block"].includes(obj.severity) ? obj.severity : "clean";
     const violations = Array.isArray(obj.violations)
-      ? obj.violations.map((v: any) => ({
+      ? obj.violations.map((v: { type?: unknown; snippet?: unknown; why?: unknown; fix?: unknown }) => ({
           type: String(v.type ?? "").trim(),
           snippet: String(v.snippet ?? "").trim(),
           why: String(v.why ?? "").trim(),

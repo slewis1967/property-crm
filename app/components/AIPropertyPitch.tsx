@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AIComplianceCheck from "./AIComplianceCheck";
+import { errMessage } from "../../utils/errors";
 
 type Match = { property_id: string; summary: string; rationale: string };
 
@@ -22,7 +23,7 @@ export default function AIPropertyPitch({ contactId }: { contactId: string }) {
   // Pre-load match suggestions when the modal opens
   useEffect(() => {
     if (!open || matches.length > 0) return;
-    setMatchesLoading(true);
+    queueMicrotask(() => setMatchesLoading(true));
     (async () => {
       try {
         const res = await fetch("/api/ai/contact-matches", {
@@ -61,8 +62,8 @@ export default function AIPropertyPitch({ contactId }: { contactId: string }) {
       } else {
         setState({ phase: "error", error: json.error || "Failed to generate pitch" });
       }
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to generate pitch" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to generate pitch") });
     }
   };
 

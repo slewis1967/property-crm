@@ -27,7 +27,7 @@ export async function PATCH(
     "annual_income", "partner_annual_income",
     "existing_savings", "hecs_balance",
   ];
-  const update: Record<string, any> = {};
+  const update: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) update[key] = body[key];
   }

@@ -6,7 +6,36 @@ import { nexusApi } from "../../../../utils/nexus-api";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface SuburbData {
+  suburb?: string | null;
+  state?: string | null;
+  key_infrastructure?: string | null;
+  median_price?: string | number | null;
+  price_growth_pct?: string | number | null;
+  population?: string | number | null;
+  last_updated?: string | null;
+  demographics?: string | null;
+  summary?: string | null;
+}
+interface StockRow {
+  id?: string | null;
+  builder_name?: string | null;
+  street_address?: string | null;
+  suburb?: string | null;
+  state?: string | null;
+  total_package_price?: string | number | null;
+  house_price?: string | number | null;
+  bedrooms?: string | number | null;
+  bathrooms?: string | number | null;
+  land_size?: string | number | null;
+  house_size?: string | number | null;
+  property_type?: string | null;
+  sda_category?: string | null;
+  status?: string | null;
+}
 
 const SYSTEM = `You write a concise market briefing for a property advisor about a single suburb. NextKey advisors use these to sound knowledgeable on calls and tailor pitches per area.
 
@@ -35,7 +64,7 @@ export async function POST(req: Request) {
     }
 
     // Pull suburb data from NEXUS API
-    let suburbData: any = null;
+    let suburbData: SuburbData | null = null;
     try {
       const res = await nexusApi("/api/suburbs", { cache: "no-store" });
       if (res.ok) {
@@ -43,7 +72,7 @@ export async function POST(req: Request) {
         const list = json.suburbs || [];
         suburbData =
           list.find(
-            (s: any) =>
+            (s: { suburb?: string | null; state?: string | null }) =>
               String(s.suburb || "").toLowerCase() === String(suburb).toLowerCase() &&
               String(s.state || "").toUpperCase() === String(state).toUpperCase(),
           ) || null;
@@ -71,7 +100,7 @@ export async function POST(req: Request) {
 
     const stockCount = stock?.length ?? 0;
     const stockPrices = (stock ?? [])
-      .map((p: any) => Number(p.total_package_price ?? p.house_price ?? 0))
+      .map((p: StockRow) => Number(p.total_package_price ?? p.house_price ?? 0))
       .filter((n: number) => n > 0);
     const stockMedian =
       stockPrices.length > 0
@@ -114,7 +143,7 @@ export async function POST(req: Request) {
       "OUR CURRENT STOCK IN THIS SUBURB:",
       `count: ${stockCount}`,
       stockMedian ? `median listing: $${stockMedian.toLocaleString()}` : "",
-      ...((stock ?? []).slice(0, 8).map((p: any) => {
+      ...((stock ?? []).slice(0, 8).map((p: StockRow) => {
         const price = Number(p.total_package_price ?? p.house_price ?? 0);
         return `- ${p.street_address || "?"} · $${price.toLocaleString()} · ${p.bedrooms ?? "?"}br · ${p.builder_name || "?"} · ${p.property_type || "?"}${p.sda_category ? ` (${p.sda_category})` : ""} · ${p.status || "?"}`;
       })),
@@ -149,15 +178,15 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to build suburb brief" },
+      { ok: false, error: errMessage(e, "Failed to build suburb brief") },
       { status: 500 },
     );
   }

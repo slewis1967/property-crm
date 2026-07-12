@@ -40,7 +40,7 @@ const NUMERIC_FIELDS = new Set([
   "expected_rent_weekly",
 ]);
 
-function coerceNumeric(v: any): number | null {
+function coerceNumeric(v: unknown): number | null {
   if (v == null || v === "") return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   const cleaned = String(v).replace(/[^0-9.\-]/g, "");
@@ -92,7 +92,7 @@ export async function POST(
 
   if (action === "approve") {
     const merged = { ...item.raw_extraction, ...(body.edited_extraction ?? {}) };
-    const row: Record<string, any> = {
+    const row: Record<string, unknown> = {
       pipeline_status: "active",
       confidence_score: 1.0, // human-approved
       ingestion_run_id: item.ingestion_run_id,

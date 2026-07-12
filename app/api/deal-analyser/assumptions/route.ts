@@ -14,11 +14,11 @@ import type { DealPacket, AssumptionSource } from "@/utils/deal-packet";
  */
 const KEYS = Object.keys(DEFAULT_INPUTS) as (keyof PiaInputs)[];
 
-function sanitizeInputs(incoming: any): PiaInputs {
+function sanitizeInputs(incoming: Record<string, unknown> | null | undefined): PiaInputs {
   const out = { ...DEFAULT_INPUTS };
   for (const k of KEYS) {
     const v = Number(incoming?.[k]);
-    if (isFinite(v)) (out as any)[k] = v;
+    if (isFinite(v)) out[k] = v;
   }
   return out;
 }
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // Citations (AI-researched), sanitized.
     if (Array.isArray(entry.pia_sources)) {
-      prop.pia_sources = entry.pia_sources.slice(0, 12).map((s: any): AssumptionSource => ({
+      prop.pia_sources = entry.pia_sources.slice(0, 12).map((s: { field?: string | null; label?: string | null; value?: number | string | null; source?: string | null; date?: string | null }): AssumptionSource => ({
         field: String(s?.field ?? "").slice(0, 60),
         label: String(s?.label ?? "").slice(0, 120),
         value: Number(s?.value) || 0,
