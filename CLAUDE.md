@@ -175,11 +175,6 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/social` | Social History |
 | `/sequences` | Email / SMS sequences |
 
-**Unlisted in sidebar**
-| Route | Description |
-|-------|-------------|
-| `/forms` | GHL archive — forms + submissions + funnels (read-only, reads `ghl_archive_forms` / `ghl_archive_form_submissions` / `ghl_archive_funnels`) |
-
 ## KEY FILES
 - `utils/supabase.ts` — **server-side** Supabase client (uses `SUPABASE_SERVICE_KEY`, bypasses RLS; never import from `"use client"` components — the env var isn't in the browser bundle)
 - `utils/compliance-review.ts` — Claude Haiku AU-compliance reviewer used by `/broadcast`
