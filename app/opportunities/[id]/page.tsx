@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { nexusApi } from "@/utils/nexus-api";
 import { supabase } from "../../../utils/supabase";
 import { notFound } from "next/navigation";
@@ -64,7 +65,9 @@ export default async function OpportunityDetailPage({
 }) {
   const { id } = await params;
 
-  let lead: any = null;
+  // The nexus API returns either a lead row (shape = OpportunityDetail's `lead`
+  // prop) or an `{ error }` envelope, distinguished by the guard below.
+  let lead: (ComponentProps<typeof OpportunityDetail>["lead"] & { error?: string }) | null = null;
   try {
     const res = await nexusApi(`/api/leads/${id}`, {
       cache: "no-store",

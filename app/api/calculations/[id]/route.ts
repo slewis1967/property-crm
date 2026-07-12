@@ -10,7 +10,7 @@ export async function PATCH(
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json();
-  const update: Record<string, any> = {};
+  const update: Record<string, unknown> = {};
   if (typeof body?.name === "string" && body.name.trim()) update.name = body.name.trim();
   if (body?.inputs && typeof body.inputs === "object") update.inputs = body.inputs;
   if (body?.outputs !== undefined) update.outputs = body.outputs;

@@ -1,8 +1,39 @@
+import Link from "next/link";
 import { supabase } from "../utils/supabase";
 import WarRoomCalculators from "./components/WarRoomCalculators";
 import AIDashboardBrief from "./components/AIDashboardBrief";
 
 export const dynamic = "force-dynamic";
+
+// Row shapes read from the dashboard queries below.
+type LeadRow = {
+  full_name: string | null;
+  email: string | null;
+  state: string | null;
+  buyer_type: string | null;
+  temperature: string | null;
+  score: number | null;
+  match_status: string | null;
+  created_at: string | null;
+};
+type ContactRow = {
+  name: string | null;
+  email: string | null;
+  buyer_type: string | null;
+  temperature: string | null;
+  lead_score: number | null;
+  status: string | null;
+  preferred_state: string | null;
+  created_at: string | null;
+};
+// Hot-leads query selects a narrower column set than recentContacts.
+type HotContactRow = {
+  name: string | null;
+  email: string | null;
+  temperature: string | null;
+  lead_score: number | null;
+  status: string | null;
+};
 
 const tempColor = (t: string | null) => {
   if (t === "hot") return "bg-red-100 text-red-700";
@@ -19,7 +50,7 @@ const statusColor = (s: string | null) => {
 
 export default async function Home() {
   let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
-  let hotLeads: any[] = [], recentLeads: any[] = [], recentContacts: any[] = [];
+  let hotLeads: HotContactRow[] = [], recentLeads: LeadRow[] = [], recentContacts: ContactRow[] = [];
   let dataFetchError = false;
 
   try {
@@ -90,12 +121,12 @@ export default async function Home() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Contacts (CRM)</h3>
           <p className="text-3xl font-bold mt-2">{contactsCount ?? 0}</p>
-          <a href="/contacts" className="text-xs text-blue-600 mt-2 block hover:underline">View contacts →</a>
+          <Link href="/contacts" className="text-xs text-blue-600 mt-2 block hover:underline">View contacts →</Link>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Stock Pool</h3>
           <p className="text-3xl font-bold mt-2">{propertiesCount ?? 0}</p>
-          <a href="/properties" className="text-xs text-blue-600 mt-2 block hover:underline">View properties →</a>
+          <Link href="/properties" className="text-xs text-blue-600 mt-2 block hover:underline">View properties →</Link>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Hot Leads</h3>
@@ -113,7 +144,7 @@ export default async function Home() {
           </div>
           {recentLeads && recentLeads.length > 0 ? (
             <div className="space-y-3">
-              {recentLeads.map((l: any, i: number) => (
+              {recentLeads.map((l, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium">{l.full_name || "—"}</p>
@@ -139,11 +170,11 @@ export default async function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Hot Contacts</h2>
-            <a href="/contacts" className="text-sm text-blue-600 hover:underline">View all</a>
+            <Link href="/contacts" className="text-sm text-blue-600 hover:underline">View all</Link>
           </div>
           {hotLeads && hotLeads.length > 0 ? (
             <div className="space-y-3">
-              {hotLeads.map((c: any, i: number) => (
+              {hotLeads.map((c, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium">{c.name || "—"}</p>
@@ -168,7 +199,7 @@ export default async function Home() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Recent Contacts</h2>
-          <a href="/contacts" className="text-sm text-blue-600 hover:underline">View all</a>
+          <Link href="/contacts" className="text-sm text-blue-600 hover:underline">View all</Link>
         </div>
         {recentContacts && recentContacts.length > 0 ? (
           <div className="overflow-x-auto">
@@ -185,7 +216,7 @@ export default async function Home() {
                 </tr>
               </thead>
               <tbody>
-                {recentContacts.map((c: any, i: number) => (
+                {recentContacts.map((c, i) => (
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 pr-4 font-medium">{c.name || "—"}</td>
                     <td className="py-2 pr-4 text-gray-500">{c.email || "—"}</td>

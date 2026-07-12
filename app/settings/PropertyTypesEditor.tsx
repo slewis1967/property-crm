@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 type PropertyType = {
   name: string;
@@ -41,8 +42,8 @@ export default function PropertyTypesEditor() {
       setTypes(json.types);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (e: any) {
-      setError(e?.message ?? "Save failed");
+    } catch (e) {
+      setError(errMessage(e, "Save failed"));
     } finally {
       setSaving(false);
     }

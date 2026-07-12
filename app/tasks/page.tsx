@@ -6,6 +6,23 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
+type TaskRow = {
+  id: string;
+  contact_id: string | null;
+  title: string | null;
+  body: string | null;
+  due_date: string | null;
+  completed: boolean | null;
+  date_added: string | null;
+};
+
+type ArchiveContactRow = {
+  id: string;
+  contact_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+};
+
 export default async function TasksPage({
   searchParams,
 }: {
@@ -29,7 +46,7 @@ export default async function TasksPage({
   const { data, count, error } = await query;
   const total = count ?? 0;
 
-  const contactIds = Array.from(new Set((data ?? []).map((d: any) => d.contact_id).filter(Boolean)));
+  const contactIds = Array.from(new Set((data ?? []).map((d: { contact_id: string | null }) => d.contact_id).filter(Boolean)));
   let contactsById: Record<string, { name: string }> = {};
   if (contactIds.length > 0) {
     const { data: contacts } = await supabase
@@ -38,7 +55,7 @@ export default async function TasksPage({
       .in("id", contactIds);
     if (contacts) {
       contactsById = Object.fromEntries(
-        contacts.map((c: any) => [
+        contacts.map((c: ArchiveContactRow) => [
           c.id,
           { name: c.contact_name || `${c.first_name || ""} ${c.last_name || ""}`.trim() || "(unnamed)" },
         ])
@@ -98,7 +115,7 @@ export default async function TasksPage({
               </tr>
             </thead>
             <tbody>
-              {data.map((t: any) => {
+              {data.map((t: TaskRow) => {
                 const contact = t.contact_id ? contactsById[t.contact_id] : null;
                 return (
                   <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">

@@ -27,6 +27,7 @@ import { MODELS, orChat, orErrorMessage } from "../../../../utils/openrouter";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60; // Netlify default 10s — bump for large PDFs
@@ -147,12 +148,12 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
-    let parsed: any;
+    let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(m[0]);
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: `JSON parse failed: ${e?.message ?? "unknown"}`, raw_excerpt: raw.slice(0, 500) },
+        { ok: false, error: `JSON parse failed: ${errMessage(e, "unknown")}`, raw_excerpt: raw.slice(0, 500) },
         { status: 500 },
       );
     }

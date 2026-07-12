@@ -5,7 +5,41 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  ghl_contact_id?: string | null;
+  email?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget?: string | number | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+  temperature?: string | null;
+  lead_score?: number | null;
+  status?: string | null;
+  updated_at?: string | null;
+}
+interface NoteRow {
+  body: string | null;
+  date_added: string | null;
+}
+interface ConversationRow {
+  type: string | null;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+}
+interface TaskRow {
+  title: string | null;
+  due_date: string | null;
+  completed: boolean | null;
+  date_added: string | null;
+}
 
 const SYSTEM = `You are a property advisor's coach. Look at one contact and suggest the SINGLE most leveraged next action the advisor (Sean) could take with them today.
 
@@ -28,7 +62,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "contactId required" }, { status: 400 });
     }
 
-    let contact: any;
+    let contact: ContactRow;
     const { data: liveContact } = await supabase
       .from("contacts")
       .select("*")
@@ -72,7 +106,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(3)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as NoteRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_conversations")
@@ -80,7 +114,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("last_message_date", { ascending: false, nullsFirst: false })
             .limit(3)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as ConversationRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_tasks")
@@ -88,7 +122,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(3)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as TaskRow[] }),
     ]);
 
     const lines: string[] = [];
@@ -143,15 +177,15 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to suggest action" },
+      { ok: false, error: errMessage(e, "Failed to suggest action") },
       { status: 500 },
     );
   }
@@ -161,12 +195,12 @@ function truncate(s: string | null | undefined, n: number) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
-function latestDate(rows: any[] | null | undefined, field: string): string | null {
+function latestDate(rows: readonly unknown[] | null | undefined, field: string): string | null {
   if (!rows || rows.length === 0) return null;
   let max: string | null = null;
   for (const r of rows) {
-    const v = r?.[field];
-    if (v && (!max || v > max)) max = v;
+    const v = (r as Record<string, unknown>)?.[field];
+    if (v && (!max || (v as string) > max)) max = v as string;
   }
   return max;
 }

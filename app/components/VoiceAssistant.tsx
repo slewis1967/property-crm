@@ -60,7 +60,8 @@ export default function VoiceAssistant() {
 
   useEffect(() => {
     const ctor = getRecognitionCtor();
-    setSupported(Boolean(ctor));
+    // Defer out of the synchronous effect body to avoid a cascading render.
+    queueMicrotask(() => setSupported(Boolean(ctor)));
   }, []);
 
   const stopSpeaking = useCallback(() => {

@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { errMessage } from "../../../utils/errors";
 
 type Lead = {
   lead_id: string;
@@ -64,8 +65,8 @@ export default function AddTaskModal({
       }
       onCreated?.();
       onClose();
-    } catch (e: any) {
-      setError(e.message || "Request failed");
+    } catch (e) {
+      setError(errMessage(e, "Request failed"));
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +102,7 @@ export default function AddTaskModal({
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
             />
-            <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact's detail page.</p>
+            <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact&apos;s detail page.</p>
           </div>
 
           {error && (

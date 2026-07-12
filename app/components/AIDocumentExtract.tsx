@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import AIComplianceCheck from "./AIComplianceCheck";
+import { errMessage } from "../../utils/errors";
 
 type Extraction = {
   document_type: string;
@@ -18,6 +19,12 @@ type ApplyState = {
   summary: boolean;
   tags: boolean;
   taskIndexes: Set<number>;
+};
+
+type ApplyResult = {
+  taskCount: number;
+  tagsAdded: number;
+  summarySaved: boolean;
 };
 
 const MEDIA_TYPES: Record<string, string> = {
@@ -38,7 +45,7 @@ export default function AIDocumentExtract({ contactId }: { contactId: string }) 
     | { phase: "extracting" }
     | { phase: "ready"; extraction: Extraction; apply: ApplyState }
     | { phase: "applying" }
-    | { phase: "done"; summary: any }
+    | { phase: "done"; summary: ApplyResult }
     | { phase: "error"; error: string }
   >({ phase: "idle" });
   const fileRef = useRef<HTMLInputElement>(null);
@@ -76,8 +83,8 @@ export default function AIDocumentExtract({ contactId }: { contactId: string }) 
         reader.onerror = () => reject(new Error("Failed to read file"));
         reader.readAsDataURL(file);
       });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to read file" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to read file") });
       return;
     }
 
@@ -109,8 +116,8 @@ export default function AIDocumentExtract({ contactId }: { contactId: string }) 
           taskIndexes: new Set(e.suggested_tasks.map((_, i) => i)),
         },
       });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Extraction failed" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Extraction failed") });
     }
   };
 
@@ -149,8 +156,8 @@ export default function AIDocumentExtract({ contactId }: { contactId: string }) 
       const json = await res.json();
       if (json.ok) setState({ phase: "done", summary: json.applied });
       else setState({ phase: "error", error: json.error || "Failed to apply" });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Failed to apply" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Failed to apply") });
     }
   };
 

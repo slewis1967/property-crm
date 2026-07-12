@@ -4,6 +4,7 @@ import {
   exchangeCodeForToken,
   fetchUserInfo,
 } from "../../../../../utils/google-oauth";
+import { errMessage } from "../../../../../utils/errors";
 
 /**
  * Receives the OAuth code from Google, swaps it for a refresh token, and
@@ -57,9 +58,9 @@ export async function GET(req: NextRequest) {
       );
     }
     return NextResponse.redirect(new URL("/settings?calendar_connected=" + encodeURIComponent(profile.email), req.url));
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.redirect(
-      new URL(`/settings?calendar_error=${encodeURIComponent(e.message || "callback_failed")}`, req.url),
+      new URL(`/settings?calendar_error=${encodeURIComponent(errMessage(e, "callback_failed"))}`, req.url),
     );
   }
 }

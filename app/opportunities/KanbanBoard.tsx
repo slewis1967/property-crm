@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import NewOpportunityModal from "./NewOpportunityModal";
 import NewPipelineModal from "./NewPipelineModal";
 import { log, errInfo } from "../../utils/logger";
+import { errMessage } from "../../utils/errors";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,7 +146,7 @@ export default function KanbanBoard({
 
   // Re-normalise when pipeline changes
   useEffect(() => {
-    setLeads(prev => prev.map(l => ({ ...l, _stage: normaliseStage(l.ghl_stage, activePipeline?.stages || ["New Lead"]) })));
+    queueMicrotask(() => setLeads(prev => prev.map(l => ({ ...l, _stage: normaliseStage(l.ghl_stage, activePipeline?.stages || ["New Lead"]) }))));
   }, [activePipelineId]);
 
   // Tags
@@ -186,7 +187,8 @@ export default function KanbanBoard({
   // Default position to end whenever the form opens or the pipeline changes
   useEffect(() => {
     if (addingStage) {
-      setNewStagePosition(activePipeline?.stages.length ?? 0);
+      const v = activePipeline?.stages.length ?? 0;
+      queueMicrotask(() => setNewStagePosition(v));
     }
   }, [addingStage, activePipelineId, activePipeline?.stages.length]);
 
@@ -216,9 +218,9 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to delete stage");
+      setStageError(errMessage(e, "Failed to delete stage"));
     } finally {
       setDeletingStage(null);
     }
@@ -253,9 +255,9 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to save stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to save stage");
+      setStageError(errMessage(e, "Failed to save stage"));
     }
   };
 
@@ -371,7 +373,7 @@ export default function KanbanBoard({
           <h2 className="text-lg font-bold text-gray-900 mb-2">No pipelines yet</h2>
           <p className="text-sm text-gray-500 mb-5">
             Create your first pipeline to start tracking opportunities. The Sales Pipeline auto-creates
-            on first contact with the API — if you're seeing this and the API is up, try a hard refresh.
+            on first contact with the API — if you&apos;re seeing this and the API is up, try a hard refresh.
           </p>
           <button
             onClick={() => setShowNewPipeline(true)}

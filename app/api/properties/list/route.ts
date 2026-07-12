@@ -102,7 +102,21 @@ async function handler(req: Request) {
     );
   }
 
-  const normalise = (p: any) => ({
+  type PropertyListRow = {
+    builder_name?: string | null;
+    total_package_price?: number | null;
+    house_price?: number | null;
+    price_total?: number | null;
+    street_address?: string | null;
+    address_street?: string | null;
+    suburb?: string | null;
+    address_suburb?: string | null;
+    state?: string | null;
+    address_state?: string | null;
+    brochure_url?: string | null;
+    image_url?: string | null;
+  };
+  const normalise = (p: PropertyListRow) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,
@@ -125,7 +139,7 @@ async function handler(req: Request) {
       log.error("properties.list.query_failed", errInfo(error));
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
-    const rows = (data ?? []).map(normalise);
+    const rows = ((data ?? []) as unknown as PropertyListRow[]).map(normalise);
     return NextResponse.json(paginate(rows, page, pageSize, count ?? 0));
   }
 
@@ -136,7 +150,7 @@ async function handler(req: Request) {
     log.error("properties.list.query_failed", errInfo(error));
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
-  const all = interleaveByBuilder((data ?? []).map(normalise));
+  const all = interleaveByBuilder(((data ?? []) as unknown as PropertyListRow[]).map(normalise));
   const from = (page - 1) * pageSize;
   const pageRows = all.slice(from, from + pageSize);
   return NextResponse.json(paginate(pageRows, page, pageSize, all.length));

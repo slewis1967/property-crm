@@ -4,6 +4,7 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are the morning briefing for Sean — a property advisor who runs NextKey Property Strategists. He opens his War Room dashboard and needs to know in 15 seconds: what should I do today?
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
       "",
       hotContacts && hotContacts.length > 0 ? "=== HOT CONTACTS (recent) ===" : "",
       ...((hotContacts ?? []).map(
-        (c: any) =>
+        (c: { name?: string | null; buyer_type?: string | null; preferred_state?: string | null; lead_score?: number | null; status?: string | null; updated_at?: string | null }) =>
           `- ${c.name || "(unnamed)"} · ${c.buyer_type || "?"} · ${c.preferred_state || "?"} · score ${c.lead_score ?? "?"} · status ${c.status ?? "?"} · last updated ${fmtDate(c.updated_at)}`,
       )),
       "",
@@ -84,13 +85,13 @@ export async function POST(req: Request) {
         ? "=== HOT CONTACTS NOT TOUCHED IN 30+ DAYS ==="
         : "",
       ...((staleHotContacts ?? []).map(
-        (c: any) =>
+        (c: { name?: string | null; buyer_type?: string | null; preferred_state?: string | null; updated_at?: string | null }) =>
           `- ${c.name || "(unnamed)"} · ${c.buyer_type || "?"} · ${c.preferred_state || "?"} · last touched ${fmtDate(c.updated_at)}`,
       )),
       "",
       recentLeads && recentLeads.length > 0 ? "=== NEW LEADS (last 7 days) ===" : "",
       ...((recentLeads ?? []).map(
-        (l: any) =>
+        (l: { full_name?: string | null; buyer_type?: string | null; state?: string | null; temperature?: string | null; match_status?: string | null; score?: number | null; created_at?: string | null }) =>
           `- ${l.full_name || "(unnamed)"} · ${l.buyer_type || "?"} · ${l.state || "?"} · temp ${l.temperature || "?"} · match ${l.match_status || "?"} · scored ${l.score ?? "?"} · received ${fmtDate(l.created_at)}`,
       )),
       "",
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
         ? "=== UPCOMING APPOINTMENTS ==="
         : "",
       ...((upcomingAppointments ?? []).map(
-        (a: any) =>
+        (a: { event_title?: string | null; contact_name?: string | null; contact_email?: string | null; start_time?: string | null }) =>
           `- ${a.event_title || "(untitled)"} · with ${a.contact_name || a.contact_email} · ${fmtDateTime(a.start_time)}`,
       )),
     ]
@@ -137,15 +138,15 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to build dashboard brief" },
+      { ok: false, error: errMessage(e, "Failed to build dashboard brief") },
       { status: 500 },
     );
   }

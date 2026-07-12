@@ -1,9 +1,18 @@
+import type { ComponentProps } from "react";
 import { nexusApi } from "@/utils/nexus-api";
 import { supabase } from "../../../utils/supabase";
 import { notFound } from "next/navigation";
 import ContactDetail from "./ContactDetail";
 
 export const dynamic = "force-dynamic";
+
+type ContactRecord = ComponentProps<typeof ContactDetail>["contact"];
+
+type LeadRow = {
+  email?: string | null;
+  primary_contact_id?: string | number | null;
+  linked_contact_ids?: string | null;
+};
 
 async function getLeadsForContact(contactId: string, email: string | null) {
   // A contact can be connected to a lead in three ways:
@@ -17,7 +26,7 @@ async function getLeadsForContact(contactId: string, email: string | null) {
     const data = await res.json();
     const all = data.leads || [];
     const e = email?.toLowerCase() || null;
-    return all.filter((l: any) => {
+    return all.filter((l: LeadRow) => {
       if (e && l.email?.toLowerCase() === e) return true;
       if (l.primary_contact_id === contactId) return true;
       const linked = (() => {
@@ -45,7 +54,7 @@ async function getPipelines() {
 /** Resolve which ghl_archive_contacts row matches this CRM contact. Prefer
  * the explicit ghl_contact_id link; fall back to email match. Returns null
  * if no match (the contact existed only post-GHL or doesn't have a counterpart). */
-async function resolveGhlContactId(contact: any): Promise<string | null> {
+async function resolveGhlContactId(contact: ContactRecord): Promise<string | null> {
   if (contact.ghl_contact_id) return contact.ghl_contact_id;
   if (!contact.email) return null;
   const { data } = await supabase
@@ -100,7 +109,7 @@ async function getGhlArchive(ghlContactId: string | null) {
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let contact: any;
+  let contact: ContactRecord;
   const { data: liveContact } = await supabase
     .from("contacts")
     .select("*")
@@ -134,7 +143,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
       updated_at: archive.date_added || null,
       source: archive.source || null,
       _archive_only: true,
-    };
+    } as unknown as ContactRecord;
   }
 
   const [leads, pipelines, ghlContactId, liveAppointments] = await Promise.all([
@@ -160,7 +169,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
 /** Cal.com bookings ingested via the booking webhook (live, current source).
  * Matches by contact_id first, falls back to email match for any pre-link rows. */
 async function getLiveAppointments(contactId: string, email: string | null) {
-  const out: any[] = [];
+  const out: NonNullable<ComponentProps<typeof ContactDetail>["liveAppointments"]> = [];
   const seenUids = new Set<string>();
   const { data: byId } = await supabase
     .from("appointments")

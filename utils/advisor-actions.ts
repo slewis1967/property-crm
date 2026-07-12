@@ -27,8 +27,16 @@ export type ExecResult =
   | { ok: true; summary: string }
   | { ok: false; error: string };
 
+export type MachineAction = {
+  kind?: string | null;
+  key?: string | null;
+  value?: unknown;
+  builder_id?: string | null;
+  field?: string | null;
+};
+
 /** Run a single allowlisted machine_action. Pure mutation — no status/audit writes. */
-export async function executeAction(action: any): Promise<ExecResult> {
+export async function executeAction(action: MachineAction | null): Promise<ExecResult> {
   if (!action || typeof action !== "object") {
     return { ok: false, error: "no machine_action on recommendation" };
   }
@@ -63,7 +71,7 @@ export async function executeAction(action: any): Promise<ExecResult> {
     if (builderId.length !== 36) {
       return { ok: false, error: `${kind} requires uuid builder_id` };
     }
-    const update: Record<string, any> = {
+    const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
     if (kind === "deactivate_builder") update.active = false;
@@ -92,7 +100,7 @@ export async function executeAction(action: any): Promise<ExecResult> {
     if (!("value" in action)) {
       return { ok: false, error: "update_builder_field requires value" };
     }
-    const update: Record<string, any> = {
+    const update: Record<string, unknown> = {
       [field]: action.value,
       updated_at: new Date().toISOString(),
     };
@@ -116,7 +124,7 @@ export async function executeAction(action: any): Promise<ExecResult> {
  */
 export async function executeAndAudit(
   recommendationId: string,
-  action: any,
+  action: MachineAction | null,
   executedBy: string,
 ): Promise<ExecResult> {
   const result = await executeAction(action);

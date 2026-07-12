@@ -41,7 +41,7 @@ export default async function SettingsPage() {
         <h2 className="text-lg font-semibold mb-1">AI instructions</h2>
         <p className="text-xs text-gray-500 mb-4">
           Extra instructions for the NextKey voice assistant — tone, phrasing, default
-          preferences. These are added to the assistant's brief and apply to its next reply.
+          preferences. These are added to the assistant&apos;s brief and apply to its next reply.
           They never override its safety rules: it still drafts and asks before sending any
           SMS or email, and the AU compliance limits always stand.
         </p>
@@ -61,7 +61,7 @@ export default async function SettingsPage() {
       <section className="mb-10">
         <h2 className="text-lg font-semibold mb-1">Calendar connections</h2>
         <p className="text-xs text-gray-500 mb-4">
-          Connect each user's Google Calendar so the CRM can schedule meetings on their behalf
+          Connect each user&apos;s Google Calendar so the CRM can schedule meetings on their behalf
           directly from the opportunity page (no more bouncing to Google).
         </p>
         <Suspense fallback={<p className="text-xs text-gray-400">Loading…</p>}>
@@ -73,8 +73,8 @@ export default async function SettingsPage() {
         <h2 className="text-lg font-semibold mb-1">Property types</h2>
         <p className="text-xs text-gray-500 mb-4">
           The list of property categories the aggregator extractor uses to classify
-          newly-ingested stock. Add bespoke types like "DHA", "NRAS", or "Granny Flat"
-          and they'll appear in the Aggregator Feed filter and be available to the AI
+          newly-ingested stock. Add bespoke types like &quot;DHA&quot;, &quot;NRAS&quot;, or &quot;Granny Flat&quot;
+          and they&apos;ll appear in the Aggregator Feed filter and be available to the AI
           on the next ingestion run.
         </p>
         <PropertyTypesEditor />

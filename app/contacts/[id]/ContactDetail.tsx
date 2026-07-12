@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "../../opportunities/NewOpportunityModal";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
@@ -182,6 +182,13 @@ export default function ContactDetail({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRefreshKey, setEmailRefreshKey] = useState(0);
   const [replyContext, setReplyContext] = useState<EmailRow | null>(null);
+  // `now` is state, kept fresh on a 60s tick, so the appointment "past" badge
+  // stays a pure render (no Date.now() call during render).
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const openReply = (email: EmailRow) => {
     setReplyContext(email);
@@ -191,7 +198,9 @@ export default function ContactDetail({
     setReplyContext(null);
     setShowEmailModal(true);
   };
-  const noteRef = useRef(contact.notes || "");
+  // Baseline of the last-saved notes. State (not a ref) because it drives the
+  // Save-button visibility during render.
+  const [savedNotes, setSavedNotes] = useState(contact.notes || "");
 
   const handleAssignType = async (type: string) => {
     setShowTypeMenu(false);
@@ -219,7 +228,7 @@ export default function ContactDetail({
   const budget = fmt(contact.budget_max || contact.budget);
 
   const saveNote = async () => {
-    if (noteText === noteRef.current) return;
+    if (noteText === savedNotes) return;
     setSavingNote(true);
     try {
       await fetch(`/api/contacts/${contact.id}`, {
@@ -227,7 +236,7 @@ export default function ContactDetail({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: noteText }),
       });
-      noteRef.current = noteText;
+      setSavedNotes(noteText);
       setNoteSaved(true);
       setTimeout(() => setNoteSaved(false), 2000);
     } finally {
@@ -335,7 +344,7 @@ export default function ContactDetail({
       {showEdit && (
         <EditRecordModal
           kind="contact"
-          record={contact as unknown as Record<string, any>}
+          record={contact as unknown as Record<string, unknown>}
           patchUrl={`/api/contacts/${contact.id}`}
           onClose={() => setShowEdit(false)}
           onSaved={(updated) => setContact(updated as unknown as Contact)}
@@ -728,7 +737,7 @@ export default function ContactDetail({
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-2">
                       {liveAppointments.map((a) => {
                         const start = a.start_time ? new Date(a.start_time) : null;
-                        const isPast = start && start.getTime() < Date.now();
+                        const isPast = start && start.getTime() < now;
                         const statusBadge =
                           a.status === "cancelled" ? "bg-red-100 text-red-700"
                           : a.status === "rescheduled" ? "bg-amber-100 text-amber-700"
@@ -859,7 +868,7 @@ export default function ContactDetail({
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 className="text-sm font-semibold text-gray-700">Notes</h2>
-                    {noteText !== noteRef.current && (
+                    {noteText !== savedNotes && (
                       <button
                         onClick={saveNote}
                         disabled={savingNote}
@@ -1052,7 +1061,7 @@ function PipelinesAndOpportunitiesPanel({
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Pipelines &amp; opportunities</h2>
         <p className="text-xs text-gray-400">
-          This contact isn't in any opportunity yet. Click "+ New Opportunity" above to create one.
+          This contact isn&apos;t in any opportunity yet. Click &quot;+ New Opportunity&quot; above to create one.
         </p>
       </div>
     );

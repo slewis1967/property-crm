@@ -3,6 +3,7 @@ import { MODELS, orText } from "@/utils/openrouter";
 import { supabase } from "@/utils/supabase";
 import { requireAuth } from "@/utils/cf-access";
 import type { DealPacket, AssumptionSource } from "@/utils/deal-packet";
+import { errMessage } from "@/utils/errors";
 
 /**
  * POST /api/deal-analyser/research  { deal_packet_id, index }
@@ -38,11 +39,11 @@ After searching, output ONLY a strict JSON object (no prose, no code fences):
 Determine the state from the suburb/address. If you can't find a figure, omit it from both the top level
 and sources rather than guessing.`;
 
-function extractJson(text: string): any | null {
+function extractJson(text: string): Record<string, unknown> | null {
   const a = text.indexOf("{");
   const b = text.lastIndexOf("}");
   if (a < 0 || b <= a) return null;
-  try { return JSON.parse(text.slice(a, b + 1)); } catch { return null; }
+  try { return JSON.parse(text.slice(a, b + 1)) as Record<string, unknown>; } catch { return null; }
 }
 
 export async function POST(req: NextRequest) {
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
     `${dutyClause} ` +
     `Research the current investment loan interest rate, that stamp duty, typical council rates, and typical landlord insurance. Output the strict JSON only.`;
 
-  let parsed: any = null;
+  let parsed: Record<string, unknown> | null = null;
   try {
     const text = await orText({
       model: MODEL,
@@ -85,13 +86,13 @@ export async function POST(req: NextRequest) {
       user: prompt,
     });
     parsed = extractJson(text);
-  } catch (e: any) {
-    return NextResponse.json({ error: `research failed: ${e?.message ?? "web search error"}` }, { status: 502 });
+  } catch (e) {
+    return NextResponse.json({ error: `research failed: ${errMessage(e, "web search error")}` }, { status: 502 });
   }
   if (!parsed) return NextResponse.json({ error: "couldn't parse researched figures — try again" }, { status: 502 });
 
   // Whitelist + coerce. Only these PiaInputs cost fields are researchable.
-  const FIELDS: { key: keyof typeof parsed; label: string }[] = [
+  const FIELDS: { key: string; label: string }[] = [
     { key: "interestRate", label: "Investment loan interest rate" },
     { key: "stampDuty", label: "Stamp duty" },
     { key: "rates", label: "Council rates" },
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
     const v = Number(parsed[f.key]);
     if (isFinite(v) && v > 0) figures[f.key as string] = v;
   }
-  const srcByField = new Map<string, any>();
+  const srcByField = new Map<string, { field?: string; label?: string; source?: string; date?: string }>();
   for (const s of Array.isArray(parsed.sources) ? parsed.sources : []) {
     if (s && typeof s.field === "string") srcByField.set(s.field, s);
   }

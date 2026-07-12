@@ -23,20 +23,107 @@ const AUD = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 });
 const PCT = (n: number | null | undefined) => (n == null ? "—" : `${n}%`);
 
+type SourceRef = { label: string; source: string; date: string };
+type GrowthMetric = {
+  reconciled?: number | null;
+  sources?: Array<{ source: string; value: number }>;
+  variance_flag?: boolean;
+};
+type MarketContext = {
+  historical_capital_growth_12m_pct?: GrowthMetric | null;
+  median_house_price?: { reconciled?: number | null } | null;
+  median_rent_pw?: number | null;
+  vacancy_rate_pct?: number | null;
+};
+type PropertySpecs = {
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  car_spaces?: number | null;
+  living_areas?: number | null;
+  land_size_m2?: number | null;
+  house_size_m2?: number | null;
+  house_design?: string | null;
+  land_price?: number | null;
+  build_price?: number | null;
+  key_inclusions?: string[];
+  is_co_living?: boolean;
+  estate?: string | null;
+  total_price?: number | null;
+  state?: string | null;
+  image_paths?: string[];
+};
+type ScheduleRow = {
+  year: number;
+  cashFlowAfterTax: number;
+  taxEffect: number;
+  taxableIncome: number;
+};
+type Cashflow = {
+  positiveAfterTax: boolean;
+  weeklyAfterTax: number;
+  afterTaxAnnual: number;
+  annualRent: number;
+  expenses: {
+    rates: number;
+    insurance: number;
+    bodyCorporate: number;
+    management: number;
+    maintenance: number;
+  };
+  loanRepaymentsAnnual: number;
+  beforeTaxAnnual: number;
+  weeklyBeforeTax: number;
+  taxBenefitAnnual: number;
+};
+type BakedIntel = {
+  median_price?: number | null;
+  population?: number | null;
+  price_growth_pct?: number | null;
+  last_updated?: string | null;
+};
+type ReportResults = {
+  kind?: string;
+  propertySpecs?: PropertySpecs;
+  marketContext?: MarketContext;
+  schedule?: ScheduleRow[];
+  suburbIntelligence?: { narrative: string | null; intel: BakedIntel | null } | null;
+  suburb?: string | null;
+  address?: string | null;
+  deal_packet_id?: string | null;
+  investmentThesis?: { narrative?: string | null; type?: string | null } | null;
+  grossYield?: number | null;
+  netYield?: number | null;
+  totalAcquisitionCost?: number | null;
+  breakevenYear?: number | null;
+  rentBasis?: { per_room?: boolean; rooms?: number | null; room_rent?: number | null; weekly_rent?: number | null } | null;
+  cashflow?: Cashflow | null;
+  initialCashRequired?: number | null;
+  endValue?: number | null;
+  endLoanBalance?: number | null;
+  endEquity?: number | null;
+  netCashOverHolding?: number | null;
+  capitalGain?: number | null;
+  cgtPayable?: number | null;
+  totalReturn?: number | null;
+  contractType?: string | null;
+  assumptionSources?: SourceRef[];
+  operatorNotes?: string | null;
+};
+
 export default async function DealReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const { data: report } = await supabase.from("pia_reports").select("*").eq("id", id).maybeSingle();
   if (!report) return notFound();
 
-  const r = (report.results ?? {}) as any;
+  const r = (report.results ?? {}) as ReportResults;
   // A comparison report lives on its own route — send it there.
   if (r.kind === "comparison") redirect(`/deal-analyser/compare/${id}`);
-  const inputs = (report.inputs ?? {}) as any;
-  const specs = r.propertySpecs ?? {};
-  const mc = r.marketContext ?? {};
+  const inputs = (report.inputs ?? {}) as Record<string, number>;
+  const specs: PropertySpecs = r.propertySpecs ?? {};
+  const mc: MarketContext = r.marketContext ?? {};
   const growth = mc.historical_capital_growth_12m_pct ?? null;
-  const sched = (r.schedule ?? []) as any[];
+  const sched: ScheduleRow[] = r.schedule ?? [];
   const yr = (n: number) => sched.find((x) => x.year === n);
   const final = sched[sched.length - 1];
   const y1 = yr(1);
@@ -44,7 +131,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
 
   // Suburb intelligence: prefer the comprehensive narrative baked at generation;
   // fall back to a live NEXUS snapshot for older reports. Non-fatal.
-  const baked = (r.suburbIntelligence ?? null) as { narrative: string | null; intel: any } | null;
+  const baked = r.suburbIntelligence ?? null;
   const bakedIntel = baked?.intel ?? null;
   const suburbIntel = baked?.narrative ? null : await getSuburbIntel(r.suburb ?? null, specs.state ?? null);
 
@@ -87,8 +174,8 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
 
         {/* Why buy this — the persuasive (compliant) investment case, leading the report */}
         {r.investmentThesis?.narrative && (
-          <Section title={`Why ${r.investmentThesis.type ?? "this property"}${r.suburb ? ` in ${r.suburb}` : ""}`}>
-            <RichText text={r.investmentThesis.narrative} />
+          <Section title={`Why ${r.investmentThesis?.type ?? "this property"}${r.suburb ? ` in ${r.suburb}` : ""}`}>
+            <RichText text={r.investmentThesis?.narrative ?? ""} />
           </Section>
         )}
 
@@ -108,7 +195,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             <>
               <p className="text-sm font-semibold text-gray-700 mb-2">Included</p>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
-                {specs.key_inclusions.map((inc: string, i: number) => (
+                {(specs.key_inclusions ?? []).map((inc, i) => (
                   <li key={i} className="flex gap-2"><span className="text-[#0F4C5C]">✓</span>{inc}</li>
                 ))}
               </ul>
@@ -151,15 +238,15 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             past performance, not a forecast.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Spec label="Median price" value={mc.median_house_price?.reconciled ? AUD(mc.median_house_price.reconciled) : null} />
-            <Spec label="12-mo growth" value={growth?.reconciled != null ? `${growth.reconciled}%` : null} />
+            <Spec label="Median price" value={mc.median_house_price?.reconciled ? AUD(mc.median_house_price?.reconciled) : null} />
+            <Spec label="12-mo growth" value={growth?.reconciled != null ? `${growth?.reconciled}%` : null} />
             <Spec label="Median rent" value={mc.median_rent_pw ? `${AUD(mc.median_rent_pw)}/wk` : null} />
             <Spec label="Vacancy" value={mc.vacancy_rate_pct != null ? `${mc.vacancy_rate_pct}%` : null} />
           </div>
-          {growth?.sources?.length > 0 && (
+          {(growth?.sources?.length ?? 0) > 0 && (
             <p className="text-xs text-gray-400 mt-3">
-              Growth sources: {growth.sources.map((s: any) => `${s.source} ${s.value}%`).join(" · ")}
-              {growth.variance_flag ? " (sources vary — range shown for transparency)" : ""}
+              Growth sources: {(growth?.sources ?? []).map((s) => `${s.source} ${s.value}%`).join(" · ")}
+              {growth?.variance_flag ? " (sources vary — range shown for transparency)" : ""}
             </p>
           )}
         </Section>
@@ -170,7 +257,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           <Section title="Suburb intelligence">
             {baked?.narrative ? (
               <>
-                <RichText text={baked.narrative} />
+                <RichText text={baked?.narrative ?? ""} />
                 {bakedIntel && (bakedIntel.median_price || bakedIntel.population) && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-5">
                     <Spec label="Median price" value={bakedIntel.median_price ? AUD(bakedIntel.median_price) : null} />
@@ -213,7 +300,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             <div className="rounded-lg p-5 mb-5" style={{ background: "#0F4C5C0d", border: "1px solid #0F4C5C33" }}>
               <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: "#0F4C5C" }}>Co-living income</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {r.rentBasis.rooms} rooms × {AUD(r.rentBasis.room_rent)}/wk = {AUD(r.rentBasis.weekly_rent)}/wk
+                {r.rentBasis?.rooms} rooms × {AUD(r.rentBasis?.room_rent)}/wk = {AUD(r.rentBasis?.weekly_rent)}/wk
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {PCT(r.grossYield)} gross yield — multiple income streams from one home, well above a single-tenancy let.
@@ -236,7 +323,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
 
         {/* Weekly cashflow — positive or negative, itemised */}
         {r.cashflow && (() => {
-          const cf = r.cashflow as any;
+          const cf = r.cashflow as Cashflow;
           const pos = cf.positiveAfterTax;
           const signed = (n: number) => `${n < 0 ? "−" : "+"}${AUD(Math.abs(n))}`;
           return (
@@ -287,7 +374,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
             ) : (
               <Spec label="Deposit" value={AUD(inputs.purchasePrice - inputs.loanAmount)} />
             )}
-            <Spec label="Cash to purchase" value={r.initialCashRequired > 0 ? AUD(r.initialCashRequired) : "Equity-funded"} />
+            <Spec label="Cash to purchase" value={(r.initialCashRequired ?? 0) > 0 ? AUD(r.initialCashRequired) : "Equity-funded"} />
             <Spec label="Interest rate" value={PCT(inputs.interestRate)} />
           </div>
           {lvr >= 100 && (
@@ -353,7 +440,7 @@ export default async function DealReportPage({ params }: { params: Promise<{ id:
           </p>
           {(r.assumptionSources?.length ?? 0) > 0 && (
             <p className="text-xs text-gray-400 mt-3">
-              Sourced figures: {r.assumptionSources.map((s: any) => `${s.label} — ${s.source} (${s.date})`).join(" · ")}.
+              Sourced figures: {(r.assumptionSources ?? []).map((s) => `${s.label} — ${s.source} (${s.date})`).join(" · ")}.
               Costs are current estimates and will vary by lender, insurer and council.
             </p>
           )}

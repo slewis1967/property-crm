@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { errMessage } from "../../utils/errors";
 
 type Match = { contact_id: string; name: string; rationale: string };
 
@@ -24,8 +25,8 @@ export default function AIPropertyMatches({ propertyId }: { propertyId: string }
         if (json.ok)
           setState({ phase: "ready", matches: json.matches || [], cached: !!json.cached });
         else setState({ phase: "error", error: json.error || "Unavailable" });
-      } catch (e: any) {
-        setState({ phase: "error", error: e?.message ?? "Unavailable" });
+      } catch (e) {
+        setState({ phase: "error", error: errMessage(e, "Unavailable") });
       }
     })();
   }, [propertyId]);

@@ -17,6 +17,17 @@ const fmtSize = (bytes: number | null | undefined): string => {
   return `${n.toFixed(n < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 };
 
+type MediaRow = {
+  id: string;
+  name: string | undefined;
+  url: string | null;
+  path_local: string | undefined;
+  size: number | null;
+  download_status: string | null;
+  download_error: string | null;
+  extracted_at: string | null;
+};
+
 const statusColor = (s: string | null) => {
   if (s === "ok") return "text-green-700 bg-green-50";
   if (s === "failed") return "text-red-700 bg-red-50";
@@ -51,10 +62,10 @@ export default async function MediaPage({
   const { data: stats } = await supabase
     .from("ghl_archive_media_files")
     .select("download_status,size");
-  const statCounts = { ok: 0, failed: 0, skipped: 0, totalSize: 0 };
-  (stats ?? []).forEach((s: any) => {
+  const statCounts: Record<string, number> = { ok: 0, failed: 0, skipped: 0, totalSize: 0 };
+  (stats ?? []).forEach((s: { download_status: string | null; size: number | null }) => {
     if (s.download_status && statCounts.hasOwnProperty(s.download_status)) {
-      (statCounts as any)[s.download_status]++;
+      statCounts[s.download_status]++;
     }
     if (s.download_status === "ok" && s.size) statCounts.totalSize += s.size;
   });
@@ -127,7 +138,7 @@ export default async function MediaPage({
               </tr>
             </thead>
             <tbody>
-              {data.map((f: any) => (
+              {data.map((f: MediaRow) => (
                 <tr key={f.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="py-2 px-4 max-w-xs truncate font-medium" title={f.name}>
                     {f.name || "—"}

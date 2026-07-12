@@ -18,7 +18,22 @@ import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  first_name?: string | null;
+  name?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget_max?: string | number | null;
+  budget?: string | number | null;
+  timeframe?: string | null;
+  finance_status?: string | null;
+  temperature?: string | null;
+  notes?: string | null;
+}
 
 const SYSTEM = `You're drafting a property pitch on Sean's behalf. Sean is a property advisor at NextKey Property Strategists. Match the framing to the contact's buyer profile — don't write generic copy.
 
@@ -64,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch contact (live first, archive fallback)
-    let contact: any;
+    let contact: ContactRow;
     const { data: liveContact } = await supabase
       .from("contacts")
       .select("*")
@@ -162,9 +177,9 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true, text });
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to generate pitch" },
+      { ok: false, error: errMessage(e, "Failed to generate pitch") },
       { status: 500 },
     );
   }

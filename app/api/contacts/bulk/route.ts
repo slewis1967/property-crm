@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "name and email are required" }, { status: 400 });
   }
 
-  const record: Record<string, any> = {
+  const record: Record<string, unknown> = {
     full_name:       fullName,
     name:            fullName,
     first_name:      firstName || null,

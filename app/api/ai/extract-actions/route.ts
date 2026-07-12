@@ -3,6 +3,7 @@ import { aiCall } from "../../../../utils/ai";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You take a property advisor's free-form note about a contact interaction and extract structured actions.
@@ -78,21 +79,21 @@ export async function POST(req: Request) {
         );
       }
       return NextResponse.json({ ok: true, ...parsed });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to extract actions" },
+      { ok: false, error: errMessage(e, "Failed to extract actions") },
       { status: 500 },
     );
   }
 }
 
-function parseExtraction(text: string): any | null {
+function parseExtraction(text: string): Record<string, unknown> | null {
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) return null;
   try {

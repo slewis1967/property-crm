@@ -9,6 +9,7 @@
  * success response — we record both in sms_log for billing reconciliation.
  */
 import { supabase } from "./supabase";
+import { errMessage } from "./errors";
 
 const CLICKSEND_BASE = "https://rest.clicksend.com/v3";
 // Glenn Mayes' verified mobile number. Replies route back through ClickSend
@@ -105,8 +106,8 @@ export async function sendSms(opts: {
         json?.response_msg ||
         `HTTP ${res.status}`;
     }
-  } catch (e: any) {
-    errMsg = e?.message ?? "Network error";
+  } catch (e) {
+    errMsg = errMessage(e, "Network error");
   }
 
   await supabase.from("sms_log").insert({

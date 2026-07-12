@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 export default function AISuburbBrief({
   suburb,
@@ -28,8 +29,8 @@ export default function AISuburbBrief({
       const json = await res.json();
       if (json.ok) setData({ phase: "ready", text: json.text, cached: !!json.cached });
       else setData({ phase: "error", error: json.error || "Unavailable" });
-    } catch (e: any) {
-      setData({ phase: "error", error: e?.message ?? "Unavailable" });
+    } catch (e) {
+      setData({ phase: "error", error: errMessage(e, "Unavailable") });
     }
   };
 

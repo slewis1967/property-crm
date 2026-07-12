@@ -23,7 +23,7 @@ export default function SearchBar({ initial }: { initial: string }) {
   // Keep local state in sync if the URL changes from elsewhere (e.g. switching
   // folders should reset the search box).
   useEffect(() => {
-    setValue(initial);
+    queueMicrotask(() => setValue(initial));
   }, [initial]);
 
   function navigate(next: string) {

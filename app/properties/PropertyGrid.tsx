@@ -84,6 +84,12 @@ export default function PropertyGrid({
   const filterQSRef = useRef("");
   const didMountRef = useRef(false);
 
+  // Declared here (above setPageSizeAndReset / loadMore) because those fetch
+  // callbacks call their setters — keeping the declarations first avoids a
+  // use-before-declaration.
+  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+
   // "Show N per page" options: 50, 100, 150 … up to the live total, with
   // the last option = total ("show all"). We union in the current pageSize
   // so a persisted value that isn't on a 50-boundary (e.g. an old 75) still
@@ -105,7 +111,7 @@ export default function PropertyGrid({
     const seq = fetchSeq.current;
     const qs = filterQSRef.current ? `&${filterQSRef.current}` : "";
     fetch(`/api/properties/list?page=1&pageSize=${next}${qs}`)
-      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((r) => r.ok ? r.json() : r.json().then((b: { error?: string }) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
       .then((data: { rows: PropertyGridItem[]; total: number; pageSize: number }) => {
         if (seq !== fetchSeq.current) return; // a newer request superseded us
         setProperties(data.rows);
@@ -131,7 +137,7 @@ export default function PropertyGrid({
     try {
       const saved = Number(localStorage.getItem("properties.pageSize"));
       if (Number.isFinite(saved) && saved >= 1) {
-        setPageSize(saved);
+        queueMicrotask(() => setPageSize(saved));
       }
     } catch {}
   }, []);
@@ -145,7 +151,7 @@ export default function PropertyGrid({
     const nextPage = page + 1;
     const qs = filterQSRef.current ? `&${filterQSRef.current}` : "";
     fetch(`/api/properties/list?page=${nextPage}&pageSize=${pageSize}${qs}`)
-      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((r) => r.ok ? r.json() : r.json().then((b: { error?: string }) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
       .then((data: { rows: PropertyGridItem[]; total: number; pageSize: number }) => {
         if (seq !== fetchSeq.current) return;
         setProperties((prev) => [...prev, ...data.rows]);
@@ -161,8 +167,6 @@ export default function PropertyGrid({
       });
   }, [loadingMore, hasMore, page, pageSize]);
 
-  const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
-
   // Lookup map name → icon for fast card rendering
   const typeIconMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -176,7 +180,6 @@ export default function PropertyGrid({
     const fromSettings = name ? typeIconMap.get(name.toLowerCase()) : null;
     return (fromSettings && fromSettings.length > 0) ? fromSettings : fallbackIcon(name);
   };
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -300,7 +303,7 @@ export default function PropertyGrid({
       setLoadError(null);
       const qs = serverFilterQS ? `&${serverFilterQS}` : "";
       fetch(`/api/properties/list?page=1&pageSize=${pageSize}${qs}`)
-        .then((r) => (r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`)))))
+        .then((r) => (r.ok ? r.json() : r.json().then((b: { error?: string }) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`)))))
         .then((data: { rows: PropertyGridItem[]; total: number }) => {
           if (seq !== fetchSeq.current) return;
           setProperties(data.rows);

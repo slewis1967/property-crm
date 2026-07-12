@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: "No ids provided" }, { status: 400 });
   }
-  const update: Record<string, any> = { updated_at: new Date().toISOString() };
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (buyer_type !== undefined) update.buyer_type = buyer_type;
 
   const { error } = await supabase.from("contacts").update(update).in("id", ids);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
+import { errMessage } from "../../../utils/errors";
 
 type Builder = {
   id: string;
@@ -30,6 +31,12 @@ export default function BuildersClient() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<Builder>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const load = async () => {
     setBuilders(null);
@@ -39,13 +46,13 @@ export default function BuildersClient() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error);
       setBuilders(json.items ?? []);
-    } catch (e: any) {
-      setError(e?.message ?? "Load failed");
+    } catch (e) {
+      setError(errMessage(e, "Load failed"));
     }
   };
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => load());
   }, []);
 
   const startEdit = (b: Builder) => {
@@ -75,8 +82,8 @@ export default function BuildersClient() {
       if (!json.ok) throw new Error(json.error);
       setEditingId(null);
       await load();
-    } catch (e: any) {
-      alert(`Save failed: ${e?.message ?? e}`);
+    } catch (e) {
+      alert(`Save failed: ${errMessage(e)}`);
     } finally {
       setBusy(null);
     }
@@ -126,8 +133,8 @@ export default function BuildersClient() {
       const patch = await patchRes.json();
       if (!patch.ok) throw new Error(patch.error || "Save failed after upload");
       await load();
-    } catch (e: any) {
-      alert(`Sample PDF upload failed: ${e?.message ?? e}`);
+    } catch (e) {
+      alert(`Sample PDF upload failed: ${errMessage(e)}`);
     } finally {
       setBusy(null);
     }
@@ -182,7 +189,7 @@ export default function BuildersClient() {
 
   const fmtRelative = (iso: string | null | undefined) => {
     if (!iso) return "never";
-    const days = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24);
+    const days = (now - new Date(iso).getTime()) / (1000 * 60 * 60 * 24);
     if (days < 1) return "today";
     if (days < 2) return "yesterday";
     if (days < 31) return `${Math.floor(days)}d ago`;
@@ -354,7 +361,7 @@ export default function BuildersClient() {
                     <span className="font-medium text-gray-600 mb-0.5 block">
                       Notes for the extractor
                       <span className="text-gray-400 font-normal ml-2">
-                        — e.g. "lot # in column 2", "ignore Display Home rows", "pricing is in $1,000s"
+                        — e.g. &quot;lot # in column 2&quot;, &quot;ignore Display Home rows&quot;, &quot;pricing is in $1,000s&quot;
                       </span>
                     </span>
                     <textarea

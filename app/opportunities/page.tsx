@@ -3,10 +3,24 @@ import { nexusApi } from "@/utils/nexus-api";
 import { supabase } from "../../utils/supabase";
 import KanbanBoard, { type Lead, type Pipeline } from "./KanbanBoard";
 import { fmtDate, fmtCurrency } from "../../utils/archive-helpers";
+import { errMessage } from "../../utils/errors";
 
 export const dynamic = "force-dynamic";
 
 const ARCHIVE_LIMIT = 50;
+
+// Row shapes read from the GHL archive tables below.
+type ArchiveOpp = {
+  id: string;
+  name: string | null;
+  contact_id: string | null;
+  pipeline_id: string;
+  pipeline_stage_id: string;
+  status: string | null;
+  monetary_value: number | null;
+  date_added: string | null;
+};
+type NamedRow = { id: string; name: string };
 
 const archiveStatusColor = (s: string | null) => {
   if (!s) return "bg-gray-100 text-gray-600";
@@ -23,8 +37,8 @@ async function getLeads(): Promise<{ leads: Lead[]; error: string | null }> {
     const res = await nexusApi("/api/leads", { cache: "no-store" });
     if (res.ok) return { leads: (await res.json()).leads || [], error: null };
     return { leads: [], error: `NEXUS API responded ${res.status}` };
-  } catch (e: any) {
-    return { leads: [], error: e?.message || "Couldn't reach NEXUS API" };
+  } catch (e) {
+    return { leads: [], error: errMessage(e, "Couldn't reach NEXUS API") };
   }
 }
 
@@ -33,8 +47,8 @@ async function getPipelines(): Promise<{ pipelines: Pipeline[]; error: string | 
     const res = await nexusApi("/api/pipelines", { cache: "no-store" });
     if (res.ok) return { pipelines: (await res.json()).pipelines || [], error: null };
     return { pipelines: [], error: `NEXUS API responded ${res.status}` };
-  } catch (e: any) {
-    return { pipelines: [], error: e?.message || "Couldn't reach NEXUS API" };
+  } catch (e) {
+    return { pipelines: [], error: errMessage(e, "Couldn't reach NEXUS API") };
   }
 }
 
@@ -51,22 +65,22 @@ async function getArchiveOpps() {
   const total = count ?? 0;
   if (opps.length === 0) return { opps: [], total: 0, pipeName: {}, stageName: {} };
 
-  const pipelineIds = Array.from(new Set(opps.map((o: any) => o.pipeline_id).filter(Boolean)));
-  const stageIds = Array.from(new Set(opps.map((o: any) => o.pipeline_stage_id).filter(Boolean)));
+  const pipelineIds = Array.from(new Set((opps as ArchiveOpp[]).map((o) => o.pipeline_id).filter(Boolean)));
+  const stageIds = Array.from(new Set((opps as ArchiveOpp[]).map((o) => o.pipeline_stage_id).filter(Boolean)));
   const [{ data: pipelines }, { data: stages }] = await Promise.all([
     pipelineIds.length > 0
       ? supabase.from("ghl_archive_pipelines").select("id,name").in("id", pipelineIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as NamedRow[] }),
     stageIds.length > 0
       ? supabase.from("ghl_archive_pipeline_stages").select("id,name").in("id", stageIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as NamedRow[] }),
   ]);
 
   const pipeName: Record<string, string> = Object.fromEntries(
-    (pipelines ?? []).map((p: any) => [p.id, p.name])
+    ((pipelines ?? []) as NamedRow[]).map((p) => [p.id, p.name])
   );
   const stageName: Record<string, string> = Object.fromEntries(
-    (stages ?? []).map((s: any) => [s.id, s.name])
+    ((stages ?? []) as NamedRow[]).map((s) => [s.id, s.name])
   );
 
   return { opps, total, pipeName, stageName };
@@ -97,7 +111,7 @@ export default async function OpportunitiesPage() {
 
       {apiError && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">
-          <div className="font-semibold mb-1">Couldn't load opportunities from NEXUS API</div>
+          <div className="font-semibold mb-1">Couldn&apos;t load opportunities from NEXUS API</div>
           <div className="text-xs text-red-600 font-mono">{apiError}</div>
           <div className="text-xs text-red-500 mt-2">Reload the page once the API is reachable.</div>
         </div>
@@ -126,7 +140,7 @@ export default async function OpportunitiesPage() {
                 </tr>
               </thead>
               <tbody>
-                {archive.opps.map((o: any) => (
+                {(archive.opps as ArchiveOpp[]).map((o) => (
                   <tr key={o.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 px-4 font-medium">{o.name || "—"}</td>
                     <td className="py-2 px-4 text-gray-600 text-xs">
