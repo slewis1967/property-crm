@@ -17,6 +17,9 @@
  *   - log_call             append a dated note to a contact's notes field
  *   - create_task          add to tasks table with optional due_date
  *   - remember_fact        store a durable fact/preference in long-term memory
+ *   - search_stock         READ-ONLY — search the global_stock_pool aggregator feed
+ *   - list_tasks           READ-ONLY — the caller's open tasks
+ *   - lead_status          READ-ONLY — a lead's pipeline + stage (NEXUS API)
  *   - send_sms             ClickSend — requires confirmed=true
  *   - send_email           Brevo — requires confirmed=true
  *
@@ -34,6 +37,7 @@ import { NextResponse } from "next/server";
 import type OpenAI from "openai";
 import { getOpenRouter, MODELS, orErrorMessage } from "../../../../utils/openrouter";
 import { supabase } from "../../../../utils/supabase";
+import { nexusApi } from "../../../../utils/nexus-api";
 import { sendBrevoEmail } from "../../../../utils/brevo";
 import { defaultSignature } from "../../../../utils/email-signature";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
@@ -116,6 +120,59 @@ const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           tags: { type: "array", items: { type: "string" }, description: "Optional keywords for retrieval." },
         },
         required: ["title", "detail"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_stock",
+      description:
+        "Search the aggregator stock feed (available house-and-land / property packages) by suburb, state, price, bedrooms, or builder. READ-ONLY — just returns matching listings for you to read back. Use when the user asks 'what have we got in <suburb>', 'anything under <price>', 'any <builder> stock', etc. Returns up to 5 packages with address, price, beds/baths and builder.",
+      parameters: {
+        type: "object",
+        properties: {
+          suburb: { type: "string", description: "Suburb name to filter by (partial match)." },
+          state: { type: "string", description: "State code, e.g. QLD, NSW, VIC." },
+          max_price: { type: "number", description: "Maximum total package price in dollars." },
+          min_bedrooms: { type: "number", description: "Minimum number of bedrooms." },
+          builder: { type: "string", description: "Builder name to filter by (partial match)." },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_tasks",
+      description:
+        "List open (not-completed) CRM tasks. READ-ONLY. Use when the user asks 'what's on my list', 'what's due today', 'anything overdue'. Optional `due` filter: 'today', 'overdue', or 'all' (default). Returns up to 10 tasks with title, due date, and linked contact name if any.",
+      parameters: {
+        type: "object",
+        properties: {
+          due: {
+            type: "string",
+            enum: ["today", "overdue", "all"],
+            description: "Which open tasks to return. Default 'all'.",
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "lead_status",
+      description:
+        "Look up where a lead/contact sits in the sales pipeline. READ-ONLY. Resolves a person by name or email and returns their pipeline, current stage, temperature and any top property match. Use when the user asks 'where's <name> at', 'what stage is <name> in', 'what's happening with <name>'.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Name or email of the lead/contact to look up." },
+        },
+        required: ["query"],
       },
     },
   },
@@ -273,6 +330,186 @@ async function rememberFact(
   }
 }
 
+// ── Read-only lookup tools (no side effects → no confirm needed) ───────────
+
+async function searchStock(args: {
+  suburb?: string;
+  state?: string;
+  max_price?: number;
+  min_bedrooms?: number;
+  builder?: string;
+}): Promise<ToolResult> {
+  try {
+    // Availability convention (mirrors app/properties/page.tsx): the feed is
+    // everything NOT withdrawn/legacy. Explicit column select, never `*`.
+    let query = supabase
+      .from("global_stock_pool")
+      .select(
+        "street_address,suburb,state,total_package_price,house_price,bedrooms,bathrooms,builder_name,status",
+      )
+      .neq("pipeline_status", "withdrawn")
+      .neq("pipeline_status", "legacy");
+
+    if (args.suburb) {
+      const safe = orSafe(args.suburb);
+      if (safe) query = query.ilike("suburb", `%${safe}%`);
+    }
+    if (args.state) {
+      const safe = orSafe(args.state);
+      if (safe) query = query.ilike("state", `%${safe}%`);
+    }
+    if (args.builder) {
+      const safe = orSafe(args.builder);
+      if (safe) query = query.ilike("builder_name", `%${safe}%`);
+    }
+    if (typeof args.max_price === "number" && Number.isFinite(args.max_price)) {
+      query = query.lte("total_package_price", args.max_price);
+    }
+    if (typeof args.min_bedrooms === "number" && Number.isFinite(args.min_bedrooms)) {
+      query = query.gte("bedrooms", args.min_bedrooms);
+    }
+
+    const { data, error } = await query
+      .order("total_package_price", { ascending: true, nullsFirst: false })
+      .limit(5);
+
+    if (error) return { content: `Stock search unavailable: ${error.message}` };
+    if (!data || data.length === 0) return { content: "No matching stock found." };
+
+    const results = data.map((p) => ({
+      address: [p.street_address, p.suburb, p.state].filter(Boolean).join(", ") || "(address n/a)",
+      price: p.total_package_price ?? p.house_price ?? null,
+      beds: p.bedrooms ?? null,
+      baths: p.bathrooms ?? null,
+      builder: p.builder_name ?? null,
+    }));
+    return {
+      content: JSON.stringify({ count: results.length, results }, null, 2),
+      side_effect: { kind: "search_stock", results: results.length, top: results[0] },
+    };
+  } catch (e) {
+    return { content: `Stock search failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+async function listTasks(args: { due?: string }): Promise<ToolResult> {
+  try {
+    // The `tasks` table (migrations/20260501_tasks.sql) is NOT owner-scoped —
+    // no owner/assigned_to column — so scope is "all open tasks", filtered by
+    // completed=false. `due` narrows by due_date window.
+    let query = supabase
+      .from("tasks")
+      .select("id,title,due_date,contact_id,completed")
+      .eq("completed", false);
+
+    const due = (args.due ?? "all").toLowerCase();
+    if (due === "today" || due === "overdue") {
+      const now = new Date();
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      if (due === "today") {
+        query = query.gte("due_date", startOfToday.toISOString()).lte("due_date", endOfToday.toISOString());
+      } else {
+        query = query.lt("due_date", startOfToday.toISOString());
+      }
+    }
+
+    const { data, error } = await query
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(10);
+
+    if (error) return { content: `Tasks unavailable: ${error.message}` };
+    if (!data || data.length === 0) {
+      return { content: due === "all" ? "No open tasks." : `No ${due} tasks.` };
+    }
+
+    // Resolve linked contact names in one batch.
+    const contactIds = Array.from(new Set(data.map((t) => t.contact_id).filter(Boolean))) as string[];
+    let namesById: Record<string, string> = {};
+    if (contactIds.length > 0) {
+      const { data: contacts } = await supabase
+        .from("contacts")
+        .select("id,full_name,name,first_name")
+        .in("id", contactIds);
+      if (contacts) {
+        namesById = Object.fromEntries(
+          contacts.map((c) => [c.id, c.full_name || c.name || c.first_name || "(unnamed)"]),
+        );
+      }
+    }
+
+    const tasks = data.map((t) => ({
+      title: t.title,
+      due_date: t.due_date ?? null,
+      contact: t.contact_id ? namesById[t.contact_id] ?? null : null,
+    }));
+    return {
+      content: JSON.stringify({ count: tasks.length, tasks }, null, 2),
+      side_effect: { kind: "list_tasks", count: tasks.length, due },
+    };
+  } catch (e) {
+    return { content: `Could not list tasks: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
+async function leadStatus(query: string): Promise<ToolResult> {
+  const q = query.trim();
+  if (!q) return { content: "No name or email provided." };
+  try {
+    // Authoritative live pipeline data lives in the NEXUS API (/api/leads +
+    // /api/pipelines), not Supabase — see app/opportunities/page.tsx. Fetch the
+    // lead set, match locally by name/email, then resolve the pipeline name.
+    const res = await nexusApi("/api/leads", { cache: "no-store" });
+    if (!res.ok) return { content: "Pipeline data is unavailable right now (NEXUS API unreachable)." };
+    const raw = await res.text();
+    let leads: Array<Record<string, unknown>> = [];
+    try {
+      const parsed = JSON.parse(raw) as { leads?: Array<Record<string, unknown>> };
+      leads = Array.isArray(parsed.leads) ? parsed.leads : [];
+    } catch {
+      return { content: "Pipeline data is unavailable right now." };
+    }
+
+    const needle = q.toLowerCase();
+    const match = leads.find((l) => {
+      const name = String(l.full_name ?? "").toLowerCase();
+      const email = String(l.email ?? "").toLowerCase();
+      return (name && name.includes(needle)) || (email && email.includes(needle));
+    });
+    if (!match) return { content: `No lead found matching "${q}".` };
+
+    // Resolve pipeline name (best-effort — stage still returns without it).
+    let pipelineName: string | null = null;
+    if (match.pipeline_id) {
+      try {
+        const pRes = await nexusApi("/api/pipelines", { cache: "no-store" });
+        if (pRes.ok) {
+          const pParsed = JSON.parse(await pRes.text()) as { pipelines?: Array<{ id: string; name: string }> };
+          pipelineName = pParsed.pipelines?.find((p) => p.id === match.pipeline_id)?.name ?? null;
+        }
+      } catch {
+        // non-fatal — leave pipelineName null
+      }
+    }
+
+    const summary = {
+      name: match.full_name ?? null,
+      email: match.email ?? null,
+      pipeline: pipelineName,
+      stage: match.ghl_stage ?? null,
+      temperature: match.temperature ?? null,
+      match_status: match.match_status ?? null,
+      top_match: match.top_match_name ?? null,
+    };
+    return {
+      content: JSON.stringify(summary, null, 2),
+      side_effect: { kind: "lead_status", name: summary.name, stage: summary.stage, pipeline: summary.pipeline },
+    };
+  } catch (e) {
+    return { content: `Could not look up lead status: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
 async function sendSms(args: { contact_id: string; message: string; confirmed: boolean }): Promise<ToolResult> {
   const { data: contact } = await supabase
     .from("contacts")
@@ -376,6 +613,17 @@ async function dispatchTool(name: string, input: Record<string, unknown>, sender
       contact_id: input.contact_id ? String(input.contact_id) : undefined,
       tags: Array.isArray(input.tags) ? (input.tags as unknown[]).map(String) : undefined,
     }, senderEmail);
+    case "search_stock": return searchStock({
+      suburb: input.suburb ? String(input.suburb) : undefined,
+      state: input.state ? String(input.state) : undefined,
+      max_price: typeof input.max_price === "number" ? input.max_price : (input.max_price ? Number(input.max_price) : undefined),
+      min_bedrooms: typeof input.min_bedrooms === "number" ? input.min_bedrooms : (input.min_bedrooms ? Number(input.min_bedrooms) : undefined),
+      builder: input.builder ? String(input.builder) : undefined,
+    });
+    case "list_tasks":   return listTasks({
+      due: input.due ? String(input.due) : undefined,
+    });
+    case "lead_status":  return leadStatus(String(input.query ?? ""));
     case "send_sms":     return sendSms({
       contact_id: String(input.contact_id ?? ""),
       message: String(input.message ?? ""),
@@ -398,7 +646,10 @@ text-to-speech. Keep replies short and conversational (1-2 sentences). No
 markdown, no bullet lists, no emojis — they sound terrible when read out.
 
 You have CRM tools for finding contacts, logging calls, creating tasks,
-remembering durable facts, and sending SMS / email. Workflow:
+remembering durable facts, looking things up (search_stock for available
+property packages, list_tasks for open tasks, lead_status for where a lead
+sits in the pipeline), and sending SMS / email. The lookup tools are
+read-only — just answer from what they return. Workflow:
   1. Find the contact first if the user mentions a name.
   2. For sends (SMS/email): call the tool with confirmed=false to draft.
      Read the draft back, ask "send it?" Wait for the user to confirm
