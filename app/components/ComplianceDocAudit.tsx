@@ -14,9 +14,67 @@
  * document. Styling matches the existing amber/teal form chrome.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { relativeTime, type AutosaveState } from "../hooks/useAutosave";
 
 const TEAL = "#0F4C5C";
+
+/**
+ * Autosave state pill shown in the form toolbar: "Unsaved changes" → "Saving…" →
+ * "Saved <relative time>", plus "Save failed — retry" (with an inline retry) on
+ * error. Screen-only (`no-print`) and styled to match the teal/amber chrome. The
+ * relative-time label re-renders on a 30s tick so "Saved 2m ago" stays current.
+ */
+export function SaveStateIndicator({
+  state,
+  lastSavedAt,
+  onRetry,
+}: {
+  state: AutosaveState;
+  lastSavedAt: number | null;
+  onRetry?: () => void;
+}) {
+  // Keep "Saved <n>m ago" fresh without reading the clock during render (impure):
+  // `now` is state, re-stamped when the saved time changes and on a 30s tick.
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    if (state !== "saved" || lastSavedAt == null) return;
+    const stamp = () => setNow(Date.now());
+    const immediate = setTimeout(stamp, 0); // re-stamp on save (async, not sync-in-effect)
+    const t = setInterval(stamp, 30_000); // then keep the label fresh
+    return () => {
+      clearTimeout(immediate);
+      clearInterval(t);
+    };
+  }, [state, lastSavedAt]);
+
+  if (state === "idle") return null;
+
+  if (state === "saving") {
+    return <span className="no-print text-xs text-gray-500">Saving…</span>;
+  }
+  if (state === "unsaved") {
+    return <span className="no-print text-xs font-semibold text-amber-700">Unsaved changes</span>;
+  }
+  if (state === "error") {
+    return (
+      <span className="no-print text-xs font-semibold text-red-700 flex items-center gap-2">
+        Save failed
+        {onRetry && (
+          <button onClick={onRetry} className="underline hover:no-underline" style={{ color: TEAL }}>
+            retry
+          </button>
+        )}
+      </span>
+    );
+  }
+  // state === "saved"
+  return (
+    <span className="no-print text-xs" style={{ color: TEAL }}>
+      Saved{lastSavedAt != null ? ` ${relativeTime(lastSavedAt, now)}` : ""}
+    </span>
+  );
+}
 
 /** One audit row as returned by the /history endpoints (no PII snapshot). */
 export type AuditRow = {

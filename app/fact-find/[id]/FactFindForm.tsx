@@ -38,7 +38,8 @@ import {
   type LiabilityKind,
 } from "../../../utils/factfind";
 import CapacityPanel from "./CapacityPanel";
-import { LockedBanner, HistoryPanel } from "../../components/ComplianceDocAudit";
+import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
+import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
 
 const TEAL = "#0F4C5C";
 
@@ -221,9 +222,14 @@ export default function FactFindForm({ id }: { id: string }) {
   const [contactId, setContactId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  // Dirtiness is derived from a monotonic edit counter vs. the counter captured
+  // at the last successful save. This survives autosave: an edit that lands mid-
+  // save bumps `rev` past `savedRev`, so the doc stays dirty and is saved again
+  // (a bare boolean would be wrongly cleared by the in-flight save completing).
+  const [rev, setRev] = useState(0);
+  const [savedRev, setSavedRev] = useState(0);
+  const dirty = rev !== savedRev;
   const [error, setError] = useState("");
-  const [savedAt, setSavedAt] = useState<string>("");
   // Needs Analysis pre-fill state.
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
@@ -250,14 +256,6 @@ export default function FactFindForm({ id }: { id: string }) {
     };
   }, [id]);
 
-  /** Warn before losing unsaved edits. */
-  useEffect(() => {
-    if (!dirty) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [dirty]);
-
   /** Structured-clone edit: mutate a draft, get a new immutable state. */
   const update = useCallback((mut: (d: FactFindData) => void) => {
     setData((prev) => {
@@ -265,11 +263,19 @@ export default function FactFindForm({ id }: { id: string }) {
       mut(next);
       return next;
     });
-    setDirty(true);
+    setRev((r) => r + 1);
   }, []);
 
-  const save = useCallback(
-    async (nextStatus?: string) => {
+  /**
+   * The single save path — PATCHes the whole blob. Used by the manual Save
+   * button, the status dropdown, the reopen action, AND autosave (via
+   * `saveNow`). Returns an outcome so autosave can react: a 409 means the doc was
+   * signed elsewhere → reflect locked and stop; other failures keep the data and
+   * surface the error for retry.
+   */
+  const doSave = useCallback(
+    async (nextStatus?: string): Promise<AutosaveOutcome> => {
+      const revAtSave = rev;
       setSaving(true);
       setError("");
       try {
@@ -279,18 +285,38 @@ export default function FactFindForm({ id }: { id: string }) {
           body: JSON.stringify({ data, status: nextStatus ?? status }),
         });
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error || "Save failed");
+        if (res.status === 409) {
+          // Signed/locked elsewhere — reflect the lock so autosave stops.
+          setStatus(FACT_FIND_TERMINAL_STATUS);
+          setError(json.error || "This document is signed/locked.");
+          return "locked";
+        }
+        if (!json.ok) {
+          setError(json.error || "Save failed");
+          return "error";
+        }
         if (nextStatus) setStatus(nextStatus);
-        setDirty(false);
-        setSavedAt(new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" }));
+        setSavedRev(revAtSave);
+        return "saved";
       } catch (e) {
         setError(e instanceof Error ? e.message : "Save failed");
+        return "error";
       } finally {
         setSaving(false);
       }
     },
-    [id, data, status],
+    [id, data, status, rev],
   );
+
+  // "Locked" is derived from status — the signed/complete document is read-only
+  // until reopened. Single source of truth: FACT_FIND_TERMINAL_STATUS.
+  const locked = status === FACT_FIND_TERMINAL_STATUS;
+
+  const {
+    state: saveState,
+    lastSavedAt,
+    saveNow,
+  } = useAutosave({ isDirty: dirty, isLocked: locked, rev, save: () => doSave() });
 
   /**
    * Seed a fresh NCCP Needs Analysis from this Fact Find's current data. The
@@ -325,9 +351,6 @@ export default function FactFindForm({ id }: { id: string }) {
 
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading fact find…</p>;
 
-  // "Locked" is derived from status — the signed/complete document is read-only
-  // until reopened. Single source of truth: FACT_FIND_TERMINAL_STATUS.
-  const locked = status === FACT_FIND_TERMINAL_STATUS;
   const totals = computeTotals(data);
   const missing = outstandingSections(data);
   const money = formatMoney;
@@ -377,11 +400,10 @@ export default function FactFindForm({ id }: { id: string }) {
           ← All fact finds
         </Link>
         <div className="flex-1" />
-        {dirty && <span className="text-xs text-amber-700 font-semibold">Unsaved changes</span>}
-        {!dirty && savedAt && <span className="text-xs text-gray-500">Saved {savedAt}</span>}
+        {!locked && <SaveStateIndicator state={saveState} lastSavedAt={lastSavedAt} onRetry={saveNow} />}
         <select
           value={status}
-          onChange={(e) => void save(e.target.value)}
+          onChange={(e) => void doSave(e.target.value)}
           disabled={saving}
           className="px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
         >
@@ -408,7 +430,7 @@ export default function FactFindForm({ id }: { id: string }) {
           Export PDF
         </button>
         <button
-          onClick={() => void save()}
+          onClick={() => saveNow()}
           disabled={saving || !dirty || locked}
           className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
           style={{ backgroundColor: TEAL }}
@@ -423,7 +445,7 @@ export default function FactFindForm({ id }: { id: string }) {
         </div>
       )}
 
-      {locked && <LockedBanner onReopen={() => void save(FACT_FIND_STATUSES[0])} busy={saving} />}
+      {locked && <LockedBanner onReopen={() => void doSave(FACT_FIND_STATUSES[0])} busy={saving} />}
       <HistoryPanel apiBase="/api/fact-finds" id={id} />
 
       {seedResult && (
