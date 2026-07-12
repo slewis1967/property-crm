@@ -48,8 +48,13 @@ Tool inventory (MVP):
 - `find_contact` — lookup by name/phone/email, returns top match (must be called before any contact-scoped tool)
 - `log_call` — append a dated note to a contact (low-risk, no confirm)
 - `create_task` — add to `tasks` table, optional `contact_id` + `due_date`
+- `search_stock` — **read-only** — search the `global_stock_pool` aggregator feed by suburb/state/price/beds/builder (no confirm)
+- `list_tasks` — **read-only** — the open (`completed=false`) `tasks`, optional `due` window (today/overdue/all); no owner scoping (table has none)
+- `lead_status` — **read-only** — resolve a lead by name/email against the NEXUS API (`/api/leads` + `/api/pipelines`) and report pipeline + stage
 - `send_sms` — ClickSend, requires `confirmed=true`
 - `send_email` — Brevo, requires `confirmed=true`
+
+The three lookup tools (`search_stock`, `list_tasks`, `lead_status`) are read-only — they query and return data for the assistant to speak, take no `confirmed` flag, and never touch the send-confirm guard.
 
 **Confirm-before-send rule:** `send_*` tools take a `confirmed` boolean. Claude is instructed to call with `confirmed=false` first (which only DRAFTS), then re-call with `confirmed=true` after the user says yes. The server enforces this — `confirmed=false` never actually fires. Don't bypass this server-side check; it's the only thing standing between "voice misheard 'send to mum'" and an outbound SMS.
 
