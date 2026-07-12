@@ -403,6 +403,92 @@ export function emptyFactFind(): FactFindData {
   };
 }
 
+/* ── Prefill from a CRM contact ──────────────────────────────────────────── */
+
+/**
+ * The subset of a `contacts` row we can safely map onto an applicant. All
+ * fields optional — a sparse or archive-only contact still yields a usable
+ * applicant. Kept structural (not the contacts UI's `Contact` type) so the
+ * pure mapper carries no dependency on the contacts module.
+ */
+export type FactFindContact = {
+  name?: string | null;
+  full_name?: string | null;
+  first_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  date_of_birth?: string | null;
+  home_address_street?: string | null;
+  home_address_suburb?: string | null;
+  home_address_state?: string | null;
+  home_address_postcode?: string | null;
+  occupation?: string | null;
+  annual_income?: number | null;
+  hecs_balance?: number | null;
+};
+
+const cleanStr = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+const cleanNum = (v: unknown): number | null =>
+  typeof v === "number" && isFinite(v) ? v : null;
+
+/**
+ * Split a contact's name into given/family for the applicant's two name fields.
+ * A multi-word name splits on the last token (surname); a single token with a
+ * distinct `first_name` treats that token as the surname; otherwise the one
+ * token becomes the given name and the family name is left blank.
+ */
+function splitContactName(c: FactFindContact): { given_names: string; family_name: string } {
+  const whole = cleanStr(c.full_name) || cleanStr(c.name);
+  const first = cleanStr(c.first_name);
+  if (whole) {
+    const parts = whole.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return { given_names: parts.slice(0, -1).join(" "), family_name: parts[parts.length - 1] };
+    }
+    if (first && first.toLowerCase() !== parts[0].toLowerCase()) {
+      return { given_names: first, family_name: parts[0] };
+    }
+    return { given_names: first || parts[0], family_name: "" };
+  }
+  return { given_names: first, family_name: "" };
+}
+
+/**
+ * Map a CRM contact onto a blank applicant. Conservative: only fields that
+ * clearly correspond on both sides are set (name, email, phone, DOB, home
+ * address, occupation, income, HECS); everything else stays at the empty-form
+ * default. Pure — unit-tested in utils/factfind-contact.test.ts.
+ */
+export function contactToApplicant(c: FactFindContact): Applicant {
+  const a = emptyApplicant();
+  const { given_names, family_name } = splitContactName(c);
+  a.given_names = given_names;
+  a.family_name = family_name;
+  a.email = cleanStr(c.email);
+  // The contact carries a single phone; seed it as the home number (the form's
+  // generic contact field). The operator can move it to "work" if needed.
+  a.phone_home = cleanStr(c.phone);
+  a.date_of_birth = cleanStr(c.date_of_birth);
+  a.occupation = cleanStr(c.occupation);
+  a.address = [c.home_address_street, c.home_address_suburb, c.home_address_state]
+    .map(cleanStr)
+    .filter(Boolean)
+    .join(", ");
+  a.postcode = cleanStr(c.home_address_postcode);
+  a.annual_income = cleanNum(c.annual_income);
+  const hecs = cleanNum(c.hecs_balance);
+  a.hecs_balance = hecs;
+  a.has_hecs = hecs != null && hecs > 0;
+  return a;
+}
+
+/** A blank fact find with its first applicant prefilled from `c`. */
+export function factFindFromContact(c: FactFindContact): FactFindData {
+  const data = emptyFactFind();
+  data.applicants[0] = contactToApplicant(c);
+  return data;
+}
+
 /**
  * Merge a persisted blob over the current template. Older rows that predate a
  * field still open cleanly, and a blob missing whole sections can't crash the
