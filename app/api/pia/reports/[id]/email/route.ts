@@ -10,6 +10,7 @@ import { sendBrevoEmail } from "../../../../../../utils/brevo";
 import { outboundEmailLogRow } from "../../../../../../utils/email-log";
 import { defaultSignature } from "../../../../../../utils/email-signature";
 import { resolveSender } from "../../../../../../utils/mail-owner";
+import { alertOps } from "../../../../../../utils/alert";
 
 import { requireAuth, userEmailFromRequest } from "../../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,14 @@ export async function POST(
   });
 
   if (!result.ok) {
+    // Genuine outbound-send failure: the operator tried to email a report and
+    // Brevo rejected it. Escalate (deduped by this route).
+    await alertOps({
+      event: "pia_report.email_failed",
+      message: `PIA report email to ${to} failed to send`,
+      context: { report_id: id, to, error: result.error },
+      discriminator: "pia/reports/email",
+    });
     return NextResponse.json({ ok: false, error: result.error }, { status: 502 });
   }
 

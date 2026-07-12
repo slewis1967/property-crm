@@ -17,6 +17,7 @@ import { supabase } from "../../../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../../../utils/brevo";
 import { resolveSender } from "../../../../../../utils/mail-owner";
 import { userEmailFromRequest } from "../../../../../../utils/cf-access";
+import { alertOps } from "../../../../../../utils/alert";
 
 export const dynamic = "force-dynamic";
 
@@ -186,6 +187,19 @@ export async function POST(
   }
 
   if (failures.length > 0) {
+    // Genuine outbound-send failure: one or more recipients bounced off Brevo
+    // (or the audit insert failed). Escalate (deduped by this route).
+    await alertOps({
+      event: "mail_draft.send_failed",
+      message: `Draft send had ${failures.length} failed recipient(s)`,
+      context: {
+        draft_id: id,
+        owner,
+        sent: sentIds.length,
+        failures: failures.map((f) => `${f.to}: ${f.error}`),
+      },
+      discriminator: "mail/drafts/send",
+    });
     return NextResponse.json(
       { ok: false, sent: sentIds, failures, error: failures.map((f) => `${f.to}: ${f.error}`).join("; ") },
       { status: 502 },
