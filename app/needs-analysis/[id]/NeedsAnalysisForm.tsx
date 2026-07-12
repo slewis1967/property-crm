@@ -592,6 +592,7 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
   const [status, setStatus] = useState<string>("Draft");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   // Dirtiness is derived from a monotonic edit counter vs. the counter captured
   // at the last successful save — survives autosave (an edit mid-save keeps the
   // doc dirty rather than being wrongly cleared by the completing save).
@@ -675,6 +676,40 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
   // reopened. Single source of truth: NEEDS_ANALYSIS_TERMINAL_STATUS.
   const locked = status === NEEDS_ANALYSIS_TERMINAL_STATUS;
 
+  /**
+   * Download the server-rendered PDF (headless Chromium reusing the YLA print
+   * document). Distinct from "Export PDF" (window.print): this yields an
+   * attachable file. Saves first so the PDF reflects the latest edits — the
+   * server reads the persisted blob, not the in-memory form state.
+   */
+  const downloadPdf = useCallback(async () => {
+    setDownloading(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const res = await fetch(`/api/needs-analyses/${id}/pdf`);
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(json?.error || "PDF download failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `needs-analysis-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PDF download failed");
+    } finally {
+      setDownloading(false);
+    }
+    // `dirty` / `locked` are read fresh at call time; `doSave` is stable enough
+    // for this manual action.
+  }, [id, dirty, locked, doSave]);
+
   const {
     state: saveState,
     lastSavedAt,
@@ -716,6 +751,14 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
           style={{ borderColor: TEAL, color: TEAL }}
         >
           Export PDF
+        </button>
+        <button
+          onClick={() => void downloadPdf()}
+          disabled={downloading}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+        >
+          {downloading ? "Preparing…" : "Download PDF"}
         </button>
         <button
           onClick={() => saveNow()}

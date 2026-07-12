@@ -50,6 +50,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Keep the headless-Chromium PDF stack out of the webpack/serverless bundle —
+  // @sparticuz/chromium ships a binary that must be require()d from node_modules
+  // at runtime, not traced/bundled. See utils/pdf/render.ts.
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     return [
       {
