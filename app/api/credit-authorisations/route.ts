@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
-import { requireAuth } from "../../../utils/cf-access";
-import { log, errInfo } from "../../../utils/logger";
 import {
   creditAuthErrMessage,
   creditAuthorisationSummary,
@@ -10,7 +7,7 @@ import {
   hydrateCreditAuthorisation,
   CREDIT_AUTHORISATION_STATUSES,
 } from "../../../utils/creditAuthorisation";
-import { recordAudit } from "../../../utils/compliance-audit";
+import { makeListHandler, makeCreateHandler, type CreateRow } from "../../../utils/compliance-doc-route";
 
 export const dynamic = "force-dynamic";
 
@@ -53,25 +50,14 @@ async function prefillFromContact(contactId: string): Promise<{ names: string; a
 }
 
 /** GET — list credit authorisations (newest first). Omits the `data` blob. */
-export async function GET(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
-  try {
-    const { data, error } = await supabase
-      .from("credit_authorisations")
-      .select(LIST_COLUMNS)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) {
-      if (creditAuthorisationsTableMissing(error)) return NextResponse.json({ ok: true, creditAuthorisations: [] });
-      throw error;
-    }
-    return NextResponse.json({ ok: true, creditAuthorisations: data ?? [] });
-  } catch (e) {
-    log.error("credit_authorisations.list_failed", { detail: creditAuthErrMessage(e, ""), ...errInfo(e) });
-    return NextResponse.json({ ok: false, error: creditAuthErrMessage(e, "List failed") }, { status: 500 });
-  }
-}
+export const GET = makeListHandler({
+  table: "credit_authorisations",
+  logPrefix: "credit_authorisations",
+  errMessage: creditAuthErrMessage,
+  tableMissing: creditAuthorisationsTableMissing,
+  listColumns: LIST_COLUMNS,
+  listKey: "creditAuthorisations",
+});
 
 /**
  * POST — create a credit authorisation. Body is optional: with no body you get a
@@ -79,11 +65,14 @@ export async function GET(req: Request) {
  * lines from that contact. An explicit `data` blob (if supplied) wins over the
  * contact prefill.
  */
-export async function POST(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
-  try {
-    const b = await req.json().catch(() => ({} as Record<string, unknown>));
+export const POST = makeCreateHandler({
+  table: "credit_authorisations",
+  docType: "credit_authorisation",
+  logPrefix: "credit_authorisations",
+  migrationHint: MIGRATION_HINT,
+  errMessage: creditAuthErrMessage,
+  tableMissing: creditAuthorisationsTableMissing,
+  buildCreateRow: async (b, auth): Promise<CreateRow> => {
     const str = (v: unknown) => (typeof v === "string" && v ? v : null);
     const contactId = str(b.contactId);
 
@@ -107,27 +96,6 @@ export async function POST(req: Request) {
       created_by: auth,
     };
 
-    const { data: inserted, error } = await supabase
-      .from("credit_authorisations")
-      .insert(row)
-      .select("id")
-      .single();
-    if (error) {
-      if (creditAuthorisationsTableMissing(error))
-        return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
-      throw error;
-    }
-    await recordAudit({
-      docType: "credit_authorisation",
-      docId: inserted.id,
-      action: "create",
-      changedBy: auth,
-      statusAfter: data.status,
-      snapshot: data,
-    });
-    return NextResponse.json({ ok: true, id: inserted.id });
-  } catch (e) {
-    log.error("credit_authorisations.create_failed", { detail: creditAuthErrMessage(e, ""), ...errInfo(e) });
-    return NextResponse.json({ ok: false, error: creditAuthErrMessage(e, "Create failed") }, { status: 500 });
-  }
-}
+    return { row, status: data.status, snapshot: data };
+  },
+});
