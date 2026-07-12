@@ -9,6 +9,7 @@ import {
   hydrateFactFind,
   FACT_FIND_STATUSES,
 } from "../../../../utils/factfind";
+import { classifyPatch, isLocked, recordAudit, LOCKED_EDIT_MESSAGE, LOCKED_DELETE_MESSAGE } from "../../../../utils/compliance-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   try {
     const b = (await req.json()) as { data?: unknown; status?: string; contactId?: string | null };
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+    // Fetch the current status first — the sign-lock is derived from it.
+    const { data: current, error: fetchErr } = await supabase
+      .from("borrower_fact_finds")
+      .select("status")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (factFindsTableMissing(fetchErr)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+
+    const currentStatus = current.status as string;
+    const incomingStatus =
+      typeof b.status === "string" && (FACT_FIND_STATUSES as readonly string[]).includes(b.status)
+        ? b.status
+        : currentStatus;
+
+    const decision = classifyPatch("fact_find", currentStatus, incomingStatus);
+    if (decision.kind === "reject") {
+      return NextResponse.json({ ok: false, error: LOCKED_EDIT_MESSAGE }, { status: 409 });
+    }
+
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: auth };
 
     if (b.data !== undefined) {
       const data = hydrateFactFind(b.data);
@@ -55,9 +80,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       patch.loan_amount = data.loan.amount_required;
       patch.referred_by = data.referred_by || null;
     }
-    if (typeof b.status === "string" && (FACT_FIND_STATUSES as readonly string[]).includes(b.status)) {
-      patch.status = b.status;
-    }
+    if (incomingStatus !== currentStatus) patch.status = incomingStatus;
     if (b.contactId !== undefined) patch.contact_id = b.contactId || null;
 
     const { error } = await supabase.from("borrower_fact_finds").update(patch).eq("id", id);
@@ -65,6 +88,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (factFindsTableMissing(error)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
       throw error;
     }
+    await recordAudit({
+      docType: "fact_find",
+      docId: id,
+      action: decision.kind,
+      changedBy: auth,
+      statusAfter: incomingStatus,
+      snapshot: patch.data ?? null,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("fact_finds.update_failed", { detail: factFindErrMessage(e, ""), ...errInfo(e) });
@@ -78,8 +109,32 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   try {
+    // Fetch the row first: a locked (signed/complete) document can't be deleted,
+    // and we snapshot its final state into the audit log before removing it.
+    const { data: current, error: fetchErr } = await supabase
+      .from("borrower_fact_finds")
+      .select("status,data")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (factFindsTableMissing(fetchErr)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    if (isLocked("fact_find", current.status as string)) {
+      return NextResponse.json({ ok: false, error: LOCKED_DELETE_MESSAGE }, { status: 409 });
+    }
+
     const { error } = await supabase.from("borrower_fact_finds").delete().eq("id", id);
     if (error) throw error;
+    await recordAudit({
+      docType: "fact_find",
+      docId: id,
+      action: "delete",
+      changedBy: auth,
+      statusAfter: current.status as string,
+      snapshot: current.data,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("fact_finds.delete_failed", { detail: factFindErrMessage(e, ""), ...errInfo(e) });

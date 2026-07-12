@@ -8,6 +8,7 @@ import {
   creditAuthorisationsTableMissing,
   hydrateCreditAuthorisation,
 } from "../../../../utils/creditAuthorisation";
+import { classifyPatch, isLocked, recordAudit, LOCKED_EDIT_MESSAGE, LOCKED_DELETE_MESSAGE } from "../../../../utils/compliance-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -52,13 +53,37 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   try {
     const b = (await req.json()) as { data?: unknown; contactId?: string | null };
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-    if (b.data !== undefined) {
-      const data = hydrateCreditAuthorisation(b.data);
-      patch.data = data;
-      patch.names = creditAuthorisationSummary(data) || null;
-      patch.status = data.status;
+    // Fetch the current status first — the sign-lock is derived from it. For this
+    // document the status lives inside the `data` blob (data.status), which the
+    // top-level `status` column mirrors on every save.
+    const { data: current, error: fetchErr } = await supabase
+      .from("credit_authorisations")
+      .select("status")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (creditAuthorisationsTableMissing(fetchErr))
+        return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+
+    const currentStatus = current.status as string;
+    const hydrated = b.data !== undefined ? hydrateCreditAuthorisation(b.data) : undefined;
+    const incomingStatus = hydrated ? hydrated.status : currentStatus;
+
+    const decision = classifyPatch("credit_authorisation", currentStatus, incomingStatus);
+    if (decision.kind === "reject") {
+      return NextResponse.json({ ok: false, error: LOCKED_EDIT_MESSAGE }, { status: 409 });
+    }
+
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: auth };
+
+    if (hydrated) {
+      patch.data = hydrated;
+      patch.names = creditAuthorisationSummary(hydrated) || null;
+      patch.status = hydrated.status;
     }
     if (b.contactId !== undefined) patch.contact_id = b.contactId || null;
 
@@ -68,6 +93,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
       throw error;
     }
+    await recordAudit({
+      docType: "credit_authorisation",
+      docId: id,
+      action: decision.kind,
+      changedBy: auth,
+      statusAfter: incomingStatus,
+      snapshot: hydrated ?? null,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("credit_authorisations.update_failed", { detail: creditAuthErrMessage(e, ""), ...errInfo(e) });
@@ -81,8 +114,33 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   try {
+    // Fetch the row first: a signed authorisation can't be deleted, and we
+    // snapshot its final state into the audit log before removing it.
+    const { data: current, error: fetchErr } = await supabase
+      .from("credit_authorisations")
+      .select("status,data")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (creditAuthorisationsTableMissing(fetchErr))
+        return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    if (isLocked("credit_authorisation", current.status as string)) {
+      return NextResponse.json({ ok: false, error: LOCKED_DELETE_MESSAGE }, { status: 409 });
+    }
+
     const { error } = await supabase.from("credit_authorisations").delete().eq("id", id);
     if (error) throw error;
+    await recordAudit({
+      docType: "credit_authorisation",
+      docId: id,
+      action: "delete",
+      changedBy: auth,
+      statusAfter: current.status as string,
+      snapshot: current.data,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("credit_authorisations.delete_failed", { detail: creditAuthErrMessage(e, ""), ...errInfo(e) });

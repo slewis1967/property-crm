@@ -10,6 +10,7 @@ import {
   hydrateFactFind,
   FACT_FIND_STATUSES,
 } from "../../../utils/factfind";
+import { recordAudit } from "../../../utils/compliance-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,14 @@ export async function POST(req: Request) {
       if (factFindsTableMissing(error)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
       throw error;
     }
+    await recordAudit({
+      docType: "fact_find",
+      docId: inserted.id,
+      action: "create",
+      changedBy: auth,
+      statusAfter: status,
+      snapshot: data,
+    });
     return NextResponse.json({ ok: true, id: inserted.id });
   } catch (e) {
     log.error("fact_finds.create_failed", { detail: factFindErrMessage(e, ""), ...errInfo(e) });

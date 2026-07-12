@@ -21,6 +21,13 @@ import { errMessage } from "./errors";
 export const FACT_FIND_STATUSES = ["Draft", "In review", "Complete"] as const;
 export type FactFindStatus = (typeof FACT_FIND_STATUSES)[number];
 
+/**
+ * The terminal status. Reaching it means the document is signed/complete and
+ * becomes read-only (see utils/compliance-audit.ts). Kept here so both the
+ * client form and the server lock logic derive "locked" from one constant.
+ */
+export const FACT_FIND_TERMINAL_STATUS: FactFindStatus = "Complete";
+
 export const APPLICANT_CAPACITIES = ["Borrower", "Guarantor", "Joint applicant"] as const;
 export const ENTITY_TYPES = ["Partnership", "Company", "Trust"] as const;
 export const PROPERTY_USES = ["Owner occupied", "Investment property"] as const;

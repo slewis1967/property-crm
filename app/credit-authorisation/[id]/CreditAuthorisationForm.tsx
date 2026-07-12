@@ -17,10 +17,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CREDIT_AUTHORISATION_STATUSES,
+  CREDIT_AUTHORISATION_TERMINAL_STATUS,
   CREDIT_AUTHORISATION_TEXT,
   emptyCreditAuthorisation,
   type CreditAuthorisationData,
 } from "../../../utils/creditAuthorisation";
+import { LockedBanner, HistoryPanel } from "../../components/ComplianceDocAudit";
 
 const TEAL = "#0F4C5C";
 
@@ -162,6 +164,19 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
 
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading authorisation…</p>;
 
+  // "Locked" is derived from status — a signed authorisation is read-only until
+  // reopened. Single source of truth: CREDIT_AUTHORISATION_TERMINAL_STATUS.
+  const locked = data.status === CREDIT_AUTHORISATION_TERMINAL_STATUS;
+
+  /** Reopen a signed authorisation for amendment (recorded as a reopen by the API). */
+  const reopen = () => {
+    const next = structuredClone(data);
+    next.status = "draft";
+    setData(next);
+    setDirty(false);
+    void save(next);
+  };
+
   const t = CREDIT_AUTHORISATION_TEXT;
 
   return (
@@ -225,7 +240,7 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
         </button>
         <button
           onClick={() => void save()}
-          disabled={saving || !dirty}
+          disabled={saving || !dirty || locked}
           className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
           style={{ backgroundColor: TEAL }}
         >
@@ -239,7 +254,13 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
         </div>
       )}
 
-      <div id="credit-auth-document" className="max-w-3xl mx-auto p-4 sm:p-8">
+      {locked && <LockedBanner onReopen={reopen} busy={saving} />}
+      <HistoryPanel apiBase="/api/credit-authorisations" id={id} />
+
+      {/* When locked (signed) every input inside is disabled — the document is
+          read-only until reopened. min-w-0 keeps the fieldset from forcing its
+          intrinsic min-width and overflowing on small screens. */}
+      <fieldset id="credit-auth-document" disabled={locked} className="max-w-3xl mx-auto p-4 sm:p-8 min-w-0 border-0">
         <section className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 space-y-5">
           {/* Title + heading */}
           <header className="text-center pb-1">
@@ -297,7 +318,7 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
             ))}
           </div>
         </section>
-      </div>
+      </fieldset>
     </div>
   );
 }

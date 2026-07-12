@@ -10,6 +10,7 @@ import {
   needsAnalysesTableMissing,
   NEEDS_ANALYSIS_STATUSES,
 } from "../../../utils/needsAnalysis";
+import { recordAudit } from "../../../utils/compliance-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,14 @@ export async function POST(req: Request) {
       if (needsAnalysesTableMissing(error)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
       throw error;
     }
+    await recordAudit({
+      docType: "needs_analysis",
+      docId: inserted.id,
+      action: "create",
+      changedBy: auth,
+      statusAfter: status,
+      snapshot: data,
+    });
     return NextResponse.json({ ok: true, id: inserted.id });
   } catch (e) {
     log.error("needs_analyses.create_failed", { detail: needsAnalysisErrMessage(e, ""), ...errInfo(e) });

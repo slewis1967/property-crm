@@ -9,6 +9,7 @@ import {
   needsAnalysesTableMissing,
   NEEDS_ANALYSIS_STATUSES,
 } from "../../../../utils/needsAnalysis";
+import { classifyPatch, isLocked, recordAudit, LOCKED_EDIT_MESSAGE, LOCKED_DELETE_MESSAGE } from "../../../../utils/compliance-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   try {
     const b = (await req.json()) as { data?: unknown; status?: string; contactId?: string | null };
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+    // Fetch the current status first — the sign-lock is derived from it.
+    const { data: current, error: fetchErr } = await supabase
+      .from("nccp_needs_analyses")
+      .select("status")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (needsAnalysesTableMissing(fetchErr)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+
+    const currentStatus = current.status as string;
+    const incomingStatus =
+      typeof b.status === "string" && (NEEDS_ANALYSIS_STATUSES as readonly string[]).includes(b.status)
+        ? b.status
+        : currentStatus;
+
+    const decision = classifyPatch("needs_analysis", currentStatus, incomingStatus);
+    if (decision.kind === "reject") {
+      return NextResponse.json({ ok: false, error: LOCKED_EDIT_MESSAGE }, { status: 409 });
+    }
+
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: auth };
 
     if (b.data !== undefined) {
       const data = hydrateNeedsAnalysis(b.data);
@@ -54,9 +79,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       patch.applicant_name = applicantSummary(data) || null;
       patch.loan_amount = data.loan_amount_sought;
     }
-    if (typeof b.status === "string" && (NEEDS_ANALYSIS_STATUSES as readonly string[]).includes(b.status)) {
-      patch.status = b.status;
-    }
+    if (incomingStatus !== currentStatus) patch.status = incomingStatus;
     if (b.contactId !== undefined) patch.contact_id = b.contactId || null;
 
     const { error } = await supabase.from("nccp_needs_analyses").update(patch).eq("id", id);
@@ -64,6 +87,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (needsAnalysesTableMissing(error)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
       throw error;
     }
+    await recordAudit({
+      docType: "needs_analysis",
+      docId: id,
+      action: decision.kind,
+      changedBy: auth,
+      statusAfter: incomingStatus,
+      snapshot: patch.data ?? null,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("needs_analyses.update_failed", { detail: needsAnalysisErrMessage(e, ""), ...errInfo(e) });
@@ -77,8 +108,32 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   try {
+    // Fetch the row first: a locked (Complete) document can't be deleted, and we
+    // snapshot its final state into the audit log before removing it.
+    const { data: current, error: fetchErr } = await supabase
+      .from("nccp_needs_analyses")
+      .select("status,data")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) {
+      if (needsAnalysesTableMissing(fetchErr)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
+      throw fetchErr;
+    }
+    if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    if (isLocked("needs_analysis", current.status as string)) {
+      return NextResponse.json({ ok: false, error: LOCKED_DELETE_MESSAGE }, { status: 409 });
+    }
+
     const { error } = await supabase.from("nccp_needs_analyses").delete().eq("id", id);
     if (error) throw error;
+    await recordAudit({
+      docType: "needs_analysis",
+      docId: id,
+      action: "delete",
+      changedBy: auth,
+      statusAfter: current.status as string,
+      snapshot: current.data,
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("needs_analyses.delete_failed", { detail: needsAnalysisErrMessage(e, ""), ...errInfo(e) });
