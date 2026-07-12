@@ -5,9 +5,9 @@
  * existing one. The form itself lives at /fact-find/[id].
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FACT_FIND_STATUSES, formatMoney } from "../../utils/factfind";
 
 const TEAL = "#0F4C5C";
@@ -23,6 +23,17 @@ type FactFindRow = {
   updated_at: string;
 };
 
+/** Just the fields the picker shows. The server re-reads the full contact by id. */
+type PickContact = {
+  id: string;
+  name: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+const contactLabel = (c: PickContact): string => c.full_name || c.name || "Unnamed contact";
+
 const STATUS_COLOR: Record<string, string> = {
   Draft: "bg-gray-100 text-gray-700",
   "In review": "bg-amber-100 text-amber-800",
@@ -37,11 +48,19 @@ function when(iso: string): string {
 
 export default function FactFindClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<FactFindRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | string>("all");
+
+  // Contact picker (start a fact find prefilled from a contact).
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [contacts, setContacts] = useState<PickContact[]>([]);
+  const [contactsLoaded, setContactsLoaded] = useState(false);
+  const [contactQuery, setContactQuery] = useState("");
+  const deepLinkFired = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +81,54 @@ export default function FactFindClient() {
     };
   }, []);
 
+  // Deep link: /fact-find?contact=<id> auto-creates a prefilled fact find and
+  // opens it. Runs once (ref-guarded against React's double-invoke) and only
+  // sets state after the await, per the mount-effect setState rule.
+  useEffect(() => {
+    const cid = searchParams.get("contact");
+    if (!cid || deepLinkFired.current) return;
+    deepLinkFired.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/fact-finds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contactId: cid }),
+        });
+        const json = await res.json();
+        if (cancelled) return;
+        if (!json.ok) throw new Error(json.error || "Create failed");
+        router.replace(`/fact-find/${json.id}`);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Create failed");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, router]);
+
+  // Load the contact list lazily the first time the picker opens.
+  useEffect(() => {
+    if (!pickerOpen || contactsLoaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/contacts/search");
+        const json = await res.json();
+        if (cancelled) return;
+        setContacts(Array.isArray(json.contacts) ? json.contacts : []);
+        setContactsLoaded(true);
+      } catch {
+        if (!cancelled) setContactsLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pickerOpen, contactsLoaded]);
+
   async function onCreate() {
     setCreating(true);
     setError("");
@@ -73,6 +140,25 @@ export default function FactFindClient() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
       setCreating(false);
+    }
+  }
+
+  async function onCreateFromContact(contactId: string) {
+    setCreating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/fact-finds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Create failed");
+      router.push(`/fact-find/${json.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Create failed");
+      setCreating(false);
+      setPickerOpen(false);
     }
   }
 
@@ -92,6 +178,15 @@ export default function FactFindClient() {
 
   const visible = filter === "all" ? rows : rows.filter((r) => r.status === filter);
 
+  const q = contactQuery.trim().toLowerCase();
+  const contactMatches = (
+    q
+      ? contacts.filter((c) =>
+          [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)),
+        )
+      : contacts
+  ).slice(0, 20);
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -103,15 +198,90 @@ export default function FactFindClient() {
             Capture an applicant&apos;s position, security and declarations. Export to PDF for signing.
           </p>
         </div>
-        <button
-          onClick={onCreate}
-          disabled={creating}
-          className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
-          style={{ backgroundColor: TEAL }}
-        >
-          {creating ? "Creating…" : "+ New fact find"}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => {
+              setContactQuery("");
+              setPickerOpen(true);
+            }}
+            disabled={creating}
+            className="px-4 py-2 text-sm font-semibold rounded-lg border disabled:opacity-60 transition hover:bg-gray-50"
+            style={{ color: TEAL, borderColor: TEAL }}
+          >
+            From a contact
+          </button>
+          <button
+            onClick={onCreate}
+            disabled={creating}
+            className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
+            style={{ backgroundColor: TEAL }}
+          >
+            {creating ? "Creating…" : "+ New fact find"}
+          </button>
+        </div>
       </div>
+
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-24"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <h2 className="text-base font-semibold" style={{ color: TEAL }}>
+                Start a fact find from a contact
+              </h2>
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-5">
+              <input
+                autoFocus
+                type="text"
+                value={contactQuery}
+                onChange={(e) => setContactQuery(e.target.value)}
+                placeholder="Search by name, email or phone…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-gray-500"
+              />
+              <div className="mt-3 max-h-72 overflow-y-auto rounded-lg border border-gray-100">
+                {!contactsLoaded ? (
+                  <p className="px-3 py-6 text-center text-sm text-gray-500">Loading contacts…</p>
+                ) : contactMatches.length === 0 ? (
+                  <p className="px-3 py-6 text-center text-sm text-gray-500">
+                    {contacts.length === 0 ? "No contacts found." : "No contacts match that search."}
+                  </p>
+                ) : (
+                  contactMatches.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => onCreateFromContact(c.id)}
+                      disabled={creating}
+                      className="flex w-full flex-col items-start gap-0.5 border-b border-gray-50 px-3 py-2 text-left last:border-b-0 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      <span className="text-sm font-semibold text-gray-800">{contactLabel(c)}</span>
+                      <span className="text-xs text-gray-500">
+                        {[c.email, c.phone].filter(Boolean).join(" · ") || "No contact details"}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+              <p className="mt-3 text-xs text-gray-400">
+                We&apos;ll prefill the first applicant&apos;s name, contact details, address, occupation
+                and income from the contact. You can edit everything after.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>
