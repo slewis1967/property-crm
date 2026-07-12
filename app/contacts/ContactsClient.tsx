@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BulkUploadModal from "./BulkUploadModal";
 import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
+import { toCsv, type CsvColumn } from "../../utils/csv";
 
 export type Contact = {
   id: string;
@@ -124,9 +125,15 @@ export default function ContactsClient({
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const [showAssignType, setShowAssignType] = useState(false);
   const [assigningRow, setAssigningRow] = useState<string | null>(null);
+  const [showAddTag, setShowAddTag] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [taggingBusy, setTaggingBusy] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const noteInitRef = useRef<string>("");
+  // Last-persisted note value. State (not a ref) so the "Save" button's
+  // dirty check can be read during render without touching a ref.
+  const [savedNote, setSavedNote] = useState("");
 
   // Restore saved page size on first mount. We just update the
   // dropdown state; the data on screen is whatever the server
@@ -137,7 +144,9 @@ export default function ContactsClient({
     try {
       const saved = localStorage.getItem("contacts.pageSize");
       if (saved && (ALLOWED_PAGE_SIZES as readonly number[]).includes(Number(saved))) {
-        setPageSize(Number(saved) as PageSize);
+        // Defer out of the effect body so we're not calling setState
+        // synchronously on mount (avoids cascading-render lint + churn).
+        queueMicrotask(() => setPageSize(Number(saved) as PageSize));
       }
     } catch {}
   }, []);
@@ -151,7 +160,7 @@ export default function ContactsClient({
     fetchSeq.current += 1;
     const seq = fetchSeq.current;
     fetch(`/api/contacts/list?page=1&pageSize=${next}`)
-      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((r) => r.ok ? r.json() : r.json().then((b: { error?: string }) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
       .then((data: { rows: Contact[]; total: number; pageSize: PageSize }) => {
         if (seq !== fetchSeq.current) return;
         setContacts(data.rows);
@@ -178,7 +187,7 @@ export default function ContactsClient({
     const seq = fetchSeq.current;
     const nextPage = page + 1;
     fetch(`/api/contacts/list?page=${nextPage}&pageSize=${pageSize}`)
-      .then((r) => r.ok ? r.json() : r.json().then((b: any) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
+      .then((r) => r.ok ? r.json() : r.json().then((b: { error?: string }) => Promise.reject(new Error(b?.error || `HTTP ${r.status}`))))
       .then((data: { rows: Contact[]; total: number; pageSize: PageSize }) => {
         if (seq !== fetchSeq.current) return;
         setContacts((prev) => [...prev, ...data.rows]);
@@ -205,14 +214,6 @@ export default function ContactsClient({
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  };
-
-  const toggleCheckAll = () => {
-    if (checkedIds.size === filtered.length) {
-      setCheckedIds(new Set());
-    } else {
-      setCheckedIds(new Set(filtered.map(c => c.id)));
-    }
   };
 
   const requestDelete = (ids: string[], label: string) => {
@@ -264,7 +265,7 @@ export default function ContactsClient({
 
   // Save notes via API
   const saveNote = async () => {
-    if (!selected || noteText === noteInitRef.current) return;
+    if (!selected || noteText === savedNote) return;
     setSavingNote(true);
     try {
       await fetch(`/api/contacts/${selected.id}`, {
@@ -272,7 +273,7 @@ export default function ContactsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: noteText }),
       });
-      noteInitRef.current = noteText;
+      setSavedNote(noteText);
     } finally {
       setSavingNote(false);
     }
@@ -281,44 +282,128 @@ export default function ContactsClient({
   // ── Filtering + Sorting ──────────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
-    let out = contacts;
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      out = out.filter((c) =>
-        [c.name, c.full_name, c.email, c.phone, c.buyer_type, c.state, c.preferred_state]
-          .some((v) => v?.toLowerCase().includes(q)) ||
-        (c.tags || []).some((t) => t.toLowerCase().includes(q))
-      );
-    }
-
-    if (filterTemp !== "all") {
-      out = filterTemp === "none"
-        ? out.filter((c) => !c.temperature)
-        : out.filter((c) => c.temperature === filterTemp);
-    }
-
-    if (filterStatus !== "all") out = out.filter((c) => c.status === filterStatus);
-    if (filterTag !== "all") {
-      out = filterTag === "__notags__"
-        ? out.filter((c) => !c.tags || c.tags.length === 0)
-        : out.filter((c) => Array.isArray(c.tags) && c.tags.includes(filterTag));
-    }
-    if (activeTypeKey !== "all") {
-      if (activeTypeKey === "__unassigned__") {
-        out = out.filter(c => !c.buyer_type);
-      } else {
-        out = out.filter(c => (c.buyer_type || "").toLowerCase() === activeTypeKey.toLowerCase());
+    const q = search.trim().toLowerCase();
+    const out = contacts.filter((c) => {
+      if (q) {
+        const hit =
+          [c.name, c.full_name, c.email, c.phone, c.buyer_type, c.state, c.preferred_state]
+            .some((v) => v?.toLowerCase().includes(q)) ||
+          (c.tags || []).some((t) => t.toLowerCase().includes(q));
+        if (!hit) return false;
       }
-    }
-
-    return [...out].sort((a, b) => {
+      if (filterTemp !== "all") {
+        if (filterTemp === "none") {
+          if (c.temperature) return false;
+        } else if (c.temperature !== filterTemp) return false;
+      }
+      if (filterStatus !== "all" && c.status !== filterStatus) return false;
+      if (filterTag !== "all") {
+        if (filterTag === "__notags__") {
+          if (c.tags && c.tags.length > 0) return false;
+        } else if (!(Array.isArray(c.tags) && c.tags.includes(filterTag))) return false;
+      }
+      if (activeTypeKey !== "all") {
+        if (activeTypeKey === "__unassigned__") {
+          if (c.buyer_type) return false;
+        } else if ((c.buyer_type || "").toLowerCase() !== activeTypeKey.toLowerCase()) {
+          return false;
+        }
+      }
+      return true;
+    });
+    return out.sort((a, b) => {
       if (sortBy === "score") return (b.lead_score ?? -1) - (a.lead_score ?? -1);
-      if (sortBy === "name") return displayName(a).localeCompare(displayName(b));
+      if (sortBy === "name") {
+        return (a.full_name || a.name || "Unknown").localeCompare(b.full_name || b.name || "Unknown");
+      }
       if (sortBy === "created") return (b.created_at || "").localeCompare(a.created_at || "");
       return (b.updated_at || "").localeCompare(a.updated_at || "");
     });
   }, [contacts, search, filterTemp, filterStatus, filterTag, activeTypeKey, sortBy]);
+
+  // Select-all toggles the currently-filtered set (respects the active
+  // search / tag / type filters). Declared after `filtered` so it never
+  // references the memo before its declaration.
+  const toggleCheckAll = () => {
+    if (checkedIds.size === filtered.length) {
+      setCheckedIds(new Set());
+    } else {
+      setCheckedIds(new Set(filtered.map((c) => c.id)));
+    }
+  };
+
+  // Rows targeted by a bulk action: the checked selection, or — when
+  // nothing is checked — the whole currently-filtered list.
+  const exportRows = checkedIds.size > 0 ? filtered.filter((c) => checkedIds.has(c.id)) : filtered;
+
+  // Client-side CSV export. Builds the CSV with the pure `toCsv` helper,
+  // then triggers a download via a Blob object URL — no server round-trip.
+  const exportCsv = () => {
+    const columns: CsvColumn<Contact>[] = [
+      { header: "Name", value: (c) => displayName(c) },
+      { header: "Email", value: (c) => c.email },
+      { header: "Phone", value: (c) => c.phone },
+      { header: "Type", value: (c) => c.buyer_type },
+      { header: "State", value: (c) => c.preferred_state || c.state },
+      { header: "Status", value: (c) => c.status },
+      { header: "Temperature", value: (c) => c.temperature },
+      { header: "Lead Score", value: (c) => c.lead_score },
+      { header: "Tags", value: (c) => (c.tags || []).join("; ") },
+    ];
+    // Prepend a UTF-8 BOM so Excel opens non-ASCII names correctly.
+    const csv = "\uFEFF" + toCsv(exportRows, columns);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Add a tag to every checked contact. Optimistic — the UI updates first,
+  // then each contact is PATCHed (reusing the existing /api/contacts/[id]
+  // tags update path); on any failure we roll back to the pre-change state.
+  const applyBulkTag = async () => {
+    const tag = tagInput.trim();
+    const ids = Array.from(checkedIds);
+    if (!tag || ids.length === 0) return;
+
+    setTaggingBusy(true);
+    setTagError(null);
+    const snapshot = contacts;
+
+    const nextContacts = contacts.map((c) =>
+      checkedIds.has(c.id) && !(c.tags || []).includes(tag)
+        ? { ...c, tags: [...(c.tags || []), tag] }
+        : c
+    );
+    setContacts(nextContacts);
+
+    try {
+      const targets = nextContacts.filter((c) => checkedIds.has(c.id));
+      const results = await Promise.all(
+        targets.map((c) =>
+          fetch(`/api/contacts/${c.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tags: c.tags }),
+          }).then((r) => r.ok).catch(() => false)
+        )
+      );
+      if (results.some((ok) => !ok)) throw new Error("Some contacts could not be updated");
+      setShowAddTag(false);
+      setTagInput("");
+      setCheckedIds(new Set());
+    } catch (e) {
+      setContacts(snapshot); // rollback
+      setTagError(e instanceof Error ? e.message : "Failed to add tag");
+    } finally {
+      setTaggingBusy(false);
+    }
+  };
 
   // Unique tag values across all contacts, with a count for each. Used to
   // populate the tag-filter dropdown — sorted by frequency so the heavy
@@ -477,6 +562,52 @@ export default function ContactsClient({
                       </div>
                     )}
                   </div>
+                  {/* Add tag to selected */}
+                  <div className="relative">
+                    <button
+                      onClick={() => { setShowAddTag(v => !v); setTagError(null); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                    >
+                      🏷️ Add Tag ▾
+                    </button>
+                    {showAddTag && (
+                      <div className="absolute top-full left-0 mt-1 w-60 bg-white border border-gray-200 rounded-xl shadow-xl z-50 p-3">
+                        <p className="text-xs font-semibold text-gray-500 mb-2">
+                          Tag {checkedIds.size} selected contact{checkedIds.size !== 1 ? "s" : ""}
+                        </p>
+                        <input
+                          autoFocus
+                          list="bulk-tag-options"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") applyBulkTag(); }}
+                          placeholder="Tag name…"
+                          className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <datalist id="bulk-tag-options">
+                          {tagOptions.map(([tag]) => (
+                            <option key={tag} value={tag} />
+                          ))}
+                        </datalist>
+                        {tagError && <p className="text-xs text-red-600 mt-1.5">{tagError}</p>}
+                        <div className="flex gap-2 mt-2.5">
+                          <button
+                            onClick={() => { setShowAddTag(false); setTagInput(""); setTagError(null); }}
+                            className="flex-1 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={applyBulkTag}
+                            disabled={!tagInput.trim() || taggingBusy}
+                            className="flex-1 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
+                          >
+                            {taggingBusy ? "Applying…" : "Apply"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => requestDelete(Array.from(checkedIds), `${checkedIds.size} contact${checkedIds.size !== 1 ? "s" : ""}`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
@@ -485,6 +616,14 @@ export default function ContactsClient({
                   </button>
                 </div>
               )}
+              <button
+                onClick={exportCsv}
+                disabled={exportRows.length === 0}
+                title={checkedIds.size > 0 ? `Export ${checkedIds.size} selected` : "Export the filtered list"}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
+              >
+                ⬇ Export CSV{checkedIds.size > 0 ? ` (${checkedIds.size})` : ""}
+              </button>
               <button
                 onClick={() => setShowBulkUpload(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -567,7 +706,7 @@ export default function ContactsClient({
             <select
               className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "updated" | "score" | "name" | "created")}
             >
               <option value="updated">Sort: Last updated</option>
               <option value="score">Sort: Lead score</option>
@@ -905,7 +1044,7 @@ export default function ContactsClient({
               <div className="px-6 py-4 border-b border-gray-50">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Notes</p>
-                  {noteText !== noteInitRef.current && (
+                  {noteText !== savedNote && (
                     <button
                       onClick={saveNote}
                       disabled={savingNote}
