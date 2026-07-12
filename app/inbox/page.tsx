@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { currentUserEmail } from "../../utils/cf-access";
+import { htmlToSnippet } from "../../utils/email-snippet";
 import InboxSidebar from "./InboxSidebar";
 import InboxTable, { type EmailRow, type Thread, type FolderOption } from "./InboxTable";
+import DraftsListClient, { type DraftListItem } from "./DraftsListClient";
 import SearchBar from "./SearchBar";
 
 export const dynamic = "force-dynamic";
@@ -85,17 +86,24 @@ export default async function InboxPage({
   }
 
   // Drafts come from a different table — render a different shape on that view.
-  // For v1 the drafts view shows a stub list; the rich compose UI ships in the
-  // next slice.
-  let drafts: Array<{ id: string; subject: string | null; updated_at: string }> = [];
+  // We pull recipients + body so each row can show a real preview, but derive a
+  // short plain-text snippet here (server-side) rather than shipping full HTML
+  // to the list.
+  let drafts: DraftListItem[] = [];
   if (view === "drafts") {
     const { data } = await supabase
       .from("email_drafts")
-      .select("id,subject,updated_at")
+      .select("id,subject,updated_at,to_addresses,body_html")
       .eq("owner_user_email", owner)
       .order("updated_at", { ascending: false })
       .limit(100);
-    drafts = data ?? [];
+    drafts = (data ?? []).map((d) => ({
+      id: d.id as string,
+      to: (d.to_addresses ?? []) as string[],
+      subject: d.subject as string | null,
+      snippet: htmlToSnippet(d.body_html as string | null),
+      updated_at: d.updated_at as string,
+    }));
   }
 
   let all: EmailRow[] = [];
@@ -180,7 +188,7 @@ export default async function InboxPage({
         )}
 
         {view === "drafts" ? (
-          <DraftsList drafts={drafts} />
+          <DraftsListClient drafts={drafts} />
         ) : threads.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-gray-500 text-sm">
             Nothing here yet.
@@ -189,39 +197,6 @@ export default async function InboxPage({
           <InboxTable threads={threads} contactNames={contactNames} folders={folderOptions} />
         )}
       </div>
-    </div>
-  );
-}
-
-function DraftsList({
-  drafts,
-}: {
-  drafts: Array<{ id: string; subject: string | null; updated_at: string }>;
-}) {
-  if (drafts.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-gray-500 text-sm">
-        No drafts.<br />
-        <span className="text-[11px] text-gray-400">
-          Auto-saved compose state appears here in the next slice.
-        </span>
-      </div>
-    );
-  }
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
-      {drafts.map((d) => (
-        <Link
-          key={d.id}
-          href={`/inbox/compose?draft=${d.id}`}
-          className="block p-3 hover:bg-gray-50 transition"
-        >
-          <p className="text-sm font-medium text-gray-900">{d.subject || "(no subject)"}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">
-            updated {new Date(d.updated_at).toLocaleString()}
-          </p>
-        </Link>
-      ))}
     </div>
   );
 }
