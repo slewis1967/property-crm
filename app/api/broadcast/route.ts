@@ -37,6 +37,7 @@ import {
   verifyReviewToken,
 } from "../../../utils/review-token";
 import { log, errInfo } from "../../../utils/logger";
+import { alertOps } from "../../../utils/alert";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,15 @@ export async function POST(req: Request) {
     .select("id")
     .single();
   if (seqErr || !seqRow) {
+    // Genuine failure: the operator hit "send" but nothing was written. This is
+    // the canonical "why didn't that broadcast go out" case — escalate.
+    await alertOps({
+      event: "broadcast.sequence_create_failed",
+      message: `Broadcast could not be queued — failed to create sequence`,
+      context: { operator, tag, error: seqErr?.message ?? "unknown error" },
+      severity: "critical",
+      discriminator: "broadcast",
+    });
     return NextResponse.json({
       ok: false,
       error: `failed to create sequence: ${seqErr?.message ?? "unknown error"}`,
@@ -214,6 +224,17 @@ export async function POST(req: Request) {
     await supabase.from("sequence_enrollments").delete().eq("sequence_id", sequenceId);
     await supabase.from("sequence_steps").delete().eq("sequence_id", sequenceId);
     await supabase.from("sequences").delete().eq("id", sequenceId);
+    // A torn-down broadcast is a genuine failed send (step/enrolment/activate
+    // write failed) — the operator's broadcast silently didn't go out.
+    if (status >= 500) {
+      await alertOps({
+        event: "broadcast.enrolment_failed",
+        message: `Broadcast could not be queued and was rolled back: ${reason}`,
+        context: { operator, tag, sequence_id: sequenceId, reason },
+        severity: "critical",
+        discriminator: "broadcast",
+      });
+    }
     return NextResponse.json({ ok: false, error: reason }, { status });
   }
 
