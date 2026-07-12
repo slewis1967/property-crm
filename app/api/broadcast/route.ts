@@ -38,6 +38,7 @@ import {
 } from "../../../utils/review-token";
 import { log, errInfo } from "../../../utils/logger";
 import { alertOps } from "../../../utils/alert";
+import { BROADCAST_SLUG_PREFIX } from "../../../utils/broadcast-history";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,9 @@ function genSlug(): string {
     `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
     `-${pad(d.getHours())}${pad(d.getMinutes())}`;
   const suffix = Math.random().toString(36).slice(2, 5);
-  return `broadcast-${stamp}-${suffix}`;
+  // The slug prefix is the marker the /broadcast history view keys off to
+  // distinguish broadcasts from ordinary drip sequences (no migration needed).
+  return `${BROADCAST_SLUG_PREFIX}${stamp}-${suffix}`;
 }
 
 // Retry the compliance call a few times before declaring outage. Anthropic

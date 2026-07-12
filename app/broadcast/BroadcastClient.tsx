@@ -103,6 +103,11 @@ export default function BroadcastClient({
       setResult(body as SendResult);
       setViolations(null);
       setReviewToken(null);
+      // Nudge the history section (sibling component) to refetch so the
+      // just-queued broadcast shows up as pending without a page reload.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("broadcast:sent"));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -144,8 +149,9 @@ export default function BroadcastClient({
             send: <strong>~{result.eta_minutes} min</strong>.
           </p>
           <p className="text-xs text-green-700 mt-3">
-            Live progress is on <a href="/sequences" className="underline">/sequences</a> (recent
-            step activity panel).
+            Watch it drain from pending to sent in <strong>Broadcast history</strong> below (hit
+            Refresh), or see live step activity on{" "}
+            <a href="/sequences" className="underline">/sequences</a>.
           </p>
         </div>
         <button
