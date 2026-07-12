@@ -32,7 +32,7 @@
  */
 import { NextResponse } from "next/server";
 import type OpenAI from "openai";
-import { openrouter, MODELS, orErrorMessage } from "../../../../utils/openrouter";
+import { getOpenRouter, MODELS, orErrorMessage } from "../../../../utils/openrouter";
 import { supabase } from "../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../utils/brevo";
 import { defaultSignature } from "../../../../utils/email-signature";
@@ -565,7 +565,7 @@ export async function POST(req: Request) {
     let finalText = "";
 
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-      const response = await openrouter.chat.completions.create({
+      const response = await getOpenRouter().chat.completions.create({
         model: MODEL,
         max_tokens: 1024,
         tools: TOOLS,

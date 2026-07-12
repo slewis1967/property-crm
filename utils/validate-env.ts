@@ -13,8 +13,16 @@ interface EnvVar {
 }
 
 const CRITICAL_VARS: EnvVar[] = [
-  // Core — app doesn't function without these
-  { name: "OPENROUTER_API_KEY", required: true, feature: "all AI features (voice, compliance, deal-analyser, document extraction) — via OpenRouter" },
+  // Core — app doesn't function without these.
+  //
+  // OPENROUTER_API_KEY is deliberately NOT required here (warn, don't throw).
+  // utils/openrouter.ts now degrades gracefully when it's missing (lazy client,
+  // AI calls fail at call-time with a clear 401 message rather than crashing).
+  // validateEnv() runs at startup via instrumentation.ts, so hard-throwing on a
+  // missing AI key would re-introduce the exact boot-crash that the lazy client
+  // removes. The non-AI CRM (properties, contacts, opportunities) must still
+  // boot and serve with the AI key absent — so this is a loud warning only.
+  { name: "OPENROUTER_API_KEY", required: false, feature: "all AI features (voice, compliance, deal-analyser, document extraction) — via OpenRouter; degrades gracefully if unset" },
   { name: "NEXT_PUBLIC_SUPABASE_URL", required: true, feature: "property/contact data" },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", required: true, feature: "Supabase client" },
   { name: "SUPABASE_SERVICE_KEY", required: true, feature: "server-side Supabase (bypasses RLS)" },

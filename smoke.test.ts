@@ -38,6 +38,40 @@ describe("validate-env", () => {
     }
   });
 
+  it("does NOT throw on a missing OpenRouter key (degrades gracefully)", async () => {
+    // Reconciliation with the lazy-OpenRouter fix: validateEnv() runs at startup
+    // via instrumentation.ts, so hard-throwing on a missing AI key would
+    // re-introduce the boot crash the lazy client removes. All truly-required
+    // (Supabase / CF Access) vars present, AI key absent → warn, don't throw.
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
+    process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
+    process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
+    process.env.CF_ACCESS_AUD = "test-aud-tag";
+    const savedAi = process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
+
+    const { validateEnv } = await import("./utils/validate-env");
+    expect(() => validateEnv()).not.toThrow();
+
+    if (savedAi) process.env.OPENROUTER_API_KEY = savedAi;
+  });
+
+  it("DOES throw when a genuinely-required Supabase var is missing", async () => {
+    process.env.OPENROUTER_API_KEY = "test-key";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
+    process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
+    process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
+    process.env.CF_ACCESS_AUD = "test-aud-tag";
+    const savedUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    const { validateEnv } = await import("./utils/validate-env");
+    expect(() => validateEnv()).toThrow("MISSING REQUIRED");
+
+    if (savedUrl) process.env.NEXT_PUBLIC_SUPABASE_URL = savedUrl;
+  });
+
   it("warns on missing optional vars but does not throw", async () => {
     // Should warn about optional vars when critical ones are present
     process.env.OPENROUTER_API_KEY = "test-key";

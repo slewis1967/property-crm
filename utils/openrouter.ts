@@ -17,16 +17,55 @@
  */
 import OpenAI from "openai";
 
-export const openrouter = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-  // OpenRouter uses these for attribution / its app-ranking dashboard. Harmless
-  // if the site URL isn't set — falls back to the production CRM origin.
-  defaultHeaders: {
-    "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://crm.nextkey.com.au",
-    "X-Title": "NextKey Property CRM",
-  },
-});
+/**
+ * Lazily-constructed OpenRouter client.
+ *
+ * IMPORTANT: do NOT construct the OpenAI client at module load.
+ *
+ * The `openai` SDK constructor THROWS ("The OPENAI_API_KEY environment variable
+ * is missing or empty…") when no apiKey is supplied. This module is imported —
+ * directly or transitively — by ~two dozen server modules including the
+ * app/settings server page and every /api/ai/* route, so an eager singleton
+ * meant a single missing/rotated OPENROUTER_API_KEY (Netlify env in prod) threw
+ * at IMPORT time, failing the build's page-data collection and 500-ing routes
+ * before any handler ran. A total outage from one absent key.
+ *
+ * Instead we mirror utils/supabase.ts: log loudly if the key is absent and build
+ * a non-throwing client with a placeholder key. Construction is deferred to the
+ * first `getOpenRouter()` call and memoised. When the key is missing the request
+ * still goes out and OpenRouter returns 401, which orErrorMessage() maps to a
+ * clear "OPENROUTER_API_KEY is missing or invalid" — so the failure surfaces at
+ * call-time as a handled error, not a boot crash.
+ */
+let _openrouter: OpenAI | null = null;
+
+export function getOpenRouter(): OpenAI {
+  if (_openrouter) return _openrouter;
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    console.error(
+      "[openrouter] OPENROUTER_API_KEY is not set — AI features (voice, compliance, " +
+        "deal-analyser, document extraction) will fail at call-time with a 401. " +
+        "Set it in .env.local (dev) or the Netlify dashboard (prod). " +
+        "Serving in degraded mode rather than crashing every route.",
+    );
+  }
+
+  _openrouter = new OpenAI({
+    // Placeholder keeps the constructor from throwing when the key is unset;
+    // a bogus token yields a 401 at request time (mapped by orErrorMessage).
+    apiKey: apiKey || "unconfigured",
+    baseURL: "https://openrouter.ai/api/v1",
+    // OpenRouter uses these for attribution / its app-ranking dashboard. Harmless
+    // if the site URL isn't set — falls back to the production CRM origin.
+    defaultHeaders: {
+      "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://crm.nextkey.com.au",
+      "X-Title": "NextKey Property CRM",
+    },
+  });
+  return _openrouter;
+}
 
 export const MODELS = {
   /** Higher-quality model for advisor-facing text + document extraction. */
@@ -83,7 +122,7 @@ export async function orChat(
   body: Record<string, unknown>,
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return openrouter.chat.completions.create(body as any) as Promise<
+  return getOpenRouter().chat.completions.create(body as any) as Promise<
     OpenAI.Chat.Completions.ChatCompletion
   >;
 }
