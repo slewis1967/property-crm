@@ -97,6 +97,7 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
   const [data, setData] = useState<CreditAuthorisationData>(emptyCreditAuthorisation());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   // Dirtiness is derived from a monotonic edit counter vs. the counter captured
   // at the last successful save — survives autosave (an edit mid-save keeps the
   // doc dirty rather than being wrongly cleared by the completing save).
@@ -183,6 +184,40 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
   // reopened. Single source of truth: CREDIT_AUTHORISATION_TERMINAL_STATUS.
   const locked = data.status === CREDIT_AUTHORISATION_TERMINAL_STATUS;
 
+  /**
+   * Download the server-rendered PDF (headless Chromium reusing the print
+   * document). Distinct from "Print to sign" (window.print): this yields an
+   * attachable file. Saves first so the PDF reflects the latest edits — the
+   * server reads the persisted blob, not the in-memory form state.
+   */
+  const downloadPdf = useCallback(async () => {
+    setDownloading(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const res = await fetch(`/api/credit-authorisations/${id}/pdf`);
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(json?.error || "PDF download failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `credit-authorisation-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PDF download failed");
+    } finally {
+      setDownloading(false);
+    }
+    // `dirty` / `locked` are read fresh at call time; `doSave` is stable enough
+    // for this manual action.
+  }, [id, dirty, locked, doSave]);
+
   const {
     state: saveState,
     lastSavedAt,
@@ -257,6 +292,14 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
           style={{ borderColor: TEAL, color: TEAL }}
         >
           Print to sign
+        </button>
+        <button
+          onClick={() => void downloadPdf()}
+          disabled={downloading}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+        >
+          {downloading ? "Preparing…" : "Download PDF"}
         </button>
         <button
           onClick={() => saveNow()}
