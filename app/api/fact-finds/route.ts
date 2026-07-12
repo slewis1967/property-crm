@@ -1,7 +1,4 @@
-import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
-import { requireAuth } from "../../../utils/cf-access";
-import { log, errInfo } from "../../../utils/logger";
 import {
   applicantSummary,
   emptyFactFind,
@@ -13,7 +10,7 @@ import {
   type FactFindContact,
   type FactFindData,
 } from "../../../utils/factfind";
-import { recordAudit } from "../../../utils/compliance-audit";
+import { makeListHandler, makeCreateHandler, type CreateRow } from "../../../utils/compliance-doc-route";
 
 export const dynamic = "force-dynamic";
 
@@ -25,25 +22,14 @@ const LIST_COLUMNS =
   "id,applicant_name,status,contact_id,loan_amount,referred_by,created_by,created_at,updated_at";
 
 /** GET — list fact finds (newest first). Omits the `data` blob. */
-export async function GET(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
-  try {
-    const { data, error } = await supabase
-      .from("borrower_fact_finds")
-      .select(LIST_COLUMNS)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) {
-      if (factFindsTableMissing(error)) return NextResponse.json({ ok: true, factFinds: [] });
-      throw error;
-    }
-    return NextResponse.json({ ok: true, factFinds: data ?? [] });
-  } catch (e) {
-    log.error("fact_finds.list_failed", { detail: factFindErrMessage(e, ""), ...errInfo(e) });
-    return NextResponse.json({ ok: false, error: factFindErrMessage(e, "List failed") }, { status: 500 });
-  }
-}
+export const GET = makeListHandler({
+  table: "borrower_fact_finds",
+  logPrefix: "fact_finds",
+  errMessage: factFindErrMessage,
+  tableMissing: factFindsTableMissing,
+  listColumns: LIST_COLUMNS,
+  listKey: "factFinds",
+});
 
 /** Columns mapped onto the applicant. Explicit select — never `*` (borrower PII). */
 const CONTACT_PREFILL_COLUMNS =
@@ -75,11 +61,14 @@ async function prefillFromContact(contactId: string): Promise<FactFindData> {
  * form to open and fill in. When `contactId` is provided (and no explicit
  * `data` blob is sent), the first applicant is prefilled from that contact.
  */
-export async function POST(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
-  try {
-    const b = await req.json().catch(() => ({} as Record<string, unknown>));
+export const POST = makeCreateHandler({
+  table: "borrower_fact_finds",
+  docType: "fact_find",
+  logPrefix: "fact_finds",
+  migrationHint: MIGRATION_HINT,
+  errMessage: factFindErrMessage,
+  tableMissing: factFindsTableMissing,
+  buildCreateRow: async (b, auth): Promise<CreateRow> => {
     const str = (v: unknown) => (typeof v === "string" && v ? v : null);
 
     const contactId = str(b.contactId);
@@ -105,22 +94,6 @@ export async function POST(req: Request) {
       created_by: auth,
     };
 
-    const { data: inserted, error } = await supabase.from("borrower_fact_finds").insert(row).select("id").single();
-    if (error) {
-      if (factFindsTableMissing(error)) return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 501 });
-      throw error;
-    }
-    await recordAudit({
-      docType: "fact_find",
-      docId: inserted.id,
-      action: "create",
-      changedBy: auth,
-      statusAfter: status,
-      snapshot: data,
-    });
-    return NextResponse.json({ ok: true, id: inserted.id });
-  } catch (e) {
-    log.error("fact_finds.create_failed", { detail: factFindErrMessage(e, ""), ...errInfo(e) });
-    return NextResponse.json({ ok: false, error: factFindErrMessage(e, "Create failed") }, { status: 500 });
-  }
-}
+    return { row, status, snapshot: data };
+  },
+});
