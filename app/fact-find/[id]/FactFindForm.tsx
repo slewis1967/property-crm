@@ -21,6 +21,7 @@ import {
   DISCLOSURE_QUESTIONS,
   ENTITY_TYPES,
   FACT_FIND_STATUSES,
+  FACT_FIND_TERMINAL_STATUS,
   LIABILITY_KINDS,
   OWNERSHIP_STATUSES,
   PROPERTY_USES,
@@ -37,6 +38,7 @@ import {
   type LiabilityKind,
 } from "../../../utils/factfind";
 import CapacityPanel from "./CapacityPanel";
+import { LockedBanner, HistoryPanel } from "../../components/ComplianceDocAudit";
 
 const TEAL = "#0F4C5C";
 
@@ -323,6 +325,9 @@ export default function FactFindForm({ id }: { id: string }) {
 
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading fact find…</p>;
 
+  // "Locked" is derived from status — the signed/complete document is read-only
+  // until reopened. Single source of truth: FACT_FIND_TERMINAL_STATUS.
+  const locked = status === FACT_FIND_TERMINAL_STATUS;
   const totals = computeTotals(data);
   const missing = outstandingSections(data);
   const money = formatMoney;
@@ -404,7 +409,7 @@ export default function FactFindForm({ id }: { id: string }) {
         </button>
         <button
           onClick={() => void save()}
-          disabled={saving || !dirty}
+          disabled={saving || !dirty || locked}
           className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
           style={{ backgroundColor: TEAL }}
         >
@@ -417,6 +422,9 @@ export default function FactFindForm({ id }: { id: string }) {
           {error}
         </div>
       )}
+
+      {locked && <LockedBanner onReopen={() => void save(FACT_FIND_STATUSES[0])} busy={saving} />}
+      <HistoryPanel apiBase="/api/fact-finds" id={id} />
 
       {seedResult && (
         <div className="no-print mx-4 mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
@@ -456,7 +464,10 @@ export default function FactFindForm({ id }: { id: string }) {
         </div>
       )}
 
-      <div id="factfind-document" className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
+      {/* When locked (signed/complete) every input inside is disabled — the
+          document is read-only until reopened. min-w-0 keeps the fieldset from
+          forcing its intrinsic min-width and overflowing on small screens. */}
+      <fieldset id="factfind-document" disabled={locked} className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5 min-w-0 border-0">
         {/* Letterhead */}
         <header className="text-center pb-2">
           <h1 className="text-xl font-bold tracking-wide" style={{ color: TEAL }}>
@@ -1226,7 +1237,7 @@ export default function FactFindForm({ id }: { id: string }) {
             </ul>
           </div>
         )}
-      </div>
+      </fieldset>
     </div>
   );
 }

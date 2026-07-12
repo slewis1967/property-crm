@@ -28,6 +28,7 @@ import {
   LIVING_EXPENSE_LABELS,
   MARITAL_STATUSES,
   NEEDS_ANALYSIS_STATUSES,
+  NEEDS_ANALYSIS_TERMINAL_STATUS,
   OWNER_OPTIONS,
   PAY_FREQUENCIES,
   PREFERRED_CONTACT_OPTIONS,
@@ -42,6 +43,7 @@ import {
   type NeedsAnalysisData,
 } from "../../../utils/needsAnalysis";
 import NeedsAnalysisPrintDocument from "./NeedsAnalysisPrintDocument";
+import { LockedBanner, HistoryPanel } from "../../components/ComplianceDocAudit";
 
 const TEAL = "#0F4C5C";
 
@@ -658,6 +660,9 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
 
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading needs analysis…</p>;
 
+  // "Locked" is derived from status — a Complete document is read-only until
+  // reopened. Single source of truth: NEEDS_ANALYSIS_TERMINAL_STATUS.
+  const locked = status === NEEDS_ANALYSIS_TERMINAL_STATUS;
   const totals = computeNeedsAnalysisTotals(data);
   const missing = outstandingSections(data);
   const money = formatMoney;
@@ -695,7 +700,7 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
         </button>
         <button
           onClick={() => void save()}
-          disabled={saving || !dirty}
+          disabled={saving || !dirty || locked}
           className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60 transition"
           style={{ backgroundColor: TEAL }}
         >
@@ -709,7 +714,13 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
         </div>
       )}
 
-      <div id="needs-document" className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
+      {locked && <LockedBanner onReopen={() => void save(NEEDS_ANALYSIS_STATUSES[0])} busy={saving} />}
+      <HistoryPanel apiBase="/api/needs-analyses" id={id} />
+
+      {/* When locked (Complete) every input inside is disabled — the document is
+          read-only until reopened. min-w-0 keeps the fieldset from forcing its
+          intrinsic min-width and overflowing on small screens. */}
+      <fieldset id="needs-document" disabled={locked} className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5 min-w-0 border-0">
         {/* Letterhead */}
         <header className="text-center pb-2">
           <h1 className="text-xl font-bold tracking-wide" style={{ color: TEAL }}>
@@ -1110,7 +1121,7 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
             </ul>
           </div>
         )}
-      </div>
+      </fieldset>
       </div>
 
       {/*

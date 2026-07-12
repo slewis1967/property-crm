@@ -23,6 +23,13 @@ import { errMessage } from "./errors";
 export const CREDIT_AUTHORISATION_STATUSES = ["draft", "signed"] as const;
 export type CreditAuthorisationStatus = (typeof CREDIT_AUTHORISATION_STATUSES)[number];
 
+/**
+ * The terminal status. Reaching it means the document is signed and becomes
+ * read-only (see utils/compliance-audit.ts). Kept here so both the client form
+ * and the server lock logic derive "locked" from one constant.
+ */
+export const CREDIT_AUTHORISATION_TERMINAL_STATUS: CreditAuthorisationStatus = "signed";
+
 /* ── The fixed legal text (VERBATIM — do not edit) ───────────────────────── */
 
 /**

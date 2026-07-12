@@ -26,6 +26,13 @@ import { errMessage } from "./errors";
 export const NEEDS_ANALYSIS_STATUSES = ["Draft", "In review", "Complete"] as const;
 export type NeedsAnalysisStatus = (typeof NEEDS_ANALYSIS_STATUSES)[number];
 
+/**
+ * The terminal status. Reaching it means the document is signed/complete and
+ * becomes read-only (see utils/compliance-audit.ts). Kept here so both the
+ * client form and the server lock logic derive "locked" from one constant.
+ */
+export const NEEDS_ANALYSIS_TERMINAL_STATUS: NeedsAnalysisStatus = "Complete";
+
 /** Interview channel (page 1 header). */
 export const INTERVIEW_TYPES = [
   { key: "face_to_face", label: "Face to face" },
