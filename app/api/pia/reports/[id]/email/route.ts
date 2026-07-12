@@ -7,10 +7,15 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../../../utils/brevo";
+import { outboundEmailLogRow } from "../../../../../../utils/email-log";
 import { defaultSignature } from "../../../../../../utils/email-signature";
+import { resolveSender } from "../../../../../../utils/mail-owner";
 
 import { requireAuth, userEmailFromRequest } from "../../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
+
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+const SENDER_NAME = process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
 
 export async function POST(
   req: Request,
@@ -55,6 +60,46 @@ export async function POST(
     return NextResponse.json({ ok: false, error: result.error }, { status: 502 });
   }
 
+  // Log an outbound email_log row so a reply to this report threads and shows
+  // in the CRM inbox. The inbound feeder (NEXUS elvis_email_inbound.py) matches
+  // a reply's In-Reply-To against email_log.message_id, so we stamp Brevo's
+  // messageId (which IS the RFC822 Message-ID) here. Additive + fail-open: the
+  // email already went out, so a logging failure must never turn a successful
+  // send into an error — we warn and carry on. Reuse the report's contact/
+  // opportunity linkage so the row lands on the right contact history.
+  let logWarning: string | null = null;
+  if (!result.messageId) {
+    logWarning = "Brevo returned no messageId; reply-threading disabled for this send";
+    console.warn(`[pia/email] ${logWarning} (report ${id})`);
+  }
+  try {
+    const ownerEmail = await resolveSender(sender);
+    const { error: logErr } = await supabase.from("email_log").insert(
+      outboundEmailLogRow(
+        {
+          to,
+          subject,
+          html,
+          fromEmail: SENDER_EMAIL,
+          fromName: SENDER_NAME,
+          sentBy: sender,
+          ownerUserEmail: ownerEmail,
+          contactId: report.contact_id ?? null,
+          opportunityId: report.opportunity_id ?? null,
+          tags: ["pia-report"],
+        },
+        result,
+      ),
+    );
+    if (logErr) {
+      logWarning = `email_log insert failed: ${logErr.message}`;
+      console.error(`[pia/email] ${logWarning} (report ${id})`);
+    }
+  } catch (e) {
+    logWarning = `email_log insert threw: ${e instanceof Error ? e.message : String(e)}`;
+    console.error(`[pia/email] ${logWarning} (report ${id})`);
+  }
+
   // Audit
   await supabase
     .from("pia_reports")
@@ -65,7 +110,7 @@ export async function POST(
     })
     .eq("id", id);
 
-  return NextResponse.json({ ok: true, messageId: result.messageId });
+  return NextResponse.json({ ok: true, messageId: result.messageId, logWarning });
 }
 
 function fmtAud(n: number | null | undefined): string {
@@ -129,8 +174,18 @@ function renderComparisonEmailHtml(
   message: string | undefined,
   signatureHtml = "",
 ): string {
-  const cmp = ((report.results ?? {}) as any).comparison ?? {};
-  const props: any[] = cmp.properties ?? [];
+  type CmpProperty = {
+    address?: string; suburb?: string; score?: number | string;
+    irr?: number | string | null; netYield?: number | string | null;
+  };
+  type CmpRecommendation = {
+    address?: string; suburb?: string; score?: number | string; why?: string[];
+  };
+  const cmp =
+    ((report.results ?? {}) as {
+      comparison?: { properties?: CmpProperty[]; recommendation?: CmpRecommendation };
+    }).comparison ?? {};
+  const props: CmpProperty[] = cmp.properties ?? [];
   const rec = cmp.recommendation;
   const rows = props
     .map(
