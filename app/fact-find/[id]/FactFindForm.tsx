@@ -222,6 +222,7 @@ export default function FactFindForm({ id }: { id: string }) {
   const [contactId, setContactId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   // Dirtiness is derived from a monotonic edit counter vs. the counter captured
   // at the last successful save. This survives autosave: an edit that lands mid-
   // save bumps `rev` past `savedRev`, so the doc stays dirty and is saved again
@@ -311,6 +312,40 @@ export default function FactFindForm({ id }: { id: string }) {
   // "Locked" is derived from status — the signed/complete document is read-only
   // until reopened. Single source of truth: FACT_FIND_TERMINAL_STATUS.
   const locked = status === FACT_FIND_TERMINAL_STATUS;
+
+  /**
+   * Download the server-rendered PDF (headless Chromium reusing the print
+   * document). Distinct from "Export PDF" (window.print): this yields an
+   * attachable file. Saves first so the PDF reflects the latest edits — the
+   * server reads the persisted blob, not the in-memory form state.
+   */
+  const downloadPdf = useCallback(async () => {
+    setDownloading(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const res = await fetch(`/api/fact-finds/${id}/pdf`);
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(json?.error || "PDF download failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fact-find-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PDF download failed");
+    } finally {
+      setDownloading(false);
+    }
+    // `dirty` / `locked` are read fresh at call time; `doSave` is stable enough
+    // for this manual action.
+  }, [id, dirty, locked, doSave]);
 
   const {
     state: saveState,
@@ -428,6 +463,14 @@ export default function FactFindForm({ id }: { id: string }) {
           style={{ borderColor: TEAL, color: TEAL }}
         >
           Export PDF
+        </button>
+        <button
+          onClick={() => void downloadPdf()}
+          disabled={downloading}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+        >
+          {downloading ? "Preparing…" : "Download PDF"}
         </button>
         <button
           onClick={() => saveNow()}
