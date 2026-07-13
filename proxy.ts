@@ -152,6 +152,23 @@ const PUBLIC_PATHS = new Set<string>([
   // room dashboard requires Sean to be authenticated.
 ]);
 
+// Public e-signature routes. External signers reach these WITHOUT a
+// Cloudflare Access identity, so they must be exempt from the CF Access
+// gate. Prefix-matched (dynamic `<token>` segment) rather than added to the
+// exact-match PUBLIC_PATHS set. The token itself is the unguessable bearer
+// credential; each handler still validates it. The CSRF origin check above
+// still applies to the mutating `/api/sign/` POSTs (they're same-origin).
+export function isPublicSignRoute(pathname: string): boolean {
+  // Public signer page: `/sign/<token>` (and a bare `/sign`).
+  if (pathname === "/sign" || pathname.startsWith("/sign/")) return true;
+  // Public token APIs — but NOT the authed advisor routes under
+  // `/api/sign/requests` (those keep the gate for defence-in-depth).
+  if (pathname.startsWith("/api/sign/") && !pathname.startsWith("/api/sign/requests")) {
+    return true;
+  }
+  return false;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -212,7 +229,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (PUBLIC_PATHS.has(pathname) || isPublicSignRoute(pathname)) {
     return NextResponse.next();
   }
 
