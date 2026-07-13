@@ -40,8 +40,11 @@ export type BrevoSendOptions = {
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
   const apiKey = process.env.BREVO_API_KEY;
   // A per-send identity override wins over the env default. Falls back to the
-  // historical NextKey env sender when not supplied (existing callers unchanged).
-  const senderEmail = opts.fromEmail ?? process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+  // NextKey env sender when not supplied. The hardcoded fallback is a
+  // Brevo-validated address so mail delivers even if BREVO_SENDER_EMAIL is unset.
+  // NOTE: hello@nextkey.com.au is not yet a validated Brevo sender — revert this
+  // default to hello@nextkey.com.au once it's validated/domain-authenticated.
+  const senderEmail = opts.fromEmail ?? process.env.BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au";
   const senderName = opts.fromName ?? process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
 
   if (!apiKey) {
