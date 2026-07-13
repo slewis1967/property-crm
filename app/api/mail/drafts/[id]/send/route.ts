@@ -16,13 +16,11 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { sendBrevoEmail } from "../../../../../../utils/brevo";
 import { resolveSender } from "../../../../../../utils/mail-owner";
+import { resolveIdentity } from "../../../../../../utils/mailIdentities";
 import { userEmailFromRequest } from "../../../../../../utils/cf-access";
 import { alertOps } from "../../../../../../utils/alert";
 
 export const dynamic = "force-dynamic";
-
-const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
-const SENDER_NAME  = process.env.BREVO_SENDER_NAME  ?? "NextKey Property Strategists";
 
 export async function POST(
   req: Request,
@@ -62,6 +60,13 @@ export async function POST(
   // try to detect + retrofit.
   const finalHtml = draft.body_html;
   const ownerEmail = await resolveSender(owner);
+
+  // Resolve the draft's chosen sending identity → from envelope. Absent/unknown
+  // (e.g. drafts created before the from_identity column) falls back to nextkey,
+  // preserving the historical behaviour.
+  const identity = resolveIdentity(draft.from_identity);
+  const senderEmail = identity.fromEmail;
+  const senderName = identity.fromName;
 
   // Resolve attachments + sign download URLs once. Brevo fetches each URL
   // during send; the signed URL lifespan only needs to cover the seconds
@@ -108,8 +113,8 @@ export async function POST(
       .insert({
         direction: "outbound",
         to_email: to,
-        from_email: SENDER_EMAIL,
-        from_name: SENDER_NAME,
+        from_email: senderEmail,
+        from_name: senderName,
         cc: ccs,
         bcc: bccs,
         subject: draft.subject,
@@ -138,6 +143,8 @@ export async function POST(
       tags: ["crm-outbound", "draft-send"],
       headers: replyHeaders,
       attachments: brevoAttachments.length > 0 ? brevoAttachments : undefined,
+      fromEmail: senderEmail,
+      fromName: senderName,
     });
 
     const updatePatch = result.ok

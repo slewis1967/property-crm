@@ -11,6 +11,7 @@
  */
 
 import { supabase } from "./supabase";
+import type { MailIdentityKey } from "./mailIdentities";
 
 export type SignatureFields = {
   name: string;
@@ -151,6 +152,44 @@ export function renderSignature(f: SignatureFields): SignatureBlock {
 export async function defaultSignature(userEmail?: string): Promise<SignatureBlock> {
   const fields = await getSignatureFields(userEmail);
   return renderSignature(fields);
+}
+
+/**
+ * Build the Springboard-brand signature fields for a user.
+ *
+ * We keep the sender's personal name + phone (so the recipient still sees who
+ * wrote it) but swap the brand identity to Springboard Homes.
+ *
+ * COMPLIANCE: this is a plain brand signature only. It deliberately carries NO
+ * finance/credit-licensing claims, credit-licence numbers, or guarantees —
+ * Springboard finance messaging is licensing-sensitive and a signature must
+ * not assert regulated claims. `disclaimer` is intentionally left empty.
+ */
+export async function springboardSignatureFields(userEmail?: string): Promise<SignatureFields> {
+  const base = await getSignatureFields(userEmail);
+  return {
+    name: base.name,
+    title: "Springboard Homes",
+    email: process.env.SPRINGBOARD_SENDER_EMAIL ?? "hello@springboardhomes.com.au",
+    phone: base.phone,
+    web: "springboardhomes.com.au",
+    disclaimer: "",
+  };
+}
+
+/**
+ * Resolve + render the signature for a given sending identity.
+ *   - `nextkey`     → the user's existing NextKey signature (unchanged).
+ *   - `springboard` → the plain Springboard brand signature.
+ */
+export async function signatureForIdentity(
+  identity: MailIdentityKey,
+  userEmail?: string,
+): Promise<SignatureBlock> {
+  if (identity === "springboard") {
+    return renderSignature(await springboardSignatureFields(userEmail));
+  }
+  return defaultSignature(userEmail);
 }
 
 function escapeHtml(s: string): string {
