@@ -1,17 +1,17 @@
 /**
- * GET /api/sign/requests/[id]/download — AUTHED advisor download of a signer's
+ * GET /api/signature-requests/[id]/download — AUTHED advisor download of a signer's
  * stored signed PDF (behind Cloudflare Access). Streams the PDF from the private
  * `signed-documents` bucket. 404 when the request isn't signed / has no PDF.
  */
 
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../../utils/supabase";
-import { requireAuth } from "../../../../../../utils/cf-access";
-import { log } from "../../../../../../utils/logger";
+import { supabase } from "../../../../../utils/supabase";
+import { requireAuth } from "../../../../../utils/cf-access";
+import { log } from "../../../../../utils/logger";
 import {
   SIGNATURE_REQUESTS_TABLE,
   signatureTableMissing,
-} from "../../../../../../utils/signature-requests-db";
+} from "../../../../../utils/signature-requests-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

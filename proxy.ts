@@ -161,8 +161,12 @@ const PUBLIC_PATHS = new Set<string>([
 export function isPublicSignRoute(pathname: string): boolean {
   // Public signer page: `/sign/<token>` (and a bare `/sign`).
   if (pathname === "/sign" || pathname.startsWith("/sign/")) return true;
-  // Public token APIs — but NOT the authed advisor routes under
-  // `/api/sign/requests` (those keep the gate for defence-in-depth).
+  // Public token APIs `/api/sign/<token>/*`. The authed advisor routes now live
+  // at `/api/signature-requests` (moved out from under this prefix so the CF
+  // Access bypass on `/api/sign/*` no longer strips their auth header), so they
+  // are already excluded here — `/api/signature-requests` does not start with
+  // `/api/sign/`. The `/api/sign/requests` guard below is a now-moot belt-and-
+  // suspenders check kept in case that legacy path is ever reintroduced.
   if (pathname.startsWith("/api/sign/") && !pathname.startsWith("/api/sign/requests")) {
     return true;
   }

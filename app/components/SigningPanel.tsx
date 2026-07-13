@@ -7,7 +7,7 @@
  * "Download signed PDF" link once a signer has completed.
  *
  * Screen-only (`no-print`). Reuses the teal form chrome. Talks to the authed
- * /api/sign/requests endpoints; the actual signing happens on the public
+ * /api/signature-requests endpoints; the actual signing happens on the public
  * /sign/[token] page the signer is emailed.
  */
 
@@ -62,7 +62,7 @@ export default function SigningPanel({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/sign/requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
+      const res = await fetch(`/api/signature-requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "Could not load signing status");
       setRows((json.requests ?? []) as RequestRow[]);
@@ -77,7 +77,7 @@ export default function SigningPanel({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/sign/requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
+        const res = await fetch(`/api/signature-requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
         const json = await res.json();
         if (cancelled) return;
         if (json.ok) setRows((json.requests ?? []) as RequestRow[]);
@@ -130,7 +130,7 @@ export default function SigningPanel({
                   <div className="flex items-center gap-3 shrink-0">
                     {r.status === "signed" && r.signed_pdf_path && (
                       <a
-                        href={`/api/sign/requests/${r.id}/download`}
+                        href={`/api/signature-requests/${r.id}/download`}
                         className="text-xs font-semibold hover:underline"
                         style={{ color: TEAL }}
                       >
@@ -200,7 +200,7 @@ function SendModal({
     setSending(true);
     setError("");
     try {
-      const res = await fetch("/api/sign/requests", {
+      const res = await fetch("/api/signature-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ doc_type: docType, doc_id: docId, signers: cleaned, message: message.trim() || undefined }),
