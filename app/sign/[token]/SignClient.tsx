@@ -258,14 +258,34 @@ export default function SignClient({ token }: { token: string }) {
             <p className="text-gray-600 mt-1">{`Please review your ${docLabel} below, then add your signature.`}</p>
           </div>
 
-          {/* Document preview */}
+          {/* Document preview — inline PDF viewer with an always-available fallback.
+             The endpoint returns application/pdf, so an <object>/<iframe> renders it
+             inline. Inline PDF rendering is unreliable on some mobile browsers, so the
+             link beneath always lets the signer open/download the full document. */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Document preview</p>
-            <iframe
-              title="Document preview"
-              src={`/api/sign/${encodeURIComponent(token)}/preview`}
-              className="w-full h-[420px] border border-gray-200 rounded-lg bg-white"
-            />
+            <object
+              data={`/api/sign/${encodeURIComponent(token)}/preview`}
+              type="application/pdf"
+              aria-label={`Preview of your ${docLabel}`}
+              className="w-full h-[70vh] min-h-[480px] border border-gray-200 rounded-lg bg-white"
+            >
+              <div className="flex flex-col items-center justify-center h-full min-h-[480px] p-6 text-center">
+                <p className="text-sm text-gray-600">
+                  Your browser can&apos;t display the document inline. Use the link below to open it.
+                </p>
+              </div>
+            </object>
+            <a
+              href={`/api/sign/${encodeURIComponent(token)}/preview`}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-1 mt-2 text-sm font-semibold hover:underline"
+              style={{ color: TEAL }}
+            >
+              Open / download the document
+              <span aria-hidden="true">↗</span>
+            </a>
           </div>
 
           {/* Signature pad */}
