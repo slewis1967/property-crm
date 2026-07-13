@@ -22,6 +22,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CapacityInputs } from "../../../utils/finance";
+import type { FactFindData } from "../../../utils/factfind";
+import { factFindToNeedsAnalysis } from "../../../utils/factFindToNeedsAnalysis";
+import type { NeedsAnalysisData } from "../../../utils/needsAnalysis";
 
 type DocRow = {
   id: string;
@@ -65,6 +68,31 @@ async function loadLatestBorrowingInputs(
     return borrowing && borrowing.inputs && typeof borrowing.inputs === "object"
       ? (borrowing.inputs as CapacityInputs)
       : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The Needs-Analysis `data` blob derived from the contact's most-recent Fact
+ * Find, or null. The list omits the `data` blob, so this lists the fact finds,
+ * picks the newest for the contact, fetches its full row, and runs the pure
+ * factFindToNeedsAnalysis bridge — carrying the borrower's personal details AND
+ * financial position (assets/liabilities/income/expenses) across. Best-effort:
+ * any failure returns null so a needs-analysis create still proceeds with
+ * contact-only prefill rather than being blocked by a fact-find lookup.
+ */
+async function loadNeedsDataFromFactFind(contactId: string): Promise<NeedsAnalysisData | null> {
+  try {
+    const listRes = await fetch("/api/fact-finds", { cache: "no-store" });
+    const listJson = await listRes.json();
+    if (!listRes.ok || !listJson.ok) return null;
+    const existing = newestForContact(listJson.factFinds ?? [], contactId);
+    if (!existing) return null;
+    const oneRes = await fetch(`/api/fact-finds/${existing.id}`, { cache: "no-store" });
+    const oneJson = await oneRes.json();
+    if (!oneRes.ok || !oneJson.ok || !oneJson.factFind?.data) return null;
+    return factFindToNeedsAnalysis(oneJson.factFind.data as FactFindData).data;
   } catch {
     return null;
   }
@@ -137,10 +165,20 @@ export function useOpportunityDocs({
           return;
         }
       }
+      // None yet (or no contact) — create one. When the contact has a Fact Find,
+      // seed the new needs analysis from it (personal details AND financial
+      // position) via factFindToNeedsAnalysis; otherwise fall back to a
+      // contact-only prefill so personal details still carry across.
+      const body: Record<string, unknown> = {};
+      if (contactId) {
+        body.contactId = contactId;
+        const naData = await loadNeedsDataFromFactFind(contactId);
+        if (naData) body.data = naData;
+      }
       const createRes = await fetch("/api/needs-analyses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactId ? { contactId } : {}),
+        body: JSON.stringify(body),
       });
       const createJson = await createRes.json();
       if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create a needs analysis");

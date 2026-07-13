@@ -1,3 +1,4 @@
+import { supabase } from "../../../utils/supabase";
 import {
   applicantSummary,
   emptyNeedsAnalysis,
@@ -5,7 +6,10 @@ import {
   needsAnalysisErrMessage,
   needsAnalysesTableMissing,
   NEEDS_ANALYSIS_STATUSES,
+  type NeedsAnalysisData,
 } from "../../../utils/needsAnalysis";
+import { factFindFromContact, type FactFindContact } from "../../../utils/factfind";
+import { factFindToNeedsAnalysis } from "../../../utils/factFindToNeedsAnalysis";
 import { makeListHandler, makeCreateHandler, type CreateRow } from "../../../utils/compliance-doc-route";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +30,41 @@ export const GET = makeListHandler({
   listKey: "needsAnalyses",
 });
 
+/** Columns mapped onto the applicant. Explicit select — never `*` (borrower PII). */
+const CONTACT_PREFILL_COLUMNS =
+  "name,full_name,first_name,email,phone,date_of_birth," +
+  "home_address_street,home_address_suburb,home_address_state,home_address_postcode," +
+  "occupation,annual_income,hecs_balance";
+
+/**
+ * Build a needs analysis seeded from a contact's personal details. The contact
+ * is mapped onto a blank applicant via the existing contact→applicant bridge
+ * (factFindFromContact) and carried onto the Needs Analysis shape by
+ * factFindToNeedsAnalysis — so surname/given names, date of birth, current
+ * address, phone and email flow through, and the mapping stays identical to the
+ * opportunity path. Best-effort: an unresolved id or any read error falls back
+ * to a blank form, so a create is never failed by prefill.
+ */
+async function prefillFromContact(contactId: string): Promise<NeedsAnalysisData> {
+  try {
+    const { data: contact, error } = await supabase
+      .from("contacts")
+      .select(CONTACT_PREFILL_COLUMNS)
+      .eq("id", contactId)
+      .maybeSingle();
+    if (error || !contact) return emptyNeedsAnalysis();
+    return factFindToNeedsAnalysis(factFindFromContact(contact as FactFindContact)).data;
+  } catch {
+    return emptyNeedsAnalysis();
+  }
+}
+
 /**
  * POST — create a needs analysis. Body is optional: with no body you get a
- * blank form to open and fill in. `contactId` prefills from a contact; an
- * optional `data` blob lets a caller seed the form.
+ * blank form to open and fill in. When `contactId` is provided (and no explicit
+ * `data` blob is sent), the first applicant's personal details are prefilled
+ * from that contact. An explicit `data` blob — e.g. the Fact-Find-derived blob
+ * the opportunity path sends — always wins.
  */
 export const POST = makeCreateHandler({
   table: "nccp_needs_analyses",
@@ -38,10 +73,16 @@ export const POST = makeCreateHandler({
   migrationHint: MIGRATION_HINT,
   errMessage: needsAnalysisErrMessage,
   tableMissing: needsAnalysesTableMissing,
-  buildCreateRow: (b, auth): CreateRow => {
+  buildCreateRow: async (b, auth): Promise<CreateRow> => {
     const str = (v: unknown) => (typeof v === "string" && v ? v : null);
 
-    const data = b.data ? hydrateNeedsAnalysis(b.data) : emptyNeedsAnalysis();
+    const contactId = str(b.contactId);
+    // An explicit `data` blob wins; otherwise a contactId prefills; otherwise blank.
+    const data = b.data
+      ? hydrateNeedsAnalysis(b.data)
+      : contactId
+        ? await prefillFromContact(contactId)
+        : emptyNeedsAnalysis();
     const status =
       typeof b.status === "string" && (NEEDS_ANALYSIS_STATUSES as readonly string[]).includes(b.status)
         ? b.status
@@ -50,7 +91,7 @@ export const POST = makeCreateHandler({
     const row = {
       applicant_name: applicantSummary(data) || null,
       status,
-      contact_id: str(b.contactId),
+      contact_id: contactId,
       deal_id: str(b.dealId),
       loan_amount: data.loan_amount_sought,
       data,
