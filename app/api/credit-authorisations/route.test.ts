@@ -201,6 +201,45 @@ describe("POST (create a credit authorisation)", () => {
     expect(a.status_after).toBe("draft");
   });
 
+  it("prefills the name/address lines from a contact when `contactId` is sent (personal details)", async () => {
+    // No explicit blob, just a contactId — the create must seed the "I ___ of ___"
+    // name and address lines from the linked contact.
+    h.state.contactResult = {
+      data: {
+        full_name: "John Smith",
+        home_address_street: "12 Example St",
+        home_address_suburb: "Sampleville",
+        home_address_state: "QLD",
+        home_address_postcode: "4000",
+      },
+      error: null,
+    };
+    const res = await POST(jsonReq("POST", { contactId: "c-1" }));
+    expect(res.status).toBe(200);
+
+    const row = docCall("insert")?.payload as {
+      names: string | null;
+      contact_id: string | null;
+      data: { names: string; address: string };
+    };
+    expect(row.contact_id).toBe("c-1");
+    expect(row.names).toBe("John Smith");
+    expect(row.data.names).toBe("John Smith");
+    expect(row.data.address).toBe("12 Example St, Sampleville, QLD, 4000");
+    expect(h.state.calls.some((c) => c.table === "contacts")).toBe(true);
+  });
+
+  it("lets an explicit `data` blob win over `contactId` (no contact prefill)", async () => {
+    h.state.contactResult = { data: { full_name: "Should Not Win" }, error: null };
+    const data = { names: "Jane Doe", address: "2 Example St" };
+    const res = await POST(jsonReq("POST", { contactId: "c-1", data }));
+    expect(res.status).toBe(200);
+    const row = docCall("insert")?.payload as { names: string | null; data: { names: string } };
+    expect(row.data.names).toBe("Jane Doe");
+    expect(row.names).toBe("Jane Doe");
+    expect(h.state.calls.some((c) => c.table === "contacts")).toBe(false);
+  });
+
   it("returns the MIGRATION_HINT with 501 when the table is missing on insert", async () => {
     h.state.insertResult = { data: null, error: { code: "42P01", message: "relation does not exist" } };
     const res = await POST(jsonReq("POST", { data: {} }));

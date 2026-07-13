@@ -206,6 +206,92 @@ describe("POST (create a needs analysis)", () => {
     expect(a.doc_id).toBe("na-1");
   });
 
+  it("prefills the first applicant's personal details from a contact when `contactId` is sent (GAP 1)", async () => {
+    // No explicit blob, just a contactId — the create must seed personal identity
+    // (name, DOB, current address, phone, email) from the linked contact so the
+    // new needs analysis isn't blank.
+    h.state.contactResult = {
+      data: {
+        full_name: "John Smith",
+        email: "john@example.com",
+        phone: "0400 000 000",
+        date_of_birth: "1980-04-01",
+        home_address_street: "12 Example St",
+        home_address_suburb: "Sampleville",
+        home_address_state: "QLD",
+        home_address_postcode: "4000",
+        occupation: "Engineer",
+        annual_income: 120000,
+      },
+      error: null,
+    };
+    const res = await POST(jsonReq("POST", { contactId: "c-1" }));
+    expect(res.status).toBe(200);
+
+    const row = docCall("insert")?.payload as {
+      applicant_name: string;
+      contact_id: string | null;
+      data: {
+        applicants: Array<{
+          surname: string;
+          given_names: string;
+          dob: string;
+          current_address: { street: string; postcode: string };
+          contact: { email: string; home_phone: string };
+        }>;
+      };
+    };
+    expect(row.contact_id).toBe("c-1");
+    expect(row.applicant_name).toBe("Smith, John");
+    const a0 = row.data.applicants[0];
+    expect(a0.surname).toBe("Smith");
+    expect(a0.given_names).toBe("John");
+    expect(a0.dob).toBe("1980-04-01");
+    expect(a0.contact.email).toBe("john@example.com");
+    expect(a0.contact.home_phone).toBe("0400 000 000");
+    expect(a0.current_address.street).toBe("12 Example St, Sampleville, QLD");
+    expect(a0.current_address.postcode).toBe("4000");
+
+    // The contacts table WAS queried for the prefill.
+    expect(h.state.calls.some((c) => c.table === "contacts")).toBe(true);
+  });
+
+  it("lets an explicit `data` blob win over `contactId` (no contact prefill)", async () => {
+    h.state.contactResult = { data: { full_name: "Should Not Win" }, error: null };
+    const data = {
+      applicants: [
+        { surname: "Doe", given_names: "Jane" },
+        { surname: "", given_names: "" },
+      ],
+      loan_amount_sought: 250000,
+    };
+    const res = await POST(jsonReq("POST", { contactId: "c-1", data }));
+    expect(res.status).toBe(200);
+    const row = docCall("insert")?.payload as {
+      applicant_name: string;
+      contact_id: string | null;
+      data: { applicants: Array<{ surname: string }> };
+    };
+    // Explicit blob survived; the contact was NOT read for prefill.
+    expect(row.data.applicants[0].surname).toBe("Doe");
+    expect(row.applicant_name).toBe("Doe, Jane");
+    expect(row.contact_id).toBe("c-1");
+    expect(h.state.calls.some((c) => c.table === "contacts")).toBe(false);
+  });
+
+  it("stays blank when no contactId and no data are sent", async () => {
+    const res = await POST(jsonReq("POST", {}));
+    expect(res.status).toBe(200);
+    const row = docCall("insert")?.payload as {
+      applicant_name: string | null;
+      data: { applicants: Array<{ surname: string; given_names: string }> };
+    };
+    expect(row.applicant_name).toBeNull();
+    expect(row.data.applicants[0].surname).toBe("");
+    expect(row.data.applicants[0].given_names).toBe("");
+    expect(h.state.calls.some((c) => c.table === "contacts")).toBe(false);
+  });
+
   it("returns the MIGRATION_HINT with 501 when the table is missing on insert", async () => {
     h.state.insertResult = { data: null, error: { code: "42P01", message: "relation does not exist" } };
     const res = await POST(jsonReq("POST", { data: {} }));
