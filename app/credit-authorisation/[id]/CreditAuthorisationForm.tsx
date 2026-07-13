@@ -23,6 +23,7 @@ import {
   type CreditAuthorisationData,
 } from "../../../utils/creditAuthorisation";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
+import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
 
 const TEAL = "#0F4C5C";
@@ -319,6 +320,11 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
 
       {locked && <LockedBanner onReopen={reopen} busy={saving} />}
       <HistoryPanel apiBase="/api/credit-authorisations" id={id} />
+      <SigningPanel
+        docType="credit_authorisation"
+        docId={id}
+        proposedSigners={[{ name: data.names.trim(), email: "" }]}
+      />
 
       {/* When locked (signed) every input inside is disabled — the document is
           read-only until reopened. min-w-0 keeps the fieldset from forcing its

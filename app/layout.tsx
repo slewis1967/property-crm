@@ -3,6 +3,7 @@ import "./globals.css";
 import { supabase } from "../utils/supabase";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
+import PublicRouteGate from "./components/PublicRouteGate";
 import Link from "next/link";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
@@ -227,7 +228,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           {children}
         </AppShell>
-        <VoiceAssistant />
+        <PublicRouteGate>
+          <VoiceAssistant />
+        </PublicRouteGate>
       </body>
     </html>
   );

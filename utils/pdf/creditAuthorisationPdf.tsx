@@ -16,11 +16,19 @@
 import { createElement } from "react";
 import CreditAuthorisationPrintDocument from "../../app/credit-authorisation/[id]/CreditAuthorisationPrintDocument";
 import type { CreditAuthorisationData } from "../creditAuthorisation";
+import type { SignatureMark } from "../signatures";
 
-/** Render the credit authorisation to a complete HTML document ready for htmlToPdf. */
-export async function renderCreditAuthorisationHtml(data: CreditAuthorisationData): Promise<string> {
+/**
+ * Render the credit authorisation to a complete HTML document ready for
+ * htmlToPdf. Pass `signatures` (per applicant, signer_index-1) to bake captured
+ * e-signatures into the signature table; omit for the unsigned PDF.
+ */
+export async function renderCreditAuthorisationHtml(
+  data: CreditAuthorisationData,
+  signatures?: (SignatureMark | null)[],
+): Promise<string> {
   const { renderToStaticMarkup } = await import("react-dom/server");
-  const body = renderToStaticMarkup(createElement(CreditAuthorisationPrintDocument, { data }));
+  const body = renderToStaticMarkup(createElement(CreditAuthorisationPrintDocument, { data, signatures }));
 
   return [
     "<!DOCTYPE html>",

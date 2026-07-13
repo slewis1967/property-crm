@@ -34,6 +34,7 @@ import {
   type CurrentEmployment,
   type NeedsAnalysisData,
 } from "../../../utils/needsAnalysis";
+import type { SignatureMark } from "../../../utils/signatures";
 
 /* ── Enum → paper-label maps (values come from the util so they stay in sync) ─ */
 
@@ -236,9 +237,19 @@ function employmentRows(
 
 /* ── The document ────────────────────────────────────────────────────────────── */
 
-export default function NeedsAnalysisPrintDocument({ data }: { data: NeedsAnalysisData }) {
+export default function NeedsAnalysisPrintDocument({
+  data,
+  signatures,
+}: {
+  data: NeedsAnalysisData;
+  /** Captured e-signatures indexed by applicant (signer_index-1). Optional —
+   *  when absent the signature area renders blank ruled lines to sign by hand. */
+  signatures?: (SignatureMark | null)[];
+}) {
   const [a1, a2] = data.applicants;
   const totals = computeNeedsAnalysisTotals(data);
+  const applicantPrintName = (a: Applicant): string =>
+    [a.given_names, a.surname].map((v) => (v ?? "").trim()).filter(Boolean).join(" ");
 
   return (
     <div className="yla-doc">
@@ -280,6 +291,7 @@ export default function NeedsAnalysisPrintDocument({ data }: { data: NeedsAnalys
         .yla-title { font-size: 20px; font-weight: bold; letter-spacing: 0.5px; margin: 2px 0; }
         .yla-subtitle { font-size: 10.5px; margin: 0 0 6px; }
 
+        .yla-sig-img { max-height: 28px; max-width: 100%; display: block; }
         .yla-box {
           display: inline-block;
           width: 10px; height: 10px;
@@ -665,6 +677,47 @@ export default function NeedsAnalysisPrintDocument({ data }: { data: NeedsAnalys
               <td className="yla-money-total">{m(totals.monthlyLivingExpenses) || "$0"}</td>
               <td />
             </tr>
+          </tbody>
+        </table>
+
+        {/* Declaration + signature area. Renders captured e-signatures when
+            supplied; otherwise blank ruled cells to sign by hand. */}
+        <SectionTitle>Declaration</SectionTitle>
+        <p style={{ margin: "4px 0 8px" }}>
+          I/We declare that the information provided in this Needs Analysis is true and correct, and I/We
+          consent to it being used to assess my/our credit needs and objectives.
+        </p>
+        <table style={{ marginTop: 6 }}>
+          <thead>
+            <tr>
+              <th className="yla-colhead" style={{ width: "14%" }}>
+                Applicant
+              </th>
+              <th className="yla-colhead">Print name</th>
+              <th className="yla-colhead">Signature</th>
+              <th className="yla-colhead" style={{ width: "22%" }}>
+                Date
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[a1, a2].map((a, i) => {
+              const mark = signatures?.[i] ?? null;
+              return (
+                <tr key={i}>
+                  <td>Applicant {i + 1}</td>
+                  <td>{mark && mark.name ? mark.name : applicantPrintName(a)}</td>
+                  <td style={{ height: 32 }}>
+                    {mark ? (
+                      <img className="yla-sig-img" src={mark.image} alt={`Signature of ${mark.name || `Applicant ${i + 1}`}`} />
+                    ) : (
+                      " "
+                    )}
+                  </td>
+                  <td>{mark ? mark.date : ""}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
