@@ -40,8 +40,11 @@ export type BrevoSendOptions = {
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
   const apiKey = process.env.BREVO_API_KEY;
   // A per-send identity override wins over the env default. Falls back to the
-  // historical NextKey env sender when not supplied (existing callers unchanged).
-  const senderEmail = opts.fromEmail ?? process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+  // NextKey env sender when not supplied. The hardcoded fallback is a
+  // Brevo-validated address so mail delivers even if BREVO_SENDER_EMAIL is unset.
+  // NOTE: hello@nextkey.com.au is not yet a validated Brevo sender — revert this
+  // default to hello@nextkey.com.au once it's validated/domain-authenticated.
+  const senderEmail = opts.fromEmail ?? process.env.BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au";
   const senderName = opts.fromName ?? process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
 
   if (!apiKey) {
@@ -56,27 +59,36 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
 
   const text = opts.text ?? stripHtml(opts.html);
 
-  const res = await fetch(`${BREVO_BASE}/smtp/email`, {
-    method: "POST",
-    headers: {
-      "api-key": apiKey,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: { email: senderEmail, name: senderName },
-      to: opts.to,
-      subject: opts.subject,
-      htmlContent: opts.html,
-      textContent: text,
-      replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
-      tags: opts.tags,
-      headers: opts.headers && Object.keys(opts.headers).length > 0 ? opts.headers : undefined,
-      attachment: opts.attachments && opts.attachments.length > 0
-        ? opts.attachments.map((a) => ({ name: a.name, url: a.url }))
-        : undefined,
-    }),
-  });
+  // Never throw: any transport-level failure (fetch rejection, DNS, timeout) is
+  // returned as { ok:false } just like a non-2xx Brevo response, so callers can
+  // rely on the envelope alone to detect a failed send. Existing callers that
+  // only check `.ok` are unaffected.
+  let res: Response;
+  try {
+    res = await fetch(`${BREVO_BASE}/smtp/email`, {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: { email: senderEmail, name: senderName },
+        to: opts.to,
+        subject: opts.subject,
+        htmlContent: opts.html,
+        textContent: text,
+        replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
+        tags: opts.tags,
+        headers: opts.headers && Object.keys(opts.headers).length > 0 ? opts.headers : undefined,
+        attachment: opts.attachments && opts.attachments.length > 0
+          ? opts.attachments.map((a) => ({ name: a.name, url: a.url }))
+          : undefined,
+      }),
+    });
+  } catch (e) {
+    return { ok: false, error: `Brevo request failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");

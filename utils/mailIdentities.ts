@@ -62,10 +62,14 @@ export function resolveIdentity(key: string | null | undefined): MailIdentity {
     };
   }
   // Default identity (nextkey) — also the fallback for any unknown/empty key.
+  // The hardcoded fromEmail fallback is a Brevo-validated address so NextKey mail
+  // delivers even when BREVO_SENDER_EMAIL is unset. NOTE: hello@nextkey.com.au is
+  // not yet a validated Brevo sender — revert this default to hello@nextkey.com.au
+  // once it's validated/domain-authenticated in Brevo.
   return {
     key: "nextkey",
     label: MAIL_IDENTITY_LABELS.nextkey,
-    fromEmail: process.env.BREVO_SENDER_EMAIL ?? "hello@nextkey.com.au",
+    fromEmail: process.env.BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au",
     fromName: process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists",
   };
 }

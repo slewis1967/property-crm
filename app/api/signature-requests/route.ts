@@ -23,6 +23,7 @@ import { newToken } from "../../../utils/sign-token";
 import { isSignDocType } from "../../../utils/signatures";
 import { loadDoc } from "../../../utils/sign-doc-render";
 import { sendBrevoEmail } from "../../../utils/brevo";
+import { resolveIdentity } from "../../../utils/mailIdentities";
 import {
   SIGNATURE_REQUESTS_TABLE,
   SIGNATURE_MIGRATION_HINT,
@@ -141,7 +142,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
     const origin = publicOrigin(req);
 
+    // These are Springboard compliance documents sent to Springboard leads, so
+    // the signer should recognise the Springboard brand — and, importantly,
+    // hello@springboardhomes.com.au is an already-validated Brevo sender, so the
+    // mail actually delivers. Reuse the composer's `springboard` identity rather
+    // than hardcoding the address so it stays in sync with env config.
+    const sender = resolveIdentity("springboard");
+
     const created: { id: string; signer_index: number; signer_email: string; status: string }[] = [];
+    const createdIds: string[] = [];
     const emailErrors: string[] = [];
 
     for (let i = 0; i < signers.length; i++) {
@@ -170,16 +179,26 @@ export async function POST(req: Request): Promise<NextResponse> {
         throw error;
       }
 
+      const insertedRow = inserted as { id: string; signer_index: number; signer_email: string; status: string };
+      createdIds.push(insertedRow.id);
+
       const link = `${origin}/sign/${raw}`;
       const sent = await sendBrevoEmail({
         to: [{ email: signers[i].email, name: signers[i].name || undefined }],
         subject: `Please sign your ${docLabel}`,
         html: signEmailHtml(signers[i].name, docLabel, link, message),
+        fromEmail: sender.fromEmail,
+        fromName: sender.fromName,
         tags: ["e-signature"],
       });
-      if (!sent.ok) emailErrors.push(`${signers[i].email}: ${sent.error}`);
+      if (!sent.ok) {
+        // The email IS the action here — a rejected send must not be reported as
+        // success. Record the error and skip the "sent" audit for this signer.
+        emailErrors.push(`${signers[i].email}: ${sent.error}`);
+        continue;
+      }
 
-      created.push(inserted as { id: string; signer_index: number; signer_email: string; status: string });
+      created.push(insertedRow);
 
       // Audit on the document itself. The audit action enum has no "sent" value,
       // so log an 'update' with a clear note (per the compliance-audit contract).
@@ -193,14 +212,22 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     if (emailErrors.length) {
-      // Rows were created; surface the email failure so the advisor can resend,
-      // rather than silently pretending everything went out.
+      // At least one signing email was rejected by Brevo. Delete the just-created
+      // request rows so the advisor gets a clean retry instead of a stuck "sent"
+      // row that never emailed, and surface the failure (SigningPanel shows the
+      // error) rather than a fake "Sent".
+      if (createdIds.length) {
+        const { error: delErr } = await supabase
+          .from(SIGNATURE_REQUESTS_TABLE)
+          .delete()
+          .in("id", createdIds);
+        if (delErr) log.error("sign.cleanup_after_email_failure_failed", { docType, docId, ...errInfo(delErr) });
+      }
       log.warn("sign.email_send_failed", { docType, docId, errors: emailErrors });
-      return NextResponse.json({
-        ok: true,
-        requests: created,
-        warning: `Requests created, but some emails failed to send: ${emailErrors.join("; ")}`,
-      });
+      return NextResponse.json(
+        { ok: false, error: `Could not send for signature: ${emailErrors.join("; ")}` },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ ok: true, requests: created });

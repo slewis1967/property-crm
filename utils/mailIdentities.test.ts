@@ -46,8 +46,11 @@ describe("resolveIdentity", () => {
     expect(id.fromName).toBe("Springboard Homes");
   });
 
-  it("falls back to safe defaults when env is unset", () => {
-    expect(resolveIdentity("nextkey").fromEmail).toBe("hello@nextkey.com.au");
+  it("falls back to safe (Brevo-validated) defaults when env is unset", () => {
+    // The NextKey default must be a Brevo-validated address so mail delivers;
+    // hello@nextkey.com.au is not yet validated (see resolveIdentity comment).
+    expect(resolveIdentity("nextkey").fromEmail).toBe("sean.l@nextkey.com.au");
+    expect(resolveIdentity("nextkey").fromName).toBe("NextKey Property Strategists");
     expect(resolveIdentity("springboard").fromEmail).toBe("hello@springboardhomes.com.au");
     expect(resolveIdentity("springboard").fromName).toBe("Springboard Homes");
   });

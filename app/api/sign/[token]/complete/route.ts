@@ -33,6 +33,7 @@ import {
 import { loadDoc, markDocSigned } from "../../../../../utils/sign-doc-render";
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
+import { resolveIdentity } from "../../../../../utils/mailIdentities";
 import { clientIp, rateKeyFromToken } from "../../_shared";
 
 export const runtime = "nodejs";
@@ -196,6 +197,10 @@ async function emailSignedCopy(
     </div>
   </div>`;
 
+  // Send from the validated Springboard sender (same identity as the "send for
+  // signature" request email) so the signed-copy mail actually delivers and the
+  // brand is consistent for the Springboard lead. Still best-effort.
+  const sender = resolveIdentity("springboard");
   const recipients = [signerEmail, advisorEmail].filter((e): e is string => !!e);
   for (const to of recipients) {
     const res = await sendBrevoEmail({
@@ -203,6 +208,8 @@ async function emailSignedCopy(
       subject: `Your signed ${label}`,
       html,
       attachments,
+      fromEmail: sender.fromEmail,
+      fromName: sender.fromName,
       tags: ["e-signature", "signed-copy"],
     });
     if (!res.ok) log.warn("sign.signed_copy_email_failed", { to, error: res.error });
