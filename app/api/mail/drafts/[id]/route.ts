@@ -9,8 +9,17 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 import { userEmailFromRequest } from "../../../../../utils/cf-access";
+import { isMailIdentityKey } from "../../../../../utils/mailIdentities";
 
 export const dynamic = "force-dynamic";
+
+/** True when the error is a missing-column error (from_identity not migrated
+ * yet) rather than a genuine failure — lets us retry the write without it. */
+function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST204" || error.code === "42703") return true;
+  return (error.message ?? "").toLowerCase().includes("from_identity");
+}
 
 function asArray(input: unknown): string[] {
   if (Array.isArray(input)) return input.filter((x) => typeof x === "string");
@@ -61,14 +70,26 @@ export async function PATCH(
   if (typeof body.subject === "string") patch.subject = body.subject;
   if (typeof body.body_html === "string") patch.body_html = body.body_html;
   if (Array.isArray(body.attachments)) patch.attachments = body.attachments;
+  if (isMailIdentityKey(body.from_identity)) patch.from_identity = body.from_identity;
 
-  const { data, error } = await supabase
-    .from("email_drafts")
-    .update(patch)
-    .eq("id", id)
-    .eq("owner_user_email", owner)
-    .select("id,updated_at")
-    .single();
+  async function runUpdate(p: Record<string, unknown>) {
+    return supabase
+      .from("email_drafts")
+      .update(p)
+      .eq("id", id)
+      .eq("owner_user_email", owner)
+      .select("id,updated_at")
+      .single();
+  }
+
+  let { data, error } = await runUpdate(patch);
+  // Graceful degradation: if from_identity hasn't been migrated yet, retry
+  // without it so the rest of the auto-save still lands.
+  if (error && isMissingColumn(error) && "from_identity" in patch) {
+    const { from_identity: _drop, ...rest } = patch;
+    void _drop;
+    ({ data, error } = await runUpdate(rest));
+  }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, draft: data });
 }

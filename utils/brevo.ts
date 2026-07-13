@@ -30,12 +30,19 @@ export type BrevoSendOptions = {
    * publicly reachable for ~30 seconds. Signed Supabase Storage URLs work.
    * Per-attachment 10MB limit when sent as URL per Brevo's docs. */
   attachments?: { name: string; url: string }[];
+  /** Optional sending-identity override for the `from` envelope. When omitted,
+   * the BREVO_SENDER_EMAIL / BREVO_SENDER_NAME env defaults are used, so
+   * existing callers are unaffected. Must be a verified Brevo sender. */
+  fromEmail?: string;
+  fromName?: string;
 };
 
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
-  const senderName = process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
+  // A per-send identity override wins over the env default. Falls back to the
+  // historical NextKey env sender when not supplied (existing callers unchanged).
+  const senderEmail = opts.fromEmail ?? process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+  const senderName = opts.fromName ?? process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
 
   if (!apiKey) {
     return { ok: false, error: "BREVO_API_KEY missing — email feature disabled" };
