@@ -240,3 +240,16 @@ and the same standard applies to anything Claude writes here.
 
 `web-asset-generator` requires `pip install Pillow Pilmoji` on the
 machine running Claude Code before first use.
+
+## EMAIL SENDERS (Brevo) — validated-sender requirement
+Outbound email goes through Brevo (`utils/brevo.ts` → `sendBrevoEmail`; per-identity
+overrides via `utils/mailIdentities.ts`). A Brevo send is REJECTED unless the `sender`
+is a *validated* sender in the Brevo account behind `BREVO_API_KEY`.
+- **Signing emails** (`/api/signature-requests`, `/api/sign/[token]/complete`) send from
+  the **Springboard** identity `hello@springboardhomes.com.au` (validated) — these docs go
+  to Springboard leads.
+- **NextKey** default sender is `sean.l@nextkey.com.au` (validated). `hello@nextkey.com.au`
+  is NOT yet validated — revert the default once it is (Brevo → Senders, verify or
+  authenticate the domain).
+- **Netlify `BREVO_API_KEY` must match the Brevo account where those senders are validated.**
+  A per-context mismatch silently fails sends (the route surfaces it as "Could not send").
