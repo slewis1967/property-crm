@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BulkUploadModal from "./BulkUploadModal";
+import DeleteReasonModal from "../components/DeleteReasonModal";
 import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
 import { toCsv, type CsvColumn } from "../../utils/csv";
 
@@ -123,6 +124,8 @@ export default function ContactsClient({
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showAssignType, setShowAssignType] = useState(false);
   const [assigningRow, setAssigningRow] = useState<string | null>(null);
   const [showAddTag, setShowAddTag] = useState(false);
@@ -217,29 +220,45 @@ export default function ContactsClient({
   };
 
   const requestDelete = (ids: string[], label: string) => {
+    setDeleteError(null);
     setConfirmDelete({ ids, label });
   };
 
-  const executeDelete = async () => {
+  const executeDelete = async (reason: string, name: string) => {
     if (!confirmDelete) return;
     const { ids } = confirmDelete;
-    setConfirmDelete(null);
-    setDeletingIds(new Set(ids));
+    setDeleteBusy(true);
+    setDeleteError(null);
 
     try {
+      let res: Response;
       if (ids.length === 1) {
-        await fetch(`/api/contacts/${ids[0]}`, { method: "DELETE" });
+        res = await fetch(`/api/contacts/${ids[0]}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason, deleter_name: name }),
+        });
       } else {
-        await fetch("/api/contacts/bulk-delete", {
+        res = await fetch("/api/contacts/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids }),
+          body: JSON.stringify({ ids, reason, deleter_name: name }),
         });
       }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error || "Failed to delete. Please try again.");
+        return;
+      }
+      setConfirmDelete(null);
+      setDeletingIds(new Set(ids));
       setContacts(prev => prev.filter(c => !ids.includes(c.id)));
       setCheckedIds(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n; });
-    } finally {
       setDeletingIds(new Set());
+    } catch {
+      setDeleteError("Failed to delete. Please try again.");
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -442,26 +461,16 @@ export default function ContactsClient({
       />
     )}
 
-    {/* Confirm delete dialog */}
-    {confirmDelete && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
-          <div className="text-3xl mb-3 text-center">🗑️</div>
-          <h3 className="text-base font-bold text-gray-900 text-center mb-1">Delete {confirmDelete.label}?</h3>
-          <p className="text-sm text-gray-500 text-center mb-6">This cannot be undone.</p>
-          <div className="flex gap-3">
-            <button onClick={() => setConfirmDelete(null)}
-              className="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
-              Cancel
-            </button>
-            <button onClick={executeDelete}
-              className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+    {/* Confirm delete dialog — requires a reason + the user's name */}
+    <DeleteReasonModal
+      open={confirmDelete !== null}
+      entityLabel={confirmDelete?.label ?? ""}
+      entityType="contact"
+      busy={deleteBusy}
+      error={deleteError}
+      onCancel={() => { setConfirmDelete(null); setDeleteError(null); }}
+      onConfirm={executeDelete}
+    />
     <div className="flex h-full gap-0 -mx-4 lg:-mx-8 -my-4 lg:-my-8 overflow-hidden">
 
       {/* ── TYPE SIDEBAR — hidden on mobile (type filter folds into the

@@ -13,6 +13,7 @@ import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
 import EditRecordModal from "../../components/EditRecordModal";
+import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
 
 type Contact = {
@@ -177,6 +178,7 @@ export default function ContactDetail({
   const [showOpportunityModal, setShowOpportunityModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [buyerType, setBuyerType] = useState(contact.buyer_type || "");
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -212,11 +214,23 @@ export default function ContactDetail({
     });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (reason: string, name: string) => {
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await fetch(`/api/contacts/${contact.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/contacts/${contact.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, deleter_name: name }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error || "Failed to delete. Please try again.");
+        return;
+      }
       router.push("/contacts");
+    } catch {
+      setDeleteError("Failed to delete. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -247,26 +261,16 @@ export default function ContactDetail({
   return (
     <div className="flex flex-col h-full -mx-8 -my-8 bg-gray-50">
 
-      {/* Confirm delete */}
-      {confirmDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
-            <div className="text-3xl mb-3 text-center">🗑️</div>
-            <h3 className="text-base font-bold text-gray-900 text-center mb-1">Delete {name}?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">This cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
-                Cancel
-              </button>
-              <button onClick={handleDelete} disabled={deleting}
-                className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-60 transition">
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm delete — requires a reason + the user's name */}
+      <DeleteReasonModal
+        open={confirmDelete}
+        entityLabel={name}
+        entityType="contact"
+        busy={deleting}
+        error={deleteError}
+        onCancel={() => { setConfirmDelete(false); setDeleteError(null); }}
+        onConfirm={handleDelete}
+      />
 
       {/* ── Top bar ── */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
