@@ -285,6 +285,18 @@ export default function OpportunityDetail({
   const activePipeline = pipelines.find((p) => p.id === pipelineId);
   const activeStages = activePipeline?.stages?.length ? activePipeline.stages : STAGES;
 
+  // Back button — return to the specific pipeline this opportunity lives in,
+  // built from its own pipeline_id so it's correct on a fresh load / shared
+  // link (not reliant on browser history). Falls back to the default
+  // opportunities view when the opportunity has no pipeline. The label uses the
+  // pipeline's name once the pipelines list has loaded.
+  const backHref = pipelineId
+    ? `/opportunities?pipeline=${encodeURIComponent(pipelineId)}`
+    : "/opportunities";
+  const backLabel = activePipeline?.name
+    ? `← Back to ${activePipeline.name}`
+    : "← Back to pipeline";
+
   const updatePipeline = async (newPipelineId: string | null) => {
     const prevPipelineId = pipelineId;
     setPipelineId(newPipelineId);
@@ -459,8 +471,12 @@ export default function OpportunityDetail({
       {/* Top bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2 text-sm">
-          <button onClick={() => router.push("/opportunities")} className="text-gray-400 hover:text-gray-700 transition">
-            ← Opportunities
+          <button
+            onClick={() => router.push(backHref)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white shadow-sm transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0F4C5C]"
+            style={{ backgroundColor: "#0F4C5C" }}
+          >
+            {backLabel}
           </button>
           <span className="text-gray-300">/</span>
           <span className="text-gray-700 font-medium">{name}</span>
