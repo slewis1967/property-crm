@@ -16,9 +16,11 @@ describe("isPublicSignRoute", () => {
     expect(isPublicSignRoute("/api/sign/tok/signed")).toBe(true);
   });
 
-  it("does NOT exempt the authed advisor routes under /api/sign/requests", () => {
-    expect(isPublicSignRoute("/api/sign/requests")).toBe(false);
-    expect(isPublicSignRoute("/api/sign/requests/123/download")).toBe(false);
+  it("does NOT exempt the authed advisor signature-requests routes", () => {
+    // These moved OUT from under /api/sign/ to /api/signature-requests so the
+    // Cloudflare Access bypass on /api/sign/* no longer strips their auth header.
+    expect(isPublicSignRoute("/api/signature-requests")).toBe(false);
+    expect(isPublicSignRoute("/api/signature-requests/123/download")).toBe(false);
   });
 
   it("does NOT exempt unrelated routes", () => {

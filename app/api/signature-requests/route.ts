@@ -1,28 +1,28 @@
 /**
  * Advisor-side signature-request management (AUTHED — behind Cloudflare Access).
  *
- *   POST /api/sign/requests
+ *   POST /api/signature-requests
  *     Body: { doc_type, doc_id, signers:[{name,email}], message?, expiresInDays? }
  *     Creates one signature_requests row per signer with a FRESH one-time token
  *     (only the SHA-256 hash is stored), emails each signer a `/sign/<raw-token>`
  *     link via Brevo, and records a "sent for signature" audit entry on the
  *     document. Returns the created requests WITHOUT the raw tokens.
  *
- *   GET /api/sign/requests?doc_type=&doc_id=
+ *   GET /api/signature-requests?doc_type=&doc_id=
  *     Lists a document's requests for the signing status panel — PII-safe columns
  *     only (never token_hash, signature_image, or the IP/UA evidence).
  */
 
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../utils/supabase";
-import { requireAuth } from "../../../../utils/cf-access";
-import { enforceRateLimit } from "../../../../utils/rate-limit";
-import { log, errInfo } from "../../../../utils/logger";
-import { recordAudit } from "../../../../utils/compliance-audit";
-import { newToken } from "../../../../utils/sign-token";
-import { isSignDocType } from "../../../../utils/signatures";
-import { loadDoc } from "../../../../utils/sign-doc-render";
-import { sendBrevoEmail } from "../../../../utils/brevo";
+import { supabase } from "../../../utils/supabase";
+import { requireAuth } from "../../../utils/cf-access";
+import { enforceRateLimit } from "../../../utils/rate-limit";
+import { log, errInfo } from "../../../utils/logger";
+import { recordAudit } from "../../../utils/compliance-audit";
+import { newToken } from "../../../utils/sign-token";
+import { isSignDocType } from "../../../utils/signatures";
+import { loadDoc } from "../../../utils/sign-doc-render";
+import { sendBrevoEmail } from "../../../utils/brevo";
 import {
   SIGNATURE_REQUESTS_TABLE,
   SIGNATURE_MIGRATION_HINT,
@@ -30,7 +30,7 @@ import {
   isValidEmail,
   isUuid,
   LIST_COLUMNS,
-} from "../../../../utils/signature-requests-db";
+} from "../../../utils/signature-requests-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
