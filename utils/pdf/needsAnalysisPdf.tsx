@@ -16,6 +16,7 @@ import path from "node:path";
 import { createElement } from "react";
 import NeedsAnalysisPrintDocument from "../../app/needs-analysis/[id]/NeedsAnalysisPrintDocument";
 import type { NeedsAnalysisData } from "../needsAnalysis";
+import type { SignatureMark } from "../signatures";
 
 /** The src the print document hard-codes for the logo <img>. */
 const LOGO_SRC = "/yla-logo.png";
@@ -48,9 +49,13 @@ export function ylaLogoDataUri(): string {
  * bundler rejects a static `react-dom/server` import in the app graph, and this
  * server-only path only needs it at call time.
  */
-export async function renderNeedsAnalysisHtml(data: NeedsAnalysisData, logoDataUri: string): Promise<string> {
+export async function renderNeedsAnalysisHtml(
+  data: NeedsAnalysisData,
+  logoDataUri: string,
+  signatures?: (SignatureMark | null)[],
+): Promise<string> {
   const { renderToStaticMarkup } = await import("react-dom/server");
-  const fragment = renderToStaticMarkup(createElement(NeedsAnalysisPrintDocument, { data }));
+  const fragment = renderToStaticMarkup(createElement(NeedsAnalysisPrintDocument, { data, signatures }));
   // Swap the network logo src for the inlined data URI (only when we have one).
   const body = logoDataUri ? fragment.split(`src="${LOGO_SRC}"`).join(`src="${logoDataUri}"`) : fragment;
 
@@ -73,6 +78,9 @@ export async function renderNeedsAnalysisHtml(data: NeedsAnalysisData, logoDataU
 }
 
 /** Convenience for the route: read the logo from disk and build the HTML. */
-export function needsAnalysisHtmlWithLogo(data: NeedsAnalysisData): Promise<string> {
-  return renderNeedsAnalysisHtml(data, ylaLogoDataUri());
+export function needsAnalysisHtmlWithLogo(
+  data: NeedsAnalysisData,
+  signatures?: (SignatureMark | null)[],
+): Promise<string> {
+  return renderNeedsAnalysisHtml(data, ylaLogoDataUri(), signatures);
 }

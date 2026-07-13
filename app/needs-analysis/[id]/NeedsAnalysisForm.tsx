@@ -44,6 +44,7 @@ import {
 } from "../../../utils/needsAnalysis";
 import NeedsAnalysisPrintDocument from "./NeedsAnalysisPrintDocument";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
+import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
 
 const TEAL = "#0F4C5C";
@@ -778,6 +779,16 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
 
       {locked && <LockedBanner onReopen={() => void doSave(NEEDS_ANALYSIS_STATUSES[0])} busy={saving} />}
       <HistoryPanel apiBase="/api/needs-analyses" id={id} />
+      <SigningPanel
+        docType="needs_analysis"
+        docId={id}
+        proposedSigners={data.applicants
+          .map((a) => ({
+            name: [a.given_names, a.surname].map((v) => v.trim()).filter(Boolean).join(" "),
+            email: a.contact.email.trim(),
+          }))
+          .filter((s) => s.name || s.email)}
+      />
 
       {/* When locked (Complete) every input inside is disabled — the document is
           read-only until reopened. min-w-0 keeps the fieldset from forcing its

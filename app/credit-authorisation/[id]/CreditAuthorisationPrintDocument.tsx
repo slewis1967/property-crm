@@ -21,6 +21,7 @@ import {
   CREDIT_AUTHORISATION_TEXT,
   type CreditAuthorisationData,
 } from "../../../utils/creditAuthorisation";
+import type { SignatureMark } from "../../../utils/signatures";
 
 const t = (v: unknown): string => (v === null || v === undefined || v === "" ? "" : String(v));
 
@@ -51,7 +52,15 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-export default function CreditAuthorisationPrintDocument({ data }: { data: CreditAuthorisationData }) {
+export default function CreditAuthorisationPrintDocument({
+  data,
+  signatures,
+}: {
+  data: CreditAuthorisationData;
+  /** Captured e-signatures indexed by applicant (signer_index-1). Optional —
+   *  when absent the form renders the blank print-to-sign layout unchanged. */
+  signatures?: (SignatureMark | null)[];
+}) {
   const doc = CREDIT_AUTHORISATION_TEXT;
 
   return (
@@ -98,6 +107,7 @@ export default function CreditAuthorisationPrintDocument({ data }: { data: Credi
         }
         .ca-doc th.ca-colhead { font-weight: bold; text-align: center; background: #f0f0f0; vertical-align: middle; }
         .ca-sig-cell { height: 34px; }
+        .ca-sig-img { max-height: 30px; max-width: 100%; display: block; }
         .ca-box {
           display: inline-block; width: 10px; height: 10px; border: 1px solid #000;
           line-height: 9px; text-align: center; font-size: 9px; font-weight: bold;
@@ -147,16 +157,25 @@ export default function CreditAuthorisationPrintDocument({ data }: { data: Credi
             </tr>
           </thead>
           <tbody>
-            {data.signatories.map((s, i) => (
-              <tr key={i}>
-                <td className="ca-sig-cell">Applicant {i + 1}</td>
-                <td className="ca-sig-cell">&nbsp;</td>
-                <td className="ca-sig-cell" style={{ textAlign: "center" }}>
-                  <Box on={s.signed} />
-                </td>
-                <td className="ca-sig-cell">{t(s.date)}</td>
-              </tr>
-            ))}
+            {data.signatories.map((s, i) => {
+              const mark = signatures?.[i] ?? null;
+              return (
+                <tr key={i}>
+                  <td className="ca-sig-cell">Applicant {i + 1}</td>
+                  <td className="ca-sig-cell">
+                    {mark ? (
+                      <img className="ca-sig-img" src={mark.image} alt={`Signature of ${mark.name || `Applicant ${i + 1}`}`} />
+                    ) : (
+                      " "
+                    )}
+                  </td>
+                  <td className="ca-sig-cell" style={{ textAlign: "center" }}>
+                    <Box on={mark ? true : s.signed} />
+                  </td>
+                  <td className="ca-sig-cell">{t(mark ? mark.date : s.date)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>

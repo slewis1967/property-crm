@@ -26,6 +26,7 @@ import {
   type FactFindData,
   type SecurityProperty,
 } from "../../../utils/factfind";
+import type { SignatureMark } from "../../../utils/signatures";
 
 /* ── Value helpers (blank, never "null"/"undefined") ─────────────────────────── */
 
@@ -82,11 +83,15 @@ function KvRow({ label, value }: { label: React.ReactNode; value: React.ReactNod
   );
 }
 
-/** The declaration signature blocks (name + date, ruled signature line). */
+/** The declaration signature blocks (name + date, ruled signature line). When
+ *  `signatures` is supplied the captured e-signature image + signed date render
+ *  into the matching applicant's row (signer_index-1). */
 function Signatures({
   signatories,
+  signatures,
 }: {
   signatories: readonly { name: string; date: string }[];
+  signatures?: (SignatureMark | null)[];
 }) {
   return (
     <table style={{ marginTop: 6 }}>
@@ -101,14 +106,23 @@ function Signatures({
         </tr>
       </thead>
       <tbody>
-        {signatories.map((s, i) => (
-          <tr key={i}>
-            <td>Applicant {i + 1}</td>
-            <td>{t(s.name)}</td>
-            <td>&nbsp;</td>
-            <td>{t(s.date)}</td>
-          </tr>
-        ))}
+        {signatories.map((s, i) => {
+          const mark = signatures?.[i] ?? null;
+          return (
+            <tr key={i}>
+              <td>Applicant {i + 1}</td>
+              <td>{t(mark && mark.name ? mark.name : s.name)}</td>
+              <td>
+                {mark ? (
+                  <img className="ff-sig-img" src={mark.image} alt={`Signature of ${mark.name || `Applicant ${i + 1}`}`} />
+                ) : (
+                  " "
+                )}
+              </td>
+              <td>{t(mark ? mark.date : s.date)}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -247,7 +261,15 @@ const PRIVACY_PARAGRAPHS: React.ReactNode[] = [
 
 /* ── The document ────────────────────────────────────────────────────────────── */
 
-export default function FactFindPrintDocument({ data }: { data: FactFindData }) {
+export default function FactFindPrintDocument({
+  data,
+  signatures,
+}: {
+  data: FactFindData;
+  /** Captured e-signatures indexed by applicant (signer_index-1). Optional —
+   *  when absent the document renders its blank signature areas unchanged. */
+  signatures?: (SignatureMark | null)[];
+}) {
   const [a1, a2] = data.applicants;
   const totals = computeTotals(data);
 
@@ -291,6 +313,7 @@ export default function FactFindPrintDocument({ data }: { data: FactFindData }) 
         .ff-title { font-size: 20px; font-weight: bold; letter-spacing: 0.5px; margin: 2px 0; color: #0F4C5C; }
         .ff-subtitle { font-size: 10px; color: #444; margin: 0 0 6px; }
 
+        .ff-sig-img { max-height: 28px; max-width: 100%; display: block; }
         .ff-box {
           display: inline-block;
           width: 10px; height: 10px;
@@ -518,7 +541,7 @@ export default function FactFindPrintDocument({ data }: { data: FactFindData }) 
             label="I confirm that the above information is complete and correct."
           />
         </div>
-        <Signatures signatories={data.declarations.signatories} />
+        <Signatures signatories={data.declarations.signatories} signatures={signatures} />
       </section>
 
       {/* ══════════════════════════ PAGE 6 ══════════════════════════ */}
@@ -562,7 +585,7 @@ export default function FactFindPrintDocument({ data }: { data: FactFindData }) 
             label="The applicant(s) have read the above and declare the loan is wholly or predominantly for the purpose selected."
           />
         </div>
-        <Signatures signatories={data.declarations.purpose.signatories} />
+        <Signatures signatories={data.declarations.purpose.signatories} signatures={signatures} />
 
         <SectionTitle>Privacy — Notice &amp; Consent</SectionTitle>
         <div className="ff-subtitle">{PRIVACY_INTRO}</div>
@@ -573,7 +596,7 @@ export default function FactFindPrintDocument({ data }: { data: FactFindData }) 
             label="The applicant(s) have read and understood the privacy notice above and consent to the disclosures described."
           />
         </div>
-        <Signatures signatories={data.declarations.privacy.signatories} />
+        <Signatures signatories={data.declarations.privacy.signatories} signatures={signatures} />
       </section>
     </div>
   );

@@ -17,11 +17,19 @@
 import { createElement } from "react";
 import FactFindPrintDocument from "../../app/fact-find/[id]/FactFindPrintDocument";
 import type { FactFindData } from "../factfind";
+import type { SignatureMark } from "../signatures";
 
-/** Render the fact find to a complete HTML document ready for htmlToPdf. */
-export async function renderFactFindHtml(data: FactFindData): Promise<string> {
+/**
+ * Render the fact find to a complete HTML document ready for htmlToPdf. Pass
+ * `signatures` (per applicant, signer_index-1) to bake captured e-signatures
+ * into the declaration signature areas; omit for the unsigned PDF.
+ */
+export async function renderFactFindHtml(
+  data: FactFindData,
+  signatures?: (SignatureMark | null)[],
+): Promise<string> {
   const { renderToStaticMarkup } = await import("react-dom/server");
-  const body = renderToStaticMarkup(createElement(FactFindPrintDocument, { data }));
+  const body = renderToStaticMarkup(createElement(FactFindPrintDocument, { data, signatures }));
 
   return [
     "<!DOCTYPE html>",

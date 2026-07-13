@@ -39,6 +39,7 @@ import {
 } from "../../../utils/factfind";
 import CapacityPanel from "./CapacityPanel";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
+import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
 
 const TEAL = "#0F4C5C";
@@ -490,6 +491,16 @@ export default function FactFindForm({ id }: { id: string }) {
 
       {locked && <LockedBanner onReopen={() => void doSave(FACT_FIND_STATUSES[0])} busy={saving} />}
       <HistoryPanel apiBase="/api/fact-finds" id={id} />
+      <SigningPanel
+        docType="fact_find"
+        docId={id}
+        proposedSigners={data.applicants
+          .map((a) => ({
+            name: [a.given_names, a.family_name].map((v) => v.trim()).filter(Boolean).join(" "),
+            email: a.email.trim(),
+          }))
+          .filter((s) => s.name || s.email)}
+      />
 
       {seedResult && (
         <div className="no-print mx-4 mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
