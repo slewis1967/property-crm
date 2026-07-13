@@ -27,6 +27,7 @@ import { emptyFactFind, type FactFindData } from "../../../utils/factfind";
 import { factFindToCapacityInputs, MISSING_FIELD_LABELS } from "../../../utils/factfind-capacity";
 import { capacityInputsToFactFind } from "../../../utils/capacityToFactFind";
 import type { CapacityInputs } from "../../../utils/finance";
+import { useOpportunityDocs } from "./useOpportunityDocs";
 
 type CalcType = "yield" | "stamp_duty" | "borrowing" | "growth" | "fhg" | "repayment";
 
@@ -209,6 +210,23 @@ export default function OpportunityCalculations({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
+
+  // Doc access right where the advisor runs the serviceability calc. Same
+  // open-or-create logic as the top-of-page buttons (shared hook) — the Fact
+  // Find one, in particular, prefills a new fact find from the latest borrowing
+  // calc below, so "run the calc → open the pre-populated Fact Find" is one spot.
+  const {
+    openFactFind,
+    factFindLoading,
+    factFindError,
+    openNeedsAnalysis,
+    needsAnalysisLoading,
+    needsAnalysisError,
+    openCreditAuthorisation,
+    creditAuthLoading,
+    creditAuthError,
+  } = useOpportunityDocs({ opportunityId, contactId });
+  const docErr = factFindError || needsAnalysisError || creditAuthError;
   const [openCalc, setOpenCalc] = useState<{
     type: CalcType;
     existing: Calculation | null;
@@ -261,6 +279,57 @@ export default function OpportunityCalculations({
           ＋ New scenario
         </button>
       </div>
+
+      {/* Compliance-doc access, next to the calculator. Opening the Fact Find
+          here creates it pre-filled from the latest borrowing calc below. */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          onClick={openFactFind}
+          disabled={!contactId || factFindLoading}
+          title={
+            contactId
+              ? "Open this borrower's Fact Find (a new one is pre-filled from the borrowing calc below)"
+              : "Link a primary contact to this opportunity first"
+          }
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+        >
+          📋 {factFindLoading ? "Opening…" : "Open Fact Find"}
+        </button>
+        <button
+          onClick={openNeedsAnalysis}
+          disabled={!contactId || needsAnalysisLoading}
+          title={
+            contactId
+              ? "Open this borrower's NCCP Needs Analysis"
+              : "Link a primary contact to this opportunity first"
+          }
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+        >
+          🧭 {needsAnalysisLoading ? "Opening…" : "Open Needs Analysis"}
+        </button>
+        <button
+          onClick={openCreditAuthorisation}
+          disabled={!contactId || creditAuthLoading}
+          title={
+            contactId
+              ? "Open this borrower's Credit File Authorisation"
+              : "Link a primary contact to this opportunity first"
+          }
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+        >
+          🔏 {creditAuthLoading ? "Opening…" : "Open Credit Authorisation"}
+        </button>
+      </div>
+      {!contactId && (
+        <p className="mb-3 text-[11px] text-gray-400">
+          Link a primary contact to this opportunity to open its Fact Find, Needs Analysis or Credit Authorisation.
+        </p>
+      )}
+      {docErr && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
+          {docErr}
+        </div>
+      )}
 
       {error && (
         <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">

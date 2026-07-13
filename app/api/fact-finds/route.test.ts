@@ -215,6 +215,59 @@ describe("POST (create a fact find)", () => {
     expect(a.doc_id).toBe("ff-1");
   });
 
+  it("overlays the serviceability calculator's financials when `capacityInputs` is sent (GAP A)", async () => {
+    // A new fact find created from an opportunity that has a saved borrowing calc
+    // must arrive pre-populated with the calc's properties / mortgages / income /
+    // HECS / living expenses — not just contact identity — via capacityInputsToFactFind.
+    const capacityInputs = {
+      income: 120000,
+      hasHecs: true,
+      hecsBalance: 5000,
+      dependents: 2,
+      declaredExpenses: 3000,
+      creditLimit: 10000,
+      properties: [
+        { label: "Investment 1", value: 600000, loanBalance: 400000, rate: 6, termRemaining: 25 },
+      ],
+    };
+    const res = await POST(jsonReq("POST", { capacityInputs }));
+    expect(res.status).toBe(200);
+
+    const row = docCall("insert")?.payload as { data: {
+      applicants: Array<{ annual_income: number | null; has_hecs: boolean; hecs_balance: number | null }>;
+      financials: {
+        assets: Array<{ kind: string; value: number | null }>;
+        liabilities: Array<{ kind: string; balance: number | null }>;
+        servicing: { dependents: number | null; monthly_living_expenses: number | null };
+      };
+    } };
+    const d = row.data;
+    expect(d.applicants[0].annual_income).toBe(120000);
+    expect(d.applicants[0].has_hecs).toBe(true);
+    expect(d.applicants[0].hecs_balance).toBe(5000);
+    expect(d.financials.assets.some((a) => a.kind === "Property" && a.value === 600000)).toBe(true);
+    expect(d.financials.liabilities.some((l) => l.kind === "Mortgage" && l.balance === 400000)).toBe(true);
+    expect(d.financials.liabilities.some((l) => l.kind === "Credit card" && l.balance === 10000)).toBe(true);
+    expect(d.financials.servicing.dependents).toBe(2);
+    expect(d.financials.servicing.monthly_living_expenses).toBe(3000);
+  });
+
+  it("lets an explicit `data` blob win over `capacityInputs`", async () => {
+    const data = {
+      applicants: [
+        { family_name: "Smith", given_names: "John", annual_income: 50000 },
+        { family_name: "", given_names: "" },
+      ],
+      loan: { amount_required: 400000 },
+    };
+    const capacityInputs = { income: 999999, properties: [] };
+    const res = await POST(jsonReq("POST", { data, capacityInputs }));
+    expect(res.status).toBe(200);
+    const row = docCall("insert")?.payload as { data: { applicants: Array<{ annual_income: number | null }> } };
+    // The explicit blob's income survives — capacityInputs did not overlay it.
+    expect(row.data.applicants[0].annual_income).toBe(50000);
+  });
+
   it("returns the MIGRATION_HINT with 501 when the table is missing on insert", async () => {
     h.state.insertResult = { data: null, error: { code: "42P01", message: "relation does not exist" } };
     const res = await POST(jsonReq("POST", { data: {} }));

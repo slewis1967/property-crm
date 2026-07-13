@@ -10,6 +10,7 @@ import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
 const STAGES = [
@@ -130,141 +131,23 @@ export default function OpportunityDetail({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Fact Find — open (or create) this borrower's Borrower Fact Find, linked to
-  // their primary contact. Mirrors the create-then-navigate pattern in
-  // app/fact-find/FactFindClient.tsx so we never spawn a duplicate when one
-  // already exists for the contact.
-  const [factFindLoading, setFactFindLoading] = useState(false);
-  const [factFindError, setFactFindError] = useState("");
-
-  const openFactFind = async () => {
-    setFactFindLoading(true);
-    setFactFindError("");
-    try {
-      const contactId = lead.primary_contact_id;
-      // If we know the borrower's contact, reuse an existing fact find rather
-      // than creating a new one. Newest (by updated_at, then created_at) wins.
-      if (contactId) {
-        const listRes = await fetch("/api/fact-finds", { cache: "no-store" });
-        const listJson = await listRes.json();
-        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load fact finds");
-        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
-          listJson.factFinds ?? [];
-        const existing = rows
-          .filter((r) => r.contact_id === contactId)
-          .sort(
-            (a, b) =>
-              new Date(b.updated_at || b.created_at || 0).getTime() -
-              new Date(a.updated_at || a.created_at || 0).getTime(),
-          )[0];
-        if (existing) {
-          router.push(`/fact-find/${existing.id}`);
-          return; // keep loading state through navigation, like FactFindClient
-        }
-      }
-      // None yet (or no contact) — create one. With a contact it links + prefills;
-      // with none it opens a blank form.
-      const createRes = await fetch("/api/fact-finds", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactId ? { contactId } : {}),
-      });
-      const createJson = await createRes.json();
-      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create a fact find");
-      router.push(`/fact-find/${createJson.id}`);
-    } catch (e) {
-      setFactFindError(e instanceof Error ? e.message : "Fact find failed");
-      setFactFindLoading(false);
-    }
-  };
-
-  // Credit Authorisation — open (or create) this borrower's Equifax Access
-  // Seeker consent form, linked to their primary contact. Mirrors openFactFind:
-  // reuse the most recent authorisation for the contact rather than spawning a
-  // duplicate; note the create route reads `contactId` (and prefills from it).
-  const [creditAuthLoading, setCreditAuthLoading] = useState(false);
-  const [creditAuthError, setCreditAuthError] = useState("");
-
-  const openCreditAuthorisation = async () => {
-    setCreditAuthLoading(true);
-    setCreditAuthError("");
-    try {
-      const contactId = lead.primary_contact_id;
-      if (contactId) {
-        const listRes = await fetch("/api/credit-authorisations", { cache: "no-store" });
-        const listJson = await listRes.json();
-        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load credit authorisations");
-        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
-          listJson.creditAuthorisations ?? [];
-        const existing = rows
-          .filter((r) => r.contact_id === contactId)
-          .sort(
-            (a, b) =>
-              new Date(b.updated_at || b.created_at || 0).getTime() -
-              new Date(a.updated_at || a.created_at || 0).getTime(),
-          )[0];
-        if (existing) {
-          router.push(`/credit-authorisation/${existing.id}`);
-          return; // keep loading state through navigation
-        }
-      }
-      // None yet (or no contact) — create one. With a contact it links + prefills.
-      const createRes = await fetch("/api/credit-authorisations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactId ? { contactId } : {}),
-      });
-      const createJson = await createRes.json();
-      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create an authorisation");
-      router.push(`/credit-authorisation/${createJson.id}`);
-    } catch (e) {
-      setCreditAuthError(e instanceof Error ? e.message : "Credit authorisation failed");
-      setCreditAuthLoading(false);
-    }
-  };
-
-  // Needs Analysis — open (or create) this borrower's NCCP Client Needs
-  // Analysis, linked to their primary contact. Same open-most-recent-by-contact-
-  // else-create-with-{contactId} pattern as openFactFind above.
-  const [needsAnalysisLoading, setNeedsAnalysisLoading] = useState(false);
-  const [needsAnalysisError, setNeedsAnalysisError] = useState("");
-
-  const openNeedsAnalysis = async () => {
-    setNeedsAnalysisLoading(true);
-    setNeedsAnalysisError("");
-    try {
-      const contactId = lead.primary_contact_id;
-      if (contactId) {
-        const listRes = await fetch("/api/needs-analyses", { cache: "no-store" });
-        const listJson = await listRes.json();
-        if (!listRes.ok || !listJson.ok) throw new Error(listJson.error || "Could not load needs analyses");
-        const rows: Array<{ id: string; contact_id: string | null; updated_at?: string | null; created_at?: string | null }> =
-          listJson.needsAnalyses ?? [];
-        const existing = rows
-          .filter((r) => r.contact_id === contactId)
-          .sort(
-            (a, b) =>
-              new Date(b.updated_at || b.created_at || 0).getTime() -
-              new Date(a.updated_at || a.created_at || 0).getTime(),
-          )[0];
-        if (existing) {
-          router.push(`/needs-analysis/${existing.id}`);
-          return; // keep loading state through navigation
-        }
-      }
-      const createRes = await fetch("/api/needs-analyses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactId ? { contactId } : {}),
-      });
-      const createJson = await createRes.json();
-      if (!createRes.ok || !createJson.ok) throw new Error(createJson.error || "Could not create a needs analysis");
-      router.push(`/needs-analysis/${createJson.id}`);
-    } catch (e) {
-      setNeedsAnalysisError(e instanceof Error ? e.message : "Needs analysis failed");
-      setNeedsAnalysisLoading(false);
-    }
-  };
+  // Fact Find / Needs Analysis / Credit Authorisation — open (or create) this
+  // borrower's compliance documents, linked to their primary contact. The
+  // open-or-create logic (reuse the contact's most-recent doc; the Fact Find
+  // also prefills from the opportunity's saved borrowing calc) lives in the
+  // shared useOpportunityDocs hook so these top buttons and the buttons in the
+  // Calculations panel can't drift.
+  const {
+    openFactFind,
+    factFindLoading,
+    factFindError,
+    openNeedsAnalysis,
+    needsAnalysisLoading,
+    needsAnalysisError,
+    openCreditAuthorisation,
+    creditAuthLoading,
+    creditAuthError,
+  } = useOpportunityDocs({ opportunityId: lead.lead_id, contactId: lead.primary_contact_id });
 
   // Pipeline switcher — load available pipelines, allow moving the
   // opportunity between them. Stage buttons below now reflect whichever
