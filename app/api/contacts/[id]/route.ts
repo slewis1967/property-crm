@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { userEmailFromRequest, isUnauthenticated } from "../../../../utils/cf-access";
+import { validateDeletionInput, recordDeletion } from "../../../../utils/deletion-log";
 
 export async function PATCH(
   req: NextRequest,
@@ -42,10 +44,41 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: contactId } = await params;
+
+  // Gate: a client deletion requires a reason + the user's name.
+  const body = await req.json().catch(() => ({}));
+  const valid = validateDeletionInput(body);
+  if (!valid.ok) return NextResponse.json({ error: valid.error }, { status: 400 });
+  const { reason, deleterName } = valid.value;
+
+  const email = await userEmailFromRequest(req);
+  const deleterEmail = isUnauthenticated(email) ? null : email;
+
+  // Snapshot the contact BEFORE deleting so the audit row is recoverable.
+  const { data: snapshot } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contactId)
+    .maybeSingle();
+  const label = snapshot
+    ? (snapshot.full_name || snapshot.name || snapshot.email || contactId)
+    : contactId;
+
+  // Fail-open audit write (never blocks the delete).
+  await recordDeletion({
+    entityType: "contact",
+    entityId: contactId,
+    entityLabel: label,
+    reason,
+    deleterName,
+    deleterEmail,
+    snapshot,
+  });
+
   const { error } = await supabase.from("contacts").delete().eq("id", contactId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

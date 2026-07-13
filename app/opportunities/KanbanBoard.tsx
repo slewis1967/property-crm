@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import NewOpportunityModal from "./NewOpportunityModal";
 import NewPipelineModal from "./NewPipelineModal";
+import DeleteReasonModal from "../components/DeleteReasonModal";
 import { log, errInfo } from "../../utils/logger";
 import { errMessage } from "../../utils/errors";
 
@@ -187,6 +188,8 @@ export default function KanbanBoard({
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  // Gate: deleting opportunities requires a reason + the user's name.
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const toggleSelect = (leadId: string) => {
     setSelected(prev => {
@@ -282,10 +285,17 @@ export default function KanbanBoard({
     }
   };
 
-  const bulkDelete = async () => {
+  // Open the reason+name gate. The actual delete runs in performBulkDelete once
+  // the user supplies a reason and their name.
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    setBulkError(null);
+    setShowDeleteModal(true);
+  };
+
+  const performBulkDelete = async (reason: string, name: string) => {
     const ids = Array.from(selected);
-    if (ids.length === 0) return;
-    if (!window.confirm(`Delete ${ids.length} opportunit${ids.length === 1 ? "y" : "ies"}? This can't be undone.`)) return;
+    if (ids.length === 0) { setShowDeleteModal(false); return; }
     setBulkDeleting(true);
     setBulkError(null);
     setBulkProgress({ done: 0, total: ids.length });
@@ -293,7 +303,11 @@ export default function KanbanBoard({
     let done = 0;
     await Promise.all(ids.map(async id => {
       try {
-        const res = await fetch(`/api/opportunities/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/opportunities/${id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason, deleter_name: name }),
+        });
         if (!res.ok) failed.push(id);
       } catch { failed.push(id); }
       done += 1;
@@ -304,6 +318,7 @@ export default function KanbanBoard({
     setSelected(new Set(failed));
     setBulkDeleting(false);
     setBulkProgress(null);
+    setShowDeleteModal(false);
     if (failed.length > 0) setBulkError(`${failed.length} of ${ids.length} failed to delete — they're still selected.`);
   };
 
@@ -503,6 +518,16 @@ export default function KanbanBoard({
           </div>
         </div>
       )}
+
+      {/* Delete gate — requires a reason + the user's name */}
+      <DeleteReasonModal
+        open={showDeleteModal}
+        entityLabel={`${selected.size} opportunit${selected.size === 1 ? "y" : "ies"}`}
+        entityType="opportunity"
+        busy={bulkDeleting}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={performBulkDelete}
+      />
 
       {/* Bulk error toast */}
       {bulkError && (
