@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import NewOpportunityModal from "./NewOpportunityModal";
 import NewPipelineModal from "./NewPipelineModal";
 import { log, errInfo } from "../../utils/logger";
@@ -104,13 +104,34 @@ export default function KanbanBoard({
   initialPipelines: Pipeline[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Pipelines
   const [pipelines, setPipelines] = useState<Pipeline[]>(initialPipelines);
-  const [activePipelineId, setActivePipelineId] = useState<string>(initialPipelines[0]?.id || "");
+  // The active pipeline is URL-addressable via ?pipeline=<id> so a deep link
+  // (e.g. the back button on an opportunity card) opens the right pipeline and
+  // survives refresh. Fall back to the first pipeline when the param is absent
+  // or points at a pipeline we don't have.
+  const [activePipelineId, setActivePipelineId] = useState<string>(() => {
+    const param = searchParams.get("pipeline");
+    if (param && initialPipelines.some((p) => p.id === param)) return param;
+    return initialPipelines[0]?.id || "";
+  });
   const [showNewPipeline, setShowNewPipeline] = useState(false);
   const [deletingPipelineId, setDeletingPipelineId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Switch the active pipeline and mirror it into the URL (?pipeline=<id>) with
+  // replaceState so the view is shareable, survives refresh, and doesn't spam
+  // the history stack. An empty id clears the param.
+  const selectPipeline = useCallback((id: string) => {
+    setActivePipelineId(id);
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    if (id) params.set("pipeline", id);
+    else params.delete("pipeline");
+    const qs = params.toString();
+    router.replace(qs ? `/opportunities?${qs}` : "/opportunities", { scroll: false });
+  }, [router, searchParams]);
 
   const deletePipeline = async (pipelineId: string) => {
     setDeletingPipelineId(pipelineId);
@@ -121,7 +142,7 @@ export default function KanbanBoard({
       if (!res.ok) { setDeleteError(data.error || "Failed to delete"); return; }
       const remaining = pipelines.filter(p => p.id !== pipelineId);
       setPipelines(remaining);
-      if (activePipelineId === pipelineId) setActivePipelineId(remaining[0]?.id || "");
+      if (activePipelineId === pipelineId) selectPipeline(remaining[0]?.id || "");
     } finally {
       setDeletingPipelineId(null);
     }
@@ -388,7 +409,7 @@ export default function KanbanBoard({
             onClose={() => setShowNewPipeline(false)}
             onCreated={(p) => {
               setPipelines(prev => [...prev, { ...p, created_at: new Date().toISOString() }]);
-              setActivePipelineId(p.id);
+              selectPipeline(p.id);
               setShowNewPipeline(false);
             }}
           />
@@ -410,7 +431,7 @@ export default function KanbanBoard({
           return (
             <div key={p.id} className="flex items-center gap-1">
               <button
-                onClick={() => setActivePipelineId(p.id)}
+                onClick={() => selectPipeline(p.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border ${
                   isActive
                     ? "bg-white border-gray-300 text-gray-900 shadow-sm"
