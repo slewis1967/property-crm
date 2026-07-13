@@ -10,6 +10,8 @@ import {
   type FactFindContact,
   type FactFindData,
 } from "../../../utils/factfind";
+import { capacityInputsToFactFind } from "../../../utils/capacityToFactFind";
+import type { CapacityInputs } from "../../../utils/finance";
 import { makeListHandler, makeCreateHandler, type CreateRow } from "../../../utils/compliance-doc-route";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +62,11 @@ async function prefillFromContact(contactId: string): Promise<FactFindData> {
  * POST — create a fact find. Body is optional: with no body you get a blank
  * form to open and fill in. When `contactId` is provided (and no explicit
  * `data` blob is sent), the first applicant is prefilled from that contact.
+ * When `capacityInputs` (a serviceability-calculator bag) is also provided — e.g.
+ * creating a fact find from an opportunity that has a saved borrowing calc — the
+ * calculator's financials are overlaid onto the contact/blank base so the new
+ * form arrives pre-populated with the properties/mortgages/income/HECS/living
+ * expenses the advisor already entered, not just contact identity.
  */
 export const POST = makeCreateHandler({
   table: "borrower_fact_finds",
@@ -73,11 +80,18 @@ export const POST = makeCreateHandler({
 
     const contactId = str(b.contactId);
     // An explicit `data` blob wins; otherwise a contactId prefills; otherwise blank.
-    const data = b.data
+    const base = b.data
       ? hydrateFactFind(b.data)
       : contactId
         ? await prefillFromContact(contactId)
         : emptyFactFind();
+    // When the serviceability calculator's inputs are supplied (and no explicit
+    // blob), overlay the calculator's financials onto that base via the existing
+    // category-scoped merge — contact identity AND the calc's numbers both land.
+    const data =
+      !b.data && b.capacityInputs && typeof b.capacityInputs === "object"
+        ? capacityInputsToFactFind(b.capacityInputs as CapacityInputs, base).data
+        : base;
     const status =
       typeof b.status === "string" && (FACT_FIND_STATUSES as readonly string[]).includes(b.status)
         ? b.status
