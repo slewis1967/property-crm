@@ -20,6 +20,7 @@ export interface RevenueDeal {
   id: string;
   lot: string;
   purchaser: string | null;
+  supplier?: string | null;
   remuneration: number;
   referrer_fee: number;
   referrer_note: string | null;
@@ -36,8 +37,29 @@ export const DEAL_STAGES: { value: DealStage; label: string; className: string }
   { value: "lost", label: "Lost", className: "bg-rose-100 text-rose-700" },
 ];
 
-export const REVENUE_COLUMNS =
+/** Base columns — present before the supplier migration. Selected as a fallback. */
+export const REVENUE_COLUMNS_BASE =
   "id,lot,purchaser,remuneration,referrer_fee,referrer_note,payments,stage,notes,created_at,updated_at";
+
+/** Full column list including the supplier field. */
+export const REVENUE_COLUMNS = REVENUE_COLUMNS_BASE + ",supplier";
+
+/** True when the error is a missing *column* — i.e. the supplier migration
+ *  (20260714_revenue_supplier.sql) hasn't been applied yet. */
+export function revenueColumnsMissing(error: unknown): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  if (e.code === "42703" || e.code === "PGRST204") return true;
+  return typeof e.message === "string" && /column .*does not exist/i.test(e.message);
+}
+
+/** Case-insensitive match of a deal against a free-text query (supplier / lot / purchaser). */
+export function dealMatches(d: RevenueDeal, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return [d.supplier, d.lot, d.purchaser, d.referrer_note, d.notes]
+    .some((f) => (f ?? "").toLowerCase().includes(q));
+}
 
 export const REVENUE_MIGRATION_HINT =
   "Revenue tracker storage isn't set up yet — run migrations/20260714_revenue_deals.sql in the Supabase SQL editor.";

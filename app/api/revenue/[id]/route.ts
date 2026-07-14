@@ -3,9 +3,11 @@ import { supabase } from "../../../../utils/supabase";
 import { requireAuth } from "../../../../utils/cf-access";
 import {
   REVENUE_COLUMNS,
+  REVENUE_COLUMNS_BASE,
   REVENUE_MIGRATION_HINT,
   isDealStage,
   normalisePayments,
+  revenueColumnsMissing,
   revenueErrMessage,
   revenueTableMissing,
 } from "../../../../utils/revenue";
@@ -30,6 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (typeof body.lot === "string" && body.lot.trim()) patch.lot = body.lot.trim();
   if ("purchaser" in body) patch.purchaser = typeof body.purchaser === "string" && body.purchaser.trim() ? body.purchaser.trim() : null;
+  if ("supplier" in body) patch.supplier = typeof body.supplier === "string" && body.supplier.trim() ? body.supplier.trim() : null;
   if ("remuneration" in body) patch.remuneration = num(body.remuneration);
   if ("referrer_fee" in body) patch.referrer_fee = num(body.referrer_fee);
   if ("referrer_note" in body) patch.referrer_note = typeof body.referrer_note === "string" && body.referrer_note.trim() ? body.referrer_note.trim() : null;
@@ -42,7 +45,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   try {
-    const { data, error } = await supabase.from("revenue_deals").update(patch).eq("id", id).select(REVENUE_COLUMNS).single();
+    const primary = await supabase.from("revenue_deals").update(patch).eq("id", id).select(REVENUE_COLUMNS).single();
+    let data: unknown = primary.data;
+    let error = primary.error;
+    if (error && revenueColumnsMissing(error)) {
+      // supplier column not migrated — retry without it
+      const { supplier: _omit, ...rest } = patch;
+      void _omit;
+      const fb = await supabase.from("revenue_deals").update(rest).eq("id", id).select(REVENUE_COLUMNS_BASE).single();
+      data = fb.data;
+      error = fb.error;
+    }
     if (error) {
       if (revenueTableMissing(error)) {
         return NextResponse.json({ ok: false, tableMissing: true, error: REVENUE_MIGRATION_HINT }, { status: 503 });
