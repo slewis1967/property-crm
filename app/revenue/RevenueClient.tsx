@@ -62,16 +62,19 @@ export default function RevenueClient() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [suppliers, setSuppliers] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/revenue", { cache: "no-store" });
-        const json = await res.json();
-        if (!cancelled && json.ok) {
-          setDeals(json.deals ?? []);
-          setTableMissing(Boolean(json.tableMissing));
+        const [r1, r2] = await Promise.all([
+          fetch("/api/revenue", { cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/revenue/suppliers", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ ok: false })),
+        ]);
+        if (!cancelled) {
+          if (r1.ok) { setDeals(r1.deals ?? []); setTableMissing(Boolean(r1.tableMissing)); }
+          if (r2.ok) setSuppliers(r2.suppliers ?? []);
         }
       } catch { /* leave empty */ }
       if (!cancelled) setLoading(false);
@@ -314,7 +317,16 @@ export default function RevenueClient() {
               </label>
               <label className="text-sm">
                 <span className="block font-semibold text-gray-700 mb-1">Supplier <span className="font-normal text-gray-400">(builder / developer)</span></span>
-                <input value={editor.supplier} onChange={(e) => setEditor({ ...editor, supplier: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="e.g. Natalia Rise / builder name" />
+                <input
+                  value={editor.supplier}
+                  onChange={(e) => setEditor({ ...editor, supplier: e.target.value })}
+                  list="supplier-options"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  placeholder="Select or type a builder / developer"
+                />
+                <datalist id="supplier-options">
+                  {suppliers.map((s) => <option key={s} value={s} />)}
+                </datalist>
               </label>
               <label className="text-sm">
                 <span className="block font-semibold text-gray-700 mb-1">Purchaser</span>
