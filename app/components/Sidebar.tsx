@@ -31,6 +31,7 @@ const GROUPS: Group[] = [
     icon: "🧭",
     items: [
       { href: "/", icon: "🎯", label: "War Room" },
+      { href: "/revenue", icon: "💰", label: "Revenue" },
       { href: "/advisor", icon: "🎩", label: "Advisor" },
       { href: "/brain", icon: "🧠", label: "Brain" },
       { href: "/search", icon: "🔍", label: "Smart Search" },
