@@ -127,6 +127,58 @@ export function cashflowByMonth(deals: RevenueDeal[]): MonthBucket[] {
   });
 }
 
+// ── Forecast (net cash by month) ────────────────────────────────────────────
+
+export interface ForecastMonth {
+  month: string;         // "YYYY-MM" or "unscheduled"
+  gross: number;         // cash in that month
+  referral: number;      // referral cost apportioned to that month
+  net: number;           // gross − referral
+  paid: number;          // net already banked in that month
+  cumulativeNet: number; // running net total
+}
+
+/**
+ * Net cashflow by month for the forecast document. Referral cost is apportioned
+ * across a deal's instalments in proportion to amount, using the ratio that
+ * makes each deal's scheduled net sum exactly to its net fee — so the monthly
+ * totals reconcile to the net pipeline even where instalments don't equal the
+ * remuneration. Deals with no scheduled payments contribute their whole net to
+ * an "unscheduled" bucket (shown last). "Lost" deals are excluded.
+ */
+export function forecastByMonth(deals: RevenueDeal[]): ForecastMonth[] {
+  type Acc = Omit<ForecastMonth, "cumulativeNet">;
+  const map = new Map<string, Acc>();
+  const bump = (key: string, gross: number, referral: number, net: number, paid: number) => {
+    const b = map.get(key) ?? { month: key, gross: 0, referral: 0, net: 0, paid: 0 };
+    b.gross += gross; b.referral += referral; b.net += net; b.paid += paid;
+    map.set(key, b);
+  };
+  for (const d of deals) {
+    if (d.stage === "lost") continue;
+    const total = paymentsTotal(d);
+    const net = dealNet(d);
+    if (total > 0) {
+      const netRate = net / total; // payment nets then sum to dealNet
+      for (const p of d.payments ?? []) {
+        const key = p.date ? p.date.slice(0, 7) : "unscheduled";
+        const g = num(p.amount);
+        const n = g * netRate;
+        bump(key, g, g - n, n, p.paid ? n : 0);
+      }
+    } else {
+      bump("unscheduled", num(d.remuneration), num(d.referrer_fee), net, 0);
+    }
+  }
+  const rows = [...map.values()].sort((a, b) => {
+    if (a.month === "unscheduled") return 1;
+    if (b.month === "unscheduled") return -1;
+    return a.month < b.month ? -1 : 1;
+  });
+  let cum = 0;
+  return rows.map((r) => { cum += r.net; return { ...r, cumulativeNet: cum }; });
+}
+
 // ── Formatting ──────────────────────────────────────────────────────────────
 
 export function fmtMoney(n: number): string {
