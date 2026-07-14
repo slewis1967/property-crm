@@ -179,6 +179,85 @@ export function forecastByMonth(deals: RevenueDeal[]): ForecastMonth[] {
   return rows.map((r) => { cum += r.net; return { ...r, cumulativeNet: cum }; });
 }
 
+// ── Operating costs + net-profit forecast ──────────────────────────────────
+
+export interface OperatingCost {
+  id: string;
+  label: string;
+  monthly_amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const REVENUE_COST_COLUMNS = "id,label,monthly_amount,created_at,updated_at";
+
+export const costsMonthlyTotal = (costs: OperatingCost[]): number =>
+  costs.reduce((s, c) => s + num(c.monthly_amount), 0);
+
+const monthIndex = (key: string): number => {
+  const [y, m] = key.split("-").map(Number);
+  return y * 12 + (m - 1);
+};
+const indexToKey = (idx: number): string => `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+
+/** Inclusive list of "YYYY-MM" from start to end (capped at 120 months). */
+export function monthsBetween(start: string, end: string): string[] {
+  const a = monthIndex(start), b = monthIndex(end);
+  if (b < a) return [start];
+  const out: string[] = [];
+  for (let i = a; i <= b && out.length < 120; i++) out.push(indexToKey(i));
+  return out;
+}
+
+export interface ProfitMonth {
+  month: string;
+  revenue: number;          // net revenue landing that month
+  cost: number;             // operating cost that month
+  profit: number;           // revenue − cost
+  cumulativeProfit: number;
+  paidRevenue: number;      // net revenue already banked that month
+}
+
+export interface ProfitForecast {
+  months: ProfitMonth[];
+  totalRevenue: number;     // = net pipeline
+  totalCost: number;        // monthlyCost × months in the scheduled window
+  netProfit: number;
+  monthlyCost: number;
+  monthsCount: number;
+}
+
+/**
+ * Net-profit forecast: lays deal net-revenue onto a continuous monthly timeline
+ * (first → last scheduled instalment) and subtracts a flat monthly operating
+ * cost from every month in that window. Unscheduled (dateless) revenue is added
+ * as a trailing bucket carrying no operating cost.
+ */
+export function profitForecast(deals: RevenueDeal[], monthlyCost: number): ProfitForecast {
+  const rev = forecastByMonth(deals);
+  const dated = rev.filter((r) => r.month !== "unscheduled");
+  const revMap = new Map(dated.map((r) => [r.month, r]));
+  const unscheduled = rev.find((r) => r.month === "unscheduled");
+  const timeline = dated.length ? monthsBetween(dated[0].month, dated[dated.length - 1].month) : [];
+
+  let cum = 0;
+  const months: ProfitMonth[] = timeline.map((m) => {
+    const r = revMap.get(m);
+    const revenue = r?.net ?? 0;
+    const profit = revenue - monthlyCost;
+    cum += profit;
+    return { month: m, revenue, cost: monthlyCost, profit, cumulativeProfit: cum, paidRevenue: r?.paid ?? 0 };
+  });
+  if (unscheduled && unscheduled.net) {
+    cum += unscheduled.net;
+    months.push({ month: "unscheduled", revenue: unscheduled.net, cost: 0, profit: unscheduled.net, cumulativeProfit: cum, paidRevenue: 0 });
+  }
+
+  const totalRevenue = rev.reduce((s, r) => s + r.net, 0);
+  const totalCost = monthlyCost * timeline.length;
+  return { months, totalRevenue, totalCost, netProfit: totalRevenue - totalCost, monthlyCost, monthsCount: timeline.length };
+}
+
 // ── Formatting ──────────────────────────────────────────────────────────────
 
 export function fmtMoney(n: number): string {
