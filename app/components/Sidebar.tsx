@@ -20,7 +20,7 @@ import { useState } from "react";
 
 type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders";
 type Item = { href: string; icon: string; label: string; badge?: BadgeKey };
-type Group = { key: string; label: string; items: Item[] };
+type Group = { key: string; label: string; icon: string; items: Item[] };
 
 export type SidebarCounts = { pendingReview: number; draftBuilders: number; dealPackets: number };
 
@@ -28,6 +28,7 @@ const GROUPS: Group[] = [
   {
     key: "command",
     label: "Command",
+    icon: "🧭",
     items: [
       { href: "/", icon: "🎯", label: "War Room" },
       { href: "/advisor", icon: "🎩", label: "Advisor" },
@@ -42,6 +43,7 @@ const GROUPS: Group[] = [
   {
     key: "crm",
     label: "CRM",
+    icon: "💼",
     items: [
       { href: "/opportunities", icon: "🗂️", label: "Opportunities" },
       { href: "/deal-analyser", icon: "📑", label: "Deal Analyser", badge: "dealPackets" },
@@ -62,6 +64,7 @@ const GROUPS: Group[] = [
   {
     key: "stock",
     label: "Stock",
+    icon: "🏠",
     items: [
       { href: "/properties", icon: "🏘️", label: "Aggregator Feed" },
       { href: "/aggregator/review", icon: "🔍", label: "Review Queue", badge: "pendingReview" },
@@ -73,11 +76,13 @@ const GROUPS: Group[] = [
   {
     key: "system",
     label: "System",
+    icon: "⚙️",
     items: [{ href: "/settings", icon: "⚙️", label: "Settings" }],
   },
   {
     key: "elvis",
     label: "Elvis",
+    icon: "🤖",
     items: [
       { href: "/approvals", icon: "✅", label: "Approval Queue" },
       { href: "/social", icon: "📱", label: "Social History" },
@@ -157,14 +162,19 @@ export default function Sidebar({ counts }: { counts: SidebarCounts }) {
                 type="button"
                 onClick={() => setOpen(isOpen ? null : g.key)}
                 aria-expanded={isOpen}
-                className="w-full flex items-center gap-2 px-3 pt-3 pb-1 text-xs text-gray-500 uppercase font-semibold hover:text-gray-300 transition"
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 mt-1.5 rounded-lg text-sm font-bold tracking-wide transition ${
+                  isOpen
+                    ? "bg-gray-800 text-white shadow-sm ring-1 ring-white/10"
+                    : "bg-gray-800/40 text-gray-100 hover:bg-gray-800 hover:text-white"
+                }`}
               >
-                <span className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
-                <span className="flex-1 text-left">{g.label}</span>
+                <span className="text-base leading-none">{g.icon}</span>
+                <span className="flex-1 text-left uppercase">{g.label}</span>
+                <span className={`text-xs text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
               </button>
 
               {isOpen && (
-                <div className="space-y-1">
+                <div className="mt-1 space-y-0.5 pl-2">
                   {g.items.map((it) => {
                     const isActive = active === it.href;
                     const count = badgeCount(it.badge);
