@@ -56,10 +56,7 @@ const GROUPS: Group[] = [
       { href: "/appointments", icon: "📅", label: "Appointments" },
       { href: "/inbox", icon: "✉️", label: "Inbox" },
       { href: "/broadcast", icon: "📣", label: "Broadcast" },
-      { href: "/conversations", icon: "💬", label: "Conversations (archive)" },
-      { href: "/notes", icon: "📝", label: "Notes (archive)" },
       { href: "/tasks", icon: "📌", label: "Tasks" },
-      { href: "/media", icon: "🗃️", label: "Media Library" },
     ],
   },
   {
@@ -88,6 +85,16 @@ const GROUPS: Group[] = [
       { href: "/approvals", icon: "✅", label: "Approval Queue" },
       { href: "/social", icon: "📱", label: "Social History" },
       { href: "/sequences", icon: "📨", label: "Sequences" },
+    ],
+  },
+  {
+    key: "archive",
+    label: "Archive",
+    icon: "🗄️",
+    items: [
+      { href: "/conversations", icon: "💬", label: "Conversations" },
+      { href: "/notes", icon: "📝", label: "Notes" },
+      { href: "/media", icon: "🗃️", label: "Media Library" },
     ],
   },
 ];
