@@ -4,7 +4,7 @@ import { supabase } from "../utils/supabase";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 import PublicRouteGate from "./components/PublicRouteGate";
-import Link from "next/link";
+import Sidebar from "./components/Sidebar";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -92,140 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell
-          sidebar={<>
-          <div className="p-6 border-b border-gray-800 hidden lg:block">
-            <div className="text-xl font-bold text-white">NextKey CRM</div>
-            <div className="text-xs text-gray-400 mt-1">Powered by Elvis AI</div>
-          </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-2 pb-1">Command</p>
-            <Link href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🎯</span> War Room
-            </Link>
-            <a href="/advisor" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🎩</span> Advisor
-            </a>
-            <a href="/brain" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🧠</span> Brain
-            </a>
-            <a href="/search" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔍</span> Smart Search
-            </a>
-            <a href="/analytics" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📊</span> Analytics
-            </a>
-            <a href="/activity" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>⚡</span> Activity Feed
-            </a>
-            <a href="/pia" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📊</span> PIA Modeller
-            </a>
-            <a href="/feasibility" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗺️</span> Planning Feasibility
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
-            <Link href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗂️</span> Opportunities
-            </Link>
-            <Link href="/deal-analyser" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📑</span>
-              <span className="flex-1">Deal Analyser</span>
-              {counts.dealPackets > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold" title={`${counts.dealPackets} packet(s) awaiting reports`}>
-                  {counts.dealPackets}
-                </span>
-              )}
-            </Link>
-            <a href="/leads" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔥</span> Leads Pipeline
-            </a>
-            <Link href="/fact-find" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📋</span> Fact Find
-            </Link>
-            <Link href="/needs-analysis" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🧭</span> Needs Analysis
-            </Link>
-            <Link href="/credit-authorisation" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔏</span> Credit Authorisation
-            </Link>
-            <Link href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>👥</span> Contacts
-            </Link>
-            <a href="/appointments" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📅</span> Appointments
-            </a>
-            <a href="/inbox" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>✉️</span> Inbox
-            </a>
-            <a href="/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📣</span> Broadcast
-            </a>
-            <a href="/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>💬</span> Conversations (archive)
-            </a>
-            <a href="/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📝</span> Notes (archive)
-            </a>
-            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📌</span> Tasks
-            </a>
-            <a href="/media" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗃️</span> Media Library
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Stock</p>
-            <Link href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🏘️</span> Aggregator Feed
-            </Link>
-            <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔍</span>
-              <span className="flex-1">Review Queue</span>
-              {counts.pendingReview > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold">
-                  {counts.pendingReview}
-                </span>
-              )}
-            </a>
-            <a href="/aggregator/runs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📜</span> Ingestion Runs
-            </a>
-            <a href="/aggregator/builders" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🏗️</span>
-              <span className="flex-1">Builders</span>
-              {counts.draftBuilders > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold" title={`${counts.draftBuilders} draft(s) blocking ingestion`}>
-                  {counts.draftBuilders}
-                </span>
-              )}
-            </a>
-            <a href="/suburbs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗺️</span> Suburb Intelligence
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">System</p>
-            <a href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>⚙️</span> Settings
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Elvis</p>
-            <a href="/approvals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>✅</span> Approval Queue
-            </a>
-            <a href="/social" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📱</span> Social History
-            </a>
-            <a href="/sequences" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📨</span> Sequences
-            </a>
-
-          </nav>
-          <div className="p-4 border-t border-gray-800">
-            <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
-          </div>
-          </>}
-        >
+        <AppShell sidebar={<Sidebar counts={counts} />}>
           {children}
         </AppShell>
         <PublicRouteGate>
