@@ -151,7 +151,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 |-------|-------------|
 | `/opportunities` | Opportunities Kanban — live leads + pipelines from the **NEXUS API** (`/api/leads`, `/api/pipelines`), plus a read-only `ghl_archive_opportunities` snapshot below the board ("GHL" = legacy naming) |
 | `/opportunities/[id]` | Opportunity detail |
-| `/leads` | Inbound leads pipeline |
+| `/leads` | **Lead Intake** — the inbound/AI-triage inbox over Supabase `property_leads`. One flow with `/opportunities`: a **Promote** action (`POST /api/leads/promote`) creates a NEXUS opportunity from the lead and stamps `promoted_at`/`promoted_opportunity_id` so it drops off the inbox. `/opportunities` (NEXUS DuckDB) is the working pipeline. `property_leads` is intake+triage; the NEXUS pipeline is the deal board — deliberately two layers, not merged. (`migrations/20260714_property_leads_promote.sql`; promote falls back gracefully before it's applied.) |
 | `/fact-find` | Borrower Fact Find — list of fact finds |
 | `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
 | `/contacts` | Contacts — Supabase `contacts` (live) merged with the `ghl_archive_contacts` snapshot (client-side tag filter dropdown on `ContactsClient.tsx`) |
