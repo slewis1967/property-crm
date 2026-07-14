@@ -3,9 +3,11 @@ import { supabase } from "../../../utils/supabase";
 import { requireAuth, userEmailFromRequest, isUnauthenticated } from "../../../utils/cf-access";
 import {
   REVENUE_COLUMNS,
+  REVENUE_COLUMNS_BASE,
   REVENUE_MIGRATION_HINT,
   isDealStage,
   normalisePayments,
+  revenueColumnsMissing,
   revenueErrMessage,
   revenueTableMissing,
 } from "../../../utils/revenue";
@@ -19,18 +21,29 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "Unauthenticated" }, { status: 401 });
   }
   try {
-    const { data, error } = await supabase
+    const primary = await supabase
       .from("revenue_deals")
       .select(REVENUE_COLUMNS)
       .order("created_at", { ascending: false })
       .limit(500);
+    let rows: unknown[] | null = primary.data as unknown[] | null;
+    let error = primary.error;
+    if (error && revenueColumnsMissing(error)) {
+      const fb = await supabase
+        .from("revenue_deals")
+        .select(REVENUE_COLUMNS_BASE)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      rows = fb.data as unknown[] | null;
+      error = fb.error;
+    }
     if (error) {
       if (revenueTableMissing(error)) {
         return NextResponse.json({ ok: true, deals: [], tableMissing: true, hint: REVENUE_MIGRATION_HINT });
       }
       throw error;
     }
-    return NextResponse.json({ ok: true, deals: data ?? [] });
+    return NextResponse.json({ ok: true, deals: rows ?? [] });
   } catch (e) {
     return NextResponse.json({ ok: false, error: revenueErrMessage(e, "Could not load deals") }, { status: 500 });
   }
@@ -53,7 +66,8 @@ export async function POST(req: Request) {
   const lot = typeof body.lot === "string" ? body.lot.trim() : "";
   if (!lot) return NextResponse.json({ ok: false, error: "A lot / address is required." }, { status: 400 });
 
-  const row = {
+  const supplier = typeof body.supplier === "string" && body.supplier.trim() ? body.supplier.trim() : null;
+  const base = {
     lot,
     purchaser: typeof body.purchaser === "string" && body.purchaser.trim() ? body.purchaser.trim() : null,
     remuneration: num(body.remuneration),
@@ -65,7 +79,15 @@ export async function POST(req: Request) {
   };
 
   try {
-    const { data, error } = await supabase.from("revenue_deals").insert(row).select(REVENUE_COLUMNS).single();
+    const primary = await supabase.from("revenue_deals").insert({ ...base, supplier }).select(REVENUE_COLUMNS).single();
+    let data: unknown = primary.data;
+    let error = primary.error;
+    if (error && revenueColumnsMissing(error)) {
+      // supplier column not migrated yet — insert without it
+      const fb = await supabase.from("revenue_deals").insert(base).select(REVENUE_COLUMNS_BASE).single();
+      data = fb.data;
+      error = fb.error;
+    }
     if (error) {
       if (revenueTableMissing(error)) {
         return NextResponse.json({ ok: false, tableMissing: true, error: REVENUE_MIGRATION_HINT }, { status: 503 });

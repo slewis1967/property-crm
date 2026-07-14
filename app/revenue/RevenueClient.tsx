@@ -6,6 +6,7 @@ import {
   DEAL_STAGES,
   cashflowByMonth,
   dealBanked,
+  dealMatches,
   dealNet,
   fmtMonth,
   fmtMoney,
@@ -23,6 +24,7 @@ type Editor = {
   id: string | null; // null = new
   lot: string;
   purchaser: string;
+  supplier: string;
   remuneration: string;
   referrer_fee: string;
   referrer_note: string;
@@ -32,13 +34,13 @@ type Editor = {
 };
 
 const emptyEditor = (): Editor => ({
-  id: null, lot: "", purchaser: "", remuneration: "", referrer_fee: "", referrer_note: "",
+  id: null, lot: "", purchaser: "", supplier: "", remuneration: "", referrer_fee: "", referrer_note: "",
   stage: "active", notes: "", payments: [{ label: "1st", date: "", amount: "", paid: false }],
 });
 
 function toEditor(d: RevenueDeal): Editor {
   return {
-    id: d.id, lot: d.lot, purchaser: d.purchaser ?? "",
+    id: d.id, lot: d.lot, purchaser: d.purchaser ?? "", supplier: d.supplier ?? "",
     remuneration: String(d.remuneration ?? ""), referrer_fee: String(d.referrer_fee ?? ""),
     referrer_note: d.referrer_note ?? "", stage: d.stage, notes: d.notes ?? "",
     payments: (d.payments ?? []).map((p) => ({ label: p.label, date: p.date ?? "", amount: String(p.amount ?? ""), paid: p.paid })),
@@ -59,6 +61,7 @@ export default function RevenueClient() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +108,7 @@ export default function RevenueClient() {
     const payload = {
       lot: editor.lot.trim(),
       purchaser: editor.purchaser.trim(),
+      supplier: editor.supplier.trim(),
       remuneration: nnum(editor.remuneration),
       referrer_fee: nnum(editor.referrer_fee),
       referrer_note: editor.referrer_note.trim(),
@@ -137,7 +141,7 @@ export default function RevenueClient() {
     } catch { setDeals(prev); }
   }
 
-  const activeDeals = deals.filter((d) => d.stage !== "lost");
+  const activeDeals = deals.filter((d) => d.stage !== "lost" && dealMatches(d, query));
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -205,11 +209,26 @@ export default function RevenueClient() {
 
       {/* Deals table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
+          <span className="text-gray-400 text-sm">🔍</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by supplier, lot or purchaser…"
+            className="flex-1 text-sm bg-transparent focus:outline-none"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} className="text-xs text-gray-400 hover:text-gray-700">
+              {activeDeals.length} match{activeDeals.length === 1 ? "" : "es"} · clear ✕
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wide text-gray-500 border-b border-gray-200">
                 <th className="px-4 py-2.5 font-semibold">Lot / address</th>
+                <th className="px-3 py-2.5 font-semibold">Supplier</th>
                 <th className="px-3 py-2.5 font-semibold">Purchaser</th>
                 <th className="px-3 py-2.5 font-semibold text-right">Remun.</th>
                 <th className="px-3 py-2.5 font-semibold text-right">Referrer</th>
@@ -221,9 +240,9 @@ export default function RevenueClient() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Loading…</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">Loading…</td></tr>
               ) : activeDeals.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-500">No deals yet — add one to get started.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-500">{query ? `No deals match “${query}”.` : "No deals yet — add one to get started."}</td></tr>
               ) : (
                 activeDeals.map((d) => {
                   const next = nextPayment(d);
@@ -234,6 +253,7 @@ export default function RevenueClient() {
                         <div className="font-medium text-gray-900">{d.lot}</div>
                         {d.notes && <div className="text-[11px] text-gray-400 mt-0.5">{d.notes}</div>}
                       </td>
+                      <td className="px-3 py-3 text-gray-700">{d.supplier || "—"}</td>
                       <td className="px-3 py-3 text-gray-700">{d.purchaser || "—"}</td>
                       <td className="px-3 py-3 text-right tabular-nums text-gray-700">{fmtMoney(d.remuneration)}</td>
                       <td className="px-3 py-3 text-right tabular-nums text-gray-500">
@@ -291,6 +311,10 @@ export default function RevenueClient() {
               <label className="col-span-2 text-sm">
                 <span className="block font-semibold text-gray-700 mb-1">Lot / address</span>
                 <input value={editor.lot} onChange={(e) => setEditor({ ...editor, lot: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="Lot 16 Commercial Townsville" />
+              </label>
+              <label className="text-sm">
+                <span className="block font-semibold text-gray-700 mb-1">Supplier <span className="font-normal text-gray-400">(builder / developer)</span></span>
+                <input value={editor.supplier} onChange={(e) => setEditor({ ...editor, supplier: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="e.g. Natalia Rise / builder name" />
               </label>
               <label className="text-sm">
                 <span className="block font-semibold text-gray-700 mb-1">Purchaser</span>
