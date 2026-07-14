@@ -351,8 +351,9 @@ export default function OpportunityDetail({
   return (
     <div className="flex flex-col h-full -mx-8 -my-8 bg-gray-50">
 
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+      {/* Top bar — breadcrumb on the first row, actions wrap onto a second row
+          so the buttons get full width instead of squashing beside the name. */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex flex-col gap-2.5 flex-shrink-0">
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => router.push(backHref)}
@@ -364,7 +365,7 @@ export default function OpportunityDetail({
           <span className="text-gray-300">/</span>
           <span className="text-gray-700 font-medium">{name}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <button
             onClick={() => setShowEdit(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
