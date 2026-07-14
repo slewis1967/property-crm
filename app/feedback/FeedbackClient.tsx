@@ -5,14 +5,23 @@ import {
   FEEDBACK_TYPES,
   FEEDBACK_PRIORITIES,
   FEEDBACK_STATUSES,
+  AGENT_STAGES,
   type FeedbackItem,
   type FeedbackType,
   type FeedbackPriority,
   type FeedbackStatus,
+  type FeedbackAgentStage,
+  type FeedbackSignoff,
 } from "../../utils/feedback";
 
 const statusMeta = (s: FeedbackStatus) => FEEDBACK_STATUSES.find((x) => x.value === s) ?? FEEDBACK_STATUSES[0];
 const typeMeta = (t: FeedbackType) => FEEDBACK_TYPES.find((x) => x.value === t) ?? FEEDBACK_TYPES[2];
+
+const SEVERITY_CHIP: Record<FeedbackPriority, string> = {
+  high: "bg-rose-100 text-rose-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-gray-100 text-gray-600",
+};
 
 function fmtDate(iso: string): string {
   try {
@@ -116,8 +125,31 @@ export default function FeedbackClient({ submitter }: { submitter: string }) {
     }
   }
 
+  async function signoff(id: string, decision: FeedbackSignoff) {
+    const prev = items;
+    setItems((list) => list.map((i) => (i.id === id ? { ...i, signoff: decision } : i)));
+    try {
+      const res = await fetch(`/api/feedback/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signoff: decision }),
+      });
+      const json = await res.json();
+      if (json.ok && json.item) setItems((list) => list.map((i) => (i.id === id ? json.item : i)));
+      else setItems(prev);
+    } catch {
+      setItems(prev);
+    }
+  }
+
+  const CLOSED_STAGES: FeedbackAgentStage[] = ["shipped", "done", "skipped"];
   const visible = filter === "open"
-    ? items.filter((i) => i.status !== "done" && i.status !== "wont_do")
+    ? items.filter(
+        (i) =>
+          i.status !== "done" &&
+          i.status !== "wont_do" &&
+          !(i.agent_stage && CLOSED_STAGES.includes(i.agent_stage)),
+      )
     : items;
 
   const activeType = typeMeta(type);
@@ -128,6 +160,7 @@ export default function FeedbackClient({ submitter }: { submitter: string }) {
         <h1 className="text-2xl font-bold text-gray-900">Feedback &amp; issues</h1>
         <p className="text-gray-600 mt-1 text-sm">
           Spotted a bug, or got an idea to make the CRM better? Tell us here — it takes about 30 seconds.
+          Genuine bugs get triaged and fixed automatically; ideas get researched and a plan comes back for sign-off.
         </p>
       </header>
 
@@ -269,6 +302,9 @@ export default function FeedbackClient({ submitter }: { submitter: string }) {
               {visible.map((i) => {
                 const sm = statusMeta(i.status);
                 const tm = typeMeta(i.type);
+                const stage = i.agent_stage ? AGENT_STAGES[i.agent_stage] : null;
+                const kindMeta = i.ai_kind ? typeMeta(i.ai_kind) : null;
+                const needsSignoff = i.agent_stage === "awaiting_signoff" && !i.signoff;
                 return (
                   <li key={i.id} className="rounded-lg border border-gray-200 bg-white p-3.5 shadow-sm">
                     <div className="flex items-start gap-3">
@@ -276,18 +312,97 @@ export default function FeedbackClient({ submitter }: { submitter: string }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="font-medium text-gray-900 text-sm">{i.title}</p>
-                          <select
-                            value={i.status}
-                            onChange={(e) => updateStatus(i.id, e.target.value as FeedbackStatus)}
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold border-0 cursor-pointer ${sm.className}`}
-                            title="Change status"
-                          >
-                            {FEEDBACK_STATUSES.map((s) => (
-                              <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                          </select>
+                          {stage ? (
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${stage.className}`}
+                              title={stage.hint}
+                            >
+                              {stage.label}
+                            </span>
+                          ) : (
+                            <select
+                              value={i.status}
+                              onChange={(e) => updateStatus(i.id, e.target.value as FeedbackStatus)}
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold border-0 cursor-pointer ${sm.className}`}
+                              title="Change status"
+                            >
+                              {FEEDBACK_STATUSES.map((s) => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                              ))}
+                            </select>
+                          )}
                         </div>
-                        {i.details && <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{i.details}</p>}
+
+                        {/* AI triage chips */}
+                        {(kindMeta || i.ai_severity || i.ai_risk_class) && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            {kindMeta && (
+                              <span className="rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-[10px] font-medium">
+                                {kindMeta.emoji} {kindMeta.value}
+                              </span>
+                            )}
+                            {i.ai_severity && (
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${SEVERITY_CHIP[i.ai_severity]}`}>
+                                {i.ai_severity} severity
+                              </span>
+                            )}
+                            {i.ai_risk_class && (
+                              <span className="rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-semibold" title="Touches auth/access/delete/payments/sending — always held for your review, never auto-shipped.">
+                                🔒 sensitive — held for review
+                              </span>
+                            )}
+                            {typeof i.ai_confidence === "number" && (
+                              <span className="text-[10px] text-gray-400">triage {Math.round(i.ai_confidence * 100)}%</span>
+                            )}
+                          </div>
+                        )}
+
+                        {i.ai_summary && <p className="text-xs text-gray-700 mt-1.5">{i.ai_summary}</p>}
+                        {i.details && <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap">{i.details}</p>}
+                        {i.ai_analysis && (
+                          <p className="text-xs text-gray-500 mt-1.5"><span className="font-semibold text-gray-600">Agent:</span> {i.ai_analysis}</p>
+                        )}
+                        {i.agent_error && <p className="text-xs text-rose-600 mt-1.5">⚠ {i.agent_error}</p>}
+
+                        {/* Feature plan (collapsible) */}
+                        {i.plan && (
+                          <details className="mt-2">
+                            <summary className="text-xs font-semibold text-teal-700 cursor-pointer">View proposed plan</summary>
+                            <pre className="mt-1 text-[11px] leading-relaxed text-gray-700 whitespace-pre-wrap bg-gray-50 border border-gray-200 rounded-lg p-2.5 font-sans">{i.plan}</pre>
+                          </details>
+                        )}
+
+                        {/* PR link */}
+                        {i.pr_url && (
+                          <a href={i.pr_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-teal-700 underline mt-1.5">
+                            View pull request →
+                          </a>
+                        )}
+
+                        {/* Sign-off */}
+                        {needsSignoff && (
+                          <div className="flex gap-2 mt-2.5">
+                            <button
+                              onClick={() => signoff(i.id, "approved")}
+                              className="rounded-lg bg-green-600 text-white text-xs font-semibold px-3 py-1.5 hover:bg-green-700 transition"
+                            >
+                              ✓ Approve
+                            </button>
+                            <button
+                              onClick={() => signoff(i.id, "rejected")}
+                              className="rounded-lg bg-white border border-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 hover:bg-gray-50 transition"
+                            >
+                              ✕ Reject
+                            </button>
+                          </div>
+                        )}
+                        {i.signoff && (
+                          <p className={`text-xs mt-1.5 font-medium ${i.signoff === "approved" ? "text-green-700" : "text-rose-600"}`}>
+                            {i.signoff === "approved" ? "✓ Approved" : "✕ Rejected"}
+                            {i.signoff_by ? ` by ${i.signoff_by}` : ""}
+                          </p>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-gray-400">
                           {i.priority === "high" && <span className="text-rose-500 font-semibold">High priority</span>}
                           {i.area && <span className="font-mono">{i.area}</span>}
