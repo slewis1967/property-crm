@@ -34,6 +34,7 @@ export type Lead = {
   created_at: string | null;
   pipeline_id: string | null;
   tags: string | null;
+  primary_contact_id: string | null;
   _stage?: string;
 };
 
@@ -175,6 +176,24 @@ export default function KanbanBoard({
   const allTags = Array.from(new Set(leads.flatMap(l => parseTags(l.tags))));
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
+  // "No response" cohort — contacts with 3+ unanswered SMS attempts (see
+  // /api/opportunities/no-response). Fetched once on mount so the tab badge
+  // shows a count without needing to click into it.
+  const [noResponseIds, setNoResponseIds] = useState<Set<string>>(new Set());
+  const [showNoResponse, setShowNoResponse] = useState(false);
+  const [reengageBusy, setReengageBusy] = useState(false);
+  const [reengageError, setReengageError] = useState<string | null>(null);
+  const [reengageResult, setReengageResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/opportunities/no-response", { cache: "no-store" })
+      .then(res => res.ok ? res.json() : { contacts: [] })
+      .then((data: { contacts?: { contact_id: string }[] }) => {
+        setNoResponseIds(new Set((data.contacts || []).map(c => c.contact_id)));
+      })
+      .catch(() => { /* best-effort — tab just shows no count */ });
+  }, []);
+
   // Drag
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -200,6 +219,32 @@ export default function KanbanBoard({
   };
 
   const clearSelection = () => setSelected(new Set());
+
+  const sendReengagement = async () => {
+    const contactIds = Array.from(selected)
+      .map(id => leads.find(l => l.lead_id === id)?.primary_contact_id)
+      .filter((id): id is string => !!id);
+    if (contactIds.length === 0) return;
+    if (!window.confirm(`Send the re-engagement email to ${contactIds.length} contact(s)?`)) return;
+    setReengageBusy(true);
+    setReengageError(null);
+    setReengageResult(null);
+    try {
+      const res = await fetch("/api/opportunities/reengage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_ids: contactIds }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to send");
+      setReengageResult(`Queued for ${data.enrolled_count} contact(s) — sending within ~${data.eta_minutes} min.`);
+      clearSelection();
+    } catch (e) {
+      setReengageError(errMessage(e, "Failed to send re-engagement email"));
+    } finally {
+      setReengageBusy(false);
+    }
+  };
 
   // Add new stage (column) to the active pipeline
   const [addingStage, setAddingStage] = useState(false);
@@ -382,14 +427,25 @@ export default function KanbanBoard({
     }
   };
 
-  // Filtered leads for current pipeline + tag
+  // Filtered leads for current pipeline + tag. The "No response" toggle
+  // switches to showing only the fetched no-response cohort.
   const visibleLeads = leads.filter(l => {
     const inPipeline = activePipeline
       ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
       : true;
     const hasTag = tagFilter ? parseTags(l.tags).includes(tagFilter) : true;
-    return inPipeline && hasTag;
+    const noResponseOk = showNoResponse
+      ? !!l.primary_contact_id && noResponseIds.has(l.primary_contact_id)
+      : true;
+    return inPipeline && hasTag && noResponseOk;
   });
+
+  const noResponseCount = leads.filter(l => {
+    const inPipeline = activePipeline
+      ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
+      : true;
+    return inPipeline && !!l.primary_contact_id && noResponseIds.has(l.primary_contact_id);
+  }).length;
 
   const byStage = (stageId: string) => visibleLeads.filter(l => l._stage === stageId);
 
@@ -503,11 +559,20 @@ export default function KanbanBoard({
           <div className="flex items-center gap-2">
             <button
               onClick={clearSelection}
-              disabled={bulkDeleting}
+              disabled={bulkDeleting || reengageBusy}
               className="px-3 py-1 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-700 transition disabled:opacity-50"
             >
               Cancel
             </button>
+            {showNoResponse && (
+              <button
+                onClick={sendReengagement}
+                disabled={reengageBusy}
+                className="px-3 py-1 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition disabled:opacity-50"
+              >
+                {reengageBusy ? "Sending…" : `Send re-engagement email (${selected.size})`}
+              </button>
+            )}
             <button
               onClick={bulkDelete}
               disabled={bulkDeleting}
@@ -534,6 +599,20 @@ export default function KanbanBoard({
         <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
           <span>{bulkError}</span>
           <button onClick={() => setBulkError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+
+      {/* Re-engagement send error/result toasts */}
+      {reengageError && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
+          <span>{reengageError}</span>
+          <button onClick={() => setReengageError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+      {reengageResult && (
+        <div className="mb-3 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-green-700">
+          <span>✓ {reengageResult}</span>
+          <button onClick={() => setReengageResult(null)} className="text-green-400 hover:text-green-600 ml-4">✕</button>
         </div>
       )}
 
@@ -579,6 +658,19 @@ export default function KanbanBoard({
             </div>
           )}
 
+          {/* No response tab — leads with 3+ unanswered SMS attempts */}
+          <button
+            onClick={() => { setShowNoResponse(v => !v); clearSelection(); }}
+            title={showNoResponse ? "Back to board" : "Show leads with 3+ unanswered SMS attempts"}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+              showNoResponse
+                ? "bg-orange-500 text-white"
+                : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+            }`}
+          >
+            📵 No response{noResponseCount > 0 ? ` (${noResponseCount})` : ""}
+          </button>
+
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm"
@@ -587,6 +679,13 @@ export default function KanbanBoard({
           </button>
         </div>
       </div>
+
+      {showNoResponse && (
+        <div className="mb-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 text-sm text-orange-800">
+          Showing {noResponseCount} lead{noResponseCount === 1 ? "" : "s"} with 3+ SMS attempts and no email reply since.
+          Select some and send the re-engagement email, or check in manually.
+        </div>
+      )}
 
       {/* Modals */}
       {showModal && (
@@ -611,6 +710,7 @@ export default function KanbanBoard({
               created_at:    lead.created_at || new Date().toISOString(),
               pipeline_id:   lead.pipeline_id || activePipelineId,
               tags:          lead.tags || null,
+              primary_contact_id: null, // a brand-new opportunity has no matched contact yet
               _stage:        lead._stage || stages[0]?.id || "New Lead",
             };
             setLeads(prev => [newLead, ...prev]);
