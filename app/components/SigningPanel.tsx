@@ -49,7 +49,7 @@ export default function SigningPanel({
   docId,
   proposedSigners,
 }: {
-  docType: "fact_find" | "needs_analysis" | "credit_authorisation";
+  docType: "fact_find" | "needs_analysis" | "credit_authorisation" | "eoi";
   docId: string;
   proposedSigners: ProposedSigner[];
 }) {
