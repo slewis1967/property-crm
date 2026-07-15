@@ -49,6 +49,7 @@ const GROUPS: Group[] = [
       { href: "/opportunities", icon: "🗂️", label: "Opportunities" },
       { href: "/deal-analyser", icon: "📑", label: "Deal Analyser", badge: "dealPackets" },
       { href: "/leads", icon: "🔥", label: "Lead Intake" },
+      { href: "/eoi", icon: "📝", label: "Expressions of Interest" },
       { href: "/fact-find", icon: "📋", label: "Fact Find" },
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },
       { href: "/credit-authorisation", icon: "🔏", label: "Credit Authorisation" },

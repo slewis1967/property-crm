@@ -88,6 +88,12 @@ export default async function PropertyDetailPage({
           >
             🗺️ Planning Feasibility
           </Link>
+          <Link
+            href={`/eoi?property=${encodeURIComponent(String(property.id))}`}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#0F4C5C] text-[#0F4C5C] hover:bg-[#0F4C5C]/5 transition"
+          >
+            📝 Create EOI
+          </Link>
           {property.status && (
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(property.status)}`}

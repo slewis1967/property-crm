@@ -397,6 +397,15 @@ export default function OpportunityDetail({
               {factFindError}
             </span>
           )}
+          <a
+            href={`/eoi?opportunity=${encodeURIComponent(lead.lead_id)}${
+              lead.primary_contact_id ? `&contact=${encodeURIComponent(lead.primary_contact_id)}` : ""
+            }`}
+            title="Create an Expression of Interest prefilled from this opportunity"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📝 EOI
+          </a>
           <button
             onClick={openNeedsAnalysis}
             disabled={needsAnalysisLoading}

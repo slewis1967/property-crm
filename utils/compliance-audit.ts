@@ -28,13 +28,15 @@ import { FACT_FIND_TERMINAL_STATUS } from "./factfind";
 import { NEEDS_ANALYSIS_TERMINAL_STATUS } from "./needsAnalysis";
 import { CREDIT_AUTHORISATION_TERMINAL_STATUS } from "./creditAuthorisation";
 import { AML_CASE_TERMINAL_STATUS } from "./aml";
+import { EOI_TERMINAL_STATUS } from "./eoi";
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
 // `aml_case` is a CDD case (AUSTRAC AML/CTF). It reuses this sign-lock + audit
 // trail so a Cleared determination is read-only and every change is recorded
-// for the 7-year retention requirement.
-export type ComplianceDocType = "fact_find" | "needs_analysis" | "credit_authorisation" | "aml_case";
+// for the 7-year retention requirement. `eoi` is an Expression of Interest — a
+// signable document (in the e-signature flow), locked once fully Signed.
+export type ComplianceDocType = "fact_find" | "needs_analysis" | "credit_authorisation" | "aml_case" | "eoi";
 export type ComplianceAuditAction = "create" | "update" | "sign" | "reopen" | "delete";
 
 /** The status at which each document is signed/complete and becomes read-only. */
@@ -43,6 +45,7 @@ export const LOCKED_STATUS: Record<ComplianceDocType, string> = {
   needs_analysis: NEEDS_ANALYSIS_TERMINAL_STATUS,
   credit_authorisation: CREDIT_AUTHORISATION_TERMINAL_STATUS,
   aml_case: AML_CASE_TERMINAL_STATUS,
+  eoi: EOI_TERMINAL_STATUS,
 };
 
 /** User-facing refusal messages (kept here so route wording stays consistent). */

@@ -12,11 +12,12 @@
 
 import type { ComplianceDocType } from "./compliance-audit";
 
-/** The three signable compliance documents. Same set as ComplianceDocType. */
+/** The signable documents (a subset of ComplianceDocType — aml_case is not one). */
 export const SIGN_DOC_TYPES: ComplianceDocType[] = [
   "fact_find",
   "needs_analysis",
   "credit_authorisation",
+  "eoi",
 ];
 
 export function isSignDocType(v: unknown): v is ComplianceDocType {
@@ -32,6 +33,7 @@ export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
   // e-signature flow (it never appears in SIGN_DOC_TYPES). This entry only
   // satisfies the exhaustive Record; it is never shown to a signer.
   aml_case: "AML/CTF Customer Due Diligence",
+  eoi: "Expression of Interest",
 };
 
 /** The lifecycle of a single signer's request. */

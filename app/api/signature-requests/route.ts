@@ -272,6 +272,8 @@ function documentLabel(docType: string, summary: string): string {
       ? "Borrower Fact Find"
       : docType === "needs_analysis"
         ? "Needs Analysis"
-        : "Credit Authorisation";
+        : docType === "eoi"
+          ? "Expression of Interest"
+          : "Credit Authorisation";
   return summary ? `${base} (${summary})` : base;
 }
