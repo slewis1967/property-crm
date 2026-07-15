@@ -28,6 +28,10 @@ export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
   fact_find: "Borrower Fact Find",
   needs_analysis: "Needs Analysis",
   credit_authorisation: "Credit File Authorisation",
+  // aml_case reuses the compliance audit/lock infra but is NOT part of the
+  // e-signature flow (it never appears in SIGN_DOC_TYPES). This entry only
+  // satisfies the exhaustive Record; it is never shown to a signer.
+  aml_case: "AML/CTF Customer Due Diligence",
 };
 
 /** The lifecycle of a single signer's request. */

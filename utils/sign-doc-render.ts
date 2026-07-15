@@ -42,6 +42,10 @@ const TABLE: Record<ComplianceDocType, string> = {
   fact_find: "borrower_fact_finds",
   needs_analysis: "nccp_needs_analyses",
   credit_authorisation: "credit_authorisations",
+  // aml_case is never routed through the e-signature flow (loadDoc/markDocSigned
+  // are only called for SIGN_DOC_TYPES). Present only to satisfy the exhaustive
+  // Record — see utils/signatures.ts DOC_TYPE_LABEL.
+  aml_case: "aml_cases",
 };
 
 /** What a fetched-and-hydrated document exposes to the signing routes. */

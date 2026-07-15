@@ -18,11 +18,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders";
+type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports";
 type Item = { href: string; icon: string; label: string; badge?: BadgeKey };
 type Group = { key: string; label: string; icon: string; items: Item[] };
 
-export type SidebarCounts = { pendingReview: number; draftBuilders: number; dealPackets: number };
+export type SidebarCounts = { pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number };
 
 const GROUPS: Group[] = [
   {
@@ -57,6 +57,16 @@ const GROUPS: Group[] = [
       { href: "/inbox", icon: "✉️", label: "Inbox" },
       { href: "/broadcast", icon: "📣", label: "Broadcast" },
       { href: "/tasks", icon: "📌", label: "Tasks" },
+    ],
+  },
+  {
+    key: "compliance",
+    label: "Compliance",
+    icon: "🛡️",
+    items: [
+      { href: "/aml", icon: "🛡️", label: "CDD Cases" },
+      { href: "/aml/reports", icon: "🚩", label: "AUSTRAC Reports", badge: "amlReports" },
+      { href: "/aml/program", icon: "📗", label: "Program & Enrolment" },
     ],
   },
   {

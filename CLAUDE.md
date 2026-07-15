@@ -95,6 +95,14 @@ A digital rebuild of the seven-page paper "Generic Borrower Fact Finder Form", s
 
 **`factFindsTableMissing()` is deliberately narrow.** The obvious guard — testing the error message for `schema cache` or `does not exist` — also matches *column*-level errors (PGRST204 / 42703), so a schema mismatch reports itself as "run the migration" for a migration you have already run. Match the table-level codes (`42P01` / `PGRST205`) instead. Any other table-missing guard added to this repo should do the same.
 
+### AML/CTF compliance (`app/aml/` + `app/api/aml/` + `utils/aml.ts`)
+Customer Due Diligence, screening and AUSTRAC reporting for the Tranche-2 real-estate AML/CTF obligations (in force **1 July 2026**). Sidebar group **Compliance**: **CDD Cases** (`/aml`), **AUSTRAC Reports** (`/aml/reports`), **Program & Enrolment** (`/aml/program`). **Not legal advice** — the field set encodes AUSTRAC's stated obligations; scope (whether NextKey is a captured reporting entity) must be confirmed with a compliance adviser.
+- `utils/aml.ts` — single source of truth (pure, vitest-tested `utils/aml.test.ts`): the `AmlCaseData` CDD blob (entity-type aware: individual/company/trust/SMSF + 25%+ beneficial owners, source of funds, verification + screening summary, risk factors), the `AmlProgramData` governance/enrolment/enterprise-risk-assessment shape, the screening list vocabulary (DFAT/UN/OFAC/EU/UK HMT/PEP/adverse-media), the SMR/TTR/IFTI report model, and the pure helpers — `cddCompleteness`, `deriveRiskRating`/`needsEnhancedDd`, `reportDueDate` (business-day math: SMR 3bd / 24h terrorism, TTR & IFTI 10bd), `retentionUntil` (7-year record keeping), `hydrateAmlCase`/`hydrateProgram`, `amlTableMissing`.
+- **A CDD case IS a `ComplianceDocType` (`aml_case`)** — it reuses `utils/compliance-audit.ts` for the sign-lock (terminal status **"Cleared"** = read-only until reopened) and the append-only audit trail (`compliance_document_audit`), so 7-year record keeping + history come for free. `aml_case` is deliberately excluded from the e-signature flow (`SIGN_DOC_TYPES` / `isSignDocType` stay the three signable docs); the inert `aml_case` entries in `utils/signatures.ts` `DOC_TYPE_LABEL` and `utils/sign-doc-render.ts` `TABLE` only satisfy the exhaustive `Record`.
+- **Screening + verification go through a provider seam** (`utils/aml-provider.ts`, mirrors `utils/brevo.ts`): First AML when `FIRST_AML_API_KEY` is set, else a **manual** fallback that fails soft (the officer records outcomes themselves) — never blocks. A confirmed sanctions match folds back into the case as status **"Blocked"** (cease to act + consider an SMR); a potential match → **"Enhanced DD"**.
+- **Tipping-off:** SMRs are stored `confidential` and flagged in the UI — never tell a client an SMR exists (criminal offence). **Lodged reports are immutable** (no edit/delete) for record keeping.
+- Routes (all `requireAuth` + service key + graceful table-missing): `app/api/aml/cases/` (+`[id]`, `[id]/history`), `screenings/`, `reports/` (+`[id]`), `program/` (singleton, GET/PUT), `training/`. Table DDL: `migrations/20260715_aml.sql` (`aml_cases`, `aml_screenings`, `aml_reports`, `aml_program`, `aml_training` — RLS on/default-deny, PII in `data` jsonb, `contact_id`/`deal_id`/`lead_id` soft FKs). Also apply `migrations/20260712_compliance_audit.sql` for the audit trail.
+
 ### Borrowing capacity engine (`utils/finance/`)
 Pure, tax-year-aware servicing model behind the War Room **Borrowing capacity** card (`app/components/WarRoomCalculators.tsx`) and the opportunity **Calculations** section. The component is a thin UI over it; all arithmetic lives here and is vitest-tested (`tax.test.ts`, `capacity.test.ts`).
 - `tax.ts` — `incomeTax`/`marginalTaxRate` (bracket tables per `TaxYear`), `lito`, `medicareLevy` (**household**: singles vs family thresholds + per-child steps — never call it per applicant), `hecsRepayment` (marginal bands **plus** a flat 10%-of-total band above the top threshold), `standardDeduction`, `personalTax` (returns `netBeforeMedicare` on purpose).
@@ -164,6 +172,14 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/notes` | Notes archive — read-only Supabase `ghl_archive_notes` snapshot (frozen GoHighLevel export; new notes go via Quick Log on the contact detail page) |
 | `/tasks` | Tasks list |
 | `/media` | Media library |
+
+**Compliance (AML/CTF)**
+| Route | Description |
+|-------|-------------|
+| `/aml` | CDD case list + compliance-status header (enrolment / officer / notify due) |
+| `/aml/[id]` | CDD case form — entity-aware identity, beneficial owners, source of funds, risk, screening, audit trail |
+| `/aml/reports` | AUSTRAC SMR/TTR/IFTI reports — statutory due dates, lodgement, tipping-off warning. Sidebar badge = reports not yet lodged |
+| `/aml/program` | AML/CTF program & AUSTRAC enrolment, compliance officer, enterprise risk assessment, staff training register |
 
 **Stock / Aggregator**
 | Route | Description |

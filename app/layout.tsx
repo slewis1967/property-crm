@@ -54,8 +54,8 @@ export const metadata: Metadata = {
 // Sidebar shows badges with the count of items needing attention. Single
 // HEAD count(*) per badge — Postgres handles this in milliseconds, and
 // missing the badge isn't worth a layout-fail so we swallow errors.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number }> {
-  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0 };
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number }> {
+  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0 };
   try {
     const { count } = await supabase
       .from("property_review_queue")
@@ -83,6 +83,15 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
       .select("id", { count: "exact", head: true })
       .in("status", ["needs_rent_input", "ready"]);
     out.dealPackets = count ?? 0;
+  } catch { /* swallow */ }
+  try {
+    // AUSTRAC reports (SMR/TTR/IFTI) not yet lodged — each has a statutory
+    // deadline, so surface the outstanding count as a compliance nudge.
+    const { count } = await supabase
+      .from("aml_reports")
+      .select("id", { count: "exact", head: true })
+      .neq("status", "lodged");
+    out.amlReports = count ?? 0;
   } catch { /* swallow */ }
   return out;
 }
