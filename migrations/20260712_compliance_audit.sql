@@ -23,7 +23,7 @@
 
 create table if not exists compliance_document_audit (
   id            uuid primary key default gen_random_uuid(),
-  doc_type      text not null check (doc_type in ('fact_find','needs_analysis','credit_authorisation')),
+  doc_type      text not null check (doc_type in ('fact_find','needs_analysis','credit_authorisation','aml_case')),
   doc_id        uuid not null,                        -- the audited document's id
   action        text not null check (action in ('create','update','sign','reopen','delete')),
   changed_by    text,                                 -- CF-Access user email of the actor

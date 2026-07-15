@@ -152,3 +152,22 @@ alter table aml_screenings enable row level security;
 alter table aml_reports    enable row level security;
 alter table aml_program    enable row level security;
 alter table aml_training   enable row level security;
+
+-- ── Allow aml_case in the shared compliance audit trail ────────────────────
+-- A CDD case reuses compliance_document_audit (utils/compliance-audit.ts,
+-- doc_type = 'aml_case'). The original 20260712_compliance_audit.sql CHECK only
+-- permitted the three signable docs, so on a DB where that migration was ALREADY
+-- applied, aml_case audit inserts would fail the constraint (fail-open, so the
+-- case history would silently not record). Widen the constraint here. Idempotent
+-- and safe whether or not the audit table exists yet.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'compliance_document_audit'
+  ) then
+    alter table compliance_document_audit drop constraint if exists compliance_document_audit_doc_type_check;
+    alter table compliance_document_audit add constraint compliance_document_audit_doc_type_check
+      check (doc_type in ('fact_find','needs_analysis','credit_authorisation','aml_case'));
+  end if;
+end $$;
