@@ -7,6 +7,20 @@ import { log, errInfo } from "@/utils/logger";
 
 export const dynamic = "force-dynamic";
 
+/** Resolve this lead's live CRM contact by email (case-insensitive). NEXUS
+ * doesn't always stamp primary_contact_id even when a matching contact exists,
+ * which left appointment/task linking blocked ("no matched contact") for leads
+ * that plainly had one. Returns the contacts.id or null. */
+async function resolveContactIdByEmail(email: string | null): Promise<string | null> {
+  if (!email) return null;
+  const { data } = await supabase
+    .from("contacts")
+    .select("id")
+    .ilike("email", email)
+    .limit(1);
+  return data?.[0]?.id ?? null;
+}
+
 /** Match this lead to its GHL counterpart via email + pull notes/conversations
  * /tasks /appointments scoped to that contact. Returns nulls if no match. */
 async function resolveGhlArchiveForLead(email: string | null) {
@@ -78,6 +92,13 @@ export default async function OpportunityDetailPage({
   }
 
   if (!lead || lead.error) return notFound();
+
+  // Fall back to an email match against the live contacts table when NEXUS
+  // didn't link this opportunity to a CRM contact — so scheduling/tasks aren't
+  // blocked ("no matched contact") for a lead that already has one.
+  if (!lead.primary_contact_id && lead.email) {
+    lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
+  }
 
   const { ghlContactId, archive } = await resolveGhlArchiveForLead(lead.email);
 
