@@ -16,7 +16,13 @@
  * config is read lazily inside functions, never thrown at import time, because
  * this can be imported on paths where LiveKit isn't configured yet.
  */
-import { AccessToken, WebhookReceiver } from "livekit-server-sdk";
+import {
+  AccessToken,
+  WebhookReceiver,
+  EgressClient,
+  EncodedFileOutput,
+  EncodedFileType,
+} from "livekit-server-sdk";
 
 /** Public wss:// URL the browser dials. Safe to expose (no secret). */
 export function livekitBrowserUrl(): string {
@@ -88,4 +94,64 @@ export function webhookReceiver(): WebhookReceiver | null {
   const creds = serverCreds();
   if (!creds) return null;
   return new WebhookReceiver(creds.apiKey, creds.apiSecret);
+}
+
+/**
+ * The EgressClient (recording) talks to LiveKit's HTTP API, not the wss://
+ * signalling URL — derive the https:// base from NEXT_PUBLIC_LIVEKIT_URL.
+ */
+function livekitHttpUrl(): string {
+  const wss = livekitBrowserUrl();
+  if (!wss) return "";
+  return wss.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
+}
+
+function egressClient(): EgressClient | null {
+  const creds = serverCreds();
+  const host = livekitHttpUrl();
+  if (!creds || !host) return null;
+  return new EgressClient(host, creds.apiKey, creds.apiSecret);
+}
+
+/**
+ * Start recording a room (server-side composite → single MP4).
+ *
+ * Requires the LiveKit **egress** service to be deployed (deploy/livekit-egress/)
+ * — the egress service holds the S3/Supabase-storage credentials and uploads the
+ * finished file, so the CRM only supplies a filepath. The resulting file's
+ * location arrives later via the egress_ended webhook and is stored on the
+ * matching `video_call_events` row (`recording_url`).
+ *
+ * Returns the egressId (persist it so the call can be stopped) or throws with a
+ * clear message the record route surfaces as a 503.
+ */
+export async function startRoomRecording(room: string): Promise<string> {
+  const client = egressClient();
+  if (!client) {
+    throw new Error("Recording is not configured (LiveKit egress unavailable).");
+  }
+  // Timestamped path keeps repeat calls in the same room from colliding.
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const output = new EncodedFileOutput({
+    fileType: EncodedFileType.MP4,
+    filepath: `recordings/${room}/${stamp}.mp4`,
+  });
+  const info = await client.startRoomCompositeEgress(room, output, {
+    layout: "grid",
+  });
+  return info.egressId;
+}
+
+/** Stop an in-progress recording by its egressId. */
+export async function stopRoomRecording(egressId: string): Promise<void> {
+  const client = egressClient();
+  if (!client) {
+    throw new Error("Recording is not configured (LiveKit egress unavailable).");
+  }
+  await client.stopEgress(egressId);
+}
+
+/** Whether recording *could* work (egress client constructable). */
+export function recordingConfigured(): boolean {
+  return egressClient() !== null;
 }

@@ -1,0 +1,28 @@
+# Fly.io app for the LiveKit EGRESS service (call recording).
+#
+# Egress records a room server-side (headless Chrome composites the grid) and
+# uploads the finished MP4 to S3-compatible storage. It has NO public ingress —
+# it dials OUT to Redis (shared with the SFU), the SFU's wss:// URL, and storage.
+#
+# Deploy (see README.md for the full walkthrough — needs Redis + Supabase S3 keys):
+#   fly launch --no-deploy --copy-config --name nextkey-livekit-egress
+#   fly secrets set EGRESS_CONFIG_BODY="$(cat egress.yaml)"   # your filled-in config
+#   fly deploy
+
+app = "nextkey-livekit-egress"
+primary_region = "syd"
+
+[build]
+  image = "livekit/egress:latest"
+
+[env]
+  # Egress reads its whole config from this env var (set as a secret so the
+  # Redis + storage creds never live in the image or this file).
+  # EGRESS_CONFIG_BODY is provided via `fly secrets set`.
+
+[[vm]]
+  # Room-composite recording runs a headless Chrome per active recording — it is
+  # CPU + memory hungry. Start here; bump to performance-* for multiple
+  # concurrent recordings.
+  size = "shared-cpu-2x"
+  memory = "2gb"

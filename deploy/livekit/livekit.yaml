@@ -10,6 +10,16 @@
 
 port: 7880 # HTTP + WebSocket signaling (Fly maps 443 -> here)
 
+# Recording (egress) requires the SFU and the egress service to share a Redis.
+# UNCOMMENT + fill this in ONLY AFTER Redis is provisioned and reachable — a
+# redis block the SFU can't reach will stop it booting and take live calls down.
+# See deploy/livekit-egress/README.md.
+# redis:
+#   address: <REDIS_HOST>:<PORT>
+#   username: default
+#   password: <REDIS_PASSWORD>
+#   db: 0
+
 rtc:
   # Single-port UDP mux keeps Fly networking simple (one UDP service in
   # fly.toml) instead of a wide port range that needs a dedicated IP range.
