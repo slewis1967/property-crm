@@ -8,6 +8,8 @@ import {
   getOAuthConfig,
   refreshAccessToken,
 } from "../../../utils/google-oauth";
+import { roomForContact, livekitConfigured } from "../../../utils/livekit";
+import { signGuestToken } from "../../../utils/guest-token";
 
 /**
  * Create an appointment from inside the CRM.
@@ -115,6 +117,37 @@ export async function POST(req: NextRequest) {
   const sendUpdates: "all" | "externalOnly" | "none" =
     body.sendUpdates ?? (attendees && attendees.length > 0 ? "all" : "none");
 
+  // --- Self-hosted LiveKit video link for this meeting (in place of Google
+  // Meet). Reuses the contact's room so ad-hoc "Video call" clicks and
+  // scheduled meetings share it and both land on the contact's video timeline.
+  // The guest link is a signed, expiring token — give it a TTL that comfortably
+  // covers the meeting time. Best-effort: if LiveKit isn't configured or signing
+  // fails, we fall back to a Google Meet link so a meeting always has video. ---
+  let videoLink: string | null = null;
+  if (livekitConfigured()) {
+    try {
+      const room = roomForContact(body.contact_id);
+      const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
+      const ttlHours = Math.max(24, hoursUntilEnd + 6);
+      const guestToken = await signGuestToken({
+        room,
+        name: body.contact_name,
+        ttlHours,
+      });
+      videoLink = `${req.nextUrl.origin}/join/${encodeURIComponent(guestToken)}`;
+    } catch {
+      videoLink = null;
+    }
+  }
+
+  // Put the join link at the top of the invite body so attendees can click it;
+  // keep any operator-written description beneath.
+  const meetingDescription = videoLink
+    ? [`Join the video meeting: ${videoLink}`, description]
+        .filter(Boolean)
+        .join("\n\n")
+    : description;
+
   // --- Step 1: Google Calendar (best-effort) ---
   let calendarId: string | null = null;
   let calendarLink: string | null = null;
@@ -138,13 +171,17 @@ export async function POST(req: NextRequest) {
       const { accessToken } = await refreshAccessToken(cred.refresh_token);
       const event = await createCalendarEvent(accessToken, {
         summary: title,
-        description,
-        location,
+        description: meetingDescription,
+        // Surface the join link in the calendar's Location field too (unless a
+        // physical location was given), so it's one click from the invite.
+        location: location ?? videoLink ?? undefined,
         start: startISO,
         end: endISO,
         timeZone: body.timeZone,
         attendees,
         sendUpdates,
+        // LiveKit replaces Google Meet when we have a link; otherwise keep Meet.
+        addGoogleMeet: !videoLink,
       });
       calendarId = event.id;
       calendarLink = event.htmlLink;
@@ -174,7 +211,7 @@ export async function POST(req: NextRequest) {
     start_time: startISO,
     end_time: endISO,
     notes: description ?? null,
-    location: location ?? hangoutLink ?? null,
+    location: location ?? videoLink ?? hangoutLink ?? null,
     appointment_status: "scheduled",
     status: "scheduled",
     // host_email is read by the contact detail page; host_name carries the
@@ -211,6 +248,9 @@ export async function POST(req: NextRequest) {
     calendar_event: calendarId
       ? { id: calendarId, htmlLink: calendarLink, hangoutLink }
       : null,
+    // The self-hosted LiveKit join link included in the invite (null if LiveKit
+    // wasn't configured and the meeting fell back to Google Meet).
+    video_link: videoLink,
     invite_requested: inviteRequested,
     invite_sent: inviteSent,
     calendar_warning: calendarWarning,

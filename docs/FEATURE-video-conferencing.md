@@ -62,6 +62,19 @@ storage keys** (generate a `recordings` bucket + S3 access key in the Supabase
 dashboard). Until egress is up, the Record button shows "recording unavailable"
 (the route 503s) — everything else keeps working.
 
+## Scheduled meetings use the LiveKit link (not Google Meet)
+
+When a meeting is booked via `POST /api/appointments` (the "📅 Schedule meeting"
+flow), the route mints a signed guest link for the contact's room and puts it at
+the top of the calendar invite body (and in the event Location when there's no
+physical location). `createCalendarEvent` is called with `addGoogleMeet: false`
+so attendees get **one** video link — the self-hosted LiveKit one. If LiveKit
+isn't configured (or signing fails) it falls back to a Google Meet link so a
+meeting always has video. The link's TTL covers the meeting time.
+
+Same CF Access caveat as guest join: external attendees clicking the invite link
+need the `/join/*` bypass (below) to get past Cloudflare Access.
+
 ## Guest join (client without a CRM login)
 
 A broker can copy a **🔗 Guest link** on the contact. `/api/livekit/guest-link`
