@@ -139,14 +139,16 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
     } catch (e) {
+      console.error("dashboard-brief: AI generation failed:", errMessage(e, "AI request failed"));
       return NextResponse.json(
-        { ok: false, error: errMessage(e, "AI request failed") },
+        { ok: false, error: "Today's brief isn't available right now — try again shortly." },
         { status: 500 },
       );
     }
   } catch (e) {
+    console.error("dashboard-brief: failed to build brief:", errMessage(e, "Failed to build dashboard brief"));
     return NextResponse.json(
-      { ok: false, error: errMessage(e, "Failed to build dashboard brief") },
+      { ok: false, error: "Today's brief isn't available right now — try again shortly." },
       { status: 500 },
     );
   }
