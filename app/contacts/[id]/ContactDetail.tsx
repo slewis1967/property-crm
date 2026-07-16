@@ -13,9 +13,11 @@ import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
 import StartVideoCallButton from "../../components/StartVideoCallButton";
+import GuestLinkButton from "../../components/GuestLinkButton";
 import EditRecordModal from "../../components/EditRecordModal";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
+import ContactVideoCalls from "../../components/ContactVideoCalls";
 
 type Contact = {
   id: string;
@@ -306,6 +308,11 @@ export default function ContactDetail({
             label="🎥 Video call"
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
           />
+          <GuestLinkButton
+            contactId={contact.id}
+            guestName={contact.name || undefined}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          />
           <button
             onClick={() => setShowOpportunityModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -588,6 +595,9 @@ export default function ContactDetail({
 
                 {/* AI matchmaker — properties that fit this contact */}
                 <AIContactMatches contactId={contact.id} />
+
+                {/* Video-call history (only renders once calls exist) */}
+                <ContactVideoCalls contactId={contact.id} />
 
                 {/* Summary card */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">

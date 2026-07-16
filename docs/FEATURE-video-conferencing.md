@@ -40,11 +40,37 @@ vars (`NEXT_PUBLIC_LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`) plus
 one DB migration. Until those are set, the token route returns 503 and the UI
 shows "video calling isn't configured" rather than erroring.
 
-## Not built yet (deliberate)
+## Call timeline (contact panel)
 
-- **Recording** — `recording_url`/`egress_id` columns exist; wiring LiveKit
-  egress + storage is a follow-up.
-- **Timeline UI** — events are logged; surfacing them on the contact detail
-  panel (next to appointments/SMS) is a small follow-up.
-- **Client-portal join** — currently the call link assumes an authed CRM user.
-  A tokenised guest link for clients is a follow-up.
+`ContactVideoCalls` (on the contact detail) reads `/api/livekit/calls?contactId=`,
+which aggregates the raw `video_call_events` into call *sessions* (grouped by
+LiveKit room sid — the room *name* `contact-<id>` is reused every call). Shows
+start time, duration, participants, and a **▶ Recording** link when one exists.
+Renders nothing until the contact has had a call.
+
+## Recording (LiveKit egress)
+
+The call UI has a **⏺ Record** toggle → `/api/livekit/record` (authed) →
+`startRoomRecording`/`stopRoomRecording` via the LiveKit `EgressClient`. The
+finished MP4's location arrives on the `egress_ended` webhook and is stored as
+`recording_url` on the call's event row.
+
+**Needs the egress service deployed** — see
+[`deploy/livekit-egress/README.md`](../deploy/livekit-egress/README.md). Its
+prerequisites are (1) a **Redis** shared with the SFU and (2) **Supabase S3
+storage keys** (generate a `recordings` bucket + S3 access key in the Supabase
+dashboard). Until egress is up, the Record button shows "recording unavailable"
+(the route 503s) — everything else keeps working.
+
+## Guest join (client without a CRM login)
+
+A broker can copy a **🔗 Guest link** on the contact. `/api/livekit/guest-link`
+(authed) signs a short-lived JWT (`utils/guest-token.ts`) naming the room; the
+public `/join/<token>` page redeems it at `/api/livekit/guest-token` (no auth —
+trust is the signed token) for a LiveKit join token. Guests can publish +
+subscribe but not record.
+
+**Needs a Cloudflare Access bypass** — `crm.nextkey.com.au` is behind CF Access,
+so external guests are blocked before Next.js runs. Add a CF Access **bypass
+policy** for the paths `/join/*` and `/api/livekit/guest-token`. Until then the
+code is live but guests hit the Access login wall.
