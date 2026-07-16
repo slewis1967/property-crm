@@ -115,7 +115,9 @@ export async function POST(req: Request) {
       : `Extract the structured data per the system prompt.`;
 
     const chatBody: Record<string, unknown> = {
-      model: MODELS.smart,
+      // Configurable via OPENROUTER_MODEL_EXTRACT; defaults to the SMART model
+      // (contracts/IDs are accuracy-critical). See MODELS.extract.
+      model: MODELS.extract,
       // Reasoning tokens share this budget on OpenRouter, so leave generous
       // headroom — a dense multi-page PDF can spend a lot thinking before it
       // emits the ~4k-token JSON, and a too-tight cap returns empty content

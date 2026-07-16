@@ -72,6 +72,17 @@ export const MODELS = {
   smart: process.env.OPENROUTER_MODEL_SMART ?? "anthropic/claude-sonnet-4",
   /** Cheap/fast model for the voice loop, compliance, parsing, CSV mapping. */
   fast: process.env.OPENROUTER_MODEL_FAST ?? "anthropic/claude-haiku-4.5",
+  /**
+   * Model for uploaded-document (PDF/image) extraction — contracts, IDs,
+   * finance approvals. Defaults to the SMART model because these are
+   * accuracy-critical and low-volume, but is separately tunable via
+   * OPENROUTER_MODEL_EXTRACT so it can be dropped to a cheaper model
+   * (e.g. anthropic/claude-haiku-4.5) without a code change.
+   */
+  extract:
+    process.env.OPENROUTER_MODEL_EXTRACT ??
+    process.env.OPENROUTER_MODEL_SMART ??
+    "anthropic/claude-sonnet-4",
 } as const;
 
 export type AIEffort = "low" | "medium" | "high" | "xhigh" | "max";
