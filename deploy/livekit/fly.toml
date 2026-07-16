@@ -1,0 +1,59 @@
+# Fly.io app for the self-hosted LiveKit SFU.
+#
+# Deploy from this folder:
+#   fly launch --no-deploy --copy-config --name nextkey-livekit
+#   fly secrets set LIVEKIT_KEYS="APIxxxx: <secret>" LIVEKIT_WEBHOOK_API_KEY="APIxxxx"
+#   fly deploy
+#
+# NOTE: WebRTC media is UDP. For reliable media you want a DEDICATED IP:
+#   fly ips allocate-v4    # dedicated (not shared) so the UDP service works
+# See README.md for the full walkthrough.
+
+app = "nextkey-livekit"
+primary_region = "syd" # Sydney — closest to AU users
+
+[build]
+  # Builds from ./Dockerfile, which bakes livekit.yaml into the official image.
+  dockerfile = "Dockerfile"
+
+[env]
+  # Point the server at the baked-in config file.
+  LIVEKIT_CONFIG = "/etc/livekit.yaml"
+
+# Signaling: WebSocket/HTTP over TLS. Fly terminates TLS and forwards to 7880.
+[[services]]
+  protocol = "tcp"
+  internal_port = 7880
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 400
+    soft_limit = 200
+
+# TCP fallback for WebRTC media (restrictive client networks).
+[[services]]
+  protocol = "tcp"
+  internal_port = 7881
+  [[services.ports]]
+    port = 7881
+
+# Primary WebRTC media path: single UDP mux port (matches rtc.udp_port).
+[[services]]
+  protocol = "udp"
+  internal_port = 7882
+  [[services.ports]]
+    port = 7882
+
+[[vm]]
+  # Media forwarding is CPU/bandwidth bound. Start at a shared-2x and scale up
+  # (or add regions) as concurrent calls grow.
+  size = "shared-cpu-2x"
+  memory = "1gb"
