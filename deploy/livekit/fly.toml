@@ -16,9 +16,9 @@ primary_region = "syd" # Sydney — closest to AU users
   # Builds from ./Dockerfile, which bakes livekit.yaml into the official image.
   dockerfile = "Dockerfile"
 
-[env]
-  # Point the server at the baked-in config file.
-  LIVEKIT_CONFIG = "/etc/livekit.yaml"
+# NOTE: do NOT set LIVEKIT_CONFIG here — LiveKit reads that env var as the
+# config *body* (YAML content), not a path. The config file is selected by the
+# `--config /etc/livekit.yaml` flag in the Dockerfile CMD instead.
 
 # Signaling: WebSocket/HTTP over TLS. Fly terminates TLS and forwards to 7880.
 [[services]]

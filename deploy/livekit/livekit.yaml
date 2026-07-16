@@ -22,10 +22,12 @@ rtc:
 # These are the SAME key/secret the CRM uses as LIVEKIT_API_KEY /
 # LIVEKIT_API_SECRET to mint join tokens and verify webhooks.
 
-# Lifecycle events -> CRM. The URL is the CRM's webhook route; the api_key
-# selects which key signs the outgoing webhook JWT (verified CRM-side).
+# Lifecycle events -> CRM. The URL is the CRM's webhook route; api_key selects
+# which key signs the outgoing webhook JWT (verified CRM-side). This is the
+# key ID only (NOT the secret) — safe to commit; the matching secret is
+# injected at runtime via the LIVEKIT_KEYS Fly secret.
 webhook:
-  api_key: ${LIVEKIT_WEBHOOK_API_KEY}
+  api_key: APIb5199261ab47
   urls:
     - https://crm.nextkey.com.au/api/livekit/webhook
 
