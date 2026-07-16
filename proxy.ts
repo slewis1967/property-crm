@@ -173,6 +173,22 @@ export function isPublicSignRoute(pathname: string): boolean {
   return false;
 }
 
+// Public guest video-call routes. A client joins a call WITHOUT a Cloudflare
+// Access identity, so these must be exempt from the CF Access gate — same model
+// as the signing routes above. Trust is the signed, expiring guest token: the
+// /join page is an empty shell without one, and the guest-token API validates
+// the JWT before minting anything. Must mirror the CF Access bypass apps
+// (crm.nextkey.com.au/join/* + /api/livekit/guest-token) EXACTLY: the guest-token
+// exemption is the single exact path, NOT all of /api/livekit/*, so the authed
+// sibling routes (token, record, calls, guest-link, webhook) keep their CF
+// Access auth header. The CSRF origin check above still applies to the mutating
+// guest-token POST (it's same-origin from the /join page).
+export function isPublicGuestRoute(pathname: string): boolean {
+  if (pathname === "/join" || pathname.startsWith("/join/")) return true;
+  if (pathname === "/api/livekit/guest-token") return true;
+  return false;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -233,7 +249,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PUBLIC_PATHS.has(pathname) || isPublicSignRoute(pathname)) {
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    isPublicSignRoute(pathname) ||
+    isPublicGuestRoute(pathname)
+  ) {
     return NextResponse.next();
   }
 
