@@ -6,14 +6,15 @@ import AIDashboardBrief from "./components/AIDashboardBrief";
 export const dynamic = "force-dynamic";
 
 // Row shapes read from the dashboard queries below.
+// NB: property_leads has no `temperature`; the card derives one from triage_score.
 type LeadRow = {
-  full_name: string | null;
+  name: string | null;
   email: string | null;
   state: string | null;
   buyer_type: string | null;
-  temperature: string | null;
-  score: number | null;
+  triage_score: number | null;
   match_status: string | null;
+  status: string | null;
   created_at: string | null;
 };
 type ContactRow = {
@@ -41,6 +42,15 @@ const tempColor = (t: string | null) => {
   return "bg-blue-100 text-blue-700";
 };
 
+// property_leads has no temperature column — derive one from the triage score
+// so the Recent Leads card can reuse the hot/warm/cold styling.
+const scoreTemp = (score: number | null): "hot" | "warm" | "cold" | null => {
+  if (score == null) return null;
+  if (score >= 50) return "hot";
+  if (score >= 35) return "warm";
+  return "cold";
+};
+
 const statusColor = (s: string | null) => {
   if (s === "matched") return "bg-green-100 text-green-700";
   if (s === "new") return "bg-gray-100 text-gray-600";
@@ -59,7 +69,7 @@ export default async function Home() {
       supabase.from("global_stock_pool").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
-      supabase.from("property_leads").select("full_name,email,state,buyer_type,temperature,score,match_status,created_at").order("created_at", { ascending: false }).limit(8),
+      supabase.from("property_leads").select("name,email,state,buyer_type,triage_score,match_status,status,created_at").order("created_at", { ascending: false }).limit(8),
       supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
     ]);
 
@@ -147,16 +157,16 @@ export default async function Home() {
               {recentLeads.map((l, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
-                    <p className="text-sm font-medium">{l.full_name || "—"}</p>
+                    <p className="text-sm font-medium">{l.name || "—"}</p>
                     <p className="text-xs text-gray-400">{l.buyer_type || "—"} · {l.state || "—"}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {l.temperature && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(l.temperature)}`}>
-                        {l.temperature}
+                    {scoreTemp(l.triage_score) && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(scoreTemp(l.triage_score))}`}>
+                        {scoreTemp(l.triage_score)}
                       </span>
                     )}
-                    <span className="text-xs text-gray-400">#{l.score ?? "—"}</span>
+                    <span className="text-xs text-gray-400">#{l.triage_score ?? "—"}</span>
                   </div>
                 </div>
               ))}
