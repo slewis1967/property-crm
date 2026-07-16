@@ -26,7 +26,7 @@ export default async function AnalyticsPage() {
     fetchAllRows((from, to) =>
       supabase
         .from("property_leads")
-        .select("temperature,buyer_type,state,score,match_status,created_at")
+        .select("triage_score,buyer_type,state,match_status,created_at")
         .range(from, to),
     ),
     supabase
@@ -70,13 +70,14 @@ export default async function AnalyticsPage() {
   let totalScore = 0;
   let scoredCount = 0;
   for (const l of leads || []) {
-    if (l.temperature === "hot") byTemp.hot++;
-    else if (l.temperature === "warm") byTemp.warm++;
+    // property_leads has no temperature column — bucket by triage_score.
+    if (l.triage_score >= 50) byTemp.hot++;
+    else if (l.triage_score >= 35) byTemp.warm++;
     else byTemp.cold++;
     if (l.state) byState[l.state] = (byState[l.state] || 0) + 1;
     if (l.buyer_type) byType[l.buyer_type] = (byType[l.buyer_type] || 0) + 1;
     if (l.match_status === "matched") matchedCount++;
-    if (l.score) { totalScore += l.score; scoredCount++; }
+    if (l.triage_score) { totalScore += l.triage_score; scoredCount++; }
   }
   const matchRate = leads?.length ? Math.round((matchedCount / leads.length) * 100) : 0;
   const avgScore = scoredCount ? Math.round(totalScore / scoredCount) : 0;

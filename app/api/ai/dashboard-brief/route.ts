@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         .limit(8),
       supabase
         .from("property_leads")
-        .select("full_name,email,state,buyer_type,temperature,score,match_status,created_at")
+        .select("name,email,state,buyer_type,triage_score,match_status,status,created_at")
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
         .limit(10),
@@ -91,8 +91,11 @@ export async function POST(req: Request) {
       "",
       recentLeads && recentLeads.length > 0 ? "=== NEW LEADS (last 7 days) ===" : "",
       ...((recentLeads ?? []).map(
-        (l: { full_name?: string | null; buyer_type?: string | null; state?: string | null; temperature?: string | null; match_status?: string | null; score?: number | null; created_at?: string | null }) =>
-          `- ${l.full_name || "(unnamed)"} · ${l.buyer_type || "?"} · ${l.state || "?"} · temp ${l.temperature || "?"} · match ${l.match_status || "?"} · scored ${l.score ?? "?"} · received ${fmtDate(l.created_at)}`,
+        (l: { name?: string | null; buyer_type?: string | null; state?: string | null; triage_score?: number | null; match_status?: string | null; status?: string | null; created_at?: string | null }) => {
+          // property_leads has no temperature column — derive it from triage_score.
+          const temp = l.triage_score == null ? "?" : l.triage_score >= 50 ? "hot" : l.triage_score >= 35 ? "warm" : "cold";
+          return `- ${l.name || "(unnamed)"} · ${l.buyer_type || "?"} · ${l.state || "?"} · temp ${temp} · match ${l.match_status || "?"} · scored ${l.triage_score ?? "?"} · received ${fmtDate(l.created_at)}`;
+        },
       )),
       "",
       upcomingAppointments && upcomingAppointments.length > 0
