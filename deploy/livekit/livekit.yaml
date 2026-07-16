@@ -1,0 +1,45 @@
+# LiveKit SFU config for the self-hosted CRM video server.
+#
+# Deployed as a Fly.io app running the official `livekit/livekit-server` image
+# (see fly.toml + README.md in this folder). This is infrastructure, NOT part
+# of the Next.js CRM build — the CRM only talks to it via wss:// (browser) and
+# the signed webhook (server -> /api/livekit/webhook).
+#
+# Secrets (API key/secret) are injected as env vars via `fly secrets`, NOT
+# committed here. LIVEKIT_KEYS is read from the environment at boot.
+
+port: 7880 # HTTP + WebSocket signaling (Fly maps 443 -> here)
+
+rtc:
+  # Single-port UDP mux keeps Fly networking simple (one UDP service in
+  # fly.toml) instead of a wide port range that needs a dedicated IP range.
+  udp_port: 7882
+  tcp_port: 7881 # TCP fallback for restrictive client networks
+  use_external_ip: true
+
+# Keys come from the LIVEKIT_KEYS env var (set via `fly secrets set`):
+#   LIVEKIT_KEYS="<API_KEY>: <API_SECRET>"
+# These are the SAME key/secret the CRM uses as LIVEKIT_API_KEY /
+# LIVEKIT_API_SECRET to mint join tokens and verify webhooks.
+
+# Lifecycle events -> CRM. The URL is the CRM's webhook route; api_key selects
+# which key signs the outgoing webhook JWT (verified CRM-side). This is the
+# key ID only (NOT the secret) — safe to commit; the matching secret is
+# injected at runtime via the LIVEKIT_KEYS Fly secret.
+webhook:
+  api_key: APIb5199261ab47
+  urls:
+    - https://crm.nextkey.com.au/api/livekit/webhook
+
+# Optional: turn server for clients fully blocked from UDP. LiveKit has an
+# embedded TURN; enable + point a subdomain at it if you see connection
+# failures behind strict corporate firewalls.
+# turn:
+#   enabled: true
+#   domain: turn.nextkey.com.au
+#   tls_port: 5349
+#   udp_port: 3478
+
+logging:
+  level: info
+  json: false
