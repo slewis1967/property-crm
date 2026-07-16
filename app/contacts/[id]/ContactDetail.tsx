@@ -12,6 +12,7 @@ import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
+import StartVideoCallButton from "../../components/StartVideoCallButton";
 import EditRecordModal from "../../components/EditRecordModal";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
@@ -300,6 +301,11 @@ export default function ContactDetail({
               📱 Call
             </a>
           )}
+          <StartVideoCallButton
+            contactId={contact.id}
+            label="🎥 Video call"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          />
           <button
             onClick={() => setShowOpportunityModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
