@@ -49,10 +49,12 @@ describe("openrouter lazy client", () => {
     expect(a).toBe(b); // same singleton across calls
   });
 
-  it("maps a 401 to a clear missing-key message", async () => {
+  it("maps a 401 to a clear configuration message", async () => {
     const mod = await import("./openrouter");
     const OpenAI = (await import("openai")).default;
     const err = new OpenAI.APIError(401, undefined, "unauthorized", undefined);
-    expect(mod.orErrorMessage(err)).toMatch(/OPENROUTER_API_KEY is missing or invalid/);
+    // A 401/403 means the OpenRouter key is missing/invalid; the user-facing
+    // string deliberately does NOT leak the env var name.
+    expect(mod.orErrorMessage(err)).toMatch(/isn't configured correctly/);
   });
 });
