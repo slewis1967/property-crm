@@ -130,7 +130,7 @@ type CalendarEventBody = {
     useDefault: boolean;
     overrides: Array<{ method: "email" | "popup"; minutes: number }>;
   };
-  conferenceData: {
+  conferenceData?: {
     createRequest: {
       requestId: string;
       conferenceSolutionKey: { type: "hangoutsMeet" };
@@ -150,8 +150,13 @@ export async function createCalendarEvent(
     attendees?: Array<{ email: string; displayName?: string }>;
     sendUpdates?: "all" | "externalOnly" | "none";
     reminders?: Array<{ method: "email" | "popup"; minutes: number }>;
+    // Attach a Google Meet link. Defaults true (legacy behaviour). Set false
+    // when the meeting uses a different video link (e.g. self-hosted LiveKit
+    // passed via description/location) so attendees don't get two video links.
+    addGoogleMeet?: boolean;
   },
 ): Promise<{ id: string; htmlLink: string; hangoutLink?: string }> {
+  const withMeet = event.addGoogleMeet !== false;
   const body: CalendarEventBody = {
     summary: event.summary,
     description: event.description,
@@ -163,17 +168,19 @@ export async function createCalendarEvent(
       useDefault: false,
       overrides: event.reminders ?? DEFAULT_REMINDERS,
     },
-    conferenceData: {
+  };
+  if (withMeet) {
+    body.conferenceData = {
       createRequest: {
         requestId: `nextkey-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         conferenceSolutionKey: { type: "hangoutsMeet" },
       },
-    },
-  };
+    };
+  }
   const params = new URLSearchParams({
-    conferenceDataVersion: "1",
     sendUpdates: event.sendUpdates || "all",
   });
+  if (withMeet) params.set("conferenceDataVersion", "1");
   const res = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
     {
