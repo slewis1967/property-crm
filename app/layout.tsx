@@ -17,7 +17,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
-  manifest: "/manifest.json",
+  // NOTE: the PWA manifest link is emitted manually in <head> below with
+  // crossOrigin="use-credentials" — Next's `metadata.manifest` can't set that,
+  // and without it Cloudflare Access blocks the (uncredentialed) manifest fetch.
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -100,6 +102,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const counts = await getSidebarCounts();
   return (
     <html lang="en">
+      <head>
+        {/* The manifest is same-origin, behind Cloudflare Access. Browsers fetch
+            manifests WITHOUT credentials by default, so CF Access blocks
+            /manifest.json (503 / login redirect). use-credentials sends the CF
+            Access cookie, so the manifest loads for signed-in users (the whole
+            app is behind Access anyway). */}
+        <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
+      </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
         <AppShell sidebar={<Sidebar counts={counts} />}>
           {children}
