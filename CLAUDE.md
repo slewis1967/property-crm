@@ -252,6 +252,7 @@ either can be repointed at any OpenRouter slug — e.g. `openai/gpt-4o-mini`).
 Stored in `.env.local` at project root:
 - `OPENROUTER_API_KEY` (required — all AI features; app fails env validation without it)
 - `OPENROUTER_MODEL_SMART` / `OPENROUTER_MODEL_FAST` (optional — override default model slugs)
+- `OPENROUTER_MODEL_EXTRACT` (optional — model for uploaded-document extraction in `/api/ai/extract-document`; defaults to `OPENROUTER_MODEL_SMART`. Set to a cheaper slug to trade contract/ID reading accuracy for cost)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
