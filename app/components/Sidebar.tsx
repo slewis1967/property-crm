@@ -224,9 +224,11 @@ export default function Sidebar({ counts }: { counts: SidebarCounts }) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-800">
-        <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
-      </div>
+      {process.env.NODE_ENV !== "production" && (
+        <div className="p-4 border-t border-gray-800">
+          <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
+        </div>
+      )}
     </>
   );
 }

@@ -7,14 +7,14 @@ export const dynamic = "force-dynamic";
 
 // Row shapes read from the dashboard queries below.
 type LeadRow = {
-  full_name: string | null;
+  name: string | null;
   email: string | null;
   state: string | null;
   buyer_type: string | null;
-  temperature: string | null;
-  score: number | null;
+  triage_score: number | null;
   match_status: string | null;
   created_at: string | null;
+  notes: string | null;
 };
 type ContactRow = {
   name: string | null;
@@ -33,6 +33,18 @@ type HotContactRow = {
   temperature: string | null;
   lead_score: number | null;
   status: string | null;
+};
+
+// property_leads has no top-level `temperature` column — it's stashed in the
+// free-text `notes` blob (a JSON-encoded string) alongside triage metadata.
+const leadTemperature = (notes: string | null): string | null => {
+  if (!notes) return null;
+  try {
+    const parsed = JSON.parse(notes);
+    return typeof parsed?.temperature === "string" ? parsed.temperature : null;
+  } catch {
+    return null;
+  }
 };
 
 const tempColor = (t: string | null) => {
@@ -59,7 +71,7 @@ export default async function Home() {
       supabase.from("global_stock_pool").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
-      supabase.from("property_leads").select("full_name,email,state,buyer_type,temperature,score,match_status,created_at").order("created_at", { ascending: false }).limit(8),
+      supabase.from("property_leads").select("name,email,state,buyer_type,triage_score,match_status,created_at,notes").order("created_at", { ascending: false }).limit(8),
       supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
     ]);
 
@@ -144,22 +156,25 @@ export default async function Home() {
           </div>
           {recentLeads && recentLeads.length > 0 ? (
             <div className="space-y-3">
-              {recentLeads.map((l, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{l.full_name || "—"}</p>
-                    <p className="text-xs text-gray-400">{l.buyer_type || "—"} · {l.state || "—"}</p>
+              {recentLeads.map((l, i) => {
+                const temperature = leadTemperature(l.notes);
+                return (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{l.name || "—"}</p>
+                      <p className="text-xs text-gray-400">{l.buyer_type || "—"} · {l.state || "—"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {temperature && (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(temperature)}`}>
+                          {temperature}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400">#{l.triage_score ?? "—"}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {l.temperature && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(l.temperature)}`}>
-                        {l.temperature}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-400">#{l.score ?? "—"}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-400 text-sm">No leads yet.</p>
