@@ -5,7 +5,7 @@
  * render in the operator's local timezone. The CRM `appointments` table is the
  * source of truth — there is no external calendar to sync with.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type Appt = {
@@ -74,7 +74,7 @@ export default function CalendarClient() {
   const [view, setView] = useState<View>("month");
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()));
   const [appts, setAppts] = useState<Appt[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Appt | null>(null);
 
@@ -91,26 +91,35 @@ export default function CalendarClient() {
     return { from: gridStart, to: addDays(gridStart, 42), gridStart, gridDays: 42 };
   }, [view, anchor]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const url = `/api/appointments?from=${encodeURIComponent(range.from.toISOString())}&to=${encodeURIComponent(range.to.toISOString())}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Failed (${res.status})`);
-      setAppts((data.appointments as Appt[]) ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setAppts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [range.from, range.to]);
-
+  // Fetch whenever the visible range changes. State updates all happen after the
+  // first await (or in finally), never synchronously in the effect body, so the
+  // loading flag is flipped ON by the nav event handlers instead (both allowed
+  // by react-hooks/set-state-in-effect). `cancelled` drops a stale response when
+  // the user navigates again before the fetch resolves.
+  const fromISO = range.from.toISOString();
+  const toISO = range.to.toISOString();
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = `/api/appointments?from=${encodeURIComponent(fromISO)}&to=${encodeURIComponent(toISO)}`;
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) throw new Error(data.error || `Failed (${res.status})`);
+        setAppts((data.appointments as Appt[]) ?? []);
+        setError(null);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e));
+          setAppts([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [fromISO, toISO]);
 
   // Bucket appointments by local day for O(1) cell lookup.
   const byDay = useMemo(() => {
@@ -127,11 +136,24 @@ export default function CalendarClient() {
     return map;
   }, [appts]);
 
-  const goPrev = () =>
+  // Nav handlers flip the loading flag (event-handler setState is fine) and move
+  // the anchor; the range-keyed effect then refetches.
+  const goPrev = () => {
+    setLoading(true);
     setAnchor((a) => (view === "week" ? addDays(a, -7) : new Date(a.getFullYear(), a.getMonth() - 1, 1)));
-  const goNext = () =>
+  };
+  const goNext = () => {
+    setLoading(true);
     setAnchor((a) => (view === "week" ? addDays(a, 7) : new Date(a.getFullYear(), a.getMonth() + 1, 1)));
-  const goToday = () => setAnchor(startOfDay(new Date()));
+  };
+  const goToday = () => {
+    setLoading(true);
+    setAnchor(startOfDay(new Date()));
+  };
+  const changeView = (v: View) => {
+    setLoading(true);
+    setView(v);
+  };
 
   const heading = useMemo(() => {
     if (view === "week") {
@@ -164,7 +186,7 @@ export default function CalendarClient() {
           {(["month", "week"] as View[]).map((v) => (
             <button
               key={v}
-              onClick={() => setView(v)}
+              onClick={() => changeView(v)}
               className={`px-3 py-1 rounded-md text-sm font-medium capitalize transition ${
                 view === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
