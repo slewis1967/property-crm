@@ -7,6 +7,7 @@ import {
   VideoConference,
   RoomAudioRenderer,
 } from "@livekit/components-react";
+import VirtualBackgroundControl from "./VirtualBackgroundControl";
 import { errMessage } from "../../utils/errors";
 
 /**
@@ -130,6 +131,8 @@ export default function VideoRoom({
         style={{ height: "100%" }}
       >
         {room && <RecordToggle room={room} />}
+        {/* Branded teal+logo virtual background, on by default (top-left toggle). */}
+        <VirtualBackgroundControl />
         <VideoConference />
         {/* Renders remote participant audio; VideoConference handles video. */}
         <RoomAudioRenderer />
