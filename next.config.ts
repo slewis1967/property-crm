@@ -11,6 +11,11 @@ import path from "path";
  *    hit these directly, but allowlist in case of debug proxies)
  *  - Cloudflare Access team domain for any future iframe/window
  *    integrations
+ *  - Self-hosted LiveKit SFU (video calls): the browser opens a wss signal
+ *    connection to it and fetches /rtc/validate over https, so BOTH schemes of
+ *    nextkey-livekit.fly.dev must be in connect-src. Without this the client
+ *    fails with "could not establish signal connection: Failed to fetch" and
+ *    the call drops instantly. Keep this in sync with NEXT_PUBLIC_LIVEKIT_URL.
  *  - Inline styles required by Tailwind v4 / LightningCSS; scripts limited
  *    to self + Brevo's analytics
  *
@@ -22,8 +27,8 @@ const SECURITY_HEADERS = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // Supabase REST/Auth/Realtime + Cloudflare Access team domain
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com",
+      // Supabase REST/Auth/Realtime + Cloudflare Access team domain + LiveKit SFU
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev",
       "script-src 'self' 'unsafe-inline' https://*.brevo.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
@@ -38,7 +43,9 @@ const SECURITY_HEADERS = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(self), geolocation=(), interest-cohort=()",
+    // camera + microphone must be allowed for same-origin so video calls can
+    // publish the user's webcam/mic (LiveKit). camera=() would disable it entirely.
+    value: "camera=(self), microphone=(self), geolocation=(), interest-cohort=()",
   },
   {
     key: "Strict-Transport-Security",
