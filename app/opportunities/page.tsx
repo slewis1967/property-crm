@@ -86,6 +86,56 @@ async function getArchiveOpps() {
   return { opps, total, pipeName, stageName };
 }
 
+/** Per-opportunity compliance-document counts for the Kanban card badges.
+ * Documents link by contact_id, but the board's Lead carries only an email, so
+ * we resolve the (small set of) doc-bearing contacts to emails and match on that
+ * — the same basis as the detail page's primary_contact_id email fallback. EOIs
+ * without a contact also count by opportunity_id. Best-effort: any failure just
+ * yields no badges. */
+async function computeDocCounts(leads: Lead[]): Promise<Record<string, number>> {
+  const byContact: Record<string, number> = {};
+  const byOpp: Record<string, number> = {};
+  const bump = (m: Record<string, number>, k: string | null | undefined) => {
+    if (k) m[k] = (m[k] || 0) + 1;
+  };
+  try {
+    const [ff, na, ca, eo] = await Promise.all([
+      supabase.from("borrower_fact_finds").select("contact_id"),
+      supabase.from("nccp_needs_analyses").select("contact_id"),
+      supabase.from("credit_authorisations").select("contact_id"),
+      supabase.from("eois").select("contact_id,opportunity_id"),
+    ]);
+    for (const r of (ff.data ?? []) as Array<{ contact_id: string | null }>) bump(byContact, r.contact_id);
+    for (const r of (na.data ?? []) as Array<{ contact_id: string | null }>) bump(byContact, r.contact_id);
+    for (const r of (ca.data ?? []) as Array<{ contact_id: string | null }>) bump(byContact, r.contact_id);
+    for (const r of (eo.data ?? []) as Array<{ contact_id: string | null; opportunity_id: string | null }>) {
+      if (r.contact_id) bump(byContact, r.contact_id);
+      else bump(byOpp, r.opportunity_id);
+    }
+  } catch {
+    return {};
+  }
+  // Resolve doc-bearing contact ids -> email (the key the board's Lead has).
+  const byEmail: Record<string, number> = {};
+  const contactIds = Object.keys(byContact);
+  if (contactIds.length) {
+    try {
+      const { data } = await supabase.from("contacts").select("id,email").in("id", contactIds);
+      for (const c of (data ?? []) as Array<{ id: string; email: string | null }>) {
+        if (c.email) byEmail[c.email.toLowerCase()] = (byEmail[c.email.toLowerCase()] || 0) + (byContact[c.id] || 0);
+      }
+    } catch {
+      /* email match just won't apply */
+    }
+  }
+  const counts: Record<string, number> = {};
+  for (const l of leads) {
+    const total = (l.email ? byEmail[l.email.toLowerCase()] || 0 : 0) + (byOpp[l.lead_id] || 0);
+    if (total > 0) counts[l.lead_id] = total;
+  }
+  return counts;
+}
+
 export default async function OpportunitiesPage() {
   const [leadsResult, pipelinesResult, archive] = await Promise.all([
     getLeads(),
@@ -94,6 +144,7 @@ export default async function OpportunitiesPage() {
   ]);
 
   const { leads, error: leadsError } = leadsResult;
+  const docCounts = await computeDocCounts(leads);
   const { pipelines, error: pipelinesError } = pipelinesResult;
   const apiError = pipelinesError || leadsError;
 
@@ -117,7 +168,7 @@ export default async function OpportunitiesPage() {
         </div>
       )}
 
-      <KanbanBoard initialLeads={leads} initialPipelines={pipelines} />
+      <KanbanBoard initialLeads={leads} initialPipelines={pipelines} docCounts={docCounts} />
 
       {archive.opps.length > 0 && (
         <section className="mt-10">

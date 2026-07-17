@@ -105,9 +105,12 @@ const isDnq = (l: Pick<Lead, "tags">) => parseTags(l.tags).includes(DNQ_TAG);
 export default function KanbanBoard({
   initialLeads,
   initialPipelines,
+  docCounts = {},
 }: {
   initialLeads: Lead[];
   initialPipelines: Pipeline[];
+  /** opportunity lead_id -> count of the contact's compliance documents. */
+  docCounts?: Record<string, number>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -785,6 +788,7 @@ export default function KanbanBoard({
                   const isSaving    = saving.has(lead.lead_id);
                   const isDragging  = dragId === lead.lead_id;
                   const tags        = parseTags(lead.tags);
+                  const docCount    = docCounts[lead.lead_id] || 0;
 
                   const isSelected = selected.has(lead.lead_id);
                   return (
@@ -878,6 +882,14 @@ export default function KanbanBoard({
                         {lead.created_at && !isAutoMoved && !isSaving && (
                           <span className="text-xs text-gray-300">
                             {new Date(lead.created_at).toLocaleDateString("en-AU")}
+                          </span>
+                        )}
+                        {docCount > 0 && (
+                          <span
+                            className="ml-auto flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-full px-1.5 py-0.5"
+                            title={`${docCount} compliance document${docCount === 1 ? "" : "s"} on file — open the opportunity to view`}
+                          >
+                            📄 {docCount}
                           </span>
                         )}
                         {lead.match_status === "matched" && !isAutoMoved && (
