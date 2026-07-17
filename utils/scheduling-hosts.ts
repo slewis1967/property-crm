@@ -1,27 +1,24 @@
 /**
- * The canonical list of people whose calendars the CRM can book into.
- *
- * `email` is the key: /api/appointments looks up the matching refresh_token
- * in public.calendar_credentials, so a host only becomes bookable once they
- * have connected their Google account via Settings → Calendar connections.
- * Until then, scheduling against them saves the CRM row and skips the invite.
- *
- * This list was previously duplicated in OpportunityDetail.tsx and
- * CalendarConnections.tsx, and the two copies disagreed on Glenn's surname.
+ * The canonical list of people a meeting can be hosted by (the "meeting owner"
+ * in the scheduler). `email` is the key: /api/appointments uses it to label the
+ * booking and `brand` to pick the Brevo sending identity for the invite email.
+ * There's no external calendar to connect — the CRM `appointments` table is the
+ * calendar, so every host is bookable immediately.
  */
 
 export type Brand = "nextkey" | "springboard";
 
 export type SchedulingHost = {
-  /** Must exactly match the Google account signed in at consent time — the
-   *  OAuth callback rejects a mismatch. */
+  /** The host's email — used to label the booking and reply-to the invite. */
   email: string;
   /** Short form, used in the host dropdown and "Book with —" links. */
   label: string;
-  /** Full name, used in the Settings connection panel. */
+  /** Full name, shown on the invite and in the calendar. */
   displayName: string;
   brand: Brand;
-  /** Google Calendar self-book page. Absent until the host publishes one. */
+  /** Optional external self-book page (a Google Calendar booking page). Only
+   *  used by the "Self-book link" dropdown — NOT part of the in-CRM meeting
+   *  flow, which schedules into the CRM's own calendar. Absent until published. */
   bookingPageUrl?: string;
 };
 

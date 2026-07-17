@@ -12,9 +12,8 @@
  * not in the browser bundle). The browser only ever receives a short-lived,
  * room-scoped JWT from /api/livekit/token.
  *
- * Mirrors the pattern already used for appointments (utils/google-oauth):
- * config is read lazily inside functions, never thrown at import time, because
- * this can be imported on paths where LiveKit isn't configured yet.
+ * Config is read lazily inside each function, never thrown at import time,
+ * because this can be imported on paths where LiveKit isn't configured yet.
  */
 import {
   AccessToken,
