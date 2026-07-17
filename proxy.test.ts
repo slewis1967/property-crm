@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -25,6 +25,26 @@ describe("isPublicGuestRoute", () => {
     expect(isPublicGuestRoute("/joined")).toBe(false);
     expect(isPublicGuestRoute("/api/livekit/guest-tokens")).toBe(false);
     expect(isPublicGuestRoute("/")).toBe(false);
+  });
+});
+
+describe("isPublicBookingRoute", () => {
+  it("exempts the self-book page (bare + host slug)", () => {
+    expect(isPublicBookingRoute("/book")).toBe(true);
+    expect(isPublicBookingRoute("/book/sean")).toBe(true);
+    expect(isPublicBookingRoute("/book/springboard")).toBe(true);
+  });
+
+  it("exempts the booking API for any host", () => {
+    expect(isPublicBookingRoute("/api/book/sean")).toBe(true);
+    expect(isPublicBookingRoute("/api/book/glenn")).toBe(true);
+  });
+
+  it("does NOT exempt lookalikes or unrelated routes", () => {
+    expect(isPublicBookingRoute("/booked")).toBe(false);
+    expect(isPublicBookingRoute("/bookings")).toBe(false);
+    expect(isPublicBookingRoute("/api/books")).toBe(false);
+    expect(isPublicBookingRoute("/")).toBe(false);
   });
 });
 
