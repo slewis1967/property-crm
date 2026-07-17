@@ -6,6 +6,7 @@ import { errMessage } from "../../../utils/errors";
 import { roomForContact, livekitConfigured } from "../../../utils/livekit";
 import { signGuestToken } from "../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../utils/meeting-invite";
+import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS } from "../../../utils/appointments";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -135,34 +136,24 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Step 2: Supabase appointments row (authoritative — this IS the calendar) ---
-  // Populates BOTH column-name conventions in use across the codebase so a row
-  // written here shows up in every read path:
-  //   - title + appointment_status — /calendar, /appointments, contact &
-  //     opportunity detail panels.
-  //   - event_title + status — OpportunityAppointments (Cal.com-shaped rows).
-  const insertRow: Record<string, unknown> = {
-    contact_id: body.contact_id,
-    contact_email: body.contact_email,
-    contact_name: body.contact_name ?? null,
-    title,
-    event_title: title,
-    start_time: startISO,
-    end_time: endISO,
-    notes: description ?? null,
-    location: videoLink ?? location ?? null,
-    appointment_status: "scheduled",
-    status: "scheduled",
-    host_email: host_email,
-    host_name: host.displayName ?? host_email,
-  };
-
+  // The table is the legacy Cal.com shape (event_title / status / additional_notes
+  // / NOT-NULL cal_uid); buildAppointmentRow is the single source of truth for
+  // that shape so this can't drift into non-existent columns again.
   const { data: inserted, error: insertErr } = await supabase
     .from("appointments")
-    .insert(insertRow)
-    .select(
-      "id,title,event_title,start_time,end_time,appointment_status,status," +
-      "location,notes,host_name,host_email,contact_id,contact_email,contact_name",
-    )
+    .insert(buildAppointmentRow({
+      contactId: body.contact_id,
+      contactEmail: body.contact_email,
+      contactName: body.contact_name ?? null,
+      hostEmail: host_email,
+      hostName: host.displayName ?? host_email,
+      title,
+      startISO,
+      endISO,
+      location: videoLink ?? location ?? null,
+      notes: description ?? null,
+    }))
+    .select("id")
     .single();
 
   if (insertErr) {
@@ -225,10 +216,7 @@ export async function GET(req: NextRequest) {
 
   let q = supabase
     .from("appointments")
-    .select(
-      "id,title,event_title,start_time,end_time,appointment_status,status," +
-      "location,notes,host_name,host_email,contact_id,contact_email,contact_name",
-    )
+    .select(APPOINTMENT_READ_COLUMNS)
     .gte("start_time", new Date(fromMs).toISOString())
     .lt("start_time", new Date(toMs).toISOString())
     .order("start_time", { ascending: true })

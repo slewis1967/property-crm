@@ -12,6 +12,7 @@ import { roomForContact, livekitConfigured } from "../../../../utils/livekit";
 import { signGuestToken } from "../../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../../utils/meeting-invite";
 import { sendBrevoEmail } from "../../../../utils/brevo";
+import { buildAppointmentRow } from "../../../../utils/appointments";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -184,21 +185,18 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   // --- Book it into the CRM calendar. ---
   const { data: inserted, error: insertErr } = await supabase
     .from("appointments")
-    .insert({
-      contact_id: contactId,
-      contact_email: email,
-      contact_name: name,
+    .insert(buildAppointmentRow({
+      contactId,
+      contactEmail: email,
+      contactName: name,
+      hostEmail: host.email,
+      hostName: host.displayName,
       title,
-      event_title: title,
-      start_time: startISO,
-      end_time: endISO,
-      notes: body.notes?.trim() || null,
+      startISO,
+      endISO,
       location: videoLink,
-      appointment_status: "scheduled",
-      status: "scheduled",
-      host_email: host.email,
-      host_name: host.displayName,
-    })
+      notes: body.notes?.trim() || null,
+    }))
     .select("id")
     .single();
 
