@@ -10,6 +10,7 @@ import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
 import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
@@ -102,10 +103,12 @@ export default function OpportunityDetail({
   lead: initialLead,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [] },
   ghlContactId = null,
+  documents = [],
 }: {
   lead: Lead;
   ghlArchive?: GhlArchive;
   ghlContactId?: string | null;
+  documents?: OpportunityDoc[];
 }) {
   const router = useRouter();
   // Local lead state — used so edits via the modal reflect immediately
@@ -700,6 +703,9 @@ export default function OpportunityDetail({
               </button>
             </div>
           </div>
+
+          {/* Borrower compliance documents (Fact Find / Needs Analysis / EOI / Credit Auth) */}
+          <OpportunityDocuments documents={documents} />
 
           {/* Linked Contacts */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
