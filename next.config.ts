@@ -16,6 +16,13 @@ import path from "path";
  *    nextkey-livekit.fly.dev must be in connect-src. Without this the client
  *    fails with "could not establish signal connection: Failed to fetch" and
  *    the call drops instantly. Keep this in sync with NEXT_PUBLIC_LIVEKIT_URL.
+ *  - Virtual background (@livekit/track-processors → MediaPipe selfie
+ *    segmentation): needs 'wasm-unsafe-eval' to instantiate the WASM module and
+ *    blob:/worker-src for the MediaPipe glue that runs the segmenter. The WASM
+ *    runtime + model file are fetched from jsDelivr and Google's model bucket,
+ *    so cdn.jsdelivr.net and storage.googleapis.com are allowed in connect-src
+ *    (and as script sources for the loader glue). If we ever self-host those
+ *    assets under /public we can drop the CDN hosts back out.
  *  - Inline styles required by Tailwind v4 / LightningCSS; scripts limited
  *    to self + Brevo's analytics
  *
@@ -28,8 +35,9 @@ const SECURITY_HEADERS = [
     value: [
       "default-src 'self'",
       // Supabase REST/Auth/Realtime + Cloudflare Access team domain + LiveKit SFU
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev",
-      "script-src 'self' 'unsafe-inline' https://*.brevo.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev https://cdn.jsdelivr.net https://storage.googleapis.com",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://*.brevo.com https://cdn.jsdelivr.net https://storage.googleapis.com",
+      "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",

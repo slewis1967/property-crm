@@ -13,6 +13,7 @@
   "dependencies": {
     "@livekit/components-react": "^2.9.23",
     "@livekit/components-styles": "^1.2.0",
+    "@livekit/track-processors": "^0.5.4",
     "@sparticuz/chromium": "^133.0.0",
     "@supabase/supabase-js": "^2.97.0",
     "isomorphic-dompurify": "^3.12.0",
