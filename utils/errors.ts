@@ -8,5 +8,12 @@
 export function errMessage(e: unknown, fallback = "unknown error"): string {
   if (e instanceof Error && e.message) return e.message;
   if (typeof e === "string" && e) return e;
+  // Supabase / PostgREST errors are plain objects ({ message, details, hint,
+  // code }), not Error instances — reach their message too rather than falling
+  // through to the useless "unknown error".
+  if (e && typeof e === "object" && "message" in e) {
+    const m = (e as { message?: unknown }).message;
+    if (typeof m === "string" && m) return m;
+  }
   return fallback;
 }
