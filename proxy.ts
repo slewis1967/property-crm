@@ -189,6 +189,20 @@ export function isPublicGuestRoute(pathname: string): boolean {
   return false;
 }
 
+// Public self-book routes. A lead picks a meeting time WITHOUT a Cloudflare
+// Access identity, so the booking page and its API must be exempt — same model
+// as the signing + guest-video routes. Trust: the host slug is public (like a
+// Calendly link), the booking API re-validates every slot against live busy
+// times, and the honeypot + slot-grid check bound abuse. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/book/* + /api/book/*) EXACTLY. The CSRF
+// origin check above still applies to the mutating booking POST (same-origin
+// from the /book page).
+export function isPublicBookingRoute(pathname: string): boolean {
+  if (pathname === "/book" || pathname.startsWith("/book/")) return true;
+  if (pathname.startsWith("/api/book/")) return true;
+  return false;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -252,7 +266,8 @@ export async function proxy(req: NextRequest) {
   if (
     PUBLIC_PATHS.has(pathname) ||
     isPublicSignRoute(pathname) ||
-    isPublicGuestRoute(pathname)
+    isPublicGuestRoute(pathname) ||
+    isPublicBookingRoute(pathname)
   ) {
     return NextResponse.next();
   }

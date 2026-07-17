@@ -16,10 +16,8 @@ export type SchedulingHost = {
   /** Full name, shown on the invite and in the calendar. */
   displayName: string;
   brand: Brand;
-  /** Optional external self-book page (a Google Calendar booking page). Only
-   *  used by the "Self-book link" dropdown — NOT part of the in-CRM meeting
-   *  flow, which schedules into the CRM's own calendar. Absent until published. */
-  bookingPageUrl?: string;
+  /** URL-safe id for the in-house self-book page at /book/<slug>. Unique. */
+  slug: string;
 };
 
 export const BRAND_LABEL: Record<Brand, string> = {
@@ -33,22 +31,23 @@ export const SCHEDULING_HOSTS: SchedulingHost[] = [
     label: "Sean",
     displayName: "Sean Lewis",
     brand: "nextkey",
-    bookingPageUrl: "https://calendar.app.google/19ocFJGhcTHSFKBg7",
+    slug: "sean",
   },
   {
     email: "glenn.m@nextkey.com.au",
     label: "Glenn",
     displayName: "Glenn Mayes",
     brand: "nextkey",
-    bookingPageUrl: "https://calendar.app.google/tyLLhLCA7k686t5L9",
+    slug: "glenn",
   },
   {
     // Springboard's own Workspace identity, so invites reach the client from
-    // a Springboard address rather than a NextKey one. No booking page yet.
+    // a Springboard address rather than a NextKey one.
     email: "bookings@springboardhomes.com.au",
     label: "Springboard",
     displayName: "Springboard Homes",
     brand: "springboard",
+    slug: "springboard",
   },
 ];
 
@@ -59,4 +58,9 @@ export function hostsForBrand(brand: Brand): SchedulingHost[] {
 export function findHost(email: string): SchedulingHost | undefined {
   const needle = email.trim().toLowerCase();
   return SCHEDULING_HOSTS.find((h) => h.email.toLowerCase() === needle);
+}
+
+export function findHostBySlug(slug: string): SchedulingHost | undefined {
+  const needle = slug.trim().toLowerCase();
+  return SCHEDULING_HOSTS.find((h) => h.slug === needle);
 }
