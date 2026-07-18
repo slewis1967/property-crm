@@ -1,51 +1,58 @@
 /**
- * Server-side sync: when a compliance document (Needs Analysis or Borrower Fact
- * Find) is COMPLETED, promote the people it captured into first-class CRM
- * contacts, so every other form (Credit File Authorisation, the other of
- * NA/Fact Find, AML/CTF) can prefill from them.
+ * Server-side sync: when a compliance document (Needs Analysis, Borrower Fact
+ * Find, or AML/CTF CDD case) is COMPLETED, promote the natural persons it
+ * captured into first-class CRM contacts, so every other form can prefill from
+ * them.
  *
- * The motivating gap: Applicant 1 is usually picked from Contacts (the document
- * carries its `contact_id`), but Applicant 2 is keyed by hand and never becomes
- * a contact — so nothing downstream can reuse their name, address or details.
- * On completion we create-or-update a contact for BOTH applicants and, if the
- * document had no linked contact yet, write Applicant 1's new contact id back.
+ * The motivating gap: the primary party is usually picked from Contacts (the
+ * document carries its `contact_id`), but the other people on the form (a second
+ * applicant, or an AML beneficial owner) are keyed by hand and never become
+ * contacts — so nothing downstream can reuse their name, address or details. On
+ * completion we create-or-update a contact for EVERY person and, if the document
+ * had no linked contact yet, write the primary person's contact id back onto it.
+ *
+ * Each document shape maps to a `primary` person + a list of `others`:
+ *  - Needs Analysis / Fact Find → Applicant 1 (primary) + Applicant 2 (other).
+ *  - AML case → the acting individual (primary) + each beneficial owner (other).
  *
  * Design rules:
  *  - Best-effort. This runs as a side effect of the completing save; it must
- *    NEVER throw back into the request. A contact that fails to sync is logged,
+ *    NEVER throw back into the request. A person that fails to sync is logged,
  *    not surfaced as a save failure — the compliance document is what matters.
- *  - Merge, don't clobber. The per-doc mapper only emits fields the applicant
- *    actually filled in, so updating an existing contact fills gaps (e.g. adds a
- *    home address) without blanking data the CRM already holds.
+ *  - Merge, don't clobber. The per-doc mapper only emits fields the form filled
+ *    in, so updating an existing contact fills gaps without blanking held data.
  *  - Dedupe. Match an existing contact by email, then by full name + DOB, before
  *    inserting — so re-completing a reopened document updates the same contact
- *    rather than spawning duplicates.
+ *    rather than spawning duplicates, and a person listed twice (e.g. the party
+ *    who is also a beneficial owner) is written once.
  *
- * The pure per-doc mappers live in utils/needsAnalysisToContact.ts and
- * utils/factFindToContact.ts; only the I/O (lookup / insert / update / write-
- * back) and the shared two-applicant orchestration live here.
+ * The pure per-doc mappers live in utils/needsAnalysisToContact.ts,
+ * utils/factFindToContact.ts and utils/amlToContact.ts; only the I/O (lookup /
+ * insert / update / write-back) and the shared orchestration live here.
  */
 
 import { supabase } from "./supabase";
 import { log, errInfo } from "./logger";
 import { hydrateNeedsAnalysis, type NeedsAnalysisData } from "./needsAnalysis";
 import { hydrateFactFind } from "./factfind";
+import { hydrateAmlCase } from "./aml";
 import { applicantToContactRecord, type ContactSyncRecord } from "./needsAnalysisToContact";
 import { factFindApplicantToContactRecord } from "./factFindToContact";
+import { amlPartyToContactRecord, beneficialOwnerToContactRecord } from "./amlToContact";
 
 export type ContactSyncResult = {
-  app1ContactId: string | null;
-  app2ContactId: string | null;
+  primaryContactId: string | null;
+  otherContactIds: string[];
   created: number;
   updated: number;
 };
 
-const emptyResult = (): ContactSyncResult => ({ app1ContactId: null, app2ContactId: null, created: 0, updated: 0 });
+const emptyResult = (): ContactSyncResult => ({ primaryContactId: null, otherContactIds: [], created: 0, updated: 0 });
 
 /** A record with at least a name is worth syncing. */
 const hasName = (rec: ContactSyncRecord | null | undefined): rec is ContactSyncRecord => Boolean(rec?.full_name);
 
-/** Find an existing contact for a mapped applicant. Email first, then name+DOB. */
+/** Find an existing contact for a mapped person. Email first, then name+DOB. */
 async function findExistingContactId(rec: ContactSyncRecord): Promise<string | null> {
   if (rec.email) {
     const { data } = await supabase
@@ -102,35 +109,38 @@ async function upsertContact(
 }
 
 /**
- * Shared orchestration for a two-applicant document. Upserts each applicant's
- * mapped record, dedupes, and backfills the document's `contact_id` from
- * Applicant 1 when it had no link yet.
+ * Shared orchestration: sync a document's `primary` person (which backfills the
+ * document's `contact_id` when it has none) plus a list of `others`. A person
+ * that resolves to an already-synced contact this run is recorded but not
+ * written twice.
  */
-async function syncApplicantRecords(opts: {
+async function syncContactRecords(opts: {
   table: string;
   docId: string;
   docLabel: string;
   /** `contacts.source` written on a freshly-inserted contact. */
   source: string;
   linkedContactId: string | null;
-  records: [ContactSyncRecord | null, ContactSyncRecord | null];
+  primary: ContactSyncRecord | null;
+  others: (ContactSyncRecord | null)[];
 }): Promise<ContactSyncResult> {
-  const { table, docId, docLabel, source, records } = opts;
+  const { table, docId, docLabel, source, primary, others } = opts;
   const result = emptyResult();
   let linkedContactId = opts.linkedContactId;
+  const seen = new Set<string>();
 
   const tally = (action: "created" | "updated" | "skipped") => {
     if (action === "created") result.created += 1;
     else if (action === "updated") result.updated += 1;
   };
 
-  // Applicant 1: reuse the document's linked contact when present, else dedupe.
-  const rec1 = records[0];
-  if (hasName(rec1)) {
-    const existing = linkedContactId ?? (await findExistingContactId(rec1));
-    const { id, action } = await upsertContact(rec1, existing, source);
-    result.app1ContactId = id;
+  // Primary: reuse the document's linked contact when present, else dedupe.
+  if (hasName(primary)) {
+    const existing = linkedContactId ?? (await findExistingContactId(primary));
+    const { id, action } = await upsertContact(primary, existing, source);
+    result.primaryContactId = id;
     tally(action);
+    if (id) seen.add(id);
     // Backfill the document's contact link if it didn't have one and we made/found it.
     if (!linkedContactId && id) {
       const { error } = await supabase.from(table).update({ contact_id: id }).eq("id", docId);
@@ -139,26 +149,29 @@ async function syncApplicantRecords(opts: {
     }
   }
 
-  // Applicant 2: never a linked contact — dedupe then upsert. If they resolve to
-  // Applicant 1's contact (e.g. a couple sharing one email), don't double-write
-  // it as the other person.
-  const rec2 = records[1];
-  if (hasName(rec2)) {
-    const existing = await findExistingContactId(rec2);
-    if (existing && existing === result.app1ContactId) {
-      result.app2ContactId = existing;
-    } else {
-      const { id, action } = await upsertContact(rec2, existing, source);
-      result.app2ContactId = id;
-      tally(action);
+  // Others: each is deduped and upserted. Skip a re-write when a person resolves
+  // to a contact already synced this run (e.g. the party is also a beneficial
+  // owner, or a name is listed twice).
+  for (const rec of others) {
+    if (!hasName(rec)) continue;
+    const existing = await findExistingContactId(rec);
+    if (existing && seen.has(existing)) {
+      result.otherContactIds.push(existing);
+      continue;
     }
+    const { id, action } = await upsertContact(rec, existing, source);
+    if (id) {
+      seen.add(id);
+      result.otherContactIds.push(id);
+    }
+    tally(action);
   }
 
   log.info("contact_sync.done", {
     docLabel,
     docId,
-    app1: result.app1ContactId,
-    app2: result.app2ContactId,
+    primary: result.primaryContactId,
+    others: result.otherContactIds,
     created: result.created,
     updated: result.updated,
   });
@@ -166,7 +179,7 @@ async function syncApplicantRecords(opts: {
 }
 
 /**
- * Sync both applicants of a completed Needs Analysis into Contacts.
+ * Sync a completed Needs Analysis's two applicants into Contacts.
  *
  * @param naId      the needs-analysis row id
  * @param preloaded optional already-hydrated data + linked contact id, to avoid
@@ -197,13 +210,14 @@ export async function syncNeedsAnalysisContacts(
       linkedContactId = (row as { contact_id: string | null }).contact_id ?? null;
     }
 
-    return await syncApplicantRecords({
+    return await syncContactRecords({
       table: "nccp_needs_analyses",
       docId: naId,
       docLabel: "needs_analysis",
       source: "needs_analysis",
       linkedContactId,
-      records: [applicantToContactRecord(data.applicants[0]), applicantToContactRecord(data.applicants[1])],
+      primary: applicantToContactRecord(data.applicants[0]),
+      others: [applicantToContactRecord(data.applicants[1])],
     });
   } catch (e) {
     // Absolute backstop — a sync error must never fail the completing save.
@@ -213,9 +227,8 @@ export async function syncNeedsAnalysisContacts(
 }
 
 /**
- * Sync both applicants of a completed Borrower Fact Find into Contacts. Same
- * shape as the Needs Analysis path, over the `borrower_fact_finds` table with
- * the Fact Find's own applicant→contact mapping.
+ * Sync a completed Borrower Fact Find's two applicants into Contacts. Same shape
+ * as the Needs Analysis path, over `borrower_fact_finds`.
  */
 export async function syncFactFindContacts(ffId: string): Promise<ContactSyncResult> {
   try {
@@ -231,19 +244,51 @@ export async function syncFactFindContacts(ffId: string): Promise<ContactSyncRes
     const data = hydrateFactFind((row as { data: unknown }).data);
     const linkedContactId = (row as { contact_id: string | null }).contact_id ?? null;
 
-    return await syncApplicantRecords({
+    return await syncContactRecords({
       table: "borrower_fact_finds",
       docId: ffId,
       docLabel: "fact_find",
       source: "fact_find",
       linkedContactId,
-      records: [
-        factFindApplicantToContactRecord(data.applicants[0]),
-        factFindApplicantToContactRecord(data.applicants[1]),
-      ],
+      primary: factFindApplicantToContactRecord(data.applicants[0]),
+      others: [factFindApplicantToContactRecord(data.applicants[1])],
     });
   } catch (e) {
     log.error("contact_sync.failed", { docLabel: "fact_find", docId: ffId, ...errInfo(e) });
+    return emptyResult();
+  }
+}
+
+/**
+ * Sync a completed ("Cleared") AML/CTF CDD case's people into Contacts: the
+ * acting individual (primary, with residential address) plus each 25%+
+ * beneficial owner (name + DOB).
+ */
+export async function syncAmlCaseContacts(caseId: string): Promise<ContactSyncResult> {
+  try {
+    const { data: row, error } = await supabase
+      .from("aml_cases")
+      .select("data,contact_id")
+      .eq("id", caseId)
+      .maybeSingle();
+    if (error || !row) {
+      log.warn("contact_sync.load_failed", { docLabel: "aml_case", docId: caseId, ...errInfo(error) });
+      return emptyResult();
+    }
+    const data = hydrateAmlCase((row as { data: unknown }).data);
+    const linkedContactId = (row as { contact_id: string | null }).contact_id ?? null;
+
+    return await syncContactRecords({
+      table: "aml_cases",
+      docId: caseId,
+      docLabel: "aml_case",
+      source: "aml_case",
+      linkedContactId,
+      primary: amlPartyToContactRecord(data),
+      others: (data.beneficialOwners ?? []).map(beneficialOwnerToContactRecord),
+    });
+  } catch (e) {
+    log.error("contact_sync.failed", { docLabel: "aml_case", docId: caseId, ...errInfo(e) });
     return emptyResult();
   }
 }

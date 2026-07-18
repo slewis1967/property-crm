@@ -12,6 +12,7 @@ import {
   makeDeleteHandler,
   type PatchBuild,
 } from "../../../../../utils/compliance-doc-route";
+import { syncAmlCaseContacts } from "../../../../../utils/contact-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,17 @@ export const PATCH = makePatchHandler({
     if (b.dealId !== undefined) patch.deal_id = b.dealId || null;
 
     return { patch, incomingStatus, snapshot: patch.data ?? null };
+  },
+  /**
+   * On completion (the not-locked → "Cleared" "sign" transition), promote the
+   * case's people into Contacts — the acting individual (with residential
+   * address) plus each beneficial owner — so the Fact Find, Needs Analysis and
+   * Credit Authorisation forms can prefill from them. Re-reads the freshly saved
+   * row inside the sync; best-effort, so it can't fail the completing save.
+   */
+  onAfterCommit: async ({ id, decision }) => {
+    if (decision.kind !== "sign") return;
+    await syncAmlCaseContacts(id);
   },
 });
 
