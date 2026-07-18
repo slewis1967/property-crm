@@ -12,6 +12,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { amlToCreditAuth } from "../../../utils/amlToCreditAuth";
+import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
+import { useLocalDraft, draftStorageKey, SAVE_FAILED_HINT } from "../../hooks/useLocalDraft";
+import UnsavedDraftBanner from "../../components/UnsavedDraftBanner";
+import { SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import {
   hydrateAmlCase,
   emptyAmlCase,
@@ -79,8 +83,22 @@ export default function CaseForm({ id }: { id: string }) {
   const [creatingCa, setCreatingCa] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Dirtiness for autosave: a monotonic edit counter vs. the counter at the last
+  // successful save (survives an edit landing mid-save).
+  const [rev, setRev] = useState(0);
+  const [savedRev, setSavedRev] = useState(0);
+  const dirty = rev !== savedRev;
 
   const locked = status === "Cleared";
+
+  // Local safety-net: mirror unsaved edits to localStorage so a failed save +
+  // reload can't lose them; offer to restore a leftover draft on reopen.
+  const { recovered, dismissRecovered, discardRecovered, clearDraft } = useLocalDraft({
+    storageKey: draftStorageKey("aml_case", id),
+    data,
+    dirty,
+    ready: !loading,
+  });
 
   const loadScreenings = useCallback(async () => {
     try {
@@ -129,9 +147,11 @@ export default function CaseForm({ id }: { id: string }) {
       mutator(next);
       return next;
     });
+    setRev((r) => r + 1);
   }
 
-  async function save(nextStatus?: string) {
+  async function save(nextStatus?: string): Promise<AutosaveOutcome> {
+    const revAtSave = rev;
     setSaving(true);
     setError("");
     setNotice("");
@@ -141,17 +161,46 @@ export default function CaseForm({ id }: { id: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data, status: nextStatus ?? status }),
       });
+      // A lapsed Cloudflare Access session bounces the request to a login page
+      // (a redirect and/or a non-JSON body) rather than the API. Surface a clear,
+      // reassuring message — the edits are in the local backup — and never parse
+      // the login HTML as JSON.
+      if (res.redirected || !(res.headers.get("content-type") || "").includes("application/json")) {
+        setError(SAVE_FAILED_HINT);
+        return "error";
+      }
       const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Save failed");
+      if (res.status === 409) {
+        setStatus("Cleared");
+        setError(json.error || "This case is signed/locked.");
+        return "locked";
+      }
+      if (!json.ok) {
+        setError(json.error || "Save failed");
+        return "error";
+      }
       if (nextStatus) setStatus(nextStatus);
+      setSavedRev(revAtSave);
+      clearDraft(); // the server has it now — drop the local backup
       setNotice("Saved.");
       loadHistory();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      return "saved";
+    } catch {
+      // Network drop / blocked auth redirect — data is safe in the local backup.
+      setError(SAVE_FAILED_HINT);
+      return "error";
     } finally {
       setSaving(false);
     }
   }
+
+  // Debounced autosave while editing a Draft (never PATCHes a Cleared/locked case).
+  const { state: saveState, lastSavedAt, saveNow } = useAutosave({
+    isDirty: dirty,
+    isLocked: locked,
+    rev,
+    save: () => save(),
+  });
 
   /**
    * Create a Credit File Authorisation pre-filled from this case — the acting
@@ -246,6 +295,18 @@ export default function CaseForm({ id }: { id: string }) {
       )}
       {error && <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>}
       {notice && <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">{notice}</div>}
+
+      {recovered && !locked && (
+        <UnsavedDraftBanner
+          ts={recovered.ts}
+          onRestore={() => {
+            setData(recovered.data);
+            setRev((r) => r + 1); // mark dirty so autosave persists the restored blob
+            dismissRecovered();
+          }}
+          onDiscard={discardRecovered}
+        />
+      )}
 
       {/* CDD completeness checklist */}
       <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4">
@@ -465,6 +526,7 @@ export default function CaseForm({ id }: { id: string }) {
 
       {/* Sticky action bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex items-center gap-3 justify-end z-40">
+        {!locked && <SaveStateIndicator state={saveState} lastSavedAt={lastSavedAt} onRetry={saveNow} />}
         <select
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           value={status}
@@ -486,7 +548,7 @@ export default function CaseForm({ id }: { id: string }) {
           {creatingCa ? "Creating…" : "→ Create Credit Authorisation"}
         </button>
         <button
-          onClick={() => save()}
+          onClick={() => void save()}
           disabled={saving}
           className="px-5 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-60"
           style={{ backgroundColor: TEAL }}
@@ -495,7 +557,7 @@ export default function CaseForm({ id }: { id: string }) {
         </button>
         {!locked && cdd.complete && data.screening.status === "clear" && (
           <button
-            onClick={() => save("Cleared")}
+            onClick={() => void save("Cleared")}
             disabled={saving}
             className="px-5 py-2 text-sm font-semibold rounded-lg border disabled:opacity-60"
             style={{ color: "#065f46", borderColor: "#065f46" }}
