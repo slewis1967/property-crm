@@ -356,7 +356,11 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
       <SigningPanel
         docType="credit_authorisation"
         docId={id}
-        proposedSigners={[{ name: data.names.trim(), email: "" }]}
+        proposedSigners={
+          data.signers.length > 0
+            ? data.signers.map((s) => ({ name: s.name.trim(), email: s.email.trim() }))
+            : [{ name: data.names.trim(), email: "" }]
+        }
       />
 
       {/* When locked (signed) every input inside is disabled — the document is

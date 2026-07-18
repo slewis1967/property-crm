@@ -35,6 +35,11 @@ export function factFindToCreditAuth(ff: FactFindData): CreditAuthorisationData 
   // The consent form has a single address line; use Applicant 1's home address
   // (fall back to Applicant 2's if the first has none).
   data.address = homeAddressLine(ff.applicants[0]) || homeAddressLine(ff.applicants[1]);
+  // Per-applicant signers (name + email) so the send-for-signature modal opens
+  // ready to send to both applicants.
+  data.signers = ff.applicants
+    .map((a) => ({ name: applicantName(a), email: clean(a.email) }))
+    .filter((s) => s.name || s.email);
 
   return data;
 }

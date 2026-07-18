@@ -37,6 +37,11 @@ export function needsAnalysisToCreditAuth(na: NeedsAnalysisData): CreditAuthoris
   // The consent form has a single address line; use Applicant 1's current
   // address (fall back to Applicant 2's if the first has none).
   data.address = currentAddressLine(na.applicants[0]) || currentAddressLine(na.applicants[1]);
+  // Per-applicant signers (name + email) so the send-for-signature modal opens
+  // ready to send to both applicants.
+  data.signers = na.applicants
+    .map((a) => ({ name: applicantName(a), email: clean(a.contact?.email) }))
+    .filter((s) => s.name || s.email);
 
   return data;
 }

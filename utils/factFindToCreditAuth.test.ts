@@ -9,8 +9,10 @@ function twoApplicants(): FactFindData {
   ff.applicants[0].family_name = "Halliday";
   ff.applicants[0].address = "12 Smith St, Toowong QLD";
   ff.applicants[0].postcode = "4066";
+  ff.applicants[0].email = "david@example.com";
   ff.applicants[1].given_names = "Jane";
   ff.applicants[1].family_name = "Halliday";
+  ff.applicants[1].email = "jane@example.com";
   return ff;
 }
 
@@ -46,5 +48,14 @@ describe("factFindToCreditAuth", () => {
     expect(ca.address).toBe("");
     expect(ca.status).toBe(blank.status);
     expect(ca.signatories).toEqual(blank.signatories);
+    expect(ca.signers).toEqual([]);
+  });
+
+  it("carries both applicants as signers (name + email) for the send modal", () => {
+    const ca = factFindToCreditAuth(twoApplicants());
+    expect(ca.signers).toEqual([
+      { name: "David Halliday", email: "david@example.com" },
+      { name: "Jane Halliday", email: "jane@example.com" },
+    ]);
   });
 });

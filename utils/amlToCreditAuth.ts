@@ -33,8 +33,13 @@ export function amlToCreditAuth(data: AmlCaseData): CreditAuthorisationData {
     clean(data.entity?.fullLegalName),
     ...(data.beneficialOwners ?? []).map((bo) => clean(bo.fullLegalName)),
   ].filter(Boolean);
-  ca.names = [...new Set(names)].join(" & ");
+  const unique = [...new Set(names)];
+  ca.names = unique.join(" & ");
   ca.address = residentialLine(data);
+  // Signers for the send-for-signature modal. The AML case captures no email for
+  // the acting individual or owners, so names are pre-filled and the sender adds
+  // the emails before sending.
+  ca.signers = unique.map((name) => ({ name, email: "" }));
 
   return ca;
 }

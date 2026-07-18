@@ -81,6 +81,15 @@ export type CreditAuthSignatory = {
 };
 
 /**
+ * A named signer for the e-signature request — one person who gets emailed a
+ * signing link. Distinct from the legal `names` line (which is joined free
+ * text): these are carried per-applicant from the source document (Needs
+ * Analysis / Fact Find / AML case) so the "Send for signature" modal opens
+ * pre-filled with both applicants' names and emails, ready to send.
+ */
+export type CreditAuthSigner = { name: string; email: string };
+
+/**
  * Everything the form captures. The bulk of the document is fixed legal text
  * (CREDIT_AUTHORISATION_TEXT); only these fields are filled in.
  */
@@ -89,6 +98,8 @@ export type CreditAuthorisationData = {
   names: string;
   /** The "of ___ (Address)" line. */
   address: string;
+  /** Per-applicant signers (name + email) for the send-for-signature request. */
+  signers: CreditAuthSigner[];
   /** The two Signature / Date blocks at the foot of the form. */
   signatories: [CreditAuthSignatory, CreditAuthSignatory];
   status: CreditAuthorisationStatus;
@@ -117,6 +128,7 @@ export function emptyCreditAuthorisation(): CreditAuthorisationData {
   return {
     names: "",
     address: "",
+    signers: [],
     signatories: [emptySignatory(), emptySignatory()],
     status: "draft",
   };
@@ -146,9 +158,20 @@ export function hydrateCreditAuthorisation(raw: unknown): CreditAuthorisationDat
   const status: CreditAuthorisationStatus =
     d.status === "signed" || d.status === "draft" ? d.status : base.status;
 
+  const signers = Array.isArray(d.signers)
+    ? (d.signers as unknown[])
+        .filter((s): s is Record<string, unknown> => !!s && typeof s === "object")
+        .map((s) => ({
+          name: typeof s.name === "string" ? s.name : "",
+          email: typeof s.email === "string" ? s.email : "",
+        }))
+        .filter((s) => s.name || s.email)
+    : base.signers;
+
   return {
     names: typeof d.names === "string" ? d.names : base.names,
     address: typeof d.address === "string" ? d.address : base.address,
+    signers,
     signatories,
     status,
   };
