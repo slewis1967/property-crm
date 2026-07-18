@@ -10,6 +10,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { amlToCreditAuth } from "../../../utils/amlToCreditAuth";
 import {
   hydrateAmlCase,
   emptyAmlCase,
@@ -65,13 +67,16 @@ function when(iso: string): string {
 }
 
 export default function CaseForm({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<AmlCaseData>(() => emptyAmlCase());
   const [status, setStatus] = useState<string>("Draft");
+  const [contactId, setContactId] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [screenings, setScreenings] = useState<ScreeningRow[]>([]);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingCa, setCreatingCa] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -100,6 +105,7 @@ export default function CaseForm({ id }: { id: string }) {
         if (!res.ok) throw new Error(res.error || "Load failed");
         setData(hydrateAmlCase(res.case.data));
         setStatus(res.case.status ?? "Draft");
+        setContactId(res.case.contact_id ?? null);
         setCreatedAt(res.case.created_at ?? "");
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Load failed");
@@ -144,6 +150,34 @@ export default function CaseForm({ id }: { id: string }) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  /**
+   * Create a Credit File Authorisation pre-filled from this case — the acting
+   * individual and any beneficial owners as the names, and the residential
+   * address — linked to the same contact, then open it. Derives from the current
+   * in-memory case (no separate save needed; the Credit Authorisation opens as a
+   * draft the broker can adjust).
+   */
+  async function createCreditAuthorisation() {
+    setCreatingCa(true);
+    setError("");
+    setNotice("");
+    try {
+      const caData = amlToCreditAuth(data);
+      const res = await fetch("/api/credit-authorisations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, data: caData }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not create Credit Authorisation");
+      router.push(`/credit-authorisation/${json.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create Credit Authorisation");
+    } finally {
+      setCreatingCa(false);
     }
   }
 
@@ -442,6 +476,15 @@ export default function CaseForm({ id }: { id: string }) {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => void createCreditAuthorisation()}
+          disabled={creatingCa}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+          title="Create a Credit File Authorisation pre-filled from this case's parties and address"
+        >
+          {creatingCa ? "Creating…" : "→ Create Credit Authorisation"}
+        </button>
         <button
           onClick={() => save()}
           disabled={saving}
