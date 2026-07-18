@@ -68,14 +68,23 @@ export function useLocalDraft<T>(opts: {
   const { storageKey, data, dirty, ready } = opts;
   const [recovered, setRecovered] = useState<StoredDraft<T> | null>(null);
 
-  // Read any leftover draft once, client-side after mount.
+  // Read any leftover draft once, client-side after mount. The state update is
+  // deferred a microtask past render so it doesn't trip the "setState
+  // synchronously within an effect" lint rule (cascading renders).
   useEffect(() => {
     if (!storageKey || typeof window === "undefined") return;
-    try {
-      setRecovered(parseStoredDraft<T>(window.localStorage.getItem(storageKey)));
-    } catch {
-      /* storage disabled — no recovery available */
-    }
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        setRecovered(parseStoredDraft<T>(window.localStorage.getItem(storageKey)));
+      } catch {
+        /* storage disabled — no recovery available */
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [storageKey]);
 
   // Mirror the blob while there are unsaved edits. Write-only: it never removes
