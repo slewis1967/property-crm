@@ -21,6 +21,12 @@ describe("amlToCreditAuth", () => {
     const ca = amlToCreditAuth(data);
     expect(ca.names).toBe("Jane Director & Bob Owner & Alice Owner");
     expect(ca.address).toBe("12 Smith St, Toowong, QLD, 4066");
+    // Signers pre-fill the send modal by name (AML captures no emails).
+    expect(ca.signers).toEqual([
+      { name: "Jane Director", email: "" },
+      { name: "Bob Owner", email: "" },
+      { name: "Alice Owner", email: "" },
+    ]);
   });
 
   it("uses just the person for an individual party (no beneficial owners)", () => {

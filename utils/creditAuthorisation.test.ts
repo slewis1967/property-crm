@@ -114,6 +114,24 @@ describe("hydrateCreditAuthorisation", () => {
     expect(d.signatories[0]).toEqual({ signed: false, date: "" });
   });
 
+  it("defaults signers to [] and parses stored signers, dropping malformed ones", () => {
+    expect(hydrateCreditAuthorisation({ names: "x" }).signers).toEqual([]);
+    const d = hydrateCreditAuthorisation({
+      signers: [
+        { name: "David Halliday", email: "david@example.com" },
+        { name: "No Email" },
+        null,
+        { name: 5, email: "keep@example.com" }, // non-string name → ""
+        { name: "", email: "" }, // fully empty → dropped
+      ],
+    });
+    expect(d.signers).toEqual([
+      { name: "David Halliday", email: "david@example.com" },
+      { name: "No Email", email: "" },
+      { name: "", email: "keep@example.com" },
+    ]);
+  });
+
   it("round-trips a filled form through JSON unchanged", () => {
     const d = signedAuthorisation();
     expect(hydrateCreditAuthorisation(JSON.parse(JSON.stringify(d)))).toEqual(d);

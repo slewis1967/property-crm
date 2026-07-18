@@ -6,6 +6,7 @@ import {
   emptyCreditAuthorisation,
   hydrateCreditAuthorisation,
   CREDIT_AUTHORISATION_STATUSES,
+  type CreditAuthSigner,
 } from "../../../utils/creditAuthorisation";
 import { makeListHandler, makeCreateHandler, type CreateRow } from "../../../utils/compliance-doc-route";
 
@@ -18,22 +19,26 @@ export const MIGRATION_HINT =
 const LIST_COLUMNS = "id,names,status,contact_id,deal_id,created_by,created_at,updated_at";
 
 /**
- * Prefill the name/address lines from a linked contact, so the broker doesn't
- * re-key what the CRM already knows. Best-effort: any failure (or a missing
- * contact) just leaves the fields blank for the user to fill in.
+ * Prefill the name/address lines — and a signer (name + email) for the
+ * send-for-signature modal — from a linked contact, so the broker doesn't re-key
+ * what the CRM already knows. Best-effort: any failure (or a missing contact)
+ * just leaves the fields blank for the user to fill in.
  */
-async function prefillFromContact(contactId: string): Promise<{ names: string; address: string }> {
+async function prefillFromContact(
+  contactId: string,
+): Promise<{ names: string; address: string; signers: CreditAuthSigner[] }> {
   try {
     const { data, error } = await supabase
       .from("contacts")
       .select(
-        "full_name,name,first_name,home_address_street,home_address_suburb,home_address_state,home_address_postcode",
+        "full_name,name,first_name,email,home_address_street,home_address_suburb,home_address_state,home_address_postcode",
       )
       .eq("id", contactId)
       .maybeSingle();
-    if (error || !data) return { names: "", address: "" };
+    if (error || !data) return { names: "", address: "", signers: [] };
     const c = data as Record<string, string | null>;
     const names = (c.full_name || c.name || c.first_name || "").trim();
+    const email = (c.email || "").trim();
     const address = [
       c.home_address_street,
       c.home_address_suburb,
@@ -43,9 +48,10 @@ async function prefillFromContact(contactId: string): Promise<{ names: string; a
       .map((p) => (p ?? "").trim())
       .filter(Boolean)
       .join(", ");
-    return { names, address };
+    const signers = names || email ? [{ name: names, email }] : [];
+    return { names, address, signers };
   } catch {
-    return { names: "", address: "" };
+    return { names: "", address: "", signers: [] };
   }
 }
 
@@ -77,11 +83,12 @@ export const POST = makeCreateHandler({
     const contactId = str(b.contactId);
 
     const data = b.data ? hydrateCreditAuthorisation(b.data) : emptyCreditAuthorisation();
-    // No explicit blob but a contact — seed the two fill-in lines from it.
+    // No explicit blob but a contact — seed the fill-in lines + signer from it.
     if (!b.data && contactId) {
       const prefill = await prefillFromContact(contactId);
       data.names = prefill.names;
       data.address = prefill.address;
+      data.signers = prefill.signers;
     }
     if (typeof b.status === "string" && (CREDIT_AUTHORISATION_STATUSES as readonly string[]).includes(b.status)) {
       data.status = b.status as (typeof CREDIT_AUTHORISATION_STATUSES)[number];
