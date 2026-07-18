@@ -26,10 +26,13 @@ export type BrevoSendOptions = {
   /** Custom RFC822 headers — used to set In-Reply-To and References on
    * replies so recipient mail clients thread the conversation correctly. */
   headers?: Record<string, string>;
-  /** Attachments — Brevo fetches each `url` during send so it must be
-   * publicly reachable for ~30 seconds. Signed Supabase Storage URLs work.
-   * Per-attachment 10MB limit when sent as URL per Brevo's docs. */
-  attachments?: { name: string; url: string }[];
+  /** Attachments. Two shapes, matching Brevo's two accepted forms:
+   *   - `{ name, url }`  — Brevo fetches the URL at send time, so it must be
+   *     publicly reachable for ~30s (signed Supabase Storage URLs work).
+   *   - `{ name, content }` — base64-encoded bytes sent inline; no hosting
+   *     needed. Used for the meeting-invite .ics, which is generated on the fly.
+   * Per-attachment 10MB limit per Brevo's docs. */
+  attachments?: ({ name: string; url: string } | { name: string; content: string })[];
   /** Optional sending-identity override for the `from` envelope. When omitted,
    * the BREVO_SENDER_EMAIL / BREVO_SENDER_NAME env defaults are used, so
    * existing callers are unaffected. Must be a verified Brevo sender. */
@@ -82,7 +85,9 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
         tags: opts.tags,
         headers: opts.headers && Object.keys(opts.headers).length > 0 ? opts.headers : undefined,
         attachment: opts.attachments && opts.attachments.length > 0
-          ? opts.attachments.map((a) => ({ name: a.name, url: a.url }))
+          ? opts.attachments.map((a) =>
+              "url" in a ? { name: a.name, url: a.url } : { name: a.name, content: a.content },
+            )
           : undefined,
       }),
     });

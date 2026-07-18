@@ -1,5 +1,52 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute } from "./proxy";
+
+describe("isPublicGuestRoute", () => {
+  it("exempts the guest-join page (bare + tokenised)", () => {
+    expect(isPublicGuestRoute("/join")).toBe(true);
+    expect(isPublicGuestRoute("/join/abc123.def.ghi")).toBe(true);
+  });
+
+  it("exempts ONLY the exact guest-token API", () => {
+    expect(isPublicGuestRoute("/api/livekit/guest-token")).toBe(true);
+  });
+
+  it("does NOT exempt the authed sibling /api/livekit routes", () => {
+    // These must keep their CF Access auth header — a broad /api/livekit/*
+    // bypass would strip it (the trap the sign flow already documents).
+    expect(isPublicGuestRoute("/api/livekit/token")).toBe(false);
+    expect(isPublicGuestRoute("/api/livekit/record")).toBe(false);
+    expect(isPublicGuestRoute("/api/livekit/calls")).toBe(false);
+    expect(isPublicGuestRoute("/api/livekit/guest-link")).toBe(false);
+    expect(isPublicGuestRoute("/api/livekit/webhook")).toBe(false);
+  });
+
+  it("does NOT exempt lookalikes", () => {
+    expect(isPublicGuestRoute("/joined")).toBe(false);
+    expect(isPublicGuestRoute("/api/livekit/guest-tokens")).toBe(false);
+    expect(isPublicGuestRoute("/")).toBe(false);
+  });
+});
+
+describe("isPublicBookingRoute", () => {
+  it("exempts the self-book page (bare + host slug)", () => {
+    expect(isPublicBookingRoute("/book")).toBe(true);
+    expect(isPublicBookingRoute("/book/sean")).toBe(true);
+    expect(isPublicBookingRoute("/book/springboard")).toBe(true);
+  });
+
+  it("exempts the booking API for any host", () => {
+    expect(isPublicBookingRoute("/api/book/sean")).toBe(true);
+    expect(isPublicBookingRoute("/api/book/glenn")).toBe(true);
+  });
+
+  it("does NOT exempt lookalikes or unrelated routes", () => {
+    expect(isPublicBookingRoute("/booked")).toBe(false);
+    expect(isPublicBookingRoute("/bookings")).toBe(false);
+    expect(isPublicBookingRoute("/api/books")).toBe(false);
+    expect(isPublicBookingRoute("/")).toBe(false);
+  });
+});
 
 describe("isPublicSignRoute", () => {
   it("exempts the public signer page and its token", () => {

@@ -49,11 +49,13 @@ const GROUPS: Group[] = [
       { href: "/opportunities", icon: "🗂️", label: "Opportunities" },
       { href: "/deal-analyser", icon: "📑", label: "Deal Analyser", badge: "dealPackets" },
       { href: "/leads", icon: "🔥", label: "Lead Intake" },
+      { href: "/eoi", icon: "📝", label: "Expressions of Interest" },
       { href: "/fact-find", icon: "📋", label: "Fact Find" },
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },
       { href: "/credit-authorisation", icon: "🔏", label: "Credit Authorisation" },
       { href: "/contacts", icon: "👥", label: "Contacts" },
-      { href: "/appointments", icon: "📅", label: "Appointments" },
+      { href: "/calendar", icon: "📅", label: "Calendar" },
+      { href: "/appointments", icon: "🗓️", label: "Appointments" },
       { href: "/inbox", icon: "✉️", label: "Inbox" },
       { href: "/broadcast", icon: "📣", label: "Broadcast" },
       { href: "/tasks", icon: "📌", label: "Tasks" },
@@ -223,9 +225,11 @@ export default function Sidebar({ counts }: { counts: SidebarCounts }) {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-800">
-        <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
-      </div>
+      {process.env.NODE_ENV !== "production" && (
+        <div className="p-4 border-t border-gray-800">
+          <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
+        </div>
+      )}
     </>
   );
 }

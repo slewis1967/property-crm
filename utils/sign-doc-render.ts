@@ -29,10 +29,12 @@ import {
   creditAuthorisationSummary,
   type CreditAuthorisationData,
 } from "./creditAuthorisation";
+import { hydrateEoi, eoiSummary, eoiProposedSigners, type EoiData } from "./eoi";
 
 import { renderFactFindHtml } from "./pdf/factFindPdf";
 import { needsAnalysisHtmlWithLogo } from "./pdf/needsAnalysisPdf";
 import { renderCreditAuthorisationHtml } from "./pdf/creditAuthorisationPdf";
+import { renderEoiHtml } from "./pdf/eoiPdf";
 
 /** A prospective signer prefilled from the document's applicant data. */
 export type ProposedSigner = { name: string; email: string };
@@ -46,6 +48,7 @@ const TABLE: Record<ComplianceDocType, string> = {
   // are only called for SIGN_DOC_TYPES). Present only to satisfy the exhaustive
   // Record — see utils/signatures.ts DOC_TYPE_LABEL.
   aml_case: "aml_cases",
+  eoi: "eois",
 };
 
 /** What a fetched-and-hydrated document exposes to the signing routes. */
@@ -104,6 +107,14 @@ export async function loadDoc(
           name: [a.given_names, a.surname].map(clean).filter(Boolean).join(" "),
           email: clean(a.contact?.email),
         })),
+    };
+  }
+  if (docType === "eoi") {
+    const data: EoiData = hydrateEoi(blob);
+    return {
+      summary: eoiSummary(data),
+      renderHtml: (sigs) => renderEoiHtml(data, sigs),
+      proposedSigners: () => eoiProposedSigners(data),
     };
   }
   // credit_authorisation — one free-text names line, no per-applicant email.

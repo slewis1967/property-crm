@@ -173,6 +173,36 @@ export function isPublicSignRoute(pathname: string): boolean {
   return false;
 }
 
+// Public guest video-call routes. A client joins a call WITHOUT a Cloudflare
+// Access identity, so these must be exempt from the CF Access gate — same model
+// as the signing routes above. Trust is the signed, expiring guest token: the
+// /join page is an empty shell without one, and the guest-token API validates
+// the JWT before minting anything. Must mirror the CF Access bypass apps
+// (crm.nextkey.com.au/join/* + /api/livekit/guest-token) EXACTLY: the guest-token
+// exemption is the single exact path, NOT all of /api/livekit/*, so the authed
+// sibling routes (token, record, calls, guest-link, webhook) keep their CF
+// Access auth header. The CSRF origin check above still applies to the mutating
+// guest-token POST (it's same-origin from the /join page).
+export function isPublicGuestRoute(pathname: string): boolean {
+  if (pathname === "/join" || pathname.startsWith("/join/")) return true;
+  if (pathname === "/api/livekit/guest-token") return true;
+  return false;
+}
+
+// Public self-book routes. A lead picks a meeting time WITHOUT a Cloudflare
+// Access identity, so the booking page and its API must be exempt — same model
+// as the signing + guest-video routes. Trust: the host slug is public (like a
+// Calendly link), the booking API re-validates every slot against live busy
+// times, and the honeypot + slot-grid check bound abuse. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/book/* + /api/book/*) EXACTLY. The CSRF
+// origin check above still applies to the mutating booking POST (same-origin
+// from the /book page).
+export function isPublicBookingRoute(pathname: string): boolean {
+  if (pathname === "/book" || pathname.startsWith("/book/")) return true;
+  if (pathname.startsWith("/api/book/")) return true;
+  return false;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -233,7 +263,12 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (PUBLIC_PATHS.has(pathname) || isPublicSignRoute(pathname)) {
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    isPublicSignRoute(pathname) ||
+    isPublicGuestRoute(pathname) ||
+    isPublicBookingRoute(pathname)
+  ) {
     return NextResponse.next();
   }
 

@@ -95,14 +95,22 @@ function parseTags(raw: string | null): string[] {
   try { return JSON.parse(raw); } catch { return []; }
 }
 
+// Reserved tag used to soft-hide unqualified leads from the board without a
+// hard delete (rides the existing `tags` field + PATCH proxy — no schema change).
+const DNQ_TAG = "DNQ";
+const isDnq = (l: Pick<Lead, "tags">) => parseTags(l.tags).includes(DNQ_TAG);
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function KanbanBoard({
   initialLeads,
   initialPipelines,
+  docCounts = {},
 }: {
   initialLeads: Lead[];
   initialPipelines: Pipeline[];
+  /** opportunity lead_id -> count of the contact's compliance documents. */
+  docCounts?: Record<string, number>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -200,6 +208,41 @@ export default function KanbanBoard({
   };
 
   const clearSelection = () => setSelected(new Set());
+
+  // DNQ (Do Not Qualify) — soft-hide via tag rather than delete. Reversible:
+  // "Restore" just PATCHes the tag back off.
+  const [showDnq, setShowDnq] = useState(false);
+  const [dnqBusy, setDnqBusy] = useState(false);
+  const [dnqError, setDnqError] = useState<string | null>(null);
+
+  const setDnqForLeads = async (ids: string[], dnq: boolean) => {
+    if (ids.length === 0) return;
+    setDnqBusy(true);
+    setDnqError(null);
+    const failed: string[] = [];
+    await Promise.all(ids.map(async id => {
+      const lead = leads.find(l => l.lead_id === id);
+      if (!lead) return;
+      const current = parseTags(lead.tags);
+      const next = dnq
+        ? Array.from(new Set([...current, DNQ_TAG]))
+        : current.filter(t => t !== DNQ_TAG);
+      try {
+        const res = await fetch(`/api/opportunities/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tags: JSON.stringify(next) }),
+        });
+        if (!res.ok) throw new Error();
+        setLeads(prev => prev.map(l => l.lead_id === id ? { ...l, tags: JSON.stringify(next) } : l));
+      } catch {
+        failed.push(id);
+      }
+    }));
+    setDnqBusy(false);
+    clearSelection();
+    if (failed.length > 0) setDnqError(`${failed.length} of ${ids.length} failed to update.`);
+  };
 
   // Add new stage (column) to the active pipeline
   const [addingStage, setAddingStage] = useState(false);
@@ -382,14 +425,23 @@ export default function KanbanBoard({
     }
   };
 
-  // Filtered leads for current pipeline + tag
+  // Filtered leads for current pipeline + tag. DNQ-tagged leads are hidden
+  // from the normal board view; the DNQ toggle flips this to show only them.
   const visibleLeads = leads.filter(l => {
     const inPipeline = activePipeline
       ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
       : true;
     const hasTag = tagFilter ? parseTags(l.tags).includes(tagFilter) : true;
-    return inPipeline && hasTag;
+    const dnqOk = showDnq ? isDnq(l) : !isDnq(l);
+    return inPipeline && hasTag && dnqOk;
   });
+
+  const dnqCount = leads.filter(l => {
+    const inPipeline = activePipeline
+      ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
+      : true;
+    return inPipeline && isDnq(l);
+  }).length;
 
   const byStage = (stageId: string) => visibleLeads.filter(l => l._stage === stageId);
 
@@ -503,11 +555,28 @@ export default function KanbanBoard({
           <div className="flex items-center gap-2">
             <button
               onClick={clearSelection}
-              disabled={bulkDeleting}
+              disabled={bulkDeleting || dnqBusy}
               className="px-3 py-1 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-700 transition disabled:opacity-50"
             >
               Cancel
             </button>
+            {showDnq ? (
+              <button
+                onClick={() => setDnqForLeads(Array.from(selected), false)}
+                disabled={dnqBusy}
+                className="px-3 py-1 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition disabled:opacity-50"
+              >
+                {dnqBusy ? "Restoring…" : `Restore ${selected.size}`}
+              </button>
+            ) : (
+              <button
+                onClick={() => setDnqForLeads(Array.from(selected), true)}
+                disabled={dnqBusy}
+                className="px-3 py-1 rounded-lg text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-50"
+              >
+                {dnqBusy ? "Marking…" : `Mark DNQ ${selected.size}`}
+              </button>
+            )}
             <button
               onClick={bulkDelete}
               disabled={bulkDeleting}
@@ -534,6 +603,14 @@ export default function KanbanBoard({
         <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
           <span>{bulkError}</span>
           <button onClick={() => setBulkError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+
+      {/* DNQ error toast */}
+      {dnqError && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
+          <span>{dnqError}</span>
+          <button onClick={() => setDnqError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
         </div>
       )}
 
@@ -579,6 +656,19 @@ export default function KanbanBoard({
             </div>
           )}
 
+          {/* DNQ tab — toggles between the normal board and the DNQ-tagged leads */}
+          <button
+            onClick={() => { setShowDnq(v => !v); clearSelection(); }}
+            title={showDnq ? "Back to board" : "Show leads marked Do Not Qualify"}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+              showDnq
+                ? "bg-amber-500 text-white"
+                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            }`}
+          >
+            🚫 DNQ{dnqCount > 0 ? ` (${dnqCount})` : ""}
+          </button>
+
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm"
@@ -587,6 +677,12 @@ export default function KanbanBoard({
           </button>
         </div>
       </div>
+
+      {showDnq && (
+        <div className="mb-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-sm text-amber-800">
+          Showing {dnqCount} lead{dnqCount === 1 ? "" : "s"} marked Do Not Qualify — hidden from the normal board. Select and restore to bring them back.
+        </div>
+      )}
 
       {/* Modals */}
       {showModal && (
@@ -692,6 +788,7 @@ export default function KanbanBoard({
                   const isSaving    = saving.has(lead.lead_id);
                   const isDragging  = dragId === lead.lead_id;
                   const tags        = parseTags(lead.tags);
+                  const docCount    = docCounts[lead.lead_id] || 0;
 
                   const isSelected = selected.has(lead.lead_id);
                   return (
@@ -785,6 +882,14 @@ export default function KanbanBoard({
                         {lead.created_at && !isAutoMoved && !isSaving && (
                           <span className="text-xs text-gray-300">
                             {new Date(lead.created_at).toLocaleDateString("en-AU")}
+                          </span>
+                        )}
+                        {docCount > 0 && (
+                          <span
+                            className="ml-auto flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-full px-1.5 py-0.5"
+                            title={`${docCount} compliance document${docCount === 1 ? "" : "s"} on file — open the opportunity to view`}
+                          >
+                            📄 {docCount}
                           </span>
                         )}
                         {lead.match_status === "matched" && !isAutoMoved && (

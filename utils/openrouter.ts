@@ -72,6 +72,17 @@ export const MODELS = {
   smart: process.env.OPENROUTER_MODEL_SMART ?? "anthropic/claude-sonnet-4",
   /** Cheap/fast model for the voice loop, compliance, parsing, CSV mapping. */
   fast: process.env.OPENROUTER_MODEL_FAST ?? "anthropic/claude-haiku-4.5",
+  /**
+   * Model for uploaded-document (PDF/image) extraction — contracts, IDs,
+   * finance approvals. Defaults to the SMART model because these are
+   * accuracy-critical and low-volume, but is separately tunable via
+   * OPENROUTER_MODEL_EXTRACT so it can be dropped to a cheaper model
+   * (e.g. anthropic/claude-haiku-4.5) without a code change.
+   */
+  extract:
+    process.env.OPENROUTER_MODEL_EXTRACT ??
+    process.env.OPENROUTER_MODEL_SMART ??
+    "anthropic/claude-sonnet-4",
 } as const;
 
 export type AIEffort = "low" | "medium" | "high" | "xhigh" | "max";
@@ -165,12 +176,40 @@ export async function orText(opts: OrTextOptions): Promise<string> {
   throw new Error(`AI returned no text (finish_reason=${reason}). Try increasing maxTokens.`);
 }
 
-/** Normalise OpenRouter/OpenAI SDK errors into a short, human message. */
+/**
+ * Normalise OpenRouter/OpenAI SDK errors into a short, USER-SAFE message.
+ *
+ * The full error is logged server-side (Netlify function logs) for debugging,
+ * but the returned string never contains provider internals — billing text,
+ * dashboard URLs, key names, token accounting — because callers surface it
+ * straight to the browser. (Previously a 402 leaked "…requires more credits…
+ * visit https://openrouter.ai/settings/credits…" onto the dashboard.)
+ */
 export function orErrorMessage(error: unknown): string {
-  if (error instanceof OpenAI.APIError) {
-    if (error.status === 401) return "OPENROUTER_API_KEY is missing or invalid";
-    if (error.status === 429) return "AI rate-limited — try again in a moment";
-    return `AI request failed (${error.status}): ${error.message}`;
+  // Always capture the real detail server-side — logging must never throw.
+  try {
+    console.error(
+      "[AI] request failed:",
+      error instanceof Error ? (error.stack ?? error.message) : String(error),
+    );
+  } catch {
+    /* noop */
   }
-  return error instanceof Error ? error.message : String(error);
+
+  if (error instanceof OpenAI.APIError) {
+    if (error.status === 401 || error.status === 403)
+      return "The AI service isn't configured correctly — please contact support.";
+    if (error.status === 429)
+      return "The AI is busy right now — please try again in a moment.";
+    if (error.status === 402)
+      return "The AI is temporarily unavailable — please try again shortly.";
+    return "The AI request failed — please try again.";
+  }
+
+  // Non-API errors are usually our own (safe) messages, but redact anything that
+  // looks like a leaked provider/billing/credential detail just in case.
+  const msg = error instanceof Error ? error.message : String(error);
+  if (/credit|billing|quota|insufficient|payment|openrouter\.ai|api[\s_-]?key|afford/i.test(msg))
+    return "The AI is temporarily unavailable — please try again shortly.";
+  return msg;
 }

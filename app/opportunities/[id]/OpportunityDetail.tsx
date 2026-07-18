@@ -10,6 +10,7 @@ import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
 import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
@@ -102,10 +103,12 @@ export default function OpportunityDetail({
   lead: initialLead,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [] },
   ghlContactId = null,
+  documents = [],
 }: {
   lead: Lead;
   ghlArchive?: GhlArchive;
   ghlContactId?: string | null;
+  documents?: OpportunityDoc[];
 }) {
   const router = useRouter();
   // Local lead state — used so edits via the modal reflect immediately
@@ -116,6 +119,7 @@ export default function OpportunityDetail({
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showBookingLinks, setShowBookingLinks] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const bookingLinkRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!showBookingLinks) return;
@@ -397,6 +401,15 @@ export default function OpportunityDetail({
               {factFindError}
             </span>
           )}
+          <a
+            href={`/eoi?opportunity=${encodeURIComponent(lead.lead_id)}${
+              lead.primary_contact_id ? `&contact=${encodeURIComponent(lead.primary_contact_id)}` : ""
+            }`}
+            title="Create an Expression of Interest prefilled from this opportunity"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📝 EOI
+          </a>
           <button
             onClick={openNeedsAnalysis}
             disabled={needsAnalysisLoading}
@@ -433,19 +446,39 @@ export default function OpportunityDetail({
               <span className="text-gray-400 text-[10px]">▾</span>
             </button>
             {showBookingLinks && (
-              <div className="absolute right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
-                {SCHEDULING_HOSTS.filter((h) => h.bookingPageUrl).map((host) => (
-                  <a
-                    key={host.email}
-                    href={host.bookingPageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setShowBookingLinks(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    📅 Book with {host.label}
-                  </a>
-                ))}
+              <div className="absolute right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
+                <p className="px-3 py-1.5 text-[11px] text-gray-400">Copy a self-book link to send the lead:</p>
+                {SCHEDULING_HOSTS.map((host) => {
+                  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/book/${host.slug}`;
+                  return (
+                    <button
+                      key={host.email}
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          setCopiedSlug(host.slug);
+                          setTimeout(() => setCopiedSlug((s) => (s === host.slug ? null : s)), 1500);
+                        } catch {
+                          window.open(url, "_blank", "noopener");
+                        }
+                      }}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-2">📅 Book with {host.label}</span>
+                      <span className={`text-[11px] ${copiedSlug === host.slug ? "text-green-600" : "text-gray-400"}`}>
+                        {copiedSlug === host.slug ? "Copied!" : "Copy"}
+                      </span>
+                    </button>
+                  );
+                })}
+                <a
+                  href="/book/sean"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-3 py-1.5 text-[11px] text-teal-700 hover:underline"
+                >
+                  Preview a booking page →
+                </a>
               </div>
             )}
           </div>
@@ -670,6 +703,9 @@ export default function OpportunityDetail({
               </button>
             </div>
           </div>
+
+          {/* Borrower compliance documents (Fact Find / Needs Analysis / EOI / Credit Auth) */}
+          <OpportunityDocuments documents={documents} />
 
           {/* Linked Contacts */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -26,10 +26,58 @@ type LoadState = "loading" | "ready" | "signed" | "declined" | "expired" | "inva
 const CONSENT_TEXT =
   "I agree to sign this document electronically and that my electronic signature is legally binding (Electronic Transactions Act 1999).";
 
+/** Read a file to a base64 data URL (used as-is for PDFs). */
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("Could not read the file."));
+    r.readAsDataURL(file);
+  });
+}
+
+/** Downscale an image to <=1600px and re-encode as JPEG, so a phone photo of a
+ *  licence lands well under the upload limit. Falls back to the raw data URL. */
+function downscaleImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1600;
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+      if (w > max || h > max) {
+        const s = max / Math.max(w, h);
+        w = Math.round(w * s);
+        h = Math.round(h * s);
+      }
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const g = cv.getContext("2d");
+      if (!g) return reject(new Error("Could not process the image."));
+      g.drawImage(img, 0, 0, w, h);
+      resolve(cv.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read the image."));
+    };
+    img.src = url;
+  });
+}
+
 export default function SignClient({ token }: { token: string }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [signerName, setSignerName] = useState("");
   const [docLabel, setDocLabel] = useState("document");
+  const [docType, setDocType] = useState("");
+
+  // Driver's licence (EOI only).
+  const [hasLicence, setHasLicence] = useState(false);
+  const [licenceName, setLicenceName] = useState("");
+  const [licenceBusy, setLicenceBusy] = useState(false);
 
   const [consent, setConsent] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -59,6 +107,7 @@ export default function SignClient({ token }: { token: string }) {
         if (state === "ready") {
           setSignerName(typeof json.signer_name === "string" ? json.signer_name : "");
           setDocLabel(typeof json.doc_label === "string" ? json.doc_label : "document");
+          setDocType(typeof json.doc_type === "string" ? json.doc_type : "");
         }
       } catch {
         if (!cancelled) setLoadState("error");
@@ -168,6 +217,45 @@ export default function SignClient({ token }: { token: string }) {
     }
   }, [token, hasSignature, consent, typedName]);
 
+  /** Attach the driver's licence (EOI only): downscale images client-side, then
+   *  upload to the token-scoped /licence endpoint. */
+  const onLicenceFile = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      setLicenceBusy(true);
+      setError("");
+      try {
+        let dataUrl: string;
+        if (file.type.startsWith("image/")) {
+          try {
+            dataUrl = await downscaleImage(file);
+          } catch {
+            dataUrl = await readAsDataUrl(file); // e.g. a browser that can't decode HEIC
+          }
+        } else {
+          dataUrl = await readAsDataUrl(file);
+        }
+        const res = await fetch(`/api/sign/${encodeURIComponent(token)}/licence`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file_data_url: dataUrl }),
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          setError(typeof json.error === "string" ? json.error : "Could not upload your licence.");
+          return;
+        }
+        setHasLicence(true);
+        setLicenceName(file.name);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not upload your licence.");
+      } finally {
+        setLicenceBusy(false);
+      }
+    },
+    [token],
+  );
+
   const submitDecline = useCallback(async () => {
     setSubmitting(true);
     setError("");
@@ -242,7 +330,8 @@ export default function SignClient({ token }: { token: string }) {
     );
   }
 
-  const canSign = hasSignature && consent && !submitting;
+  const licenceRequired = docType === "eoi";
+  const canSign = hasSignature && consent && !submitting && (!licenceRequired || hasLicence);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4">
@@ -287,6 +376,40 @@ export default function SignClient({ token }: { token: string }) {
               <span aria-hidden="true">↗</span>
             </a>
           </div>
+
+          {/* Driver's licence (EOI only) */}
+          {licenceRequired && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Driver&apos;s licence</p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="text-sm text-gray-700 mb-2">
+                  Please attach a clear photo or PDF of your driver&apos;s licence to verify your identity.
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label
+                    className="px-3 py-2 text-sm font-semibold rounded-md border cursor-pointer"
+                    style={{ borderColor: TEAL, color: TEAL }}
+                  >
+                    {licenceBusy ? "Uploading…" : hasLicence ? "Replace licence" : "Attach licence"}
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      capture="environment"
+                      className="hidden"
+                      disabled={licenceBusy}
+                      onChange={(e) => {
+                        void onLicenceFile(e.target.files?.[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {hasLicence && (
+                    <span className="text-sm font-medium text-emerald-700">✓ {licenceName || "Licence attached"}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Signature pad */}
           <div>
