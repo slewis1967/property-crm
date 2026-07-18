@@ -43,6 +43,8 @@ import CapacityPanel from "./CapacityPanel";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
+import { useLocalDraft, draftStorageKey, SAVE_FAILED_HINT } from "../../hooks/useLocalDraft";
+import UnsavedDraftBanner from "../../components/UnsavedDraftBanner";
 
 const TEAL = "#0F4C5C";
 
@@ -234,6 +236,15 @@ export default function FactFindForm({ id }: { id: string }) {
   const [savedRev, setSavedRev] = useState(0);
   const dirty = rev !== savedRev;
   const [error, setError] = useState("");
+
+  // Local safety-net: mirror unsaved edits to localStorage so a failed save +
+  // reload can't lose them; offer to restore a leftover draft on reopen.
+  const { recovered, dismissRecovered, discardRecovered, clearDraft } = useLocalDraft({
+    storageKey: draftStorageKey("fact_find", id),
+    data,
+    dirty,
+    ready: !loading,
+  });
   // Needs Analysis pre-fill state.
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
@@ -290,6 +301,14 @@ export default function FactFindForm({ id }: { id: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data, status: nextStatus ?? status }),
         });
+        // A lapsed Cloudflare Access session bounces the request to a login page
+        // (a redirect and/or a non-JSON body) rather than the API. Surface a
+        // clear, reassuring message (the edits are in the local backup) instead
+        // of a generic failure, and never parse the login HTML as JSON.
+        if (res.redirected || !(res.headers.get("content-type") || "").includes("application/json")) {
+          setError(SAVE_FAILED_HINT);
+          return "error";
+        }
         const json = await res.json();
         if (res.status === 409) {
           // Signed/locked elsewhere — reflect the lock so autosave stops.
@@ -303,15 +322,17 @@ export default function FactFindForm({ id }: { id: string }) {
         }
         if (nextStatus) setStatus(nextStatus);
         setSavedRev(revAtSave);
+        clearDraft(); // the server has it now — drop the local backup
         return "saved";
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Save failed");
+      } catch {
+        // Network drop / blocked auth redirect — data is safe in the local backup.
+        setError(SAVE_FAILED_HINT);
         return "error";
       } finally {
         setSaving(false);
       }
     },
-    [id, data, status, rev],
+    [id, data, status, rev, clearDraft],
   );
 
   // "Locked" is derived from status — the signed/complete document is read-only
@@ -565,6 +586,18 @@ export default function FactFindForm({ id }: { id: string }) {
         <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
           {error}
         </div>
+      )}
+
+      {recovered && !locked && (
+        <UnsavedDraftBanner
+          ts={recovered.ts}
+          onRestore={() => {
+            setData(recovered.data);
+            setRev((r) => r + 1); // mark dirty so autosave persists the restored blob
+            dismissRecovered();
+          }}
+          onDiscard={discardRecovered}
+        />
       )}
 
       {locked && <LockedBanner onReopen={() => void doSave(FACT_FIND_STATUSES[0])} busy={saving} />}
