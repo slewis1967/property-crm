@@ -11,6 +11,7 @@ import {
   makeDeleteHandler,
   type PatchBuild,
 } from "../../../../utils/compliance-doc-route";
+import { syncFactFindContacts } from "../../../../utils/contact-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,17 @@ export const PATCH = makePatchHandler({
     if (b.contactId !== undefined) patch.contact_id = b.contactId || null;
 
     return { patch, incomingStatus, snapshot: patch.data ?? null };
+  },
+  /**
+   * On completion (the not-locked → Complete "sign" transition), promote both
+   * applicants into Contacts so the Credit Authorisation, Needs Analysis and
+   * AML/CTF forms can prefill from them — Applicant 2 in particular, who is keyed
+   * by hand and otherwise never becomes a contact. Re-reads the freshly saved
+   * row inside the sync; best-effort, so it can't fail the completing save.
+   */
+  onAfterCommit: async ({ id, decision }) => {
+    if (decision.kind !== "sign") return;
+    await syncFactFindContacts(id);
   },
 });
 
