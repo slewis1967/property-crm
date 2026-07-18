@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { factFindToNeedsAnalysis } from "../../../utils/factFindToNeedsAnalysis";
 import { factFindToCreditAuth } from "../../../utils/factFindToCreditAuth";
+import { factFindToAmlCase } from "../../../utils/factFindToAmlCase";
 import {
   APPLICANT_CAPACITIES,
   ASSET_KINDS,
@@ -237,6 +238,7 @@ export default function FactFindForm({ id }: { id: string }) {
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
   const [creatingCa, setCreatingCa] = useState(false);
+  const [creatingAml, setCreatingAml] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -415,6 +417,34 @@ export default function FactFindForm({ id }: { id: string }) {
     }
   }, [data, contactId, dirty, locked, doSave, router]);
 
+  /**
+   * Create an AML/CTF CDD case pre-filled from this Fact Find's primary borrower
+   * (Applicant 1) — legal name, date of birth and residential address as an
+   * individual party. A co-borrower (Applicant 2) is a separate natural person
+   * who needs their own case. Persists any pending edits first, links the new
+   * case to the same contact, and opens it.
+   */
+  const createAmlCase = useCallback(async () => {
+    setCreatingAml(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const caseData = factFindToAmlCase(data);
+      const res = await fetch("/api/aml/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, partyType: "individual", data: caseData }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not create AML case");
+      router.push(`/aml/${json.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create AML case");
+    } finally {
+      setCreatingAml(false);
+    }
+  }, [data, contactId, dirty, locked, doSave, router]);
+
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading fact find…</p>;
 
   const totals = computeTotals(data);
@@ -496,6 +526,15 @@ export default function FactFindForm({ id }: { id: string }) {
           title="Create a Credit File Authorisation pre-filled with both applicants' names and address"
         >
           {creatingCa ? "Creating…" : "→ Create Credit Authorisation"}
+        </button>
+        <button
+          onClick={() => void createAmlCase()}
+          disabled={creatingAml}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+          title="Create an AML/CTF CDD case pre-filled from Applicant 1"
+        >
+          {creatingAml ? "Creating…" : "→ Create AML case"}
         </button>
         <button
           onClick={() => window.print()}
