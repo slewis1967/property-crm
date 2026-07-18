@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { factFindToNeedsAnalysis } from "../../../utils/factFindToNeedsAnalysis";
+import { factFindToCreditAuth } from "../../../utils/factFindToCreditAuth";
 import {
   APPLICANT_CAPACITIES,
   ASSET_KINDS,
@@ -235,6 +236,7 @@ export default function FactFindForm({ id }: { id: string }) {
   // Needs Analysis pre-fill state.
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
+  const [creatingCa, setCreatingCa] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -385,6 +387,34 @@ export default function FactFindForm({ id }: { id: string }) {
     }
   }, [data, contactId, router]);
 
+  /**
+   * Create a Credit File Authorisation pre-filled from this Fact Find — both
+   * applicants' names and Applicant 1's home address, so the broker doesn't
+   * re-key what this form already holds. Persists any pending edits first so the
+   * derived document reflects the latest data, then links the new Credit
+   * Authorisation to the same contact and opens it.
+   */
+  const createCreditAuthorisation = useCallback(async () => {
+    setCreatingCa(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const caData = factFindToCreditAuth(data);
+      const res = await fetch("/api/credit-authorisations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, data: caData }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not create Credit Authorisation");
+      router.push(`/credit-authorisation/${json.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create Credit Authorisation");
+    } finally {
+      setCreatingCa(false);
+    }
+  }, [data, contactId, dirty, locked, doSave, router]);
+
   if (loading) return <p className="p-6 text-sm text-gray-500">Loading fact find…</p>;
 
   const totals = computeTotals(data);
@@ -457,6 +487,15 @@ export default function FactFindForm({ id }: { id: string }) {
           title="Create an NCCP Needs Analysis pre-filled from this Fact Find"
         >
           {seeding ? "Creating…" : "→ Create Needs Analysis"}
+        </button>
+        <button
+          onClick={() => void createCreditAuthorisation()}
+          disabled={creatingCa}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+          title="Create a Credit File Authorisation pre-filled with both applicants' names and address"
+        >
+          {creatingCa ? "Creating…" : "→ Create Credit Authorisation"}
         </button>
         <button
           onClick={() => window.print()}
