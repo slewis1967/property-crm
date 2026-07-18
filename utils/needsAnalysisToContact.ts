@@ -43,6 +43,7 @@ export type ContactSyncRecord = {
   home_address_postcode?: string;
   occupation?: string;
   annual_income?: number;
+  hecs_balance?: number;
 };
 
 const clean = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
