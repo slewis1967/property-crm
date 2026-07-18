@@ -25,6 +25,8 @@ import {
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
+import { useLocalDraft, draftStorageKey, SAVE_FAILED_HINT } from "../../hooks/useLocalDraft";
+import UnsavedDraftBanner from "../../components/UnsavedDraftBanner";
 
 const TEAL = "#0F4C5C";
 
@@ -107,6 +109,15 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
   const dirty = rev !== savedRev;
   const [error, setError] = useState("");
 
+  // Local safety-net: mirror unsaved edits to localStorage so a failed save +
+  // reload can't lose them; offer to restore a leftover draft on reopen.
+  const { recovered, dismissRecovered, discardRecovered, clearDraft } = useLocalDraft({
+    storageKey: draftStorageKey("credit_authorisation", id),
+    data,
+    dirty,
+    ready: !loading,
+  });
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -155,6 +166,14 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: body }),
         });
+        // A lapsed Cloudflare Access session bounces the request to a login page
+        // (a redirect and/or a non-JSON body) rather than the API. Surface a
+        // clear, reassuring message (the edits are in the local backup) instead
+        // of a generic failure, and never parse the login HTML as JSON.
+        if (res.redirected || !(res.headers.get("content-type") || "").includes("application/json")) {
+          setError(SAVE_FAILED_HINT);
+          return "error";
+        }
         const json = await res.json();
         if (res.status === 409) {
           setData((prev) => {
@@ -170,15 +189,17 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
           return "error";
         }
         setSavedRev(revAtSave);
+        clearDraft(); // the server has it now — drop the local backup
         return "saved";
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Save failed");
+      } catch {
+        // Network drop / blocked auth redirect — data is safe in the local backup.
+        setError(SAVE_FAILED_HINT);
         return "error";
       } finally {
         setSaving(false);
       }
     },
-    [id, data, rev],
+    [id, data, rev, clearDraft],
   );
 
   // "Locked" is derived from status — a signed authorisation is read-only until
@@ -316,6 +337,18 @@ export default function CreditAuthorisationForm({ id }: { id: string }) {
         <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
           {error}
         </div>
+      )}
+
+      {recovered && !locked && (
+        <UnsavedDraftBanner
+          ts={recovered.ts}
+          onRestore={() => {
+            setData(recovered.data);
+            setRev((r) => r + 1); // mark dirty so autosave persists the restored blob
+            dismissRecovered();
+          }}
+          onDiscard={discardRecovered}
+        />
       )}
 
       {locked && <LockedBanner onReopen={reopen} busy={saving} />}
