@@ -18,6 +18,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ASSET_TYPES,
   EMPLOYMENT_BASES,
@@ -46,6 +47,7 @@ import NeedsAnalysisPrintDocument from "./NeedsAnalysisPrintDocument";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
+import { needsAnalysisToCreditAuth } from "../../../utils/needsAnalysisToCreditAuth";
 
 const TEAL = "#0F4C5C";
 
@@ -589,10 +591,13 @@ function ApplicantBlock({
 /* ── The form ────────────────────────────────────────────────────────────── */
 
 export default function NeedsAnalysisForm({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<NeedsAnalysisData>(emptyNeedsAnalysis());
   const [status, setStatus] = useState<string>("Draft");
+  const [contactId, setContactId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingCa, setCreatingCa] = useState(false);
   const [downloading, setDownloading] = useState(false);
   // Dirtiness is derived from a monotonic edit counter vs. the counter captured
   // at the last successful save — survives autosave (an edit mid-save keeps the
@@ -612,6 +617,7 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
         if (cancelled) return;
         setData(json.needsAnalysis.data);
         setStatus(json.needsAnalysis.status);
+        setContactId(json.needsAnalysis.contact_id ?? null);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Load failed");
       } finally {
@@ -676,6 +682,34 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
   // "Locked" is derived from status — a Complete document is read-only until
   // reopened. Single source of truth: NEEDS_ANALYSIS_TERMINAL_STATUS.
   const locked = status === NEEDS_ANALYSIS_TERMINAL_STATUS;
+
+  /**
+   * Create a Credit File Authorisation pre-filled from this Needs Analysis —
+   * both applicants' names and the current residential address, so the broker
+   * doesn't re-key what this form already holds. Persists any pending edits
+   * first so the derived document reflects the latest data, then links the new
+   * Credit Authorisation to the same contact and opens it.
+   */
+  const createCreditAuthorisation = useCallback(async () => {
+    setCreatingCa(true);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const caData = needsAnalysisToCreditAuth(data);
+      const res = await fetch("/api/credit-authorisations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId, data: caData }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not create Credit Authorisation");
+      router.push(`/credit-authorisation/${json.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create Credit Authorisation");
+    } finally {
+      setCreatingCa(false);
+    }
+  }, [data, contactId, dirty, locked, doSave, router]);
 
   /**
    * Download the server-rendered PDF (headless Chromium reusing the YLA print
@@ -746,6 +780,15 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => void createCreditAuthorisation()}
+          disabled={creatingCa}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+          style={{ borderColor: TEAL, color: TEAL }}
+          title="Create a Credit File Authorisation pre-filled with both applicants' names and address"
+        >
+          {creatingCa ? "Creating…" : "→ Create Credit Authorisation"}
+        </button>
         <button
           onClick={() => window.print()}
           className="px-4 py-2 text-sm font-semibold rounded-lg border transition"

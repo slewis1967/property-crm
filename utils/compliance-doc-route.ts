@@ -31,6 +31,7 @@ import {
   LOCKED_EDIT_MESSAGE,
   LOCKED_DELETE_MESSAGE,
   type ComplianceDocType,
+  type PatchDecision,
 } from "./compliance-audit";
 
 /* ── Config shared by every handler ──────────────────────────────────────── */
@@ -204,6 +205,20 @@ export type PatchConfig = BaseConfig & {
    * only writes when the decision isn't `reject`.
    */
   buildPatch: (body: Record<string, unknown>, currentStatus: string, auth: string) => PatchBuild;
+  /**
+   * Optional side effect fired AFTER a successful update + audit — e.g. syncing
+   * derived records when a document first reaches its terminal status. Runs
+   * inside its own try/catch and can NEVER fail the save (a hook error is logged
+   * and swallowed). Use `decision.kind` to react only to the transition you care
+   * about — e.g. `"sign"` is the not-locked → locked (Complete/signed) move.
+   */
+  onAfterCommit?: (ctx: {
+    id: string;
+    decision: PatchDecision;
+    body: Record<string, unknown>;
+    snapshot: unknown;
+    auth: string;
+  }) => Promise<void>;
 };
 
 /**
@@ -252,6 +267,14 @@ export function makePatchHandler(cfg: PatchConfig) {
         statusAfter: incomingStatus,
         snapshot,
       });
+      // Post-commit side effect (best-effort — never fails the save).
+      if (cfg.onAfterCommit) {
+        try {
+          await cfg.onAfterCommit({ id, decision, body, snapshot, auth });
+        } catch (hookErr) {
+          log.error(`${cfg.logPrefix}.after_commit_failed`, { detail: cfg.errMessage(hookErr, ""), ...errInfo(hookErr) });
+        }
+      }
       return NextResponse.json({ ok: true });
     } catch (e) {
       log.error(`${cfg.logPrefix}.update_failed`, { detail: cfg.errMessage(e, ""), ...errInfo(e) });
