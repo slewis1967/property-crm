@@ -45,12 +45,14 @@ export default function AppShell({
     }
   }, [drawerOpen]);
 
-  // Public, standalone routes (the external e-signature page + the self-book
-  // page) render with NO app chrome — no sidebar, no mobile bar. Hooks above run
-  // unconditionally so their order stays stable across this branch.
+  // Public, standalone routes (the external e-signature page, the self-book
+  // page, and the client document portal) render with NO app chrome — no
+  // sidebar, no mobile bar. Hooks above run unconditionally so their order stays
+  // stable across this branch.
   const isStandalone =
     pathname === "/sign" || pathname?.startsWith("/sign/") ||
-    pathname === "/book" || pathname?.startsWith("/book/");
+    pathname === "/book" || pathname?.startsWith("/book/") ||
+    pathname === "/portal" || pathname?.startsWith("/portal/");
   if (isStandalone) {
     return (
       <div data-appshell-root className="h-screen overflow-y-auto bg-gray-50">
