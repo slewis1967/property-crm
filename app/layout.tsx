@@ -117,6 +117,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <a href="/activity" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>⚡</span> Activity Feed
             </a>
+            <a href="/health" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>📡</span> Bot Health
+            </a>
             <a href="/pia" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>📊</span> PIA Modeller
             </a>
