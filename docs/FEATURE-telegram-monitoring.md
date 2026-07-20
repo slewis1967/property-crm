@@ -79,38 +79,65 @@ Silence is treated as weak evidence. A healthy NEXUS is legitimately quiet for
 long stretches because most senders only fire on a problem, so the staleness
 threshold is a generous 24h without any successful send.
 
-## Migration status — IMPORTANT
+## Migration status — COMPLETE
 
-Only scripts routed through `nexus_notify` appear on `/health`. Anything still
-calling `api.telegram.org` directly is invisible to the CRM **by construction**.
+Every NEXUS script that sends to `@elvsnextkey_bot` now routes through
+`nexus_notify`. **32 modules migrated**, verified by compile + import + a grep
+for residual `api.telegram.org` URL construction.
 
-**Migrated (9):**
-
-- `elvis_telegram.py` — the shared helper, so its 8 importers
-  (`elvis_facebook`, `elvis_fhb_tracker`, `elvis_ghl_automation`,
-  `elvis_instagram`, `elvis_interest_rate_agent`, `elvis_youtube_content`,
-  `elvis_youtube_learning`, `elvis_youtube_pipeline`) are covered without edits
-- `oncall_agent.py` — threads its own severity classification through
-- `elvis_aggregator_health.py`
-- `director_agent.py`
-- `elvis_fb_health.py`
-- `elvis_fb_token_refresh.py`
-- `elvis_email_inbound.py`
-- `veteran_advisor.py`
-- `senior_advisor.py`
-
-**Not yet migrated (~27)** — each still inlines its own `sendMessage`. Find them
-with:
+To re-check after any change:
 
 ```bash
 grep -rln "api.telegram.org" --include="*.py" /mnt/c/NEXUS-Memory/projects \
-  | grep -v nexus_notify
+  | grep -vE "nexus_notify|kogan_agent"
 ```
 
-Migrating one is mechanical: delete the hand-rolled `urlopen` body and call
-`nexus_notify.notify(text, source="<script>", severity=...)`. Preserve any
-`parse_mode` the original used — dropping it silently changes how the message
-renders; keeping it is also what makes `parse_error` failures visible.
+That should return only `elvis_approval_handler.py` (see exceptions below).
+
+### Two deliberate exceptions
+
+**`elvis_approval_handler.py`** keeps its raw `api()` helper. It is the one
+place in NEXUS that *consumes* the update stream — a 30s `getUpdates` long
+poll. Telegram permits only one `getUpdates` consumer per bot; a second caller
+gets a 409 and the two fight, silently breaking the approve/reject buttons. It
+is also not a send, so there is nothing to record. Its `send()` **is**
+migrated. **Do not route `api()` through `nexus_notify`.**
+
+This daemon is also why the CRM must never poll this bot. It was dormant when
+this feature was built (no lockfile, not in crontab), which is why a `getUpdates`
+probe came back clean rather than 409 — that measured the daemon being *off*,
+not the stream being free. Starting it after wiring CRM polling would break
+approvals.
+
+**`kogan_agent/`** is a different bot entirely — `KOGANNextKey_bot`, token
+`KOGAN_TELEGRAM_BOT_TOKEN`. Routing it through `nexus_notify` would send Kogan
+alerts from the NextKey bot. If you want Kogan on `/health` too, generalise
+`nexus_notify` to take a token + bot label rather than pointing it at this one.
+
+### Migration recipe (for anything new)
+
+Delete the hand-rolled `urlopen`/`requests.post` body and call
+`nexus_notify.notify(text, source="<script>", severity=...)`. Rules:
+
+- **Preserve `parse_mode`.** Dropping it silently changes how the message
+  renders; keeping it is what makes `parse_error` failures visible. Both
+  Markdown and HTML fail the same way (400 "can't parse entities").
+- **Check the return contract.** `nexus_notify.notify` returns the parsed
+  response or `None`. `elvis_content_pipeline` needed `or {}` because its
+  caller does `result.get("ok")`.
+- **Use `nexus_notify.call(method, payload)`** for non-`sendMessage` methods
+  or generic helpers (see `elvis_linkedin._tg_request`).
+- **Delete raw-API fallbacks.** Several scripts had "try the helper, fall back
+  to a direct API call" blocks. `nexus_notify` never raises, so those were
+  unreachable — and being direct calls, they were the one path `/health`
+  could not see.
+
+### Note on side effects when testing
+
+`instagram_diagnostic.py` runs its whole diagnostic at import time (no
+`if __name__ == "__main__"` guard). Importing it to verify a change will hit the
+Facebook API and send a real Telegram alert. Verify that one with
+`py_compile` and grep instead.
 
 ## Deliberate non-goals
 
