@@ -203,6 +203,27 @@ export function isPublicBookingRoute(pathname: string): boolean {
   return false;
 }
 
+// Public client document-portal routes. A borrower uploads their Preliminary
+// Assessment documents WITHOUT a Cloudflare Access identity, so these must be
+// exempt from the CF Access gate — same model as the signing, guest-call and
+// booking routes above. Trust is the unguessable 256-bit token in the path:
+// only its SHA-256 hash is stored, and every handler re-resolves the token
+// itself rather than trusting any caller-supplied id. Must mirror the CF Access
+// bypass app (crm.nextkey.com.au/portal/* + /api/portal/*) EXACTLY.
+//
+// Note this exempts ALL of /api/portal/*, which is safe because every route
+// under it is token-scoped by construction. The REP-side routes that create and
+// manage document requests deliberately live at /api/document-requests instead,
+// so they keep their CF Access auth header — the same separation the signing
+// routes had to make when /api/sign/requests moved to /api/signature-requests.
+// The CSRF origin check above still applies to the mutating portal POSTs
+// (same-origin from the /portal page).
+export function isPublicPortalRoute(pathname: string): boolean {
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) return true;
+  if (pathname.startsWith("/api/portal/")) return true;
+  return false;
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -267,7 +288,8 @@ export async function proxy(req: NextRequest) {
     PUBLIC_PATHS.has(pathname) ||
     isPublicSignRoute(pathname) ||
     isPublicGuestRoute(pathname) ||
-    isPublicBookingRoute(pathname)
+    isPublicBookingRoute(pathname) ||
+    isPublicPortalRoute(pathname)
   ) {
     return NextResponse.next();
   }

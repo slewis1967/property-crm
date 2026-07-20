@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute, isPublicPortalRoute } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -84,5 +84,32 @@ describe("isPublicSignRoute", () => {
     // Likewise "/api/sign" (no trailing slash / token) is not a token API.
     expect(isPublicSignRoute("/api/sign")).toBe(false);
     expect(isPublicSignRoute("/api/signatures")).toBe(false);
+  });
+});
+
+describe("isPublicPortalRoute", () => {
+  it("exempts the client document portal page (bare + tokenised)", () => {
+    expect(isPublicPortalRoute("/portal")).toBe(true);
+    expect(isPublicPortalRoute("/portal/1IJ_wDiPtdmvzXVfRcCFEeQZ9mQ2S8kK3nHrLbY7pUo")).toBe(true);
+  });
+
+  it("exempts the token-scoped portal APIs", () => {
+    expect(isPublicPortalRoute("/api/portal/abc123")).toBe(true);
+    expect(isPublicPortalRoute("/api/portal/abc123/upload-url")).toBe(true);
+  });
+
+  it("does NOT exempt the rep-side document-request routes", () => {
+    // These create and manage requests and MUST keep their CF Access auth
+    // header. They live outside /api/portal/ precisely so this bypass cannot
+    // strip it -- the same trap the sign flow hit with /api/sign/requests.
+    expect(isPublicPortalRoute("/api/document-requests")).toBe(false);
+    expect(isPublicPortalRoute("/api/document-requests/abc/export")).toBe(false);
+  });
+
+  it("does NOT exempt lookalikes", () => {
+    expect(isPublicPortalRoute("/portalx")).toBe(false);
+    expect(isPublicPortalRoute("/api/portalx/abc")).toBe(false);
+    expect(isPublicPortalRoute("/api/portal")).toBe(false);
+    expect(isPublicPortalRoute("/documents")).toBe(false);
   });
 });
