@@ -100,11 +100,32 @@ export default function RequestDocumentsButton({
   // Prefill from the latest props when the popover opens — linked-contact data
   // (which supplies applicant2Name/count) can load after this button mounts,
   // and the rep only opens the popover once it's on screen.
-  function openPopover() {
+  async function openPopover() {
+    const seedName2 = (applicant2Name || "").trim();
     setCount(initialCount);
-    setName2((applicant2Name || "").trim());
+    setName2(seedName2);
     setError(null);
     setOpen(true);
+
+    // If a linked contact didn't supply a second applicant, ask the server for
+    // one from the newest Fact Find / Needs Analysis (where a joint deal's
+    // applicant 2 is usually captured). Fire-and-forget; the rep can type over it.
+    if (!seedName2 && contactId) {
+      try {
+        const res = await fetch(
+          `/api/document-requests/prefill?contact_id=${encodeURIComponent(contactId)}`,
+          { cache: "no-store" },
+        );
+        const data = await res.json();
+        if (data?.ok && data.applicant2_name) {
+          // Only apply if the rep hasn't already started typing a second name.
+          setName2((cur) => (cur.trim() ? cur : data.applicant2_name));
+          setCount((cur) => (cur >= 2 ? cur : 2));
+        }
+      } catch {
+        /* prefill is best-effort; the manual field still works */
+      }
+    }
   }
 
   function copy(link: string) {
