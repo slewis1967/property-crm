@@ -25,6 +25,14 @@ type RequestRow = {
   created_at: string;
 };
 
+type WeeklyEntry = {
+  title: string;
+  invite: string;
+  body: string;
+  count: number;
+  requests: { id: string; applicant_name: string; drive_folder_url: string }[];
+};
+
 type Detail = {
   received: number;
   total: number;
@@ -59,6 +67,12 @@ export default function DocumentRequestsClient() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportMsg, setExportMsg] = useState<{ id: string; text: string; url?: string; error?: boolean } | null>(null);
+
+  // Weekly YLA calendar entry
+  const [weekly, setWeekly] = useState<WeeklyEntry | null>(null);
+  const [weeklyOpen, setWeeklyOpen] = useState(false);
+  const [weeklyCopied, setWeeklyCopied] = useState<"title" | "body" | null>(null);
+  const [marking, setMarking] = useState(false);
 
   const fetchRows = useCallback(async () => {
     try {
@@ -163,6 +177,58 @@ export default function DocumentRequestsClient() {
     }
   }
 
+  const fetchWeekly = useCallback(async (): Promise<WeeklyEntry | null> => {
+    try {
+      const res = await fetch("/api/document-requests/weekly-entry", { cache: "no-store" });
+      const json = await res.json();
+      return json.ok ? (json as WeeklyEntry) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const loadWeekly = useCallback(async () => {
+    const w = await fetchWeekly();
+    if (w) setWeekly(w);
+  }, [fetchWeekly]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const w = await fetchWeekly();
+      if (!cancelled && w) setWeekly(w);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchWeekly]);
+
+  function copyText(text: string, which: "title" | "body") {
+    void navigator.clipboard.writeText(text).then(() => {
+      setWeeklyCopied(which);
+      setTimeout(() => setWeeklyCopied(null), 2000);
+    });
+  }
+
+  async function markWeeklySubmitted() {
+    if (!weekly || weekly.count === 0) return;
+    if (!confirm(`Mark ${weekly.count} client${weekly.count === 1 ? "" : "s"} as submitted to YLA? They'll drop out of next week's entry.`)) {
+      return;
+    }
+    setMarking(true);
+    try {
+      await fetch("/api/document-requests/weekly-entry", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids: weekly.requests.map((r) => r.id) }),
+      });
+      await loadWeekly();
+      await reload();
+    } finally {
+      setMarking(false);
+    }
+  }
+
   async function exportToDrive(id: string, complete: boolean) {
     setExportMsg(null);
     if (!complete && !confirm("This set is incomplete. Export a partial set to Drive anyway? YLA reject partial sets.")) {
@@ -177,6 +243,7 @@ export default function DocumentRequestsClient() {
       if (json.ok) {
         setExportMsg({ id, text: `Exported ${json.uploaded} file${json.uploaded === 1 ? "" : "s"} to Drive.`, url: json.folder_url });
         await reload();
+        await loadWeekly();
         if (openId === id) await refreshDetail(id);
       } else {
         setExportMsg({ id, text: json.error || "Export failed.", url: json.folder_url, error: true });
@@ -218,6 +285,64 @@ export default function DocumentRequestsClient() {
       {migrationHint && (
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           {migrationHint}
+        </div>
+      )}
+
+      {/* Weekly YLA entry */}
+      {weekly && weekly.count > 0 && (
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-blue-900">
+                Ready for this week&apos;s YLA submission
+              </h2>
+              <p className="text-sm text-blue-800">
+                {weekly.count} client{weekly.count === 1 ? "" : "s"} exported to Drive and not yet sent to YLA.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWeeklyOpen((v) => !v)}
+              className="rounded-md border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-800"
+            >
+              {weeklyOpen ? "Hide" : "Build calendar entry"}
+            </button>
+          </div>
+
+          {weeklyOpen && (
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wide text-blue-700">Calendar title</span>
+                  <button type="button" onClick={() => copyText(weekly.title, "title")} className="text-xs font-medium text-blue-700 hover:underline">
+                    {weeklyCopied === "title" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <input readOnly value={weekly.title} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-blue-200 bg-white px-2 py-1 font-mono text-sm" />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wide text-blue-700">
+                    Body — invite {weekly.invite}
+                  </span>
+                  <button type="button" onClick={() => copyText(weekly.body, "body")} className="text-xs font-medium text-blue-700 hover:underline">
+                    {weeklyCopied === "body" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <textarea readOnly value={weekly.body} rows={Math.min(12, weekly.count + 2)} onFocus={(e) => e.target.select()} className="mt-1 w-full rounded border border-blue-200 bg-white px-2 py-1 font-mono text-xs" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => void markWeeklySubmitted()} disabled={marking} className="rounded-md bg-blue-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
+                  {marking ? "Marking…" : "Mark all as submitted to YLA"}
+                </button>
+                <span className="text-xs text-blue-700">
+                  Do this after you&apos;ve created and sent the calendar entry.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

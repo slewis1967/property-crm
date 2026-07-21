@@ -48,13 +48,18 @@ CREATE TABLE IF NOT EXISTS document_requests (
   -- Google Drive handoff. Populated when the rep exports to Drive.
   drive_folder_id  text,
   drive_folder_url text,
-  submitted_at     timestamptz,
+  submitted_at     timestamptz,       -- exported to Drive
+  yla_submitted_at timestamptz,       -- included in a weekly YLA calendar entry
 
   created_by       text,
   expires_at       timestamptz NOT NULL DEFAULT (now() + interval '30 days'),
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
+
+-- Idempotent add for tables created before yla_submitted_at existed (this
+-- migration was applied once without it). Safe to run repeatedly.
+ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS yla_submitted_at timestamptz;
 
 CREATE INDEX IF NOT EXISTS document_requests_token_hash_idx ON document_requests (token_hash);
 CREATE INDEX IF NOT EXISTS document_requests_status_idx     ON document_requests (status);
