@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 import EditRecordModal from "../../components/EditRecordModal";
+import RequestDocumentsButton from "../../components/RequestDocumentsButton";
 import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
@@ -410,6 +411,15 @@ export default function OpportunityDetail({
           >
             📝 EOI
           </a>
+          <RequestDocumentsButton
+            applicantName={lead.full_name}
+            applicantEmail={lead.email}
+            applicantPhone={lead.phone}
+            opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
+            applicantCount={lead.partner_annual_income ? 2 : 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          />
           <button
             onClick={openNeedsAnalysis}
             disabled={needsAnalysisLoading}
