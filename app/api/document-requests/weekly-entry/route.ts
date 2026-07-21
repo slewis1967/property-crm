@@ -46,7 +46,7 @@ export async function GET(req: Request) {
   // as included in a weekly YLA entry.
   const { data, error } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .select("id,applicant_name,drive_folder_url,submitted_at,yla_submitted_at")
+    .select("id,application_id,applicant_name,drive_folder_url,submitted_at,yla_submitted_at")
     .eq("status", "submitted")
     .not("drive_folder_url", "is", null)
     .is("yla_submitted_at", null)
@@ -71,8 +71,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
+  // A joint application has one request per applicant sharing a Drive folder —
+  // collapse those to ONE calendar line per application (keyed by folder, or
+  // application_id). The line uses the primary (first) applicant's surname.
   const rows = data ?? [];
-  const lines = rows.map((r) => `${surnameOf(r.applicant_name)} - ${r.drive_folder_url} -`);
+  const seen = new Set<string>();
+  const apps: { id: string; applicant_name: string; drive_folder_url: string }[] = [];
+  for (const r of rows) {
+    const key = r.drive_folder_url || r.application_id || r.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    apps.push({ id: r.id, applicant_name: r.applicant_name, drive_folder_url: r.drive_folder_url });
+  }
+
+  const lines = apps.map((a) => `${surnameOf(a.applicant_name)} - ${a.drive_folder_url} -`);
   const body = [BODY_HEADER, ...lines].join("\n");
 
   return NextResponse.json({
@@ -80,12 +92,10 @@ export async function GET(req: Request) {
     title: CALENDAR_TITLE,
     invite: "programs@yourloanassist.com.au",
     body,
-    count: rows.length,
-    requests: rows.map((r) => ({
-      id: r.id,
-      applicant_name: r.applicant_name,
-      drive_folder_url: r.drive_folder_url,
-    })),
+    count: apps.length,
+    // POST needs ALL request ids (both applicants) to stamp them submitted.
+    all_ids: rows.map((r) => r.id),
+    requests: apps,
   });
 }
 

@@ -4,18 +4,19 @@ import { useState } from "react";
 import { errMessage } from "../../utils/errors";
 
 /**
- * "Request Documents" — creates a client document-collection request pre-filled
- * from the record the rep is looking at (opportunity or contact) and, when the
- * client has an email, sends them the secure upload link in one click.
+ * "Request Documents" — creates a document-collection request per applicant,
+ * pre-filled from the record the rep is looking at, and emails each applicant
+ * their own secure upload link.
  *
- * Pre-fill removes the retyping the standalone /document-requests page needs;
- * the confirm step exists because clicking this emails a real client, so the
- * rep sees exactly who it's going to first. When there's no email on file, it
- * still creates the request and hands back a link to send by hand.
+ * Each applicant gets their OWN request (their own link, their own personal
+ * documents). A joint deal's requests share an application_id + one NK reference
+ * so they later export into a single Drive folder for YLA. Pre-fill removes the
+ * retyping; a confirm step exists because this emails real clients.
  *
- * Calls POST /api/document-requests (authed) — same endpoint the standalone
- * dashboard uses; nothing new server-side.
+ * Calls POST /api/document-requests (authed) once per applicant.
  */
+type Created = { label: string; link: string; email: string; emailed: boolean; emailError?: string | null };
+
 export default function RequestDocumentsButton({
   applicantName,
   applicantEmail,
@@ -24,6 +25,7 @@ export default function RequestDocumentsButton({
   contactId,
   applicantCount,
   applicant2Name,
+  applicant2Email,
   className,
 }: {
   applicantName: string | null | undefined;
@@ -33,23 +35,39 @@ export default function RequestDocumentsButton({
   contactId?: string | null;
   /** Best-effort pre-fill; the rep can change it before sending. */
   applicantCount?: number;
-  /** Second applicant's name, e.g. from a linked co-applicant contact. Pre-fills the field. */
+  /** Second applicant, e.g. from a linked co-applicant contact or a fact find. */
   applicant2Name?: string | null;
+  applicant2Email?: string | null;
   className?: string;
 }) {
   const initialCount = applicantCount && applicantCount >= 1 ? applicantCount : 1;
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(initialCount);
   const [name2, setName2] = useState((applicant2Name || "").trim());
+  const [email2, setEmail2] = useState((applicant2Email || "").trim());
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<
-    { link: string; emailed: boolean; emailError?: string | null; clientRef?: string | null } | null
-  >(null);
+  const [results, setResults] = useState<Created[] | null>(null);
+  const [clientRef, setClientRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const name = (applicantName || "").trim();
   const email = (applicantEmail || "").trim();
+
+  async function createOne(body: Record<string, unknown>): Promise<{ ok: boolean; data?: Record<string, unknown>; error?: string }> {
+    try {
+      const res = await fetch("/api/document-requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) return { ok: false, error: data.error || "Couldn't create the request" };
+      return { ok: true, data };
+    } catch (err) {
+      return { ok: false, error: errMessage(err) };
+    }
+  }
 
   async function send() {
     setError(null);
@@ -59,30 +77,57 @@ export default function RequestDocumentsButton({
     }
     setSending(true);
     try {
-      const res = await fetch("/api/document-requests", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          applicant_name: name,
-          applicant_email: email || undefined,
-          applicant_phone: (applicantPhone || "").trim() || undefined,
-          applicant_count: count,
-          applicant2_name: count >= 2 && name2.trim() ? name2.trim() : undefined,
+      // Applicant 1 first — it gets the shared NK reference the others reuse.
+      const applicationId = count >= 2 ? crypto.randomUUID() : null;
+      const first = await createOne({
+        applicant_name: name,
+        applicant_email: email || undefined,
+        applicant_phone: (applicantPhone || "").trim() || undefined,
+        opportunity_id: opportunityId || undefined,
+        contact_id: contactId || undefined,
+        application_id: applicationId || undefined,
+        send_email: !!email,
+      });
+      if (!first.ok) {
+        setError(first.error!);
+        return;
+      }
+      const ref = (first.data!.request as { client_ref?: string })?.client_ref ?? null;
+      setClientRef(ref);
+      const created: Created[] = [
+        {
+          label: name || "Applicant 1",
+          link: first.data!.link as string,
+          email,
+          emailed: !!first.data!.emailed,
+          emailError: (first.data!.email_error as string | null) ?? null,
+        },
+      ];
+
+      if (count >= 2) {
+        const e2 = email2.trim();
+        const second = await createOne({
+          applicant_name: name2.trim(),
+          applicant_email: e2 || undefined,
           opportunity_id: opportunityId || undefined,
-          contact_id: contactId || undefined,
-          send_email: !!email,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Couldn't create the request");
-      setResult({
-        link: data.link,
-        emailed: !!data.emailed,
-        emailError: data.email_error,
-        clientRef: data.request?.client_ref ?? null,
-      });
-    } catch (err) {
-      setError(errMessage(err));
+          application_id: applicationId || undefined,
+          client_ref: ref || undefined, // share the reference + folder
+          send_email: !!e2,
+        });
+        if (second.ok) {
+          created.push({
+            label: name2.trim(),
+            link: second.data!.link as string,
+            email: e2,
+            emailed: !!second.data!.emailed,
+            emailError: (second.data!.email_error as string | null) ?? null,
+          });
+        } else {
+          setError(`Applicant 1 created, but applicant 2 failed: ${second.error}`);
+        }
+      }
+
+      setResults(created);
     } finally {
       setSending(false);
     }
@@ -90,26 +135,28 @@ export default function RequestDocumentsButton({
 
   function reset() {
     setOpen(false);
-    setResult(null);
+    setResults(null);
+    setClientRef(null);
     setError(null);
-    setCopied(false);
+    setCopiedIdx(null);
     setCount(initialCount);
     setName2((applicant2Name || "").trim());
+    setEmail2((applicant2Email || "").trim());
   }
 
-  // Prefill from the latest props when the popover opens — linked-contact data
-  // (which supplies applicant2Name/count) can load after this button mounts,
-  // and the rep only opens the popover once it's on screen.
+  // Prefill from the latest props when the popover opens — linked-contact / fact
+  // find data can load after this button mounts, and the rep opens the popover
+  // once it's on screen.
   async function openPopover() {
     const seedName2 = (applicant2Name || "").trim();
     setCount(initialCount);
     setName2(seedName2);
+    setEmail2((applicant2Email || "").trim());
     setError(null);
     setOpen(true);
 
-    // If a linked contact didn't supply a second applicant, ask the server for
-    // one from the newest Fact Find / Needs Analysis (where a joint deal's
-    // applicant 2 is usually captured). Fire-and-forget; the rep can type over it.
+    // Fill the second applicant from the newest Fact Find / Needs Analysis when a
+    // linked contact didn't already supply one. Best-effort.
     if (!seedName2 && contactId) {
       try {
         const res = await fetch(
@@ -118,20 +165,20 @@ export default function RequestDocumentsButton({
         );
         const data = await res.json();
         if (data?.ok && data.applicant2_name) {
-          // Only apply if the rep hasn't already started typing a second name.
           setName2((cur) => (cur.trim() ? cur : data.applicant2_name));
+          if (data.applicant2_email) setEmail2((cur) => (cur.trim() ? cur : data.applicant2_email));
           setCount((cur) => (cur >= 2 ? cur : 2));
         }
       } catch {
-        /* prefill is best-effort; the manual field still works */
+        /* prefill is best-effort */
       }
     }
   }
 
-  function copy(link: string) {
+  function copy(link: string, idx: number) {
     void navigator.clipboard.writeText(link).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
     });
   }
 
@@ -148,52 +195,51 @@ export default function RequestDocumentsButton({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
-          {!result ? (
+        <div className="absolute right-0 z-20 mt-2 w-96 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+          {!results ? (
             <>
               <p className="text-sm font-semibold text-gray-900">Request documents</p>
               <p className="mt-1 text-sm text-gray-600">
-                {name || "This record"} will be asked to upload their Preliminary Assessment documents.
+                Each applicant gets their own upload link for their personal documents.
               </p>
 
-              <dl className="mt-3 space-y-1 text-sm">
-                <div className="flex justify-between gap-2">
-                  <dt className="text-gray-500">Send to</dt>
-                  <dd className="truncate text-right text-gray-900">
-                    {email || <span className="text-amber-700">no email — link only</span>}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <dt className="text-gray-500">Applicants</dt>
-                  <dd>
-                    <select
-                      value={count}
-                      onChange={(e) => setCount(Number(e.target.value))}
-                      className="rounded border border-gray-300 px-2 py-0.5 text-sm"
-                    >
-                      {[1, 2, 3, 4].map((n) => (
-                        <option key={n} value={n}>
-                          {n}
-                        </option>
-                      ))}
-                    </select>
-                  </dd>
-                </div>
-              </dl>
+              <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+                <span className="text-gray-500">Applicants</span>
+                <select
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  className="rounded border border-gray-300 px-2 py-0.5 text-sm"
+                >
+                  {[1, 2].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-3 rounded-md border border-gray-100 bg-gray-50 p-2 text-sm">
+                <p className="font-medium text-gray-900">Applicant 1 — {name || "Unknown"}</p>
+                <p className="text-gray-500">{email || "no email — link only"}</p>
+              </div>
 
               {count >= 2 && (
-                <label className="mt-3 block text-sm">
-                  <span className="text-gray-500">Second applicant&apos;s name</span>
+                <div className="mt-2 space-y-2 rounded-md border border-gray-100 bg-gray-50 p-2">
+                  <p className="text-sm font-medium text-gray-900">Applicant 2</p>
                   <input
                     value={name2}
                     onChange={(e) => setName2(e.target.value)}
-                    placeholder="e.g. Alex Smith"
-                    className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                    placeholder="Name (e.g. Alex Smith)"
+                    className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                   />
-                  <span className="mt-1 block text-xs text-gray-400">
-                    So their documents are named correctly for YLA.
-                  </span>
-                </label>
+                  <input
+                    type="email"
+                    value={email2}
+                    onChange={(e) => setEmail2(e.target.value)}
+                    placeholder="Email (optional — for their own link)"
+                    className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  />
+                </div>
               )}
 
               {error && <p className="mt-3 rounded bg-red-50 p-2 text-sm text-red-700">{error}</p>}
@@ -208,45 +254,49 @@ export default function RequestDocumentsButton({
                   disabled={sending}
                   className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 >
-                  {sending ? "Working…" : email ? "Send link" : "Create link"}
+                  {sending ? "Working…" : count >= 2 ? "Create links" : email ? "Send link" : "Create link"}
                 </button>
               </div>
             </>
           ) : (
             <>
               <p className="text-sm font-semibold text-green-800">
-                {result.emailed ? `Link sent to ${email}` : "Request created"}
-                {result.clientRef && (
+                {results.length > 1 ? `${results.length} links created` : "Request created"}
+                {clientRef && (
                   <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800">
-                    {result.clientRef}
+                    {clientRef}
                   </span>
                 )}
               </p>
-              {!result.emailed && email && result.emailError && (
-                <p className="mt-1 text-xs text-amber-700">
-                  Couldn&apos;t email it ({result.emailError}). Copy the link and send it manually.
-                </p>
-              )}
-              {!email && (
-                <p className="mt-1 text-xs text-gray-600">No email on file — copy this and send it to the client.</p>
-              )}
-              <div className="mt-3 flex items-center gap-2">
-                <input
-                  readOnly
-                  value={result.link}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => copy(result.link)}
-                  className="shrink-0 rounded-md bg-gray-700 px-2 py-1 text-xs font-medium text-white"
-                >
-                  {copied ? "Copied" : "Copy"}
-                </button>
+              {error && <p className="mt-1 text-xs text-amber-700">{error}</p>}
+
+              <div className="mt-3 space-y-3">
+                {results.map((r, i) => (
+                  <div key={i} className="rounded-md border border-gray-100 p-2">
+                    <p className="text-sm font-medium text-gray-900">{r.label}</p>
+                    <p className="text-xs text-gray-500">
+                      {r.emailed ? `Link sent to ${r.email}` : r.email ? `Email failed — copy below` : "No email — copy below"}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={r.link}
+                        onFocus={(e) => e.target.select()}
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => copy(r.link, i)}
+                        className="shrink-0 rounded-md bg-gray-700 px-2 py-1 text-xs font-medium text-white"
+                      >
+                        {copiedIdx === i ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="mt-2 text-xs text-gray-400">This link is shown once. Track progress under Client Documents.</p>
-              <div className="mt-3 text-right">
+              <p className="mt-2 text-xs text-gray-400">Links are shown once. Track progress under Client Documents.</p>
+              <div className="mt-2 text-right">
                 <button type="button" onClick={reset} className="rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-50">
                   Done
                 </button>

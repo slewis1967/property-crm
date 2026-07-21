@@ -50,20 +50,15 @@ export async function GET(
 
   const { data: docs } = await supabase
     .from("client_documents")
-    .select("id,doc_type,applicant_index,filename,status,check_notes,size_bytes,uploaded_at")
+    .select("id,doc_type,filename,status,check_notes,size_bytes,uploaded_at")
     .eq("request_id", id)
     .neq("status", "replaced")
     .order("uploaded_at", { ascending: true });
 
-  const slots = requiredSlots(request.applicant_count);
+  const slots = requiredSlots();
   const used = new Set<string>();
   const filled = slots.map((slot) => {
-    const match = (docs ?? []).find(
-      (d) =>
-        !used.has(d.id) &&
-        d.doc_type === slot.docKey &&
-        (d.applicant_index ?? null) === slot.applicantIndex,
-    );
+    const match = (docs ?? []).find((d) => !used.has(d.id) && d.doc_type === slot.docKey);
     if (match) used.add(match.id);
     return { ...slot, document: match ?? null };
   });

@@ -13,7 +13,7 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
-import { DOC_BY_KEY, ylaFilename, surnameForApplicant, YLA_MAX_BYTES } from "../../../../../utils/yla-documents";
+import { DOC_BY_KEY, ylaFilename, surnameOf, YLA_MAX_BYTES } from "../../../../../utils/yla-documents";
 import { resolveToken } from "../../_shared";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function POST(
   }
 
   const body = await req.json().catch(() => ({}));
-  const { doc_key, applicant_index, slot, size, mime_type } = body ?? {};
+  const { doc_key, slot, size, mime_type } = body ?? {};
 
   const spec = DOC_BY_KEY[doc_key];
   if (!spec) {
@@ -49,17 +49,6 @@ export async function POST(
   const slotNum = Number(slot);
   if (!Number.isInteger(slotNum) || slotNum < 1 || slotNum > spec.count) {
     return NextResponse.json({ ok: false, error: "Invalid document slot" }, { status: 400 });
-  }
-
-  // Applicant index must be consistent with the spec and within the number of
-  // applicants on this request — otherwise a crafted call could write a
-  // "document for applicant 9".
-  let applicantIdx: number | null = null;
-  if (spec.perApplicant) {
-    applicantIdx = Number(applicant_index);
-    if (!Number.isInteger(applicantIdx) || applicantIdx < 1 || applicantIdx > request.applicant_count) {
-      return NextResponse.json({ ok: false, error: "Invalid applicant" }, { status: 400 });
-    }
   }
 
   if (typeof size !== "number" || size <= 0) {
@@ -76,8 +65,8 @@ export async function POST(
     );
   }
 
-  const surname = surnameForApplicant(applicantIdx, request.applicant_name, request.applicant2_name);
-  const filename = ylaFilename(spec.key, slotNum, surname, applicantIdx, request.client_ref);
+  const surname = surnameOf(request.applicant_name);
+  const filename = ylaFilename(spec.key, slotNum, surname, request.client_ref);
   const path = `portal/${request.id}/${Date.now()}-${filename.replace(/[^\w.\- ]+/g, "_")}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
@@ -91,21 +80,19 @@ export async function POST(
   // Supersede any previous file in this slot so re-uploading replaces rather
   // than duplicates. 'replaced' rows are retained for audit, and filtered out
   // of the portal view and the Drive export.
-  const supersede = supabase
+  await supabase
     .from("client_documents")
     .update({ status: "replaced" })
     .eq("request_id", request.id)
     .eq("doc_type", spec.key)
+    .eq("filename", filename)
     .neq("status", "replaced");
-  if (applicantIdx === null) await supersede.is("applicant_index", null).eq("filename", filename);
-  else await supersede.eq("applicant_index", applicantIdx).eq("filename", filename);
 
   const { data: row, error: insErr } = await supabase
     .from("client_documents")
     .insert({
       request_id: request.id,
       doc_type: spec.key,
-      applicant_index: applicantIdx,
       filename,
       original_name: typeof body.original_name === "string" ? body.original_name.slice(0, 200) : null,
       storage_path: path,

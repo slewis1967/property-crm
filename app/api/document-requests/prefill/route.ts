@@ -31,6 +31,11 @@ function applicantName(a: Applicant | undefined): string {
   return `${given} ${family}`.trim();
 }
 
+function applicantEmail(a: Applicant | undefined): string {
+  if (!a || typeof a !== "object") return "";
+  return String(a.email ?? "").trim();
+}
+
 /** newest row's { data, created_at } for a table filtered by contact_id */
 async function newest(table: string, contactId: string) {
   const { data } = await supabase
@@ -49,7 +54,7 @@ export async function GET(req: Request) {
 
   const contactId = new URL(req.url).searchParams.get("contact_id");
   if (!contactId) {
-    return NextResponse.json({ ok: true, applicant2_name: null, applicant_count: 1, source: null });
+    return NextResponse.json({ ok: true, applicant2_name: null, applicant2_email: null, applicant_count: 1, source: null });
   }
 
   // Read both forms; take whichever is newer and actually names a second applicant.
@@ -67,16 +72,18 @@ export async function GET(req: Request) {
     .sort((a, b) => new Date(b!.created_at).getTime() - new Date(a!.created_at).getTime());
 
   for (const c of candidates) {
-    const name2 = applicantName(c!.data?.applicants?.[1]);
+    const a2 = c!.data?.applicants?.[1];
+    const name2 = applicantName(a2);
     if (name2) {
       return NextResponse.json({
         ok: true,
         applicant2_name: name2,
+        applicant2_email: applicantEmail(a2) || null,
         applicant_count: 2,
         source: c!.source,
       });
     }
   }
 
-  return NextResponse.json({ ok: true, applicant2_name: null, applicant_count: 1, source: null });
+  return NextResponse.json({ ok: true, applicant2_name: null, applicant2_email: null, applicant_count: 1, source: null });
 }

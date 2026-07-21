@@ -71,6 +71,11 @@ CREATE SEQUENCE IF NOT EXISTS document_requests_nk_seq START 10001;
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS yla_submitted_at timestamptz;
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS applicant2_name text;
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS client_ref text;
+-- Links the per-applicant requests of one joint application together: they share
+-- an application_id (and a client_ref, and one Drive folder). NULL for a solo
+-- applicant. See the "request per applicant" model in yla-documents.ts.
+ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS application_id uuid;
+CREATE INDEX IF NOT EXISTS document_requests_application_idx ON document_requests (application_id);
 ALTER TABLE document_requests
   ALTER COLUMN client_ref SET DEFAULT ('NK-' || nextval('document_requests_nk_seq'));
 -- Backfill any rows created before the column existed.
