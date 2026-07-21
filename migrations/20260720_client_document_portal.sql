@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS document_requests (
   -- Supabase, so referential integrity is not available (same posture as
   -- deal_packets.opportunity_id and borrower_fact_finds.contact_id).
   applicant_name   text NOT NULL,
+  applicant2_name  text,              -- second applicant, for per-applicant file naming
   applicant_email  text,
   applicant_phone  text,
   applicant_count  int  NOT NULL DEFAULT 1 CHECK (applicant_count BETWEEN 1 AND 4),
@@ -57,9 +58,10 @@ CREATE TABLE IF NOT EXISTS document_requests (
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
 
--- Idempotent add for tables created before yla_submitted_at existed (this
--- migration was applied once without it). Safe to run repeatedly.
+-- Idempotent adds for columns introduced after the table was first applied.
+-- Safe to run repeatedly.
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS yla_submitted_at timestamptz;
+ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS applicant2_name text;
 
 CREATE INDEX IF NOT EXISTS document_requests_token_hash_idx ON document_requests (token_hash);
 CREATE INDEX IF NOT EXISTS document_requests_status_idx     ON document_requests (status);

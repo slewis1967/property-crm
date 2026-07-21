@@ -36,6 +36,7 @@ export default function RequestDocumentsButton({
 }) {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(applicantCount && applicantCount >= 1 ? applicantCount : 1);
+  const [name2, setName2] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<
     { link: string; emailed: boolean; emailError?: string | null } | null
@@ -48,6 +49,10 @@ export default function RequestDocumentsButton({
 
   async function send() {
     setError(null);
+    if (count >= 2 && !name2.trim()) {
+      setError("Enter the second applicant's name so their documents are named correctly.");
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/document-requests", {
@@ -58,6 +63,7 @@ export default function RequestDocumentsButton({
           applicant_email: email || undefined,
           applicant_phone: (applicantPhone || "").trim() || undefined,
           applicant_count: count,
+          applicant2_name: count >= 2 && name2.trim() ? name2.trim() : undefined,
           opportunity_id: opportunityId || undefined,
           contact_id: contactId || undefined,
           send_email: !!email,
@@ -79,6 +85,7 @@ export default function RequestDocumentsButton({
     setError(null);
     setCopied(false);
     setCount(applicantCount && applicantCount >= 1 ? applicantCount : 1);
+    setName2("");
   }
 
   function copy(link: string) {
@@ -133,6 +140,21 @@ export default function RequestDocumentsButton({
                   </dd>
                 </div>
               </dl>
+
+              {count >= 2 && (
+                <label className="mt-3 block text-sm">
+                  <span className="text-gray-500">Second applicant&apos;s name</span>
+                  <input
+                    value={name2}
+                    onChange={(e) => setName2(e.target.value)}
+                    placeholder="e.g. Alex Smith"
+                    className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  />
+                  <span className="mt-1 block text-xs text-gray-400">
+                    So their documents are named correctly for YLA.
+                  </span>
+                </label>
+              )}
 
               {error && <p className="mt-3 rounded bg-red-50 p-2 text-sm text-red-700">{error}</p>}
 

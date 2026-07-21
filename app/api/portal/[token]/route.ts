@@ -70,6 +70,7 @@ export async function GET(
   return NextResponse.json({
     ok: true,
     applicant_name: request.applicant_name,
+    applicant2_name: request.applicant2_name,
     applicant_count: request.applicant_count,
     status: request.status,
     slots: filled,

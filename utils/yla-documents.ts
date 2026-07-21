@@ -54,7 +54,7 @@ export const YLA_DOCUMENTS: DocSpec[] = [
   {
     key: "ato_income",
     label: "ATO Income Statement",
-    hint: "Both the previous and the current financial year. There is a step-by-step myGov guide linked below.",
+    hint: "Both the previous and the current financial year. Use the step-by-step myGov guide below if you're not sure how to get it.",
     perApplicant: false,
     count: 2,
     filenameBase: "ATO Income Statement",
@@ -135,6 +135,29 @@ export function requiredSlots(applicantCount: number): RequiredSlot[] {
  * document" — "Payslip 1", "Super Statement" — so we generate it rather than
  * trusting whatever the phone called it (IMG_4821.pdf is an instant rejection).
  */
+/** Surname from a full name, upper-case-preserving as typed. "" when blank. */
+export function surnameOf(fullName: string | null | undefined): string {
+  const parts = (fullName || "").trim().split(/\s+/).filter(Boolean);
+  return parts.length > 1 ? parts[parts.length - 1]! : parts[0] ?? "";
+}
+
+/**
+ * The surname to stamp on a given applicant's files. Applicant 1 uses the
+ * primary name; applicant 2 uses applicant2_name when we have it, so a couple's
+ * documents aren't all named after one person. Falls back to the primary
+ * surname if a second name wasn't captured.
+ */
+export function surnameForApplicant(
+  applicantIndex: number | null,
+  applicantName: string,
+  applicant2Name: string | null | undefined,
+): string {
+  if (applicantIndex === 2 && applicant2Name && applicant2Name.trim()) {
+    return surnameOf(applicant2Name);
+  }
+  return surnameOf(applicantName);
+}
+
 export function ylaFilename(
   docKey: string,
   slot: number,

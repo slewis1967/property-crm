@@ -93,6 +93,12 @@ export async function POST(req: Request) {
   }
 
   const applicantCount = Math.max(1, Math.min(4, Number(body.applicant_count) || 1));
+  // Second applicant name — only meaningful for a 2+ applicant request, so it's
+  // ignored (nulled) for a single applicant even if one is supplied.
+  const applicant2Name =
+    applicantCount >= 2 && typeof body.applicant2_name === "string" && body.applicant2_name.trim()
+      ? body.applicant2_name.trim()
+      : null;
 
   const token = newToken();
 
@@ -101,6 +107,7 @@ export async function POST(req: Request) {
     .insert({
       token_hash: token.hash,
       applicant_name: applicantName,
+      applicant2_name: applicant2Name,
       applicant_email: applicantEmail,
       applicant_phone:
         typeof body.applicant_phone === "string" ? body.applicant_phone.trim() || null : null,
