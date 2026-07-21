@@ -229,6 +229,14 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
        </p>`
     : "";
 
+  // Protective reminder (also motivating — ties the docs to the reward): no
+  // offers on property until the broker confirms pre-approval and says go.
+  const preApprovalText =
+    "Important: please don't make an offer on any property until your broker has confirmed your pre-approval and given you the go-ahead — getting these documents in is the first step to that pre-approval.";
+  const preApprovalHtml = `<p style="margin:0 0 16px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:12px 14px;font-size:14px;color:#1E3A8A">
+         <strong>Before you fall for a place:</strong> please don't put an offer on any property until your broker has confirmed your pre-approval and given you the go-ahead. These documents are the first step to that pre-approval.
+       </p>`;
+
   const subjectByKind: Record<ReminderKind, string> = {
     nudge1: "Your assessment's ready — we just need your documents",
     nudge2: started ? `You're almost there — ${remaining} to go` : "You're one step from getting started",
@@ -257,6 +265,7 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
         </a>
       </p>
       ${myGovHtml}
+      ${preApprovalHtml}
       <p style="margin:0 0 6px;font-size:13px;color:#555">Or paste this link into your browser:</p>
       <p style="margin:0 0 16px;font-size:13px;color:#555;word-break:break-all">${escapeHtml(ctx.link)}</p>
       <p style="margin:0 0 14px;font-size:12px;color:#777">🔒 Your documents are encrypted and only seen by your assessor.</p>
@@ -274,6 +283,7 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
     `Upload here: ${ctx.link}`,
   ];
   if (myGovTextPlain) textLines.push("", myGovTextPlain);
+  textLines.push("", preApprovalText);
   textLines.push(
     "",
     "Your documents are encrypted and only seen by your assessor.",
@@ -294,6 +304,7 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
   }
   // Keep SMS lean: invite a reply for myGov help rather than sending a 2nd URL.
   if (needsMyGov && kind !== "nudge1") smsBits.push("Stuck on the myGov step? Just reply and I'll help.");
+  smsBits.push("Note: don't offer on any property until your broker confirms your pre-approval.");
   smsBits.push("Reply STOP to opt out.");
   const sms = smsBits.join(" ");
 

@@ -121,6 +121,13 @@ describe("renderReminder", () => {
     expect(r.sms).toContain("Reply STOP");
   });
 
+  it("reinforces: no offers until the broker confirms pre-approval (email + SMS)", () => {
+    const r = renderReminder("nudge2", { applicantName: "David Halliday", link: "https://x/portal/abc", progress, now: THU_10AM });
+    expect(r.html.toLowerCase()).toContain("pre-approval");
+    expect(r.text.toLowerCase()).toContain("offer on any property until your broker");
+    expect(r.sms.toLowerCase()).toContain("pre-approval");
+  });
+
   it("greets by first name and carries the deadline in the email body", () => {
     const r = renderReminder("nudge1", { applicantName: "David Halliday", link: "https://x/portal/abc", progress, now: THU_10AM });
     expect(r.html).toContain("Hi David,");
