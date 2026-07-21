@@ -11,9 +11,19 @@ import { errMessage } from "../../utils/errors";
  * without leaving the opportunity/contact page. The "Request Documents" button
  * creates the requests; this panel tracks them.
  *
+ * BOTH applicants of a joint application are shown:
+ *  - Each applicant with a request appears with their upload progress. A joint
+ *    application's per-applicant requests share an application_id, so we gather
+ *    the siblings by application_id (applicant 2's request has no contact_id, so
+ *    a contact-scoped list alone would miss it).
+ *  - A co-applicant who is on file (a linked contact, or applicant 2 captured in
+ *    the Fact Find / Needs Analysis) but has NOT been sent a link yet appears as
+ *    a muted "no link sent yet" row, so the rep sees the whole household.
+ *
  * Reads the authed rep endpoints only:
- *   GET /api/document-requests?opportunity_id= | contact_id=   (the list)
- *   GET /api/document-requests/<id>                            (per-slot detail)
+ *   GET /api/document-requests?opportunity_id= | contact_id= | application_id=
+ *   GET /api/document-requests/<id>                      (per-slot detail)
+ *   GET /api/document-requests/prefill?contact_id=        (co-applicant from FF/NA)
  *
  * Clients upload asynchronously, so a manual refresh is offered rather than
  * polling.
@@ -22,6 +32,7 @@ import { errMessage } from "../../utils/errors";
 type ListRow = {
   id: string;
   client_ref: string | null;
+  application_id: string | null;
   applicant_name: string;
   status: string;
   drive_folder_url: string | null;
@@ -50,14 +61,29 @@ function slotLabel(s: { label: string; docKey: string; slot: number }): string {
   return label;
 }
 
+const normName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+async function getJson(url: string): Promise<Record<string, unknown>> {
+  const res = await fetch(url, { cache: "no-store" });
+  const json = await res.json();
+  if (!res.ok || (json as { ok?: boolean }).ok === false) {
+    throw new Error((json as { error?: string }).error || `Failed (${res.status})`);
+  }
+  return json as Record<string, unknown>;
+}
+
 export default function DocumentProgress({
   opportunityId,
   contactId,
+  applicant2Name,
 }: {
   opportunityId?: string | null;
   contactId?: string | null;
+  /** Co-applicant already known to the caller (e.g. a linked contact). */
+  applicant2Name?: string | null;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [pending, setPending] = useState<{ name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,35 +101,70 @@ export default function DocumentProgress({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/document-requests?${query}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || json.ok === false) {
-        throw new Error(json.error || `Failed to load (${res.status})`);
-      }
-      const list: ListRow[] = (json.requests || []).filter(
-        (r: ListRow) => r.status !== "cancelled",
+      // 1. The record's requests, plus any joint-application siblings (shared
+      //    application_id) that the opp/contact filter wouldn't return on its own.
+      const base = ((await getJson(`/api/document-requests?${query}`)).requests as ListRow[]) || [];
+      const byId = new Map<string, ListRow>();
+      for (const r of base) byId.set(r.id, r);
+      const appIds = [...new Set(base.map((r) => r.application_id).filter(Boolean))] as string[];
+      await Promise.all(
+        appIds.map(async (appId) => {
+          try {
+            const sibs =
+              ((await getJson(`/api/document-requests?application_id=${encodeURIComponent(appId)}`))
+                .requests as ListRow[]) || [];
+            for (const s of sibs) if (!byId.has(s.id)) byId.set(s.id, s);
+          } catch {
+            /* best-effort */
+          }
+        }),
       );
-      // Pull each request's per-slot completeness in parallel.
+
+      const list = [...byId.values()].filter((r) => r.status !== "cancelled");
+
+      // 2. Each request's per-slot completeness, in parallel.
       const withDetail: Row[] = await Promise.all(
         list.map(async (r) => {
           try {
-            const d = await fetch(`/api/document-requests/${r.id}`, { cache: "no-store" });
-            const dj = await d.json();
-            if (!d.ok || dj.ok === false) return { ...r, detailError: dj.error || "detail failed" };
-            return { ...r, detail: dj as Detail };
+            const dj = await getJson(`/api/document-requests/${r.id}`);
+            return { ...r, detail: dj as unknown as Detail };
           } catch (e) {
             return { ...r, detailError: errMessage(e) };
           }
         }),
       );
+      // Primary (earliest) first — the list endpoint sorts newest-first.
+      withDetail.reverse();
+
+      // 3. A co-applicant on file (linked contact, or applicant 2 from FF/NA) who
+      //    has no request yet, so both applicants are visible either way.
+      const known = new Set(withDetail.map((r) => normName(r.applicant_name)));
+      const coApplicants: { name: string }[] = [];
+      if (applicant2Name && applicant2Name.trim()) {
+        coApplicants.push({ name: applicant2Name.trim() });
+      } else if (contactId) {
+        try {
+          const pf = await getJson(
+            `/api/document-requests/prefill?contact_id=${encodeURIComponent(contactId)}`,
+          );
+          const n = (pf.applicant2_name as string | null) || null;
+          if (n && n.trim()) coApplicants.push({ name: n.trim() });
+        } catch {
+          /* prefill is best-effort */
+        }
+      }
+      const stillPending = coApplicants.filter((c) => !known.has(normName(c.name)));
+
       setRows(withDetail);
+      setPending(stillPending);
     } catch (e) {
       setError(errMessage(e));
       setRows([]);
+      setPending([]);
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [query, contactId, applicant2Name]);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +178,8 @@ export default function DocumentProgress({
   }, [load]);
 
   if (!query) return null;
+
+  const nothing = rows && rows.length === 0 && pending.length === 0;
 
   return (
     <div className="px-6 py-4 border-b border-gray-100">
@@ -137,13 +200,13 @@ export default function DocumentProgress({
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {rows && rows.length === 0 && !error && (
+      {nothing && !error && (
         <p className="text-sm text-gray-400">
           No documents requested yet. Use “Request Documents” above to send a secure upload link.
         </p>
       )}
 
-      {rows && rows.length > 0 && (
+      {rows && (rows.length > 0 || pending.length > 0) && (
         <ul className="space-y-3">
           {rows.map((r) => {
             const d = r.detail;
@@ -212,6 +275,24 @@ export default function DocumentProgress({
               </li>
             );
           })}
+
+          {/* Co-applicant(s) on file who haven't been sent an upload link yet. */}
+          {pending.map((p, i) => (
+            <li key={`pending-${i}`} className="opacity-90">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-gray-600 truncate" title={p.name}>
+                  {p.name}
+                </span>
+                <span className="shrink-0 text-[11px] font-medium text-gray-400">2nd applicant</span>
+              </div>
+              <div className="mt-1 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full rounded-full bg-gray-200" style={{ width: "0%" }} />
+              </div>
+              <p className="mt-1 text-[11px] text-gray-400 leading-snug">
+                No upload link sent yet — use “Request Documents” above.
+              </p>
+            </li>
+          ))}
         </ul>
       )}
     </div>
