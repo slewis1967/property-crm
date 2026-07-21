@@ -30,6 +30,7 @@
 CREATE TABLE IF NOT EXISTS document_requests (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   token_hash       text NOT NULL UNIQUE,
+  client_ref       text,               -- "NK-10001"; default + unique index set below
 
   -- Who this is for. Soft FKs throughout: opportunities live in NEXUS, not
   -- Supabase, so referential integrity is not available (same posture as
@@ -58,10 +59,25 @@ CREATE TABLE IF NOT EXISTS document_requests (
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
 
+-- A stable, human-friendly reference per request: "NK-10001", "NK-10002"…
+-- Carried in every filename and the Drive folder name alongside the surname, so
+-- two clients with the same name never collide (and YLA still reads a name).
+-- A DB sequence + column default means it's assigned atomically at insert with
+-- no app logic and no race.
+CREATE SEQUENCE IF NOT EXISTS document_requests_nk_seq START 10001;
+
 -- Idempotent adds for columns introduced after the table was first applied.
 -- Safe to run repeatedly.
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS yla_submitted_at timestamptz;
 ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS applicant2_name text;
+ALTER TABLE document_requests ADD COLUMN IF NOT EXISTS client_ref text;
+ALTER TABLE document_requests
+  ALTER COLUMN client_ref SET DEFAULT ('NK-' || nextval('document_requests_nk_seq'));
+-- Backfill any rows created before the column existed.
+UPDATE document_requests
+  SET client_ref = 'NK-' || nextval('document_requests_nk_seq')
+  WHERE client_ref IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS document_requests_client_ref_idx ON document_requests (client_ref);
 
 CREATE INDEX IF NOT EXISTS document_requests_token_hash_idx ON document_requests (token_hash);
 CREATE INDEX IF NOT EXISTS document_requests_status_idx     ON document_requests (status);

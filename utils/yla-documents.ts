@@ -163,6 +163,7 @@ export function ylaFilename(
   slot: number,
   surname: string | null,
   applicantIndex: number | null,
+  clientRef?: string | null,
 ): string {
   const spec = DOC_BY_KEY[docKey];
   const base = spec?.filenameBase ?? docKey.replace(/_/g, " ");
@@ -181,6 +182,11 @@ export function ylaFilename(
   let name = parts.join(" ");
   if (clean) name += ` - ${clean}`;
   else if (applicantIndex) name += ` - Applicant ${applicantIndex}`;
+
+  // The NK reference disambiguates two clients with the same surname. Kept in
+  // parentheses so it reads as a tag, not part of the document name itself.
+  const ref = (clientRef || "").trim();
+  if (ref) name += ` (${ref})`;
 
   return `${name}.pdf`;
 }
