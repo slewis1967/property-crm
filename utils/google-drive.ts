@@ -169,11 +169,24 @@ export async function exportToDrive(input: ExportInput): Promise<ExportResult> {
   try {
     const drive = await client(cfg);
     const folder = await drive.createFolder(input.folderName, cfg.parentFolderId);
+
+    // Upload with bounded concurrency — a joint application is ~14 files, and
+    // sequential uploads blow the serverless function's time limit (a 504). A
+    // small pool keeps well under Drive's rate limits while cutting wall-time.
+    const CONCURRENCY = 5;
+    let next = 0;
     let uploaded = 0;
-    for (const f of input.files) {
-      await drive.uploadFile(f.name, folder.id, f.bytes, f.mime);
-      uploaded++;
+    async function worker() {
+      while (next < input.files.length) {
+        const f = input.files[next++]!;
+        await drive.uploadFile(f.name, folder.id, f.bytes, f.mime);
+        uploaded++;
+      }
     }
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, input.files.length) }, () => worker()),
+    );
+
     return { ok: true, folderId: folder.id, folderUrl: folder.webViewLink, uploaded };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Drive export failed" };

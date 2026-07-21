@@ -71,9 +71,12 @@ export async function POST(
     );
   }
 
-  // Gather each applicant's complete personal set.
+  // Gather each applicant's complete personal set. First resolve WHICH document
+  // fills each slot (cheap DB work), then download the bytes in parallel — a
+  // joint application is ~14 files and downloading them one-by-one blows the
+  // serverless function's time limit (a 504).
   const slots = requiredSlots();
-  const files: { name: string; bytes: ArrayBuffer; mime: string }[] = [];
+  const matches: { filename: string; storage_path: string; mime: string }[] = [];
   let missing = 0;
 
   for (const sib of siblings) {
@@ -95,21 +98,42 @@ export async function POST(
         continue;
       }
       used.add(match.id);
+      matches.push({
+        filename: match.filename,
+        storage_path: match.storage_path,
+        mime: match.mime_type || "application/pdf",
+      });
+    }
+  }
+
+  // Parallel download with bounded concurrency (signed URL + fetch per file).
+  const files: { name: string; bytes: ArrayBuffer; mime: string }[] = [];
+  let downloadError: string | null = null;
+  const DL_CONCURRENCY = 6;
+  let nextIdx = 0;
+  async function downloadWorker() {
+    while (nextIdx < matches.length && !downloadError) {
+      const m = matches[nextIdx++]!;
       const { data: signed, error: signErr } = await supabase.storage
         .from(BUCKET)
-        .createSignedUrl(match.storage_path, 120);
+        .createSignedUrl(m.storage_path, 300);
       if (signErr || !signed?.signedUrl) {
-        return NextResponse.json(
-          { ok: false, error: `Could not read ${match.filename} from storage.` },
-          { status: 500 },
-        );
+        downloadError = `Could not read ${m.filename} from storage.`;
+        return;
       }
       const res = await fetch(signed.signedUrl);
       if (!res.ok) {
-        return NextResponse.json({ ok: false, error: `Could not download ${match.filename}.` }, { status: 500 });
+        downloadError = `Could not download ${m.filename}.`;
+        return;
       }
-      files.push({ name: match.filename, bytes: await res.arrayBuffer(), mime: match.mime_type || "application/pdf" });
+      files.push({ name: m.filename, bytes: await res.arrayBuffer(), mime: m.mime });
     }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(DL_CONCURRENCY, matches.length) }, () => downloadWorker()),
+  );
+  if (downloadError) {
+    return NextResponse.json({ ok: false, error: downloadError }, { status: 500 });
   }
 
   if (missing > 0 && !force) {
