@@ -23,6 +23,7 @@ export default function RequestDocumentsButton({
   opportunityId,
   contactId,
   applicantCount,
+  applicant2Name,
   className,
 }: {
   applicantName: string | null | undefined;
@@ -32,11 +33,14 @@ export default function RequestDocumentsButton({
   contactId?: string | null;
   /** Best-effort pre-fill; the rep can change it before sending. */
   applicantCount?: number;
+  /** Second applicant's name, e.g. from a linked co-applicant contact. Pre-fills the field. */
+  applicant2Name?: string | null;
   className?: string;
 }) {
+  const initialCount = applicantCount && applicantCount >= 1 ? applicantCount : 1;
   const [open, setOpen] = useState(false);
-  const [count, setCount] = useState(applicantCount && applicantCount >= 1 ? applicantCount : 1);
-  const [name2, setName2] = useState("");
+  const [count, setCount] = useState(initialCount);
+  const [name2, setName2] = useState((applicant2Name || "").trim());
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<
     { link: string; emailed: boolean; emailError?: string | null; clientRef?: string | null } | null
@@ -89,8 +93,18 @@ export default function RequestDocumentsButton({
     setResult(null);
     setError(null);
     setCopied(false);
-    setCount(applicantCount && applicantCount >= 1 ? applicantCount : 1);
-    setName2("");
+    setCount(initialCount);
+    setName2((applicant2Name || "").trim());
+  }
+
+  // Prefill from the latest props when the popover opens — linked-contact data
+  // (which supplies applicant2Name/count) can load after this button mounts,
+  // and the rep only opens the popover once it's on screen.
+  function openPopover() {
+    setCount(initialCount);
+    setName2((applicant2Name || "").trim());
+    setError(null);
+    setOpen(true);
   }
 
   function copy(link: string) {
@@ -104,7 +118,7 @@ export default function RequestDocumentsButton({
     <div className="relative inline-block">
       <button
         type="button"
-        onClick={() => (open ? reset() : setOpen(true))}
+        onClick={() => (open ? reset() : openPopover())}
         className={className}
         title={!name ? "This record has no name" : "Request Preliminary Assessment documents"}
         disabled={!name}

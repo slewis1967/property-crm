@@ -266,6 +266,13 @@ export default function OpportunityDetail({
     [allContacts, linkedIds],
   );
 
+  // The co-applicant on a joint deal: the first linked contact that isn't the
+  // primary. Used to pre-fill applicant 2 in the document request.
+  const coApplicant = useMemo(
+    () => linkedContacts.find((c) => c.id !== lead.primary_contact_id) ?? null,
+    [linkedContacts, lead.primary_contact_id],
+  );
+
   const filtered = useMemo(() => {
     if (!contactQuery.trim()) return [];
     const q = contactQuery.toLowerCase();
@@ -417,7 +424,11 @@ export default function OpportunityDetail({
             applicantPhone={lead.phone}
             opportunityId={lead.lead_id}
             contactId={lead.primary_contact_id}
-            applicantCount={lead.partner_annual_income ? 2 : 1}
+            // A joint application carries the co-applicant as a linked contact —
+            // use the first one as applicant 2, and default to 2 applicants when
+            // there's a linked contact or a partner income on file.
+            applicant2Name={coApplicant?.full_name || coApplicant?.name || undefined}
+            applicantCount={coApplicant || lead.partner_annual_income ? 2 : 1}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
           />
           <button
