@@ -1,22 +1,20 @@
 /**
  * POST /api/document-requests/<id>/export   (AUTHED)
  *
- * Push a client's collected documents into Google Drive: one folder per
- * submission, named so YLA can identify it, containing every accepted file with
- * the YLA-compliant name we generated. Returns the shareable folder link and
- * records it on the request, then marks the request 'submitted'.
+ * Push an APPLICATION's collected documents into Google Drive — one folder for
+ * the whole application, containing every applicant's files. A joint deal has
+ * one request per applicant (linked by application_id); this gathers them all
+ * into a single folder so YLA get one link, as their process expects.
  *
- * This is the actual handoff. The rep runs it once the completeness view shows
- * the set is ready, then pastes the folder link into the Thursday calendar
- * entry (see yla-weekly-lead-submission).
+ * The rep runs it once the application's completeness view is ready, then pastes
+ * the folder link into the Thursday calendar entry (see yla-weekly-lead-submission).
  *
- * Guarded: refuses to export an incomplete set unless ?force=1, so a half-
- * finished submission doesn't reach YLA and burn a week on a partial reject.
+ * Guarded: refuses to export while any applicant is incomplete unless ?force=1.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 import { requireAuth } from "../../../../../utils/cf-access";
-import { requiredSlots } from "../../../../../utils/yla-documents";
+import { requiredSlots, surnameOf } from "../../../../../utils/yla-documents";
 import { exportToDrive } from "../../../../../utils/google-drive";
 import {
   DOCUMENT_REQUESTS_TABLE,
@@ -28,6 +26,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BUCKET = "client-documents";
+const SELECT = "id,client_ref,application_id,applicant_name,status,drive_folder_url,created_at";
 
 export async function POST(
   req: Request,
@@ -40,7 +39,7 @@ export async function POST(
 
   const { data: request, error: reqErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .select("id,client_ref,applicant_name,applicant_count,status,drive_folder_url")
+    .select(SELECT)
     .eq("id", id)
     .maybeSingle();
 
@@ -52,91 +51,97 @@ export async function POST(
   }
   if (!request) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
 
-  if (request.status === "submitted" && request.drive_folder_url) {
+  // The application's requests: all that share application_id, else just this one.
+  let siblings = [request];
+  if (request.application_id) {
+    const { data: sibs } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select(SELECT)
+      .eq("application_id", request.application_id)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true });
+    if (sibs && sibs.length) siblings = sibs;
+  }
+
+  const already = siblings.find((s) => s.status === "submitted" && s.drive_folder_url);
+  if (already) {
     return NextResponse.json(
-      { ok: false, error: "Already exported to Drive.", folder_url: request.drive_folder_url },
+      { ok: false, error: "Already exported to Drive.", folder_url: already.drive_folder_url },
       { status: 409 },
     );
   }
 
-  const { data: docs, error: docErr } = await supabase
-    .from("client_documents")
-    .select("id,doc_type,applicant_index,filename,storage_path,mime_type,status,uploaded_at")
-    .eq("request_id", id)
-    .neq("status", "replaced")
-    .order("uploaded_at", { ascending: true });
-  if (docErr) {
-    return NextResponse.json({ ok: false, error: docErr.message }, { status: 500 });
-  }
+  // Gather each applicant's complete personal set.
+  const slots = requiredSlots();
+  const files: { name: string; bytes: ArrayBuffer; mime: string }[] = [];
+  let missing = 0;
 
-  // Completeness guard: keep only the newest per (doc_type, applicant_index),
-  // then check every required slot is filled.
-  const slots = requiredSlots(request.applicant_count);
-  const used = new Set<string>();
-  const chosen: typeof docs = [];
-  for (const slot of slots) {
-    const match = (docs ?? []).find(
-      (d) =>
-        !used.has(d.id) &&
-        d.doc_type === slot.docKey &&
-        (d.applicant_index ?? null) === slot.applicantIndex,
-    );
-    if (match) {
+  for (const sib of siblings) {
+    const { data: docs, error: docErr } = await supabase
+      .from("client_documents")
+      .select("id,doc_type,filename,storage_path,mime_type,status,uploaded_at")
+      .eq("request_id", sib.id)
+      .neq("status", "replaced")
+      .order("uploaded_at", { ascending: true });
+    if (docErr) {
+      return NextResponse.json({ ok: false, error: docErr.message }, { status: 500 });
+    }
+
+    const used = new Set<string>();
+    for (const slot of slots) {
+      const match = (docs ?? []).find((d) => !used.has(d.id) && d.doc_type === slot.docKey);
+      if (!match) {
+        missing++;
+        continue;
+      }
       used.add(match.id);
-      chosen.push(match);
+      const { data: signed, error: signErr } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(match.storage_path, 120);
+      if (signErr || !signed?.signedUrl) {
+        return NextResponse.json(
+          { ok: false, error: `Could not read ${match.filename} from storage.` },
+          { status: 500 },
+        );
+      }
+      const res = await fetch(signed.signedUrl);
+      if (!res.ok) {
+        return NextResponse.json({ ok: false, error: `Could not download ${match.filename}.` }, { status: 500 });
+      }
+      files.push({ name: match.filename, bytes: await res.arrayBuffer(), mime: match.mime_type || "application/pdf" });
     }
   }
-  const missing = slots.length - chosen.length;
+
   if (missing > 0 && !force) {
     return NextResponse.json(
       {
         ok: false,
-        error: `${missing} document${missing > 1 ? "s" : ""} still outstanding. Wait for the client, or re-run with force to export a partial set.`,
+        error: `${missing} document${missing > 1 ? "s" : ""} still outstanding across the application. Wait for the client(s), or re-run with force to export a partial set.`,
         missing,
       },
       { status: 409 },
     );
   }
-
-  // Pull the bytes from storage. A signed download per file, then fetch.
-  const files: { name: string; bytes: ArrayBuffer; mime: string }[] = [];
-  for (const d of chosen) {
-    const { data: signed, error: signErr } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(d.storage_path, 120);
-    if (signErr || !signed?.signedUrl) {
-      return NextResponse.json(
-        { ok: false, error: `Could not read ${d.filename} from storage.` },
-        { status: 500 },
-      );
-    }
-    const res = await fetch(signed.signedUrl);
-    if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Could not download ${d.filename}.` },
-        { status: 500 },
-      );
-    }
-    files.push({
-      name: d.filename,
-      bytes: await res.arrayBuffer(),
-      mime: d.mime_type || "application/pdf",
-    });
+  if (files.length === 0) {
+    return NextResponse.json({ ok: false, error: "No documents to export yet." }, { status: 409 });
   }
 
-  // Folder name YLA sees. Surname-led so their Drive sorts sensibly; the NK
-  // reference guarantees two same-named clients never share a folder. Dated too,
-  // so a repeat submission for the same request reads clearly.
-  const surname = request.applicant_name.trim().split(/\s+/).pop() || request.applicant_name;
+  // One folder for the whole application, named from the primary (earliest)
+  // applicant. Surname-led so YLA's Drive sorts sensibly; the NK reference is
+  // shared across applicants and disambiguates same-named clients.
+  const primary = siblings[0]!;
+  const surname = surnameOf(primary.applicant_name) || primary.applicant_name;
   const today = new Date().toISOString().slice(0, 10);
-  const ref = request.client_ref ? ` (${request.client_ref})` : "";
-  const folderName = `${surname} - ${request.applicant_name}${ref} - ${today}`;
+  const ref = primary.client_ref ? ` (${primary.client_ref})` : "";
+  const folderName = `${surname} - ${primary.applicant_name}${ref} - ${today}`;
 
   const result = await exportToDrive({ folderName, files });
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: 502 });
   }
 
+  // Mark every applicant's request submitted, all pointing at the one folder.
+  const ids = siblings.map((s) => s.id);
   const { error: updErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .update({
@@ -146,10 +151,8 @@ export async function POST(
       submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .in("id", ids);
   if (updErr) {
-    // The Drive export succeeded — surface the link even though the status
-    // write failed, so the rep isn't stuck.
     return NextResponse.json({
       ok: true,
       folder_url: result.folderUrl,
@@ -162,6 +165,7 @@ export async function POST(
     ok: true,
     folder_url: result.folderUrl,
     uploaded: result.uploaded,
+    applicants: siblings.length,
     partial: missing > 0,
   });
 }

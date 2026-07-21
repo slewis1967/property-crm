@@ -428,6 +428,7 @@ export default function OpportunityDetail({
             // use the first one as applicant 2, and default to 2 applicants when
             // there's a linked contact or a partner income on file.
             applicant2Name={coApplicant?.full_name || coApplicant?.name || undefined}
+            applicant2Email={coApplicant?.email || undefined}
             applicantCount={coApplicant || lead.partner_annual_income ? 2 : 1}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
           />

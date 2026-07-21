@@ -17,7 +17,6 @@ type RequestRow = {
   client_ref: string | null;
   applicant_name: string;
   applicant_email: string | null;
-  applicant_count: number;
   opportunity_id: string | null;
   status: string;
   drive_folder_url: string | null;
@@ -31,6 +30,7 @@ type WeeklyEntry = {
   invite: string;
   body: string;
   count: number;
+  all_ids: string[];
   requests: { id: string; applicant_name: string; drive_folder_url: string }[];
 };
 
@@ -41,7 +41,6 @@ type Detail = {
   slots: {
     docKey: string;
     label: string;
-    applicantIndex: number | null;
     slot: number;
     document: { filename: string; status: string; check_notes: string | null } | null;
   }[];
@@ -56,7 +55,6 @@ export default function DocumentRequestsClient() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [count, setCount] = useState(1);
   const [sendEmail, setSendEmail] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newLink, setNewLink] = useState<string | null>(null);
@@ -128,7 +126,6 @@ export default function DocumentRequestsClient() {
           applicant_name: name.trim(),
           applicant_email: email.trim() || undefined,
           applicant_phone: phone.trim() || undefined,
-          applicant_count: count,
           send_email: sendEmail && !!email.trim(),
         }),
       });
@@ -144,7 +141,6 @@ export default function DocumentRequestsClient() {
       setName("");
       setEmail("");
       setPhone("");
-      setCount(1);
       await reload();
     } catch {
       setCreateError("Could not reach the server.");
@@ -221,7 +217,7 @@ export default function DocumentRequestsClient() {
       await fetch("/api/document-requests/weekly-entry", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ids: weekly.requests.map((r) => r.id) }),
+        body: JSON.stringify({ ids: weekly.all_ids }),
       });
       await loadWeekly();
       await reload();
@@ -379,20 +375,6 @@ export default function DocumentRequestsClient() {
               placeholder="0400 000 000"
             />
           </label>
-          <label className="text-sm">
-            <span className="text-gray-700">Number of applicants</span>
-            <select
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            >
-              {[1, 2, 3, 4].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
         <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
@@ -459,8 +441,7 @@ export default function DocumentRequestsClient() {
                       )}
                     </p>
                     <p className="truncate text-sm text-gray-500">
-                      {r.applicant_email || "no email"} · {r.applicant_count} applicant
-                      {r.applicant_count > 1 ? "s" : ""} · {new Date(r.created_at).toLocaleDateString()}
+                      {r.applicant_email || "no email"} · {new Date(r.created_at).toLocaleDateString()}
                     </p>
                   </button>
                   <StatusPill status={r.status} />
@@ -567,11 +548,10 @@ export default function DocumentRequestsClient() {
   );
 }
 
-function slotLabel(s: { label: string; docKey: string; slot: number; applicantIndex: number | null }): string {
+function slotLabel(s: { label: string; docKey: string; slot: number }): string {
   let label = s.label;
   if (s.docKey === "photo_id") label += s.slot === 1 ? " (front)" : " (back)";
   else if (s.slot > 1 || s.docKey === "payslip") label += ` ${s.slot}`;
-  if (s.applicantIndex) label += ` — applicant ${s.applicantIndex}`;
   return label;
 }
 

@@ -92,31 +92,36 @@ export async function POST(req: Request) {
     );
   }
 
-  const applicantCount = Math.max(1, Math.min(4, Number(body.applicant_count) || 1));
-  // Second applicant name — only meaningful for a 2+ applicant request, so it's
-  // ignored (nulled) for a single applicant even if one is supplied.
-  const applicant2Name =
-    applicantCount >= 2 && typeof body.applicant2_name === "string" && body.applicant2_name.trim()
-      ? body.applicant2_name.trim()
-      : null;
+  // Each request is now a single applicant. `application_id` (and a shared
+  // `client_ref`) link the per-applicant requests of one joint application; the
+  // caller creates applicant 1 first, then passes both back on applicant 2 so
+  // they share a reference and one Drive folder.
+  const applicationId =
+    typeof body.application_id === "string" && body.application_id ? body.application_id : null;
+  const sharedRef =
+    typeof body.client_ref === "string" && body.client_ref.trim() ? body.client_ref.trim() : undefined;
 
   const token = newToken();
 
+  const insert: Record<string, unknown> = {
+    token_hash: token.hash,
+    applicant_name: applicantName,
+    applicant_email: applicantEmail,
+    applicant_phone:
+      typeof body.applicant_phone === "string" ? body.applicant_phone.trim() || null : null,
+    applicant_count: 1,
+    application_id: applicationId,
+    opportunity_id: typeof body.opportunity_id === "string" ? body.opportunity_id : null,
+    contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
+    fact_find_id: typeof body.fact_find_id === "string" ? body.fact_find_id : null,
+    created_by: createdBy,
+  };
+  // Only override the DB-default client_ref when sharing one across siblings.
+  if (sharedRef) insert.client_ref = sharedRef;
+
   const { data: row, error } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .insert({
-      token_hash: token.hash,
-      applicant_name: applicantName,
-      applicant2_name: applicant2Name,
-      applicant_email: applicantEmail,
-      applicant_phone:
-        typeof body.applicant_phone === "string" ? body.applicant_phone.trim() || null : null,
-      applicant_count: applicantCount,
-      opportunity_id: typeof body.opportunity_id === "string" ? body.opportunity_id : null,
-      contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
-      fact_find_id: typeof body.fact_find_id === "string" ? body.fact_find_id : null,
-      created_by: createdBy,
-    })
+    .insert(insert)
     .select(REQUEST_LIST_COLUMNS)
     .single();
 

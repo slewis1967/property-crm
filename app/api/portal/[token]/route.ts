@@ -28,7 +28,7 @@ export async function GET(
 
   const { data: docs, error } = await supabase
     .from("client_documents")
-    .select("id,doc_type,applicant_index,filename,status,check_notes,size_bytes,uploaded_at")
+    .select("id,doc_type,filename,status,check_notes,size_bytes,uploaded_at")
     .eq("request_id", request.id)
     .neq("status", "replaced")
     .order("uploaded_at", { ascending: true });
@@ -37,19 +37,14 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "Could not load your documents." }, { status: 500 });
   }
 
-  const slots = requiredSlots(request.applicant_count);
+  // One applicant per request now — a flat personal set, no per-applicant split.
+  const slots = requiredSlots();
 
   // Fill each required slot with an uploaded document, in upload order, so the
-  // client sees "Payslip 1 done, Payslip 2 outstanding" rather than an
-  // undifferentiated count.
+  // client sees "Payslip 1 done, Payslip 2 outstanding" rather than a count.
   const used = new Set<string>();
   const filled = slots.map((slot) => {
-    const match = (docs ?? []).find(
-      (d) =>
-        !used.has(d.id) &&
-        d.doc_type === slot.docKey &&
-        (d.applicant_index ?? null) === slot.applicantIndex,
-    );
+    const match = (docs ?? []).find((d) => !used.has(d.id) && d.doc_type === slot.docKey);
     if (match) used.add(match.id);
     return {
       ...slot,
@@ -71,8 +66,6 @@ export async function GET(
     ok: true,
     client_ref: request.client_ref,
     applicant_name: request.applicant_name,
-    applicant2_name: request.applicant2_name,
-    applicant_count: request.applicant_count,
     status: request.status,
     slots: filled,
     outstanding,

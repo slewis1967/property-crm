@@ -22,29 +22,19 @@ type Slot = {
   docKey: string;
   label: string;
   hint: string;
-  applicantIndex: number | null;
   slot: number;
   document: { id: string; filename: string; status: string; notes: string | null; size: number | null } | null;
 };
 
 type State = {
   applicant_name: string;
-  applicant2_name: string | null;
-  applicant_count: number;
   status: string;
   slots: Slot[];
   outstanding: number;
   complete: boolean;
 };
 
-const slotId = (s: Slot) => `${s.docKey}:${s.applicantIndex ?? 0}:${s.slot}`;
-
-/** Section heading for an applicant — their real first name when we have it. */
-function applicantName(state: State, index: number): string {
-  const full = index === 2 && state.applicant2_name ? state.applicant2_name : index === 1 ? state.applicant_name : "";
-  const first = (full || "").trim().split(/\s+/)[0];
-  return first ? first : `Applicant ${index}`;
-}
+const slotId = (s: Slot) => `${s.docKey}:${s.slot}`;
 
 export default function PortalClient({ token }: { token: string }) {
   const [state, setState] = useState<State | null>(null);
@@ -110,7 +100,6 @@ export default function PortalClient({ token }: { token: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           doc_key: slot.docKey,
-          applicant_index: slot.applicantIndex,
           slot: slot.slot,
           size: norm.blob.size,
           mime_type: "application/pdf",
@@ -183,14 +172,6 @@ export default function PortalClient({ token }: { token: string }) {
   const done = state.slots.length - state.outstanding;
   const pct = state.slots.length ? Math.round((done / state.slots.length) * 100) : 0;
 
-  // Group by applicant so a couple isn't scanning one long undifferentiated list.
-  const groups = new Map<number | null, Slot[]>();
-  for (const s of state.slots) {
-    const key = s.applicantIndex;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(s);
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-8 pb-24">
@@ -236,17 +217,12 @@ export default function PortalClient({ token }: { token: string }) {
           </p>
         </div>
 
-        {[...groups.entries()].map(([applicantIndex, slots]) => (
-          <section key={String(applicantIndex)} className="mt-8">
+        <section className="mt-8">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-              {applicantIndex === null
-                ? "For your application"
-                : state.applicant_count > 1
-                  ? applicantName(state, applicantIndex)
-                  : "About you"}
+              Your documents
             </h2>
             <ul className="mt-3 space-y-3">
-              {slots.map((s) => {
+              {state.slots.map((s) => {
                 const id = slotId(s);
                 const label =
                   s.docKey === "photo_id"
@@ -317,8 +293,7 @@ export default function PortalClient({ token }: { token: string }) {
                 );
               })}
             </ul>
-          </section>
-        ))}
+        </section>
 
         <footer className="mt-10 border-t border-gray-200 pt-6 text-sm text-gray-500">
           <p>

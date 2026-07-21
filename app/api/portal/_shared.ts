@@ -14,9 +14,7 @@ export type PortalRequest = {
   id: string;
   client_ref: string | null;
   applicant_name: string;
-  applicant2_name: string | null;
   applicant_email: string | null;
-  applicant_count: number;
   status: string;
   expires_at: string;
   drive_folder_url: string | null;
@@ -41,7 +39,7 @@ export async function resolveToken(token: string): Promise<Resolved> {
 
   const { data, error } = await supabase
     .from("document_requests")
-    .select("id,client_ref,applicant_name,applicant2_name,applicant_email,applicant_count,status,expires_at,drive_folder_url")
+    .select("id,client_ref,applicant_name,applicant_email,status,expires_at,drive_folder_url")
     .eq("token_hash", hashToken(token))
     .maybeSingle();
 
