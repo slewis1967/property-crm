@@ -163,6 +163,7 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const opportunityId = url.searchParams.get("opportunity_id");
+  const contactId = url.searchParams.get("contact_id");
   const status = url.searchParams.get("status");
 
   let q = supabase
@@ -171,6 +172,7 @@ export async function GET(req: Request) {
     .order("created_at", { ascending: false })
     .limit(200);
   if (opportunityId) q = q.eq("opportunity_id", opportunityId);
+  if (contactId) q = q.eq("contact_id", contactId);
   if (status) q = q.eq("status", status);
 
   const { data, error } = await q;
