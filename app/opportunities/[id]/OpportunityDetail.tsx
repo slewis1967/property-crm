@@ -6,6 +6,7 @@ import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../u
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 import EditRecordModal from "../../components/EditRecordModal";
 import RequestDocumentsButton from "../../components/RequestDocumentsButton";
+import DocumentProgress from "../../components/DocumentProgress";
 import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
@@ -622,6 +623,9 @@ export default function OpportunityDetail({
               <p className="text-sm font-semibold text-gray-700">{linkedContacts.length} contact{linkedContacts.length > 1 ? "s" : ""}</p>
             </div>
           )}
+
+          {/* Document collection progress */}
+          <DocumentProgress opportunityId={lead.lead_id} contactId={lead.primary_contact_id} />
 
           {/* Timestamps */}
           <div className="px-6 py-4">

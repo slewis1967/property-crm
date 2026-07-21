@@ -15,6 +15,7 @@ import EmailComposeModal from "../../components/EmailComposeModal";
 import StartVideoCallButton from "../../components/StartVideoCallButton";
 import GuestLinkButton from "../../components/GuestLinkButton";
 import RequestDocumentsButton from "../../components/RequestDocumentsButton";
+import DocumentProgress from "../../components/DocumentProgress";
 import EditRecordModal from "../../components/EditRecordModal";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
@@ -531,6 +532,9 @@ export default function ContactDetail({
               <p className="text-xs font-mono text-gray-500 break-all">{contact.ghl_contact_id}</p>
             </div>
           )}
+
+          {/* Document collection progress */}
+          <DocumentProgress contactId={contact.id} />
 
           {/* Timestamps */}
           <div className="px-6 py-4">
