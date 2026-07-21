@@ -40,7 +40,7 @@ export async function POST(
 
   const { data: request, error: reqErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .select("id,applicant_name,applicant_count,status,drive_folder_url")
+    .select("id,client_ref,applicant_name,applicant_count,status,drive_folder_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -124,11 +124,13 @@ export async function POST(
     });
   }
 
-  // Folder name YLA sees. Surname-led so their Drive sorts sensibly, dated so
-  // repeat submissions for the same client don't collide.
+  // Folder name YLA sees. Surname-led so their Drive sorts sensibly; the NK
+  // reference guarantees two same-named clients never share a folder. Dated too,
+  // so a repeat submission for the same request reads clearly.
   const surname = request.applicant_name.trim().split(/\s+/).pop() || request.applicant_name;
   const today = new Date().toISOString().slice(0, 10);
-  const folderName = `${surname} - ${request.applicant_name} - ${today}`;
+  const ref = request.client_ref ? ` (${request.client_ref})` : "";
+  const folderName = `${surname} - ${request.applicant_name}${ref} - ${today}`;
 
   const result = await exportToDrive({ folderName, files });
   if (!result.ok) {

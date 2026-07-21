@@ -69,6 +69,7 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
+    client_ref: request.client_ref,
     applicant_name: request.applicant_name,
     applicant2_name: request.applicant2_name,
     applicant_count: request.applicant_count,

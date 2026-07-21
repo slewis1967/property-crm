@@ -39,7 +39,7 @@ export default function RequestDocumentsButton({
   const [name2, setName2] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<
-    { link: string; emailed: boolean; emailError?: string | null } | null
+    { link: string; emailed: boolean; emailError?: string | null; clientRef?: string | null } | null
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -71,7 +71,12 @@ export default function RequestDocumentsButton({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Couldn't create the request");
-      setResult({ link: data.link, emailed: !!data.emailed, emailError: data.email_error });
+      setResult({
+        link: data.link,
+        emailed: !!data.emailed,
+        emailError: data.email_error,
+        clientRef: data.request?.client_ref ?? null,
+      });
     } catch (err) {
       setError(errMessage(err));
     } finally {
@@ -176,6 +181,11 @@ export default function RequestDocumentsButton({
             <>
               <p className="text-sm font-semibold text-green-800">
                 {result.emailed ? `Link sent to ${email}` : "Request created"}
+                {result.clientRef && (
+                  <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800">
+                    {result.clientRef}
+                  </span>
+                )}
               </p>
               {!result.emailed && email && result.emailError && (
                 <p className="mt-1 text-xs text-amber-700">

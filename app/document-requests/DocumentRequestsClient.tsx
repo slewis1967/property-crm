@@ -14,6 +14,7 @@ const AMBER = "#B45309";
 
 type RequestRow = {
   id: string;
+  client_ref: string | null;
   applicant_name: string;
   applicant_email: string | null;
   applicant_count: number;
@@ -449,7 +450,14 @@ export default function DocumentRequestsClient() {
               <li key={r.id} className="rounded-lg border border-gray-200 bg-white">
                 <div className="flex items-center justify-between gap-3 p-4">
                   <button type="button" onClick={() => void toggleDetail(r.id)} className="min-w-0 flex-1 text-left">
-                    <p className="font-medium text-gray-900">{r.applicant_name}</p>
+                    <p className="font-medium text-gray-900">
+                      {r.applicant_name}
+                      {r.client_ref && (
+                        <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600">
+                          {r.client_ref}
+                        </span>
+                      )}
+                    </p>
                     <p className="truncate text-sm text-gray-500">
                       {r.applicant_email || "no email"} · {r.applicant_count} applicant
                       {r.applicant_count > 1 ? "s" : ""} · {new Date(r.created_at).toLocaleDateString()}

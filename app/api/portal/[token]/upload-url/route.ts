@@ -77,7 +77,7 @@ export async function POST(
   }
 
   const surname = surnameForApplicant(applicantIdx, request.applicant_name, request.applicant2_name);
-  const filename = ylaFilename(spec.key, slotNum, surname, applicantIdx);
+  const filename = ylaFilename(spec.key, slotNum, surname, applicantIdx, request.client_ref);
   const path = `portal/${request.id}/${Date.now()}-${filename.replace(/[^\w.\- ]+/g, "_")}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
