@@ -266,7 +266,7 @@ export default function PortalClient({ token }: { token: string }) {
                         {!uploaded && <p className="mt-1 text-sm text-gray-500">{s.hint}</p>}
                         {!uploaded && s.docKey === "ato_income" && (
                           <a
-                            href="/mygov-income-statement-guide.pdf"
+                            href="/api/portal/mygov-guide"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:underline"
