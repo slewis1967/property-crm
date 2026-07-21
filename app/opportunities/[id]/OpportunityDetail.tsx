@@ -624,8 +624,12 @@ export default function OpportunityDetail({
             </div>
           )}
 
-          {/* Document collection progress */}
-          <DocumentProgress opportunityId={lead.lead_id} contactId={lead.primary_contact_id} />
+          {/* Document collection progress — both applicants */}
+          <DocumentProgress
+            opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
+            applicant2Name={coApplicant?.full_name || coApplicant?.name || undefined}
+          />
 
           {/* Timestamps */}
           <div className="px-6 py-4">

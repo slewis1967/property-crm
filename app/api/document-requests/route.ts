@@ -164,6 +164,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const opportunityId = url.searchParams.get("opportunity_id");
   const contactId = url.searchParams.get("contact_id");
+  const applicationId = url.searchParams.get("application_id");
   const status = url.searchParams.get("status");
 
   let q = supabase
@@ -173,6 +174,11 @@ export async function GET(req: Request) {
     .limit(200);
   if (opportunityId) q = q.eq("opportunity_id", opportunityId);
   if (contactId) q = q.eq("contact_id", contactId);
+  // A joint application's per-applicant requests share an application_id. Its
+  // applicant-2 request carries no contact_id (that contact is the co-applicant,
+  // not the primary), so the contact-scoped list alone would miss it — callers
+  // gather the siblings by application_id.
+  if (applicationId) q = q.eq("application_id", applicationId);
   if (status) q = q.eq("status", status);
 
   const { data, error } = await q;
