@@ -274,6 +274,14 @@ export default function OpportunityDetail({
     [linkedContacts, lead.primary_contact_id],
   );
 
+  // The primary applicant's email so the document request can auto-send: prefer
+  // the opportunity's own email, fall back to the linked primary contact's.
+  const primaryEmail = useMemo(() => {
+    if (lead.email && lead.email.trim()) return lead.email.trim();
+    const pc = allContacts.find((c) => c.id === lead.primary_contact_id);
+    return pc?.email || undefined;
+  }, [lead.email, lead.primary_contact_id, allContacts]);
+
   const filtered = useMemo(() => {
     if (!contactQuery.trim()) return [];
     const q = contactQuery.toLowerCase();
@@ -421,7 +429,7 @@ export default function OpportunityDetail({
           </a>
           <RequestDocumentsButton
             applicantName={lead.full_name}
-            applicantEmail={lead.email}
+            applicantEmail={primaryEmail}
             applicantPhone={lead.phone}
             opportunityId={lead.lead_id}
             contactId={lead.primary_contact_id}

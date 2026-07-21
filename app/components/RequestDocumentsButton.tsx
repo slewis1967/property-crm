@@ -53,6 +53,9 @@ export default function RequestDocumentsButton({
 
   const name = (applicantName || "").trim();
   const email = (applicantEmail || "").trim();
+  // Whether clicking the action will actually email link(s), vs. only create a
+  // link the rep must deliver (no email on file).
+  const willSend = !!email || (count >= 2 && !!email2.trim());
 
   async function createOne(body: Record<string, unknown>): Promise<{ ok: boolean; data?: Record<string, unknown>; error?: string }> {
     try {
@@ -200,7 +203,7 @@ export default function RequestDocumentsButton({
             <>
               <p className="text-sm font-semibold text-gray-900">Request documents</p>
               <p className="mt-1 text-sm text-gray-600">
-                Each applicant gets their own upload link for their personal documents.
+                Each applicant is emailed their own secure upload link automatically.
               </p>
 
               <div className="mt-3 flex items-center justify-between gap-2 text-sm">
@@ -254,48 +257,75 @@ export default function RequestDocumentsButton({
                   disabled={sending}
                   className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 >
-                  {sending ? "Working…" : count >= 2 ? "Create links" : email ? "Send link" : "Create link"}
+                  {sending ? "Sending…" : willSend ? (count >= 2 ? "Send links" : "Send link") : "Create link"}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-green-800">
-                {results.length > 1 ? `${results.length} links created` : "Request created"}
-                {clientRef && (
-                  <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800">
-                    {clientRef}
-                  </span>
-                )}
-              </p>
+              {(() => {
+                const allSent = results.every((r) => r.emailed);
+                const anySent = results.some((r) => r.emailed);
+                return (
+                  <p className={`text-sm font-semibold ${allSent ? "text-green-800" : "text-amber-800"}`}>
+                    {allSent
+                      ? results.length > 1
+                        ? "Links sent to both applicants"
+                        : "Link sent"
+                      : anySent
+                        ? "Some links sent — action needed below"
+                        : "Links created — action needed below"}
+                    {clientRef && (
+                      <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800">
+                        {clientRef}
+                      </span>
+                    )}
+                  </p>
+                );
+              })()}
               {error && <p className="mt-1 text-xs text-amber-700">{error}</p>}
 
               <div className="mt-3 space-y-3">
-                {results.map((r, i) => (
-                  <div key={i} className="rounded-md border border-gray-100 p-2">
-                    <p className="text-sm font-medium text-gray-900">{r.label}</p>
-                    <p className="text-xs text-gray-500">
-                      {r.emailed ? `Link sent to ${r.email}` : r.email ? `Email failed — copy below` : "No email — copy below"}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        readOnly
-                        value={r.link}
-                        onFocus={(e) => e.target.select()}
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => copy(r.link, i)}
-                        className="shrink-0 rounded-md bg-gray-700 px-2 py-1 text-xs font-medium text-white"
-                      >
-                        {copiedIdx === i ? "Copied" : "Copy"}
-                      </button>
+                {results.map((r, i) =>
+                  r.emailed ? (
+                    // Delivered automatically — no copying needed.
+                    <div key={i} className="flex items-start gap-2 rounded-md bg-green-50 p-2">
+                      <span className="text-green-600">✓</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{r.label}</p>
+                        <p className="text-xs text-green-700">Emailed to {r.email}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    // Couldn't auto-send (no email, or the send failed) — fall back
+                    // to a copyable link so the request isn't stuck.
+                    <div key={i} className="rounded-md border border-amber-200 bg-amber-50 p-2">
+                      <p className="text-sm font-medium text-gray-900">{r.label}</p>
+                      <p className="text-xs text-amber-700">
+                        {r.email
+                          ? `Couldn't email ${r.email} — send the link below.`
+                          : "No email on file — add one to their contact to auto-send, or send the link below."}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={r.link}
+                          onFocus={(e) => e.target.select()}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => copy(r.link, i)}
+                          className="shrink-0 rounded-md bg-gray-700 px-2 py-1 text-xs font-medium text-white"
+                        >
+                          {copiedIdx === i ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                )}
               </div>
-              <p className="mt-2 text-xs text-gray-400">Links are shown once. Track progress under Client Documents.</p>
+              <p className="mt-2 text-xs text-gray-400">Track progress under Client Documents.</p>
               <div className="mt-2 text-right">
                 <button type="button" onClick={reset} className="rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-50">
                   Done
