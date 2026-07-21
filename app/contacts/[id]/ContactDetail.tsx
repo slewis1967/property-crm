@@ -14,6 +14,7 @@ import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
 import StartVideoCallButton from "../../components/StartVideoCallButton";
 import GuestLinkButton from "../../components/GuestLinkButton";
+import RequestDocumentsButton from "../../components/RequestDocumentsButton";
 import EditRecordModal from "../../components/EditRecordModal";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
@@ -312,6 +313,17 @@ export default function ContactDetail({
             contactId={contact.id}
             guestName={contact.name || undefined}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          />
+          <RequestDocumentsButton
+            applicantName={contact.full_name || contact.name}
+            applicantEmail={contact.email}
+            applicantPhone={contact.phone}
+            contactId={contact.id}
+            // Stamp the opportunity only when there's exactly one — a contact can
+            // have several, and guessing the wrong one is worse than none.
+            opportunityId={leads.length === 1 ? leads[0]!.lead_id : undefined}
+            applicantCount={contact.partner_annual_income ? 2 : 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
           />
           <button
             onClick={() => setShowOpportunityModal(true)}

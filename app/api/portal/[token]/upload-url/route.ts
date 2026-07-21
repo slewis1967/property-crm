@@ -13,8 +13,8 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
-import { DOC_BY_KEY, ylaFilename, YLA_MAX_BYTES } from "../../../../../utils/yla-documents";
-import { resolveToken, surnameOf } from "../../_shared";
+import { DOC_BY_KEY, ylaFilename, surnameForApplicant, YLA_MAX_BYTES } from "../../../../../utils/yla-documents";
+import { resolveToken } from "../../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +76,8 @@ export async function POST(
     );
   }
 
-  const filename = ylaFilename(spec.key, slotNum, surnameOf(request.applicant_name), applicantIdx);
+  const surname = surnameForApplicant(applicantIdx, request.applicant_name, request.applicant2_name);
+  const filename = ylaFilename(spec.key, slotNum, surname, applicantIdx);
   const path = `portal/${request.id}/${Date.now()}-${filename.replace(/[^\w.\- ]+/g, "_")}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);

@@ -13,6 +13,7 @@ import { hashToken } from "../../../utils/sign-token";
 export type PortalRequest = {
   id: string;
   applicant_name: string;
+  applicant2_name: string | null;
   applicant_email: string | null;
   applicant_count: number;
   status: string;
@@ -39,7 +40,7 @@ export async function resolveToken(token: string): Promise<Resolved> {
 
   const { data, error } = await supabase
     .from("document_requests")
-    .select("id,applicant_name,applicant_email,applicant_count,status,expires_at,drive_folder_url")
+    .select("id,applicant_name,applicant2_name,applicant_email,applicant_count,status,expires_at,drive_folder_url")
     .eq("token_hash", hashToken(token))
     .maybeSingle();
 
@@ -63,8 +64,4 @@ export function clientIp(req: Request): string {
   return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "unknown";
 }
 
-/** Surname for filename generation — YLA want files named to reflect the document. */
-export function surnameOf(applicantName: string): string {
-  const parts = (applicantName || "").trim().split(/\s+/);
-  return parts.length > 1 ? parts[parts.length - 1]! : parts[0] ?? "";
-}
+// surnameOf / surnameForApplicant live in utils/yla-documents.ts (single source).

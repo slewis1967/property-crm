@@ -29,6 +29,7 @@ type Slot = {
 
 type State = {
   applicant_name: string;
+  applicant2_name: string | null;
   applicant_count: number;
   status: string;
   slots: Slot[];
@@ -37,6 +38,13 @@ type State = {
 };
 
 const slotId = (s: Slot) => `${s.docKey}:${s.applicantIndex ?? 0}:${s.slot}`;
+
+/** Section heading for an applicant — their real first name when we have it. */
+function applicantName(state: State, index: number): string {
+  const full = index === 2 && state.applicant2_name ? state.applicant2_name : index === 1 ? state.applicant_name : "";
+  const first = (full || "").trim().split(/\s+/)[0];
+  return first ? first : `Applicant ${index}`;
+}
 
 export default function PortalClient({ token }: { token: string }) {
   const [state, setState] = useState<State | null>(null);
@@ -234,7 +242,7 @@ export default function PortalClient({ token }: { token: string }) {
               {applicantIndex === null
                 ? "For your application"
                 : state.applicant_count > 1
-                  ? `Applicant ${applicantIndex}`
+                  ? applicantName(state, applicantIndex)
                   : "About you"}
             </h2>
             <ul className="mt-3 space-y-3">
@@ -256,6 +264,16 @@ export default function PortalClient({ token }: { token: string }) {
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900">{label}</p>
                         {!uploaded && <p className="mt-1 text-sm text-gray-500">{s.hint}</p>}
+                        {!uploaded && s.docKey === "ato_income" && (
+                          <a
+                            href="/mygov-income-statement-guide.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:underline"
+                          >
+                            📄 Step-by-step: get this from myGov
+                          </a>
+                        )}
                         {uploaded && (
                           <p className="mt-1 truncate text-sm text-green-700">
                             ✓ {s.document!.filename}
