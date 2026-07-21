@@ -82,7 +82,12 @@ ALTER TABLE document_requests
 UPDATE document_requests
   SET client_ref = 'NK-' || nextval('document_requests_nk_seq')
   WHERE client_ref IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS document_requests_client_ref_idx ON document_requests (client_ref);
+-- client_ref is UNIQUE PER APPLICATION, not per request: a joint application's
+-- per-applicant requests deliberately SHARE one client_ref (and one Drive
+-- folder). So the index must NOT be unique. Drop the old unique index if a
+-- previous apply created it, then create the plain lookup index.
+DROP INDEX IF EXISTS document_requests_client_ref_idx;
+CREATE INDEX IF NOT EXISTS document_requests_client_ref_idx ON document_requests (client_ref);
 
 CREATE INDEX IF NOT EXISTS document_requests_token_hash_idx ON document_requests (token_hash);
 CREATE INDEX IF NOT EXISTS document_requests_status_idx     ON document_requests (status);
