@@ -53,6 +53,7 @@ const GROUPS: Group[] = [
       { href: "/fact-find", icon: "📋", label: "Fact Find" },
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },
       { href: "/credit-authorisation", icon: "🔏", label: "Credit Authorisation" },
+      { href: "/document-requests", icon: "📎", label: "Client Documents" },
       { href: "/contacts", icon: "👥", label: "Contacts" },
       { href: "/calendar", icon: "📅", label: "Calendar" },
       { href: "/appointments", icon: "🗓️", label: "Appointments" },
