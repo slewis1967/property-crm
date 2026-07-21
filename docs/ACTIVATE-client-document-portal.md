@@ -78,12 +78,15 @@ security is the token, not the network:
 
 ---
 
-## C. Google service account — LATER, not needed yet
+## C. Google service account — needed for the Drive export
 
-Only required once the Drive export is built. Skip for now; the portal works
-without it.
+The Drive export is now built (`utils/google-drive.ts`,
+`/api/document-requests/[id]/export`). Until these three env vars are set, the
+portal still works — the rep just can't push a finished set to Drive; the
+"Send to Drive" button returns a "not configured" message and nothing else
+breaks.
 
-When the time comes:
+Steps:
 
 1. **Google Cloud Console → APIs & Services → Library → enable the Google Drive API.**
 2. **IAM & Admin → Service Accounts → Create service account.** Name it

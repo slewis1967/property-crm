@@ -19,6 +19,7 @@ type RequestRow = {
   applicant_count: number;
   opportunity_id: string | null;
   status: string;
+  drive_folder_url: string | null;
   submitted_at: string | null;
   created_by: string | null;
   created_at: string;
@@ -56,6 +57,8 @@ export default function DocumentRequestsClient() {
   // Expanded detail per row
   const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [exportMsg, setExportMsg] = useState<{ id: string; text: string; url?: string; error?: boolean } | null>(null);
 
   const fetchRows = useCallback(async () => {
     try {
@@ -143,13 +146,7 @@ export default function DocumentRequestsClient() {
     }
     setOpenId(id);
     setDetail(null);
-    try {
-      const res = await fetch(`/api/document-requests/${id}`, { cache: "no-store" });
-      const json = await res.json();
-      if (json.ok) setDetail(json);
-    } catch {
-      /* leave detail null; the row still shows */
-    }
+    await refreshDetail(id);
   }
 
   async function cancel(id: string) {
@@ -163,6 +160,41 @@ export default function DocumentRequestsClient() {
     if (openId === id) {
       setOpenId(null);
       setDetail(null);
+    }
+  }
+
+  async function exportToDrive(id: string, complete: boolean) {
+    setExportMsg(null);
+    if (!complete && !confirm("This set is incomplete. Export a partial set to Drive anyway? YLA reject partial sets.")) {
+      return;
+    }
+    setExporting(id);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/export${complete ? "" : "?force=1"}`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setExportMsg({ id, text: `Exported ${json.uploaded} file${json.uploaded === 1 ? "" : "s"} to Drive.`, url: json.folder_url });
+        await reload();
+        if (openId === id) await refreshDetail(id);
+      } else {
+        setExportMsg({ id, text: json.error || "Export failed.", url: json.folder_url, error: true });
+      }
+    } catch {
+      setExportMsg({ id, text: "Could not reach the server.", error: true });
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  async function refreshDetail(id: string) {
+    try {
+      const res = await fetch(`/api/document-requests/${id}`, { cache: "no-store" });
+      const json = await res.json();
+      if (json.ok) setDetail(json);
+    } catch {
+      /* keep prior detail */
     }
   }
 
@@ -331,6 +363,64 @@ export default function DocumentRequestsClient() {
                             </li>
                           ))}
                         </ul>
+
+                        {r.status !== "submitted" && r.status !== "cancelled" && (
+                          <div className="mt-4 flex items-center gap-3">
+                            <button
+                              type="button"
+                              disabled={exporting === r.id}
+                              onClick={() => void exportToDrive(r.id, detail.complete)}
+                              className={`rounded-md px-3 py-2 text-sm font-medium text-white disabled:opacity-50 ${
+                                detail.complete ? "bg-green-700 hover:bg-green-800" : "bg-gray-500 hover:bg-gray-600"
+                              }`}
+                            >
+                              {exporting === r.id
+                                ? "Sending to Drive…"
+                                : detail.complete
+                                  ? "Send to Drive"
+                                  : "Send partial set to Drive"}
+                            </button>
+                            {!detail.complete && (
+                              <span className="text-xs text-gray-500">
+                                Not all documents are in yet.
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {r.status === "submitted" && r.drive_folder_url && (
+                          <p className="mt-4 text-sm">
+                            <a
+                              href={r.drive_folder_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-blue-700 hover:underline"
+                            >
+                              Open Drive folder →
+                            </a>
+                            <span className="ml-2 text-gray-500">Paste this into the Thursday calendar entry.</span>
+                          </p>
+                        )}
+
+                        {exportMsg?.id === r.id && (
+                          <div
+                            className={`mt-3 rounded-md p-3 text-sm ${
+                              exportMsg.error ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"
+                            }`}
+                          >
+                            <p>{exportMsg.text}</p>
+                            {exportMsg.url && (
+                              <a
+                                href={exportMsg.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 inline-block font-medium underline"
+                              >
+                                Open Drive folder →
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
