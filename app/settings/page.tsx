@@ -1,5 +1,6 @@
 import SignatureEditor from "./SignatureEditor";
 import PropertyTypesEditor from "./PropertyTypesEditor";
+import BrokersEditor from "./BrokersEditor";
 import AiInstructionsEditor from "./AiInstructionsEditor";
 import { getSignatureFields } from "../../utils/email-signature";
 import { getAiInstructions } from "../../utils/ai-instructions";
@@ -67,6 +68,18 @@ export default async function SettingsPage() {
         <p className="text-xs text-gray-400">
           View the schedule on the <a href="/calendar" className="text-teal-700 hover:underline">Calendar</a> page.
         </p>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-lg font-semibold mb-1">Brokers</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Lenders/brokers a completed Fact Find can be submitted to. Add one or
+          many here — each is then selectable from a dropdown on the Fact Find,
+          which submits the application to that broker automatically. Name and a
+          valid email are required; the reference/comp code (if set) is included
+          on the submission.
+        </p>
+        <BrokersEditor />
       </section>
 
       <section className="mb-10">
