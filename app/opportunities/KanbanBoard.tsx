@@ -37,6 +37,13 @@ export type Lead = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// How often the board re-checks for stage changes made elsewhere. Every mounted
+// board is its own polling client and each tick pulls the whole lead table
+// (~150 KB), so this used to be 8s with no visibility check — an abandoned tab
+// polled all night and that traffic was most of what starved the NEXUS API's
+// DuckDB lock (188 gunicorn worker timeouts on /api/leads, May–Jul 2026).
+const POLL_MS = 30_000;
+
 const STAGE_PALETTE = [
   { color: "bg-gray-100",   accent: "border-gray-400",   dot: "bg-gray-400"   },
   { color: "bg-blue-50",    accent: "border-blue-400",   dot: "bg-blue-400"   },
@@ -143,10 +150,13 @@ export default function KanbanBoard({
   const [leads, setLeads] = useState(() => normalise(initialLeads));
   const [showModal, setShowModal] = useState(false);
 
-  // Re-normalise when pipeline changes
-  useEffect(() => {
+  // Re-normalise when the pipeline changes. Done during render rather than in
+  // an effect so the board never paints once with the old pipeline's stages.
+  const [normalisedFor, setNormalisedFor] = useState(activePipelineId);
+  if (normalisedFor !== activePipelineId) {
+    setNormalisedFor(activePipelineId);
     setLeads(prev => prev.map(l => ({ ...l, _stage: normaliseStage(l.ghl_stage, activePipeline?.stages || ["New Lead"]) })));
-  }, [activePipelineId]);
+  }
 
   // Tags
   const allTags = Array.from(new Set(leads.flatMap(l => parseTags(l.tags))));
@@ -183,12 +193,9 @@ export default function KanbanBoard({
   const [newStagePosition, setNewStagePosition] = useState<number | null>(null);
   const [stageError, setStageError] = useState<string | null>(null);
 
-  // Default position to end whenever the form opens or the pipeline changes
-  useEffect(() => {
-    if (addingStage) {
-      setNewStagePosition(activePipeline?.stages.length ?? 0);
-    }
-  }, [addingStage, activePipelineId, activePipeline?.stages.length]);
+  // No effect needed to default the position to "end": both readers of
+  // newStagePosition (addStage() and the <select>) already treat null as
+  // end-of-list, so the open handler just clears it back to null.
 
   // Delete a stage (column) from the active pipeline. Only allowed when the
   // column is empty — UI guards on cards.length === 0 below.
@@ -216,9 +223,9 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to delete stage");
+      setStageError(errInfo(e).message || "Failed to delete stage");
     } finally {
       setDeletingStage(null);
     }
@@ -253,9 +260,9 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to save stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to save stage");
+      setStageError(errInfo(e).message || "Failed to save stage");
     }
   };
 
@@ -290,7 +297,7 @@ export default function KanbanBoard({
     prevStagesRef.current = map;
   }, [leads]);
 
-  // Poll 8s
+  // Poll for stage changes made elsewhere — see POLL_MS.
   const poll = useCallback(async () => {
     try {
       const res = await fetch("/api/opportunities/poll", { cache: "no-store" });
@@ -312,8 +319,17 @@ export default function KanbanBoard({
   }, [activePipeline]);
 
   useEffect(() => {
-    const t = setInterval(poll, 8000);
-    return () => clearInterval(t);
+    // Only poll while someone is actually looking at the board. A hidden tab
+    // has nothing to repaint, so the fetch would be pure load.
+    const t = setInterval(() => { if (!document.hidden) poll(); }, POLL_MS);
+    // Returning to a backgrounded tab shouldn't mean staring at stale cards
+    // for up to POLL_MS — refresh straight away instead.
+    const onVisibilityChange = () => { if (!document.hidden) poll(); };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [poll]);
 
   // Drag handlers
@@ -371,7 +387,7 @@ export default function KanbanBoard({
           <h2 className="text-lg font-bold text-gray-900 mb-2">No pipelines yet</h2>
           <p className="text-sm text-gray-500 mb-5">
             Create your first pipeline to start tracking opportunities. The Sales Pipeline auto-creates
-            on first contact with the API — if you're seeing this and the API is up, try a hard refresh.
+            on first contact with the API — if you&apos;re seeing this and the API is up, try a hard refresh.
           </p>
           <button
             onClick={() => setShowNewPipeline(true)}
@@ -804,7 +820,7 @@ export default function KanbanBoard({
               </div>
             ) : (
               <button
-                onClick={() => setAddingStage(true)}
+                onClick={() => { setAddingStage(true); setNewStagePosition(null); }}
                 className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-transparent hover:border-blue-300 hover:bg-blue-50 text-sm text-gray-400 hover:text-blue-600 font-medium py-3 transition"
               >
                 ＋ Add stage
