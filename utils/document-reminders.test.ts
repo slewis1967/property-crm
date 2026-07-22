@@ -117,7 +117,7 @@ describe("renderReminder", () => {
   it("builds an SMS with the link, the deadline intent and an opt-out", () => {
     const r = renderReminder("cutoff", { applicantName: "David Halliday", link: "https://x/portal/abc", progress, now: WED_10AM });
     expect(r.sms).toContain("https://x/portal/abc");
-    expect(r.sms).toContain("Glenn from NextKey");
+    expect(r.sms).toContain("Glenn from Springboard Homes");
     expect(r.sms).toContain("Reply STOP");
   });
 

@@ -57,7 +57,7 @@ function origin(): string {
   return (process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://crm.nextkey.com.au").replace(/\/+$/, "");
 }
 function fromName(): string {
-  return process.env.REMINDER_FROM_NAME || "Glenn from NextKey";
+  return process.env.REMINDER_FROM_NAME || "Glenn from Springboard Homes";
 }
 function replyTo(): string {
   return process.env.REMINDER_REPLY_TO || "glenn.m@nextkey.com.au";
@@ -269,7 +269,7 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
       <p style="margin:0 0 6px;font-size:13px;color:#555">Or paste this link into your browser:</p>
       <p style="margin:0 0 16px;font-size:13px;color:#555;word-break:break-all">${escapeHtml(ctx.link)}</p>
       <p style="margin:0 0 14px;font-size:12px;color:#777">🔒 Your documents are encrypted and only seen by your assessor.</p>
-      <p style="margin:0;font-size:13px;color:#555">Any questions at all, just hit reply — it comes straight to me.<br>Glenn — NextKey</p>
+      <p style="margin:0;font-size:13px;color:#555">Any questions at all, just hit reply — it comes straight to me.<br>Glenn — Springboard Homes</p>
     </div>
   </div>`;
 
@@ -288,13 +288,13 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
     "",
     "Your documents are encrypted and only seen by your assessor.",
     "Any questions at all, just hit reply — it comes straight to me.",
-    "Glenn — NextKey",
+    "Glenn — Springboard Homes",
   );
   const text = textLines.join("\n");
 
   // SMS — short, one link, opt-out. Loss-framed on the cutoff; effort-light and
   // personal otherwise. myGov nudge only when it's the likely blocker.
-  const smsBits = [`Hi ${first || "there"}, Glenn from NextKey here.`];
+  const smsBits = [`Hi ${first || "there"}, Glenn from Springboard Homes here.`];
   if (kind === "cutoff") {
     smsBits.push("This week's assessment closes 5pm today — upload before then to be looked at tomorrow, or it waits a week:", ctx.link);
   } else if (started) {
