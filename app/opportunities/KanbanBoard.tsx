@@ -39,6 +39,13 @@ export type Lead = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// How often the board re-checks for stage changes made elsewhere. Every mounted
+// board is its own polling client and each tick pulls the whole lead table
+// (~150 KB), so this used to be 8s with no visibility check — an abandoned tab
+// polled all night and that traffic was most of what starved the NEXUS API's
+// DuckDB lock (188 gunicorn worker timeouts on /api/leads, May–Jul 2026).
+const POLL_MS = 30_000;
+
 const STAGE_PALETTE = [
   { color: "bg-gray-100",   accent: "border-gray-400",   dot: "bg-gray-400"   },
   { color: "bg-blue-50",    accent: "border-blue-400",   dot: "bg-blue-400"   },
@@ -393,8 +400,17 @@ export default function KanbanBoard({
   }, [activePipeline]);
 
   useEffect(() => {
-    const t = setInterval(poll, 8000);
-    return () => clearInterval(t);
+    // Only poll while someone is actually looking at the board. A hidden tab
+    // has nothing to repaint, so the fetch would be pure load.
+    const t = setInterval(() => { if (!document.hidden) poll(); }, POLL_MS);
+    // Returning to a backgrounded tab shouldn't mean staring at stale cards
+    // for up to POLL_MS — refresh straight away instead.
+    const onVisibilityChange = () => { if (!document.hidden) poll(); };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [poll]);
 
   // Drag handlers
