@@ -31,6 +31,7 @@ type Candidate = {
   applicant_name: string;
   verification_status: string | null;
   verified_at: string | null;
+  submit_target: string | null;
 };
 
 export type SweepAction =
@@ -72,12 +73,14 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
 
   const { data: cands } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .select("id,application_id,applicant_name,verification_status,verified_at")
+    .select("id,application_id,applicant_name,verification_status,verified_at,submit_target")
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
     .order("created_at", { ascending: true })
     .limit(500);
-  const candidates = (cands ?? []) as Candidate[];
+  // This sweep handles the YLA destination only. Broker-destined applications
+  // are routed separately (they must NOT be sent to YLA).
+  const candidates = ((cands ?? []) as Candidate[]).filter((c) => (c.submit_target ?? "yla") !== "broker");
 
   // Group into applications (siblings share application_id; solo = own id).
   const groups = new Map<string, Candidate[]>();

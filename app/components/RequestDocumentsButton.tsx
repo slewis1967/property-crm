@@ -50,6 +50,9 @@ export default function RequestDocumentsButton({
   const [clientRef, setClientRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  // Where the completed + verified set goes: 'yla' (default) or a broker id.
+  const [brokers, setBrokers] = useState<{ id: string; name: string; active: boolean }[]>([]);
+  const [destination, setDestination] = useState("yla");
 
   const name = (applicantName || "").trim();
   const email = (applicantEmail || "").trim();
@@ -89,6 +92,8 @@ export default function RequestDocumentsButton({
         opportunity_id: opportunityId || undefined,
         contact_id: contactId || undefined,
         application_id: applicationId || undefined,
+        submit_target: destination === "yla" ? "yla" : "broker",
+        broker_id: destination === "yla" ? undefined : destination,
         send_email: !!email,
       });
       if (!first.ok) {
@@ -115,6 +120,8 @@ export default function RequestDocumentsButton({
           opportunity_id: opportunityId || undefined,
           application_id: applicationId || undefined,
           client_ref: ref || undefined, // share the reference + folder
+          submit_target: destination === "yla" ? "yla" : "broker",
+          broker_id: destination === "yla" ? undefined : destination,
           send_email: !!e2,
         });
         if (second.ok) {
@@ -157,6 +164,15 @@ export default function RequestDocumentsButton({
     setEmail2((applicant2Email || "").trim());
     setError(null);
     setOpen(true);
+
+    // Load the broker list so the rep can route this set to a broker instead of
+    // YLA. Best-effort — no brokers just means YLA is the only option.
+    fetch("/api/settings/brokers")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j?.ok && Array.isArray(j.brokers)) setBrokers(j.brokers.filter((b: { active: boolean }) => b.active));
+      })
+      .catch(() => {});
 
     // Fill the second applicant from the newest Fact Find / Needs Analysis when a
     // linked contact didn't already supply one. Best-effort.
@@ -220,6 +236,25 @@ export default function RequestDocumentsButton({
                   ))}
                 </select>
               </div>
+
+              {brokers.length > 0 && (
+                <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+                  <span className="text-gray-500">Submit completed set to</span>
+                  <select
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    className="rounded border border-gray-300 px-2 py-0.5 text-sm"
+                    title="Where the verified documents are sent once collected"
+                  >
+                    <option value="yla">Your Loan Assist (YLA)</option>
+                    {brokers.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="mt-3 rounded-md border border-gray-100 bg-gray-50 p-2 text-sm">
                 <p className="font-medium text-gray-900">Applicant 1 — {name || "Unknown"}</p>
