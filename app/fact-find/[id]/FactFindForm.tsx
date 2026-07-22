@@ -255,6 +255,10 @@ export default function FactFindForm({ id }: { id: string }) {
   const [naSeedNotes, setNaSeedNotes] = useState<string[] | null>(null);
   const [creatingCa, setCreatingCa] = useState(false);
   const [creatingAml, setCreatingAml] = useState(false);
+  const [brokers, setBrokers] = useState<{ id: string; name: string; active: boolean }[]>([]);
+  const [brokerId, setBrokerId] = useState("");
+  const [sendingBroker, setSendingBroker] = useState(false);
+  const [brokerMsg, setBrokerMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -471,6 +475,56 @@ export default function FactFindForm({ id }: { id: string }) {
     }
   }, [data, contactId, router]);
 
+  // Load the configurable broker list (Settings → Brokers) for the dropdown.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/settings/brokers");
+        const json = await res.json();
+        if (!cancelled && json.ok) setBrokers((json.brokers as typeof brokers).filter((b) => b.active));
+      } catch {
+        /* brokers are optional — the control just won't show any */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * Submit this Fact Find to the selected broker: save any pending edits, then
+   * the server verifies it's complete, renders the PDF and emails the broker.
+   * Blocks (with the missing fields) if the Fact Find is a stub.
+   */
+  const sendToBroker = useCallback(async () => {
+    if (!brokerId) {
+      setBrokerMsg({ ok: false, text: "Pick a broker first." });
+      return;
+    }
+    setSendingBroker(true);
+    setBrokerMsg(null);
+    setError("");
+    try {
+      if (dirty && !locked) await doSave();
+      const res = await fetch(`/api/fact-finds/${id}/submit-to-broker`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brokerId }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setBrokerMsg({ ok: false, text: json.error || "Could not send to the broker." });
+        return;
+      }
+      setBrokerMsg({ ok: true, text: `Fact Find sent to ${json.broker} (${json.email}).` });
+    } catch (e) {
+      setBrokerMsg({ ok: false, text: e instanceof Error ? e.message : "Could not send to the broker." });
+    } finally {
+      setSendingBroker(false);
+    }
+  }, [brokerId, id, dirty, locked, doSave]);
+
   /**
    * Create a Credit File Authorisation pre-filled from this Fact Find — both
    * applicants' names and Applicant 1's home address, so the broker doesn't
@@ -602,6 +656,35 @@ export default function FactFindForm({ id }: { id: string }) {
             {seedingNa ? "Pulling…" : "↓ Populate from Needs Analysis"}
           </button>
         )}
+        {brokers.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <select
+              value={brokerId}
+              onChange={(e) => {
+                setBrokerId(e.target.value);
+                setBrokerMsg(null);
+              }}
+              className="px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
+              title="Submit this Fact Find to a broker"
+            >
+              <option value="">Send to broker…</option>
+              {brokers.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => void sendToBroker()}
+              disabled={sendingBroker || !brokerId}
+              className="px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 transition"
+              style={{ backgroundColor: TEAL }}
+              title="Verify the Fact Find is complete, then email it to the selected broker"
+            >
+              {sendingBroker ? "Sending…" : "Send"}
+            </button>
+          </div>
+        )}
         <button
           onClick={() => void createNeedsAnalysis()}
           disabled={seeding}
@@ -657,6 +740,16 @@ export default function FactFindForm({ id }: { id: string }) {
       {error && (
         <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
           {error}
+        </div>
+      )}
+
+      {brokerMsg && (
+        <div
+          className={`no-print mx-4 mt-4 p-3 rounded-lg border text-sm ${
+            brokerMsg.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-amber-50 border-amber-200 text-amber-800"
+          }`}
+        >
+          {brokerMsg.text}
         </div>
       )}
 
