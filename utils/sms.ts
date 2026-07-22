@@ -12,10 +12,12 @@ import { supabase } from "./supabase";
 import { errMessage } from "./errors";
 
 const CLICKSEND_BASE = "https://rest.clicksend.com/v3";
-// Glenn Mayes' verified mobile number. Replies route back through ClickSend
-// to this number so YES/STOP replies show up on Glenn's actual phone.
-// Verified APPROVED in ClickSend account on 2026-05-01.
-const SENDER = "+61488161674";
+// Outbound sender ("from"). Defaults to Glenn Mayes' verified mobile
+// (+61488161674, approved in ClickSend 2026-05-01) — replies to that go to
+// Glenn's actual phone. Override with CLICKSEND_FROM to switch to a ClickSend
+// DEDICATED number: only then do inbound replies (STOP opt-outs) come back
+// through ClickSend to the /api/portal/sms-inbound webhook instead of a handset.
+const SENDER = process.env.CLICKSEND_FROM?.trim() || "+61488161674";
 
 export type SmsResult =
   | { ok: true; provider_msg_id: string; cost: number; status: string }
