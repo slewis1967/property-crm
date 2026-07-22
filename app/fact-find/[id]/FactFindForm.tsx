@@ -33,12 +33,15 @@ import {
   emptyFactFind,
   emptyLiability,
   emptySecurity,
+  factFindCompletionBlockers,
   formatMoney,
   outstandingSections,
+  type Applicant,
   type AssetKind,
   type FactFindData,
   type LiabilityKind,
 } from "../../../utils/factfind";
+import { mergeSeededApplicant } from "../../../utils/needsAnalysisToFactFind";
 import CapacityPanel from "./CapacityPanel";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import SigningPanel from "../../components/SigningPanel";
@@ -248,6 +251,8 @@ export default function FactFindForm({ id }: { id: string }) {
   // Needs Analysis pre-fill state.
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{ naId: string; notes: string[] } | null>(null);
+  const [seedingNa, setSeedingNa] = useState(false);
+  const [naSeedNotes, setNaSeedNotes] = useState<string[] | null>(null);
   const [creatingCa, setCreatingCa] = useState(false);
   const [creatingAml, setCreatingAml] = useState(false);
 
@@ -338,6 +343,62 @@ export default function FactFindForm({ id }: { id: string }) {
   // "Locked" is derived from status — the signed/complete document is read-only
   // until reopened. Single source of truth: FACT_FIND_TERMINAL_STATUS.
   const locked = status === FACT_FIND_TERMINAL_STATUS;
+
+  /**
+   * Status change from the dropdown. Marking a fact find Complete is gated: a
+   * stub (missing name / DOB / address) can't be signed off. We check locally
+   * for an instant, specific message; the server enforces the same rule as a
+   * backstop (422). Any other status change saves straight through.
+   */
+  const requestStatusChange = useCallback(
+    (next: string) => {
+      if (next === FACT_FIND_TERMINAL_STATUS) {
+        const blockers = factFindCompletionBlockers(data);
+        if (blockers.length) {
+          setError(`Can't mark Complete yet — still needed: ${blockers.join(", ")}.`);
+          return; // dropdown reverts because its value is bound to `status`
+        }
+      }
+      void doSave(next);
+    },
+    [data, doSave],
+  );
+
+  /**
+   * Pull applicant identity from this contact's newest Needs Analysis into the
+   * Fact Find (empty fields only — never overwrites existing values). Fixes the
+   * common case where the detail was entered in the Needs Analysis and the Fact
+   * Find was left an empty stub. Reviewable: the advisor confirms and saves.
+   */
+  const populateFromNeedsAnalysis = useCallback(async () => {
+    if (!contactId) {
+      setError("Link a contact to this fact find first — the Needs Analysis is found by contact.");
+      return;
+    }
+    setSeedingNa(true);
+    setError("");
+    setNaSeedNotes(null);
+    try {
+      const res = await fetch(`/api/fact-finds/na-seed?contact_id=${encodeURIComponent(contactId)}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Could not read the Needs Analysis");
+      if (!json.found) {
+        setError("No Needs Analysis found for this contact to pull from.");
+        return;
+      }
+      const seeded = json.applicants as Applicant[];
+      update((d) => {
+        seeded.forEach((s, i) => {
+          d.applicants[i] = d.applicants[i] ? mergeSeededApplicant(d.applicants[i], s) : s;
+        });
+      });
+      setNaSeedNotes((json.notes as string[]) ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not populate from Needs Analysis");
+    } finally {
+      setSeedingNa(false);
+    }
+  }, [contactId, update]);
 
   /**
    * Download the server-rendered PDF (headless Chromium reusing the print
@@ -520,7 +581,7 @@ export default function FactFindForm({ id }: { id: string }) {
         {!locked && <SaveStateIndicator state={saveState} lastSavedAt={lastSavedAt} onRetry={saveNow} />}
         <select
           value={status}
-          onChange={(e) => void doSave(e.target.value)}
+          onChange={(e) => requestStatusChange(e.target.value)}
           disabled={saving}
           className="px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
         >
@@ -530,6 +591,17 @@ export default function FactFindForm({ id }: { id: string }) {
             </option>
           ))}
         </select>
+        {!locked && (
+          <button
+            onClick={() => void populateFromNeedsAnalysis()}
+            disabled={seedingNa}
+            className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-60"
+            style={{ borderColor: TEAL, color: TEAL }}
+            title="Fill empty applicant fields from this contact's newest Needs Analysis"
+          >
+            {seedingNa ? "Pulling…" : "↓ Populate from Needs Analysis"}
+          </button>
+        )}
         <button
           onClick={() => void createNeedsAnalysis()}
           disabled={seeding}
@@ -585,6 +657,23 @@ export default function FactFindForm({ id }: { id: string }) {
       {error && (
         <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
           {error}
+        </div>
+      )}
+
+      {naSeedNotes && (
+        <div className="no-print mx-4 mt-4 p-3 rounded-lg bg-teal-50 border border-teal-200 text-sm text-teal-900">
+          <p className="font-semibold">Pulled applicant details from the Needs Analysis — please review, then Save.</p>
+          <ul className="mt-1 list-disc pl-5 text-teal-800">
+            {naSeedNotes.map((n, i) => (
+              <li key={i}>{n}</li>
+            ))}
+          </ul>
+          <button
+            onClick={() => setNaSeedNotes(null)}
+            className="mt-2 text-xs font-medium text-teal-700 hover:underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

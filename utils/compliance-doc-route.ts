@@ -206,6 +206,14 @@ export type PatchConfig = BaseConfig & {
    */
   buildPatch: (body: Record<string, unknown>, currentStatus: string, auth: string) => PatchBuild;
   /**
+   * Optional completion guard. Given the would-be-saved snapshot, return the
+   * human-readable list of things still missing before this document may reach
+   * its terminal (locked) status. Enforced ONLY on the "sign" transition — a
+   * non-empty result blocks the sign-off with 422, so a stub can't be signed as
+   * Complete. Returns [] (or is absent) to allow.
+   */
+  completionBlockers?: (snapshot: unknown) => string[];
+  /**
    * Optional side effect fired AFTER a successful update + audit — e.g. syncing
    * derived records when a document first reaches its terminal status. Runs
    * inside its own try/catch and can NEVER fail the save (a hook error is logged
@@ -252,6 +260,22 @@ export function makePatchHandler(cfg: PatchConfig) {
       const decision = classifyPatch(cfg.docType, currentStatus, incomingStatus);
       if (decision.kind === "reject") {
         return NextResponse.json({ ok: false, error: LOCKED_EDIT_MESSAGE }, { status: 409 });
+      }
+
+      // Completion guard: refuse to sign off a stub. Only on the sign transition
+      // (not on ordinary draft saves), so an in-progress form still saves freely.
+      if (decision.kind === "sign" && cfg.completionBlockers) {
+        const blockers = cfg.completionBlockers(snapshot);
+        if (blockers.length) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `Can't mark this Complete yet — still needed: ${blockers.join(", ")}.`,
+              blockers,
+            },
+            { status: 422 },
+          );
+        }
       }
 
       const { error } = await supabase.from(cfg.table).update(patch).eq("id", id);

@@ -610,6 +610,31 @@ export function outstandingSections(data: FactFindData): string[] {
   return missing;
 }
 
+/**
+ * HARD blockers for marking a Fact Find "Complete". Unlike outstandingSections
+ * (advisory, lists everything), a non-empty result here MUST stop the sign-off:
+ * this is the gap that let a blank fact find get signed as Complete. Kept narrow
+ * — full name + DOB + residential address for each applicant actually in use —
+ * so it blocks a STUB without nagging a genuinely in-progress form. Enforced
+ * server-side on the sign transition and mirrored client-side for a friendly
+ * message.
+ */
+export function factFindCompletionBlockers(data: FactFindData): string[] {
+  const apps = data.applicants ?? [];
+  const inUse = (a: Applicant) => !!(a.given_names.trim() || a.family_name.trim());
+  if (!apps.some(inUse)) return ["At least one applicant's name"];
+
+  const blockers: string[] = [];
+  apps.forEach((a, i) => {
+    if (!inUse(a)) return; // an untouched second-applicant slot is fine
+    const who = `Applicant ${i + 1}`;
+    if (!a.given_names.trim() || !a.family_name.trim()) blockers.push(`${who} full name`);
+    if (!a.date_of_birth.trim()) blockers.push(`${who} date of birth`);
+    if (!a.address.trim()) blockers.push(`${who} residential address`);
+  });
+  return blockers;
+}
+
 /* ── Supabase plumbing ───────────────────────────────────────────────────── */
 
 /**

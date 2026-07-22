@@ -2,8 +2,10 @@ import {
   applicantSummary,
   factFindErrMessage,
   factFindsTableMissing,
+  factFindCompletionBlockers,
   hydrateFactFind,
   FACT_FIND_STATUSES,
+  type FactFindData,
 } from "../../../../utils/factfind";
 import {
   makeGetOneHandler,
@@ -65,6 +67,10 @@ export const PATCH = makePatchHandler({
 
     return { patch, incomingStatus, snapshot: patch.data ?? null };
   },
+  // Refuse to sign off a stub — the exact gap that let a blank fact find reach
+  // Complete. Only checked on the sign transition (see the shared handler).
+  completionBlockers: (snapshot) =>
+    snapshot ? factFindCompletionBlockers(snapshot as FactFindData) : [],
   /**
    * On completion (the not-locked → Complete "sign" transition), promote both
    * applicants into Contacts so the Credit Authorisation, Needs Analysis and
