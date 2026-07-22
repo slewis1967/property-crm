@@ -19,6 +19,7 @@ import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite } from "./yla-submit";
+import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
 
 export function ylaAutoSubmitEnabled(): boolean {
@@ -29,9 +30,13 @@ type Candidate = {
   id: string;
   application_id: string | null;
   applicant_name: string;
+  contact_id: string | null;
   verification_status: string | null;
   verified_at: string | null;
   submit_target: string | null;
+  broker_name: string | null;
+  broker_email: string | null;
+  broker_reference: string | null;
 };
 
 export type SweepAction =
@@ -73,14 +78,14 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
 
   const { data: cands } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
-    .select("id,application_id,applicant_name,verification_status,verified_at,submit_target")
+    .select(
+      "id,application_id,applicant_name,contact_id,verification_status,verified_at,submit_target,broker_name,broker_email,broker_reference",
+    )
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
     .order("created_at", { ascending: true })
     .limit(500);
-  // This sweep handles the YLA destination only. Broker-destined applications
-  // are routed separately (they must NOT be sent to YLA).
-  const candidates = ((cands ?? []) as Candidate[]).filter((c) => (c.submit_target ?? "yla") !== "broker");
+  const candidates = (cands ?? []) as Candidate[];
 
   // Group into applications (siblings share application_id; solo = own id).
   const groups = new Map<string, Candidate[]>();
@@ -143,26 +148,48 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
       actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `export: ${exp.error}` });
       continue;
     }
-    const invite = buildYlaInvite({
-      primaryApplicant: run.primaryApplicant,
-      driveUrl: exp.folderUrl,
-      clientRef: run.clientRef,
-      applicationId: run.applicationId,
-      requestId: rep.id,
-      now,
-    });
-    const emailRes = await sendBrevoEmail({
-      to: [{ email: invite.to, name: "Your Loan Assist" }],
-      subject: invite.subject,
-      html: invite.html,
-      text: invite.text,
-      attachments: [{ name: "invite.ics", content: invite.icsBase64 }],
-      tags: ["yla-submission"],
-    });
-    if (!emailRes.ok) {
-      actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `send: ${emailRes.error}` });
-      continue;
+
+    // Route to the destination: a broker, else YLA.
+    if ((rep.submit_target ?? "yla") === "broker") {
+      if (!rep.broker_email) {
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: "broker destination has no email" });
+        continue;
+      }
+      const bres = await submitApplicationToBroker({
+        brokerName: rep.broker_name || "Broker",
+        brokerEmail: rep.broker_email,
+        brokerReference: rep.broker_reference,
+        contactId: rep.contact_id,
+        primaryApplicant: run.primaryApplicant,
+        driveUrl: exp.folderUrl,
+      });
+      if (!bres.ok) {
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `broker send: ${bres.error}` });
+        continue;
+      }
+    } else {
+      const invite = buildYlaInvite({
+        primaryApplicant: run.primaryApplicant,
+        driveUrl: exp.folderUrl,
+        clientRef: run.clientRef,
+        applicationId: run.applicationId,
+        requestId: rep.id,
+        now,
+      });
+      const emailRes = await sendBrevoEmail({
+        to: [{ email: invite.to, name: "Your Loan Assist" }],
+        subject: invite.subject,
+        html: invite.html,
+        text: invite.text,
+        attachments: [{ name: "invite.ics", content: invite.icsBase64 }],
+        tags: ["yla-submission"],
+      });
+      if (!emailRes.ok) {
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `send: ${emailRes.error}` });
+        continue;
+      }
     }
+
     await supabase
       .from(DOCUMENT_REQUESTS_TABLE)
       .update({ yla_submitted_at: now.toISOString(), verification_status: "passed", verified_at: now.toISOString(), updated_at: now.toISOString() })
