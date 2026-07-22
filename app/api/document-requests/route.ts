@@ -21,6 +21,7 @@ import { requireAuth } from "../../../utils/cf-access";
 import { enforceRateLimit } from "../../../utils/rate-limit";
 import { newToken } from "../../../utils/sign-token";
 import { sendBrevoEmail } from "../../../utils/brevo";
+import { getBroker, type Broker } from "../../../utils/brokers";
 import {
   DOCUMENT_REQUESTS_TABLE,
   DOC_MIGRATION_HINT,
@@ -101,6 +102,18 @@ export async function POST(req: Request) {
   const sharedRef =
     typeof body.client_ref === "string" && body.client_ref.trim() ? body.client_ref.trim() : undefined;
 
+  // Destination: YLA (default) or a broker chosen from Settings. Snapshot the
+  // broker's details now so the submission is stable if it's later edited/removed.
+  const submitTarget = body.submit_target === "broker" ? "broker" : "yla";
+  let broker: Broker | null = null;
+  if (submitTarget === "broker") {
+    const bid = typeof body.broker_id === "string" ? body.broker_id : "";
+    broker = bid ? await getBroker(bid) : null;
+    if (!broker) {
+      return NextResponse.json({ ok: false, error: "Broker not found — pick one from Settings → Brokers." }, { status: 400 });
+    }
+  }
+
   const token = newToken();
 
   const insert: Record<string, unknown> = {
@@ -114,6 +127,11 @@ export async function POST(req: Request) {
     opportunity_id: typeof body.opportunity_id === "string" ? body.opportunity_id : null,
     contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
     fact_find_id: typeof body.fact_find_id === "string" ? body.fact_find_id : null,
+    submit_target: submitTarget,
+    broker_id: broker?.id ?? null,
+    broker_name: broker?.name ?? null,
+    broker_email: broker?.email ?? null,
+    broker_reference: broker?.reference ?? null,
     created_by: createdBy,
   };
   // Only override the DB-default client_ref when sharing one across siblings.
