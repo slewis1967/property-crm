@@ -13,6 +13,8 @@ import { signGuestToken } from "../../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../../utils/meeting-invite";
 import { sendBrevoEmail } from "../../../../utils/brevo";
 import { buildAppointmentRow } from "../../../../utils/appointments";
+import { enforceRateLimit } from "../../../../utils/rate-limit";
+import { clientIp } from "../../sign/_shared";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -101,6 +103,19 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   if (body.website && body.website.trim() !== "") {
     return NextResponse.json({ ok: true, video_link: null });
   }
+
+  // This endpoint is PUBLIC (no Cloudflare Access) and each call sends a Brevo
+  // invite to a caller-supplied address, writes a calendar appointment, and can
+  // create a contact — so unthrottled it's an email-amplification + calendar-
+  // flood primitive behind only the honeypot. Per-IP limit. In-memory, so it's
+  // per-instance (a distributed attacker isn't fully stopped) — cheap insurance
+  // against the single-source loop, not a complete control.
+  const limited = enforceRateLimit(req, {
+    windowMs: 60_000,
+    max: 5,
+    keyFn: () => `book:${clientIp(req)}`,
+  });
+  if (limited) return limited;
 
   const name = (body.name || "").trim();
   const email = (body.email || "").trim().toLowerCase();
@@ -201,7 +216,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
     .single();
 
   if (insertErr) {
-    return NextResponse.json({ error: `Could not save the booking: ${errMessage(insertErr)}` }, { status: 500 });
+    // Don't echo the raw DB error to an unauthenticated caller (leaks column/
+    // constraint names). Log server-side, return a generic message.
+    console.error("[book] appointment insert failed:", errMessage(insertErr));
+    return NextResponse.json({ error: "Could not save the booking. Please try again." }, { status: 500 });
   }
   const apptId = (inserted as { id: string }).id;
 
