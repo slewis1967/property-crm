@@ -404,6 +404,7 @@ export async function runDocumentReminders(opts?: { dryRun?: boolean; now?: Date
           replyTo: replyTo(),
           fromName: fromName(),
           tags: ["document-reminder", due.kind],
+          commercial: true, // automated nudge — honour email opt-out (Spam Act)
         });
         channelResults.push({ channel, recipient: to, status: res.ok ? "sent" : "failed", error: res.ok ? undefined : res.error });
         await supabase.from("document_reminder_log").insert({

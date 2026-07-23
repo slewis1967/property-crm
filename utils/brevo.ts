@@ -8,11 +8,40 @@
  * stay flat).
  */
 
+import { supabase } from "./supabase";
+
 const BREVO_BASE = "https://api.brevo.com/v3";
 
 export type BrevoSendResult =
   | { ok: true; messageId: string }
   | { ok: false; error: string };
+
+/**
+ * Which of these emails have opted out of commercial email? Matches the
+ * broadcast audience filter (`unsubscribes` table, channel ∈ {email, all}),
+ * so a contact who unsubscribes is suppressed identically whether they're hit
+ * by a bulk broadcast or a 1:1 commercial send. Returns a lower-cased Set.
+ *
+ * Fail-OPEN on a query error (returns empty) is deliberate: a transient
+ * Supabase outage must not silently swallow a legitimate send. The bulk
+ * broadcast path and the NEXUS runner both re-check, so this is one of several
+ * suppression points, not the only one.
+ */
+export async function unsubscribedEmails(emails: string[]): Promise<Set<string>> {
+  const lowered = emails.map((e) => e.toLowerCase()).filter(Boolean);
+  if (lowered.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("unsubscribes")
+    .select("email")
+    .in("channel", ["email", "all"])
+    .in("email", lowered);
+  if (error || !data) return new Set();
+  return new Set(
+    (data as { email: string | null }[])
+      .map((u) => u.email?.toLowerCase())
+      .filter((e): e is string => !!e),
+  );
+}
 
 export type BrevoSendOptions = {
   to: { email: string; name?: string }[];
@@ -38,6 +67,14 @@ export type BrevoSendOptions = {
    * existing callers are unaffected. Must be a verified Brevo sender. */
   fromEmail?: string;
   fromName?: string;
+  /** Set true for commercial/marketing email (advisory reports, nudges,
+   * outreach). Recipients on the `unsubscribes` list are then suppressed —
+   * the Spam Act requires opt-out to be honoured across the business, not
+   * just on the bulk broadcast path. Leave false/unset for genuinely
+   * transactional or legal mail (e-signature requests, meeting invites,
+   * booking confirmations, broker/YLA submissions) where an unsubscribe from
+   * marketing must NOT block the message. */
+  commercial?: boolean;
 };
 
 export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendResult> {
@@ -60,6 +97,20 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
     return { ok: false, error: "subject and html are required" };
   }
 
+  // Commercial email: drop any recipient who has opted out (Spam Act). Non-
+  // commercial (transactional/legal) sends skip this so an unsubscribe can't
+  // block e.g. an e-signature request or a meeting invite the person needs.
+  let recipients = opts.to;
+  if (opts.commercial) {
+    const suppressed = await unsubscribedEmails(recipients.map((r) => r.email));
+    if (suppressed.size > 0) {
+      recipients = recipients.filter((r) => !suppressed.has(r.email.toLowerCase()));
+      if (recipients.length === 0) {
+        return { ok: false, error: "All recipients have unsubscribed" };
+      }
+    }
+  }
+
   const text = opts.text ?? stripHtml(opts.html);
 
   // Never throw: any transport-level failure (fetch rejection, DNS, timeout) is
@@ -77,7 +128,7 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
       },
       body: JSON.stringify({
         sender: { email: senderEmail, name: senderName },
-        to: opts.to,
+        to: recipients,
         subject: opts.subject,
         htmlContent: opts.html,
         textContent: text,

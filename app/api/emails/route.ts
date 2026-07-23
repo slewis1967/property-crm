@@ -10,8 +10,9 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { sendBrevoEmail } from "../../../utils/brevo";
+import { requireAuth } from "../../../utils/cf-access";
 import { defaultSignature } from "../../../utils/email-signature";
-import { resolveOwner, resolveSender } from "../../../utils/mail-owner";
+import { resolveSender } from "../../../utils/mail-owner";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const body = await req.json().catch(() => ({}));
   const {
     to, to_name, subject, body_html, body_text,

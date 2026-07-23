@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { requireAuth } from "../../../../utils/cf-access";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const body = await req.json();
 
   const firstName = body.first_name?.trim() || "";

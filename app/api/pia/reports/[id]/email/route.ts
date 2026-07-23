@@ -55,6 +55,7 @@ export async function POST(
     subject,
     html,
     tags: ["pia-report"],
+    commercial: true, // advisory/marketing report — honour email opt-out (Spam Act)
   });
 
   if (!result.ok) {
