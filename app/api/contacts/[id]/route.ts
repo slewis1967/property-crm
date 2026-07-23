@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
-import { userEmailFromRequest, isUnauthenticated } from "../../../../utils/cf-access";
+import { userEmailFromRequest, isUnauthenticated, requireAuth } from "../../../../utils/cf-access";
 import { validateDeletionInput, recordDeletion } from "../../../../utils/deletion-log";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id: contactId } = await params;
   const body = await req.json();
   const allowed = [
@@ -47,6 +49,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const { id: contactId } = await params;
 
   // Gate: a client deletion requires a reason + the user's name.
