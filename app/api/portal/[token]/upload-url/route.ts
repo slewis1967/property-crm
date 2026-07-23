@@ -14,7 +14,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 import { DOC_BY_KEY, ylaFilename, surnameOf, YLA_MAX_BYTES } from "../../../../../utils/yla-documents";
-import { resolveToken } from "../../_shared";
+import { resolveToken, clientIp } from "../../_shared";
+import { enforceRateLimit } from "../../../../../utils/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,16 @@ export async function POST(
     return NextResponse.json({ ok: false, error: resolved.error }, { status: resolved.status });
   }
   const request = resolved.request;
+
+  // PUBLIC endpoint: a valid-token holder could otherwise loop this to mint
+  // unbounded signed upload URLs + client_documents rows (per-file size is
+  // capped, count wasn't). Throttle per token+IP.
+  const limited = enforceRateLimit(req, {
+    windowMs: 60_000,
+    max: 30,
+    keyFn: () => `portal-upload:${token}:${clientIp(req)}`,
+  });
+  if (limited) return limited;
 
   if (request.status === "submitted") {
     return NextResponse.json(
