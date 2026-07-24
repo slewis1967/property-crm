@@ -57,11 +57,14 @@ export type SweepResult = {
 
 /** Cheap completeness (no byte fetch): every applicant has YLA's required counts. */
 async function applicationState(requestIds: string[]): Promise<{ complete: boolean; latestUpload: string | null }> {
-  const { data: docs } = await supabase
+  const { data: docs, error } = await supabase
     .from("client_documents")
     .select("request_id,doc_type,uploaded_at,status")
     .in("request_id", requestIds)
     .neq("status", "replaced");
+  // Don't let a read error masquerade as an empty document set — that would
+  // wrongly judge a complete application "incomplete" and skip it forever.
+  if (error) throw new Error(`yla-auto-submit: document read failed: ${error.message}`);
   const rows = docs ?? [];
   const latestUpload = rows.reduce<string | null>((mx, r) => (!mx || r.uploaded_at > mx ? r.uploaded_at : mx), null);
   const complete = requestIds.every((rid) => {
@@ -76,7 +79,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   const dryRun = opts?.dryRun ?? !ylaAutoSubmitEnabled();
   const maxApps = opts?.limit ?? 25;
 
-  const { data: cands } = await supabase
+  const { data: cands, error: candErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .select(
       "id,application_id,applicant_name,contact_id,verification_status,verified_at,submit_target,broker_name,broker_email,broker_reference",
@@ -85,6 +88,14 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     .neq("status", "cancelled")
     .order("created_at", { ascending: true })
     .limit(500);
+  // A query error here (e.g. a missing column because a migration never ran)
+  // must NOT be silently read as "no applications to submit" — that turns the
+  // whole sweep into a no-op that sends nothing, verifies nothing and logs
+  // nothing, which is invisible until someone asks why a lead never reached
+  // YLA. Fail loud so the scheduled function surfaces it.
+  if (candErr) {
+    throw new Error(`yla-auto-submit: candidate query failed: ${candErr.message}`);
+  }
   const candidates = (cands ?? []) as Candidate[];
 
   // Group into applications (siblings share application_id; solo = own id).
