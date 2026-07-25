@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { supabase } from "../utils/supabase";
+import { brisbaneToday, summarise, type PaidService } from "../utils/paid-services";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 import PublicRouteGate from "./components/PublicRouteGate";
@@ -56,8 +57,8 @@ export const metadata: Metadata = {
 // Sidebar shows badges with the count of items needing attention. Single
 // HEAD count(*) per badge — Postgres handles this in milliseconds, and
 // missing the badge isn't worth a layout-fail so we swallow errors.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number }> {
-  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0 };
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number }> {
+  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0 };
   try {
     const { count } = await supabase
       .from("property_review_queue")
@@ -94,6 +95,20 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
       .select("id", { count: "exact", head: true })
       .neq("status", "lodged");
     out.amlReports = count ?? 0;
+  } catch { /* swallow */ }
+  try {
+    // Paid accounts needing attention (payment due/overdue, card expiring,
+    // prepaid balance dry). Unlike the others this can't be a count(*) — the
+    // rules are date arithmetic in utils/paid-services.ts, and duplicating them
+    // in SQL is how the badge and the email start disagreeing. The register is
+    // tens of rows, so read the few columns the rules need and count in code.
+    const { data } = await supabase
+      .from("paid_services")
+      .select(
+        "id,name,category,criticality,status,cost,currency,billing_cycle,next_due_date,auto_renew,payment_method,card_expiry,balance_remaining,balance_unit,low_balance_threshold,alert_lead_days,snoozed_until,purpose,plan",
+      )
+      .limit(500);
+    if (data) out.paidAccounts = summarise(data as unknown as PaidService[], brisbaneToday()).needingAttention;
   } catch { /* swallow */ }
   return out;
 }
