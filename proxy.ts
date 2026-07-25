@@ -224,6 +224,17 @@ export function isPublicPortalRoute(pathname: string): boolean {
   return false;
 }
 
+// External-cron trigger route. Netlify's scheduled functions stopped executing,
+// so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
+// machine caller with no Cloudflare Access identity. Exempt from the CF Access
+// gate here; re-secured by a shared secret INSIDE the route (Authorization:
+// Bearer CRON_SECRET, constant-time compared). Must mirror the CF Access bypass
+// app (crm.nextkey.com.au/api/cron/*) EXACTLY. The CSRF origin check above still
+// applies, but a server-to-server POST sends no Origin, so it passes.
+export function isCronRoute(pathname: string): boolean {
+  return pathname === "/api/cron" || pathname.startsWith("/api/cron/");
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -289,7 +300,8 @@ export async function proxy(req: NextRequest) {
     isPublicSignRoute(pathname) ||
     isPublicGuestRoute(pathname) ||
     isPublicBookingRoute(pathname) ||
-    isPublicPortalRoute(pathname)
+    isPublicPortalRoute(pathname) ||
+    isCronRoute(pathname)
   ) {
     return NextResponse.next();
   }
