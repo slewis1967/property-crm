@@ -67,8 +67,14 @@ function fy(startYear: number): FinancialYear {
  * "Year to date".
  */
 export function financialYearsNeeded(now: Date): [FinancialYear, FinancialYear] {
-  const month = now.getMonth(); // 0-based; 6 = July
-  const year = now.getFullYear();
+  // The Australian financial year is an AEST concept, and this runs on servers
+  // set to UTC. Reading the local month would move the boundary by the server's
+  // offset — a 1 October changeover would fire on 30 September in UTC. Shift the
+  // instant into AEST (UTC+10; QLD has no DST, the same convention utils/booking.ts
+  // uses) and read UTC fields off that.
+  const aest = new Date(now.getTime() + 10 * 60 * 60 * 1000);
+  const month = aest.getUTCMonth(); // 0-based; 6 = July
+  const year = aest.getUTCFullYear();
   // Start year of the financial year we are currently inside.
   const inProgressStart = month >= 6 ? year : year - 1;
   // Jul/Aug/Sep — the in-progress year is too new to be useful.

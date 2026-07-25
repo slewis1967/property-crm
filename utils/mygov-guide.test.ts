@@ -36,6 +36,14 @@ describe("financialYearsNeeded", () => {
     expect(financialYearsNeeded(new Date("2026-09-30T00:00:00+10:00"))[0].label).toBe("2025-26");
     expect(financialYearsNeeded(new Date("2026-10-01T00:00:00+10:00"))[0].label).toBe("2026-27");
   });
+  it("uses the boundary in AEST, not the server's timezone", () => {
+    // This runs on UTC servers but is about the AUSTRALIAN financial year, so
+    // the changeover must follow the client's calendar, not the machine's.
+    // 2026-09-30T23:00Z is already 1 October in Brisbane...
+    expect(financialYearsNeeded(new Date("2026-09-30T23:00:00Z"))[0].label).toBe("2026-27");
+    // ...and 2026-09-30T13:00Z is still 30 September there.
+    expect(financialYearsNeeded(new Date("2026-09-30T13:00:00Z"))[0].label).toBe("2025-26");
+  });
   it("labels a turn-of-century year correctly", () => {
     // 2099-00 would be wrong; the modulo must wrap to two digits.
     const [a] = financialYearsNeeded(new Date("2100-03-01T00:00:00+10:00"));
