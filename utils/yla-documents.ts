@@ -46,7 +46,9 @@ export const YLA_DOCUMENTS: DocSpec[] = [
   {
     key: "ato_income",
     label: "ATO Income Statement",
-    hint: "Both the previous and the current financial year. Use the step-by-step myGov guide below if you're not sure how to get it.",
+    hint:
+      "The payment summary you download from the ATO section of your myGov account — not your tax return, and not a summary from your employer. " +
+      "We need both the previous and the current financial year. Use the step-by-step myGov guide below if you're not sure how to get it.",
     count: 2,
     filenameBase: "ATO Income Statement",
   },

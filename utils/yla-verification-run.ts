@@ -20,6 +20,7 @@ import {
   visualIssues,
   docVerdict,
   buildResult,
+  atoYearCoverageIssues,
   type DocVerdict,
   type VerificationResult,
 } from "./yla-verification";
@@ -44,7 +45,15 @@ export type VerifyRunResult =
       result: VerificationResult;
     };
 
-type Matched = { applicant: string; docKey: string; filename: string; storage_path: string; mime: string };
+type Matched = {
+  applicant: string;
+  docKey: string;
+  /** 1-based index within the doc type — licence front vs back reads differently. */
+  slot: number;
+  filename: string;
+  storage_path: string;
+  mime: string;
+};
 
 export async function runApplicationVerification(
   id: string,
@@ -103,6 +112,7 @@ export async function runApplicationVerification(
       matched.push({
         applicant: who,
         docKey: slot.docKey,
+        slot: slot.slot,
         filename: m.filename,
         storage_path: m.storage_path,
         mime: m.mime_type || "application/pdf",
@@ -111,6 +121,8 @@ export async function runApplicationVerification(
   }
 
   const verdicts: DocVerdict[] = new Array(matched.length);
+  /** Per-document facts only the cross-document checks below can act on. */
+  const financialYears: (string | null)[] = new Array(matched.length).fill(null);
   let next = 0;
   async function worker() {
     while (next < matched.length) {
@@ -140,7 +152,7 @@ export async function runApplicationVerification(
                 role: "user",
                 content: [
                   { type: "file", file: { filename: m.filename, file_data: dataUrl } },
-                  { type: "text", text: visualCheckPrompt(m.docKey) },
+                  { type: "text", text: visualCheckPrompt(m.docKey, m.slot) },
                 ],
               },
             ],
@@ -148,7 +160,9 @@ export async function runApplicationVerification(
           };
           const response = await orChat(chatBody);
           const text = response.choices?.[0]?.message?.content;
-          visual.push(...visualIssues(parseVisualVerdict(typeof text === "string" ? text : "")));
+          const verdict = parseVisualVerdict(typeof text === "string" ? text : "");
+          financialYears[i] = verdict.financialYear ?? null;
+          visual.push(...visualIssues(verdict));
         }
       } catch (e) {
         structural.push(`couldn't be checked (${e instanceof Error ? e.message : "read error"})`);
@@ -157,6 +171,20 @@ export async function runApplicationVerification(
     }
   }
   await Promise.all(Array.from({ length: Math.min(AI_CONCURRENCY, matched.length) }, () => worker()));
+
+  // Cross-document: two ATO statements for the same financial year pass every
+  // per-file check but are still a YLA rejection. Only visible across the pair.
+  const atoIndexes = matched.map((m, i) => ({ m, i })).filter(({ m }) => m.docKey === "ato_income");
+  const yearIssues = atoYearCoverageIssues(
+    atoIndexes.map(({ m, i }) => ({ applicant: m.applicant, financialYear: financialYears[i]! })),
+  );
+  for (const [nth, issue] of yearIssues) {
+    const target = atoIndexes[nth];
+    const verdict = target ? verdicts[target.i] : undefined;
+    if (!verdict) continue;
+    verdict.issues.push(issue);
+    verdict.pass = false;
+  }
 
   const result = buildResult({ applicantCount: siblings.length, received, missing, docs: verdicts.filter(Boolean) });
   const driveFolderUrl = siblings.map((s) => s.drive_folder_url).find(Boolean) ?? null;
