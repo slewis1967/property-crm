@@ -68,7 +68,7 @@ const FIX_GUIDANCE: Record<string, string> = {
   payslip: "Download the PDF payslips from your payroll/employer system rather than taking a screenshot.",
   photo_id: "A clear image of your licence — both the front and the back.",
   ato_income:
-    "Download the official PDF from myGov (ATO → Income statement) for the relevant financial year. A screenshot of the screen won't be accepted — use the Save-as-PDF / download option.",
+    "Download the official PDF from myGov (ATO → Income statement). We need two: one for the PREVIOUS financial year and one for the CURRENT one — if you had more than one employer, that is still two years, not two employers. A screenshot of the screen won't be accepted — use the Save-as-PDF / download option.",
   super_statement: "Your most recent super statement as a PDF, from myGov or your fund's website.",
 };
 
