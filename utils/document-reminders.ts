@@ -258,9 +258,10 @@ export function renderReminder(kind: ReminderKind, ctx: ReminderContext): Render
     cutoff: `This week's assessment closes at 5pm today. ${progressLine} ${outstandingText} Anything in before 5pm is looked at tomorrow — after that it's a full week's wait.`.trim(),
   };
 
+  const logo = `${origin()}/api/portal/logo`;
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:0 auto">
-    <div style="background:${AMBER};color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
-      <div style="font-size:18px;font-weight:bold">Springboard Homes</div>
+    <div style="background:#fff;padding:18px 22px;border:1px solid #e5e7eb;border-bottom:none;border-radius:8px 8px 0 0;text-align:center">
+      <img src="${logo}" alt="Springboard Homes" width="240" style="width:240px;max-width:70%;height:auto">
     </div>
     <div style="border:1px solid #e5e7eb;border-top:none;padding:22px;border-radius:0 0 8px 8px">
       <p style="margin:0 0 16px">${greet}</p>

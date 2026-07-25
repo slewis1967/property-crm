@@ -152,6 +152,8 @@ export default function PortalClient({ token }: { token: string }) {
   if (loadError) {
     return (
       <Centered>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/api/portal/logo" alt="Springboard Homes" className="mx-auto mb-6 h-10 w-auto" />
         <h1 className="text-xl font-semibold text-gray-900">This link isn&apos;t working</h1>
         <p className="mt-3 text-gray-600">{loadError}</p>
         <p className="mt-6 text-sm text-gray-500">
@@ -176,8 +178,9 @@ export default function PortalClient({ token }: { token: string }) {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-8 pb-24">
         <header>
-          <p className="text-sm font-medium text-amber-700">Springboard Homes</p>
-          <h1 className="mt-1 text-2xl font-semibold text-gray-900">Your documents</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/api/portal/logo" alt="Springboard Homes" className="h-12 w-auto" />
+          <h1 className="mt-3 text-2xl font-semibold text-gray-900">Your documents</h1>
           <p className="mt-2 text-gray-600">
             Hello {state.applicant_name.split(" ")[0]} — we need a few documents to complete your
             assessment. You can do this on your phone, and you don&apos;t need an account.

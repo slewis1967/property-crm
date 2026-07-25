@@ -31,6 +31,10 @@ export function clientDocFixupEnabled(): boolean {
 function origin(): string {
   return (process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://crm.nextkey.com.au").replace(/\/+$/, "");
 }
+/** Public, CF-exempt Springboard Homes logo (for email image proxies). */
+function logoUrl(): string {
+  return `${origin()}/api/portal/logo`;
+}
 // These document-collection clients are SPRINGBOARD HOMES' (the community-
 // funding product that feeds YLA), so this email carries the Springboard brand —
 // from Glenn at Springboard Homes, NOT NextKey. Sends from the verified,
@@ -116,11 +120,12 @@ function renderFixup(opts: { applicantName: string | null; link: string; flagged
     )
     .join("");
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.5">
+    <div style="text-align:center;padding:4px 0 14px"><img src="${logoUrl()}" alt="Springboard Homes" width="240" style="width:240px;max-width:70%;height:auto"></div>
     <p>Hi ${escapeHtml(first)},</p>
     <p>Thanks for uploading your documents — you're almost there. Our lending partner reviews everything to bank standard, and a couple of files need to be re-supplied in the right format before we can put your application forward:</p>
     <ul style="padding-left:20px">${htmlRows}</ul>
     <p style="margin:20px 0">
-      <a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">Re-upload your documents</a>
+      <a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#020e40;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">Re-upload your documents</a>
     </p>
     <p style="font-size:13px;color:#555">Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(opts.link)}</span></p>
     <p>Getting these in as PDFs is the last step before we can move you forward. Any questions, just reply to this email.</p>
