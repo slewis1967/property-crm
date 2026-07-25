@@ -4,9 +4,9 @@ import { supabase } from "../../../utils/supabase";
 import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import type { OpportunityDoc } from "./OpportunityDocuments";
-import type { SupportingDoc } from "./OpportunitySupportingDocuments";
+import type { SupportingDoc, UploadTarget } from "./OpportunitySupportingDocuments";
 import type { LiveTask } from "./OpportunityTasks";
-import { DOC_BY_KEY } from "../../../utils/yla-documents";
+import { DOC_BY_KEY, requiredSlots } from "../../../utils/yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../utils/document-requests-db";
 import { log, errInfo } from "@/utils/logger";
 
@@ -113,6 +113,58 @@ async function fetchSupportingDocuments(opportunityId: string): Promise<Supporti
     }));
   } catch (e) {
     log.warn("opportunity_supporting_documents.fetch_failed", { ...errInfo(e) });
+    return [];
+  }
+}
+
+/**
+ * The applicants on this opportunity and which of YLA's document slots are
+ * still empty — so the advisor can upload on a client's behalf when they post
+ * or email their paperwork in rather than using the portal.
+ */
+async function fetchUploadTargets(opportunityId: string): Promise<UploadTarget[]> {
+  try {
+    const { data: reqs } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select("id,applicant_name,status,opportunity_id,created_at")
+      .eq("opportunity_id", opportunityId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true });
+    const requests = reqs ?? [];
+    if (requests.length === 0) return [];
+
+    const { data: docs } = await supabase
+      .from("client_documents")
+      .select("request_id,doc_type")
+      .in("request_id", requests.map((r) => String(r.id)))
+      .neq("status", "replaced");
+
+    return requests.map((r) => {
+      const mine = (docs ?? []).filter((d) => String(d.request_id) === String(r.id));
+      // Slots fill in order within a doc type, matching how the verification
+      // gate pairs uploads to slots — so "slot 2" is simply the second file.
+      const usedByType = new Map<string, number>();
+      for (const d of mine) {
+        const k = String(d.doc_type);
+        usedByType.set(k, (usedByType.get(k) ?? 0) + 1);
+      }
+      const filledSlots = new Set<string>();
+      for (const [type, n] of usedByType) {
+        for (let i = 1; i <= n; i++) filledSlots.add(`${type}:${i}`);
+      }
+      return {
+        requestId: String(r.id),
+        applicant: (r.applicant_name as string) || "Applicant",
+        slots: requiredSlots().map((s) => ({
+          docKey: s.docKey,
+          label: s.label,
+          slot: s.slot,
+          filled: filledSlots.has(`${s.docKey}:${s.slot}`),
+        })),
+      };
+    });
+  } catch (e) {
+    log.warn("opportunity_upload_targets.fetch_failed", { ...errInfo(e) });
     return [];
   }
 }
@@ -238,10 +290,11 @@ export default async function OpportunityDetailPage({
     lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
   }
 
-  const [{ ghlContactId, archive }, documents, supportingDocuments, liveTasks] = await Promise.all([
+  const [{ ghlContactId, archive }, documents, supportingDocuments, uploadTargets, liveTasks] = await Promise.all([
     resolveGhlArchiveForLead(lead.email),
     fetchOpportunityDocuments(lead.primary_contact_id, id),
     fetchSupportingDocuments(id),
+    fetchUploadTargets(id),
     fetchLiveTasks(lead.primary_contact_id),
   ]);
 
@@ -252,6 +305,7 @@ export default async function OpportunityDetailPage({
       ghlContactId={ghlContactId}
       documents={documents}
       supportingDocuments={supportingDocuments}
+      uploadTargets={uploadTargets}
       liveTasks={liveTasks}
       opportunityId={id}
     />
