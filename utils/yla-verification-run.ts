@@ -25,6 +25,7 @@ import {
   type VerificationResult,
 } from "./yla-verification";
 import { missingComplianceDocs } from "./yla-package";
+import { financialYearsNeeded } from "./mygov-guide";
 
 const BUCKET = "client-documents";
 const SELECT =
@@ -173,11 +174,13 @@ export async function runApplicationVerification(
   }
   await Promise.all(Array.from({ length: Math.min(AI_CONCURRENCY, matched.length) }, () => worker()));
 
-  // Cross-document: two ATO statements for the same financial year pass every
-  // per-file check but are still a YLA rejection. Only visible across the pair.
+  // Cross-document: a whole financial year can be missing while every file
+  // passes on its own. NOT a duplicate-year check — myGov issues one statement
+  // per employer, so two for the same year is correct for a two-job year.
   const atoIndexes = matched.map((m, i) => ({ m, i })).filter(({ m }) => m.docKey === "ato_income");
   const yearIssues = atoYearCoverageIssues(
     atoIndexes.map(({ m, i }) => ({ applicant: m.applicant, financialYear: financialYears[i]! })),
+    financialYearsNeeded(new Date()).map((y) => y.label),
   );
   for (const [nth, issue] of yearIssues) {
     const target = atoIndexes[nth];

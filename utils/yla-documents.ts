@@ -48,7 +48,8 @@ export const YLA_DOCUMENTS: DocSpec[] = [
     label: "ATO Income Statement",
     hint:
       "The payment summary you download from the ATO section of your myGov account — not your tax return, and not a summary from your employer. " +
-      "We need both the previous and the current financial year. Use the step-by-step myGov guide below if you're not sure how to get it.",
+      "We need the previous and the current financial year. myGov lists one statement per employer, so if you had two jobs in a year, upload both of that year's statements. " +
+      "Use the step-by-step myGov guide below if you're not sure how to get them.",
     count: 2,
     filenameBase: "ATO Income Statement",
   },

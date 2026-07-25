@@ -170,21 +170,32 @@ export function normaliseFinancialYear(raw: unknown): string | null {
 
 /**
  * Cross-document check: YLA require the PREVIOUS **and** the CURRENT financial
- * year's ATO Income Statement per applicant. Every per-document check can pass
- * while the pair covers the same year twice — which is exactly what happened to
- * NK-10010, where an applicant with two employers uploaded two 2025-26
- * statements and no 2024-25. Nothing in the file itself is wrong, so only the
- * pair can reveal it.
+ * year's ATO income statements per applicant. Every per-document check can pass
+ * while a whole year is missing — the NK-10010 case, where an applicant sent two
+ * 2025-26 statements and nothing for 2024-25. Nothing in either file is wrong,
+ * so only the set can reveal it.
  *
- * Deliberately narrow: flags ONLY a positively-detected duplicate year. An
- * unreadable year is not evidence of a problem, and a false positive here costs
- * a real client a pointless "re-upload this" email — the failure mode this
- * module has already been bitten by once.
+ * CHECKS FOR A MISSING YEAR, NOT A DUPLICATE ONE. myGov issues a SEPARATE income
+ * statement per employer — strictly, per ABN + branch + BMS ID combination, so
+ * one employer can even produce two if they changed payroll systems mid-year.
+ * There is no combined document. Two statements for the same year is therefore
+ * the CORRECT and complete picture for anyone who had two jobs that year, and an
+ * earlier version of this function flagged exactly that as a fault. It would
+ * have told every multi-employer client to fix a set that was already right.
+ *
+ * Deliberately narrow in the other direction too: a year counts as missing only
+ * when at least one year WAS readable. If we couldn't read any of them we know
+ * nothing, and guessing costs a real client a pointless "re-upload this" email.
  */
 export type AtoYearInput = { applicant: string; financialYear: string | null };
 
-export function atoYearCoverageIssues(docs: AtoYearInput[]): Map<number, string> {
+export function atoYearCoverageIssues(
+  docs: AtoYearInput[],
+  requiredYears: readonly string[],
+): Map<number, string> {
   const out = new Map<number, string>();
+  if (requiredYears.length === 0) return out;
+
   const byApplicant = new Map<string, number[]>();
   docs.forEach((d, i) => {
     const list = byApplicant.get(d.applicant) ?? [];
@@ -193,23 +204,26 @@ export function atoYearCoverageIssues(docs: AtoYearInput[]): Map<number, string>
   });
 
   for (const indexes of byApplicant.values()) {
-    const seen = new Map<string, number[]>();
+    const present = new Set<string>();
     for (const i of indexes) {
       const fy = docs[i]!.financialYear;
-      if (!fy) continue;
-      const list = seen.get(fy) ?? [];
-      list.push(i);
-      seen.set(fy, list);
+      if (fy) present.add(fy);
     }
-    for (const [fy, dupes] of seen) {
-      if (dupes.length < 2) continue;
-      for (const i of dupes) {
-        out.set(
-          i,
-          `both ATO Income Statements are for ${fy} — YLA need the previous AND the current financial year`,
-        );
-      }
-    }
+    // Nothing readable → no evidence either way.
+    if (present.size === 0) continue;
+
+    const missing = requiredYears.filter((y) => !present.has(y));
+    if (missing.length === 0) continue;
+
+    // One issue per applicant, on their first ATO document, so the client's
+    // fixup email says it once rather than repeating it per file.
+    const anchor = indexes[0];
+    if (anchor === undefined) continue;
+    out.set(
+      anchor,
+      `no ATO Income Statement for ${missing.join(" or ")} — YLA need every statement for both ${requiredYears.join(" and ")} ` +
+        `(myGov issues one per employer, so a year with two jobs has two statements)`,
+    );
   }
   return out;
 }
