@@ -22,6 +22,21 @@ import { buildYlaInvite } from "./yla-submit";
 import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
 import { sendClientDocFixups, clientDocFixupEnabled } from "./yla-remediation-email";
+import { notifyYlaSubmissionHeld } from "./yla-hold-notify";
+
+/**
+ * Hold the last step: package the application to Drive, then wait for a human
+ * to press send. Set while building confidence in the pipeline — the first real
+ * submission to a live partner is worth eyeballing, and a rejected set costs a
+ * week. Unset it to go fully unattended again.
+ *
+ * Deliberately separate from YLA_AUTOSUBMIT_ENABLED: that gate makes the sweep
+ * a dry run, which produces no Drive folder to inspect. This one produces the
+ * complete package and stops at the send.
+ */
+export function ylaSubmitHold(): boolean {
+  return process.env.YLA_SUBMIT_HOLD === "true";
+}
 
 export function ylaAutoSubmitEnabled(): boolean {
   return process.env.YLA_AUTOSUBMIT_ENABLED === "true";
@@ -42,6 +57,7 @@ type Candidate = {
 
 export type SweepAction =
   | { application: string; applicant: string; action: "submitted"; drive_folder_url: string }
+  | { application: string; applicant: string; action: "held"; drive_folder_url: string }
   | { application: string; applicant: string; action: "flagged"; issues: string[]; emailedClients?: string[] }
   | { application: string; applicant: string; action: "would_submit" }
   | { application: string; applicant: string; action: "would_flag"; issues: string[]; emailedClients?: string[] }
@@ -122,6 +138,11 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     if (rep.verification_status === "failed" && rep.verified_at && latestUpload && latestUpload <= rep.verified_at) {
       continue;
     }
+    // Skip a set already HELD for human release: it passed and was packaged to
+    // Drive, but yla_submitted_at is still null because a person hasn't pressed
+    // send. Without this it would re-verify, re-notify and re-pay for the AI
+    // pass every two hours until released.
+    if (rep.verification_status === "passed") continue;
     processed++;
 
     const run = await runApplicationVerification(rep.id, { visual: true });
@@ -170,6 +191,29 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     const exp = await exportApplicationToDrive(rep.id);
     if (!exp.ok) {
       actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `export: ${exp.error}` });
+      continue;
+    }
+
+    // HOLD — the package is built and in Drive, but a human presses send.
+    // Nothing about the set is wrong; this exists so a first (or otherwise
+    // sensitive) submission can be eyeballed before it reaches a real partner.
+    // Releasing is the "Send to YLA" button, which calls the same submit
+    // primitive this sweep would have used.
+    if (ylaSubmitHold()) {
+      await supabase
+        .from(DOCUMENT_REQUESTS_TABLE)
+        // Deliberately NOT yla_submitted_at — it isn't submitted. "passed" with
+        // no submission timestamp IS the held state, and the candidate scan
+        // above skips it, so this notifies once rather than every two hours.
+        .update({ verification_status: "passed", verified_at: now.toISOString(), updated_at: now.toISOString() })
+        .in("id", ids);
+      await notifyYlaSubmissionHeld({
+        primaryApplicant: run.primaryApplicant,
+        clientRef: run.clientRef,
+        driveUrl: exp.folderUrl,
+        requestId: rep.id,
+      });
+      actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "held", drive_folder_url: exp.folderUrl });
       continue;
     }
 
