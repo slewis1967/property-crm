@@ -18,6 +18,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
 import { normaliseToPdf } from "./normalise";
 import MyGovGuide from "./MyGovGuide";
+import {
+  MyDocumentsSection,
+  HelpSection,
+  BookSection,
+  JourneySection,
+  type SignedDoc,
+} from "./PortalSections";
 
 type Slot = {
   docKey: string;
@@ -37,9 +44,21 @@ type State = {
   status: string;
   slots: Slot[];
   extra_slots?: ExtraSlot[];
+  signed_documents?: SignedDoc[];
+  booking_url?: string;
   outstanding: number;
   complete: boolean;
 };
+
+/** The portal is no longer just an upload form. */
+type Tab = "upload" | "documents" | "help" | "next" | "book";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "upload", label: "Upload" },
+  { id: "documents", label: "My documents" },
+  { id: "help", label: "Help" },
+  { id: "next", label: "What's next" },
+  { id: "book", label: "Talk to us" },
+];
 
 const slotId = (s: Slot) => `${s.docKey}:${s.slot}`;
 
@@ -49,6 +68,7 @@ export default function PortalClient({ token }: { token: string }) {
   const [busy, setBusy] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [guideOpen, setGuideOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("upload");
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Pure fetch — returns a result rather than setting state, so the effect below
@@ -219,6 +239,47 @@ export default function PortalClient({ token }: { token: string }) {
           )}
         </div>
 
+        <nav className="mt-5 flex gap-1 overflow-x-auto border-b border-gray-200">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`whitespace-nowrap px-3 py-2 text-sm font-medium transition ${
+                tab === t.id
+                  ? "border-b-2 border-[#020e40] text-[#020e40]"
+                  : "border-b-2 border-transparent text-gray-500 hover:text-gray-800"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        {tab !== "upload" && (
+          <div className="mt-5">
+            {tab === "documents" && (
+              <MyDocumentsSection
+                token={token}
+                documents={state.slots
+                  .filter((s) => s.document)
+                  .map((s) => ({
+                    id: s.document!.id,
+                    label: s.label,
+                    filename: s.document!.filename,
+                    status: s.document!.status,
+                  }))}
+                signedDocuments={state.signed_documents ?? []}
+              />
+            )}
+            {tab === "help" && <HelpSection onOpenWalkthrough={() => setGuideOpen(true)} />}
+            {tab === "next" && <JourneySection />}
+            {tab === "book" && <BookSection bookingUrl={state.booking_url ?? "/book/glenn"} />}
+          </div>
+        )}
+
+        {tab === "upload" && (
+        <>
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
           <p className="font-medium">A tip that saves time</p>
           <p className="mt-1">
@@ -349,6 +410,9 @@ export default function PortalClient({ token }: { token: string }) {
               );
             })}
         </section>
+
+        </>
+        )}
 
         <footer className="mt-10 border-t border-gray-200 pt-6 text-sm text-gray-500">
           <p>

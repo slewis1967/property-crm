@@ -15,6 +15,8 @@ export type PortalRequest = {
   client_ref: string | null;
   applicant_name: string;
   applicant_email: string | null;
+  /** Resolves the client's own signed compliance documents. */
+  contact_id: string | null;
   status: string;
   expires_at: string;
   drive_folder_url: string | null;
@@ -39,7 +41,7 @@ export async function resolveToken(token: string): Promise<Resolved> {
 
   const { data, error } = await supabase
     .from("document_requests")
-    .select("id,client_ref,applicant_name,applicant_email,status,expires_at,drive_folder_url")
+    .select("id,client_ref,applicant_name,applicant_email,contact_id,status,expires_at,drive_folder_url")
     .eq("token_hash", hashToken(token))
     .maybeSingle();
 

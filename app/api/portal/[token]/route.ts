@@ -10,6 +10,8 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { NEEDS_ANALYSIS_TERMINAL_STATUS } from "../../../../utils/needsAnalysis";
+import { CREDIT_AUTHORISATION_TERMINAL_STATUS } from "../../../../utils/creditAuthorisation";
 import {
   requiredSlots,
   allowsExtra,
@@ -110,6 +112,20 @@ export async function GET(
     return next <= maxSlotFor(key) ? { docKey: key, label: DOC_BY_KEY[key]?.label ?? key, slot: next } : null;
   }).filter(Boolean);
 
+  // Which of the client's OWN signed compliance documents they can open.
+  // Presence only — the PDFs render on demand at /compliance/<kind>.
+  const signedDocs: { kind: string; label: string }[] = [];
+  if (request.contact_id) {
+    const [na, ca] = await Promise.all([
+      supabase.from("nccp_needs_analyses").select("id").eq("contact_id", request.contact_id)
+        .eq("status", NEEDS_ANALYSIS_TERMINAL_STATUS).limit(1).maybeSingle(),
+      supabase.from("credit_authorisations").select("id").eq("contact_id", request.contact_id)
+        .eq("status", CREDIT_AUTHORISATION_TERMINAL_STATUS).limit(1).maybeSingle(),
+    ]);
+    if (na.data) signedDocs.push({ kind: "needs-analysis", label: "Needs Analysis" });
+    if (ca.data) signedDocs.push({ kind: "credit-authorisation", label: "Credit Authorisation" });
+  }
+
   const outstanding = filled.filter((s) => !s.document).length;
 
   return NextResponse.json({
@@ -119,6 +135,8 @@ export async function GET(
     status: request.status,
     slots: filled,
     extra_slots: extraSlots,
+    signed_documents: signedDocs,
+    booking_url: `${(process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://crm.nextkey.com.au").replace(/\/+$/, "")}/book/glenn`,
     outstanding,
     complete: outstanding === 0,
     limits: { max_bytes: YLA_MAX_BYTES, accepted_mime: ACCEPTED_MIME },
