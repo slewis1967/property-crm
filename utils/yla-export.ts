@@ -11,9 +11,11 @@ import { supabase } from "./supabase";
 import { requiredSlots, surnameOf } from "./yla-documents";
 import { exportToDrive } from "./google-drive";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
+import { buildYlaPackageDocs } from "./yla-package";
 
 const BUCKET = "client-documents";
-const SELECT = "id,client_ref,application_id,applicant_name,status,drive_folder_url,created_at";
+const SELECT =
+  "id,client_ref,application_id,applicant_name,contact_id,status,drive_folder_url,created_at";
 const DL_CONCURRENCY = 6;
 
 export type ExportRunResult =
@@ -101,6 +103,26 @@ export async function exportApplicationToDrive(id: string, opts?: { force?: bool
   if (files.length === 0) return { ok: false, status: 409, error: "No documents to export yet." };
 
   const primary = siblings[0]!;
+
+  // The two documents YLA need that the client never uploads: the signed Needs
+  // Analysis and Credit File Authorisation. Without these the folder is a
+  // partial set, and YLA reject partial sets outright — so a missing one blocks
+  // the export rather than quietly shipping an incomplete package. `force` is
+  // the same manual override that bypasses outstanding client documents.
+  let packageDocs;
+  try {
+    packageDocs = await buildYlaPackageDocs({
+      contactId: (primary as { contact_id?: string | null }).contact_id ?? null,
+      clientRef: primary.client_ref,
+      primaryApplicant: primary.applicant_name,
+    });
+  } catch (e) {
+    return { ok: false, status: 500, error: e instanceof Error ? e.message : "Could not prepare the Needs Analysis / Credit Authorisation." };
+  }
+  if (packageDocs.missing.length > 0 && !force) {
+    return { ok: false, status: 409, error: `Not ready for YLA — ${packageDocs.missing.join("; ")}.` };
+  }
+  files.push(...packageDocs.docs.map((d) => ({ name: d.name, bytes: d.bytes, mime: d.mime })));
   const surname = surnameOf(primary.applicant_name) || primary.applicant_name;
   const today = new Date().toISOString().slice(0, 10);
   const ref = primary.client_ref ? ` (${primary.client_ref})` : "";

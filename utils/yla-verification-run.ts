@@ -24,10 +24,11 @@ import {
   type DocVerdict,
   type VerificationResult,
 } from "./yla-verification";
+import { missingComplianceDocs } from "./yla-package";
 
 const BUCKET = "client-documents";
 const SELECT =
-  "id,client_ref,application_id,applicant_name,status,created_at,drive_folder_url,yla_submitted_at";
+  "id,client_ref,application_id,applicant_name,contact_id,status,created_at,drive_folder_url,yla_submitted_at";
 const AI_CONCURRENCY = 5;
 
 export type VerifyRunResult =
@@ -184,6 +185,18 @@ export async function runApplicationVerification(
     if (!verdict) continue;
     verdict.issues.push(issue);
     verdict.pass = false;
+  }
+
+  // The two documents the client never uploads. They belong in `missing` (a
+  // rep task) rather than in the per-document verdicts, so an unsigned Needs
+  // Analysis blocks the YLA submission WITHOUT emailing the client to re-upload
+  // something they were never asked for.
+  try {
+    missing.push(
+      ...(await missingComplianceDocs((request as { contact_id?: string | null }).contact_id ?? null)),
+    );
+  } catch (e) {
+    missing.push(e instanceof Error ? e.message : "Could not check the Needs Analysis / Credit Authorisation.");
   }
 
   const result = buildResult({ applicantCount: siblings.length, received, missing, docs: verdicts.filter(Boolean) });
