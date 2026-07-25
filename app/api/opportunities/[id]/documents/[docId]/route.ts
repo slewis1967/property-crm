@@ -1,8 +1,13 @@
 /**
- * GET /api/opportunities/<id>/documents/<docId>   (AUTHED)
+ * GET /api/opportunities/<id>/documents/<docId>[?preview=1]   (AUTHED)
  *
  * Streams a client-uploaded supporting document back to the advisor by minting a
- * short-lived signed URL for it and redirecting. Access is scoped to the
+ * short-lived signed URL for it and redirecting.
+ *
+ * ?preview=1 serves it INLINE so it opens in a browser tab instead of landing in
+ * the downloads folder — the advisor usually wants to glance at a payslip, not
+ * keep a copy. Everything else (auth, opportunity scoping, URL lifetime) is
+ * identical; only the Content-Disposition differs. Access is scoped to the
  * opportunity: the document must belong to a non-cancelled document_request
  * whose opportunity_id matches <id>, so one opportunity's link can never reach
  * another's files.
@@ -24,6 +29,7 @@ export async function GET(
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const { id, docId } = await params;
+  const inline = new URL(req.url).searchParams.get("preview") === "1";
 
   // The document and the request it belongs to.
   const { data: doc, error: docErr } = await supabase
@@ -47,9 +53,11 @@ export async function GET(
   }
 
   const downloadName = (doc.original_name as string) || (doc.filename as string) || "document.pdf";
+  // Omitting `download` leaves the object's own content-type in play, which is
+  // what makes the browser render it rather than save it.
   const { data: signed, error: signErr } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(doc.storage_path as string, 60, { download: downloadName });
+    .createSignedUrl(doc.storage_path as string, 60, inline ? undefined : { download: downloadName });
   if (signErr || !signed?.signedUrl) {
     return NextResponse.json(
       { ok: false, error: signErr?.message || "Could not read the document" },

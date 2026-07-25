@@ -13,7 +13,7 @@ import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
 import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
-import OpportunitySupportingDocuments, { type SupportingDoc } from "./OpportunitySupportingDocuments";
+import OpportunitySupportingDocuments, { type SupportingDoc, type UploadTarget } from "./OpportunitySupportingDocuments";
 import OpportunityTasks, { type LiveTask } from "./OpportunityTasks";
 import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
@@ -109,6 +109,7 @@ export default function OpportunityDetail({
   ghlContactId = null,
   documents = [],
   supportingDocuments = [],
+  uploadTargets = [],
   liveTasks = [],
   opportunityId,
 }: {
@@ -117,6 +118,7 @@ export default function OpportunityDetail({
   ghlContactId?: string | null;
   documents?: OpportunityDoc[];
   supportingDocuments?: SupportingDoc[];
+  uploadTargets?: UploadTarget[];
   liveTasks?: LiveTask[];
   opportunityId: string;
 }) {
@@ -754,7 +756,11 @@ export default function OpportunityDetail({
           <OpportunityDocuments documents={documents} />
 
           {/* Supporting documents the client uploaded through their portal */}
-          <OpportunitySupportingDocuments opportunityId={opportunityId} documents={supportingDocuments} />
+          <OpportunitySupportingDocuments
+            opportunityId={opportunityId}
+            documents={supportingDocuments}
+            uploadTargets={uploadTargets}
+          />
 
           {/* Live tasks (the "Add task" TODOs) — also shown in the War Room */}
           <OpportunityTasks tasks={liveTasks} onAddTask={() => setShowAddTask(true)} />

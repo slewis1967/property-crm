@@ -14,8 +14,8 @@
  * outcome is their own set being marked incomplete, which the rep sees.
  */
 import { NextResponse } from "next/server";
-import { supabase } from "../../../../../utils/supabase";
 import { resolveToken } from "../../_shared";
+import { confirmClientDocumentUpload } from "../../../../../utils/client-document-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -30,27 +30,12 @@ export async function POST(
   }
 
   const body = await req.json().catch(() => ({}));
-  const documentId = body?.document_id;
-  const succeeded = body?.ok !== false;
 
-  if (!documentId || typeof documentId !== "string") {
-    return NextResponse.json({ ok: false, error: "document_id required" }, { status: 400 });
-  }
-
-  // Scope the update to this request's own documents — a token must never be
-  // able to touch another client's row.
-  const { error } = await supabase
-    .from("client_documents")
-    .update(
-      succeeded
-        ? { status: "accepted", check_notes: null }
-        : { status: "replaced", check_notes: "Upload did not complete" },
-    )
-    .eq("id", documentId)
-    .eq("request_id", resolved.request.id);
-
-  if (error) {
-    return NextResponse.json({ ok: false, error: "Could not confirm the upload." }, { status: 500 });
-  }
+  const res = await confirmClientDocumentUpload({
+    requestId: resolved.request.id,
+    documentId: body?.document_id,
+    succeeded: body?.ok !== false,
+  });
+  if (!res.ok) return NextResponse.json({ ok: false, error: res.error }, { status: res.status });
   return NextResponse.json({ ok: true });
 }
