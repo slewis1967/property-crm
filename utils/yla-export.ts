@@ -8,7 +8,7 @@
  * existing folder rather than duplicating it.
  */
 import { supabase } from "./supabase";
-import { requiredSlots, surnameOf } from "./yla-documents";
+import { requiredSlots, surnameOf, allowsExtra } from "./yla-documents";
 import { exportToDrive } from "./google-drive";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import { buildYlaPackageDocs } from "./yla-package";
@@ -72,6 +72,19 @@ export async function exportApplicationToDrive(id: string, opts?: { force?: bool
       }
       used.add(match.id);
       matches.push({ filename: match.filename, storage_path: match.storage_path, mime: match.mime_type || "application/pdf" });
+    }
+
+    // Anything beyond the required slots — extra ATO income statements, one per
+    // employer. Without this the folder would silently omit a statement the
+    // client did supply, and YLA would reject the set for being incomplete.
+    for (const d of docs ?? []) {
+      if (used.has(d.id) || !allowsExtra(d.doc_type as string)) continue;
+      used.add(d.id);
+      matches.push({
+        filename: d.filename as string,
+        storage_path: d.storage_path as string,
+        mime: (d.mime_type as string) || "application/pdf",
+      });
     }
   }
 

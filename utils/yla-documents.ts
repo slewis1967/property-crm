@@ -22,11 +22,29 @@ export type DocSpec = {
   label: string;
   /** Plain-language help — the difference between a good upload and a week's delay. */
   hint: string;
-  /** How many of this document are required. */
+  /** How many of this document are required — the MINIMUM, not a ceiling. */
   count: number;
+  /**
+   * Whether the client may supply MORE than `count`, up to EXTRA_SLOT_CEILING.
+   *
+   * Only ATO income statements need this today. myGov issues one statement per
+   * employer (per ABN + branch + BMS ID), so a client with two jobs in each of
+   * the two required years genuinely has four, and a fixed two-slot form left
+   * them nowhere to put the other two. Payslips and photo ID are fixed by
+   * definition — two most recent, front and back — and one super statement is
+   * one super statement.
+   */
+  allowExtra?: boolean;
   /** Base filename YLA see, before we append an index and surname. */
   filenameBase: string;
 };
+
+/**
+ * Hard ceiling on extra slots, per document type. Not a real-world limit — it
+ * stops a public endpoint being looped into unbounded rows, and no one has
+ * eight employers across two years.
+ */
+export const EXTRA_SLOT_CEILING = 8;
 
 export const YLA_DOCUMENTS: DocSpec[] = [
   {
@@ -51,6 +69,7 @@ export const YLA_DOCUMENTS: DocSpec[] = [
       "We need the previous and the current financial year. myGov lists one statement per employer, so if you had two jobs in a year, upload both of that year's statements. " +
       "Use the step-by-step myGov guide below if you're not sure how to get them.",
     count: 2,
+    allowExtra: true,
     filenameBase: "ATO Income Statement",
   },
   {
@@ -101,6 +120,22 @@ export function requiredSlots(): RequiredSlot[] {
     }
   }
   return out;
+}
+
+/**
+ * Highest slot number this document type accepts. `requiredSlots()` above is
+ * the MINIMUM the client must supply — this is the ceiling on what they MAY.
+ * They differ only for types that allow extras (ATO income statements).
+ */
+export function maxSlotFor(docKey: string): number {
+  const spec = DOC_BY_KEY[docKey];
+  if (!spec) return 0;
+  return spec.allowExtra ? Math.max(spec.count, EXTRA_SLOT_CEILING) : spec.count;
+}
+
+/** True when the client may add more of this document than the required count. */
+export function allowsExtra(docKey: string): boolean {
+  return DOC_BY_KEY[docKey]?.allowExtra === true;
 }
 
 /** Surname from a full name, preserving case as typed. "" when blank. */
@@ -168,3 +203,6 @@ export function packageFilename(
   if (ref) name += ` (${ref})`;
   return `${name}.pdf`;
 }
+
+/** Doc types the client may supply more of than the required count. */
+export const YLA_DOC_KEYS_WITH_EXTRA: string[] = YLA_DOCUMENTS.filter((d) => d.allowExtra).map((d) => d.key);

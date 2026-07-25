@@ -14,7 +14,7 @@
  * Netlify's function body limit already made server-side multipart unusable.
  */
 import { supabase } from "./supabase";
-import { DOC_BY_KEY, ylaFilename, surnameOf, YLA_MAX_BYTES } from "./yla-documents";
+import { DOC_BY_KEY, ylaFilename, surnameOf, maxSlotFor, YLA_MAX_BYTES } from "./yla-documents";
 
 export const CLIENT_DOCUMENTS_BUCKET = "client-documents";
 
@@ -61,8 +61,10 @@ export async function prepareClientDocumentUpload(
   const spec = DOC_BY_KEY[String(body.doc_key)];
   if (!spec) return { ok: false, status: 400, error: "Unknown document type" };
 
+  // The ceiling, not the required count: ATO statements allow extras because
+  // myGov issues one per employer, so a two-job year genuinely has two.
   const slotNum = Number(body.slot);
-  if (!Number.isInteger(slotNum) || slotNum < 1 || slotNum > spec.count) {
+  if (!Number.isInteger(slotNum) || slotNum < 1 || slotNum > maxSlotFor(spec.key)) {
     return { ok: false, status: 400, error: "Invalid document slot" };
   }
 
