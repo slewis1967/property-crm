@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute, isPublicPortalRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -84,6 +84,20 @@ describe("isPublicSignRoute", () => {
     // Likewise "/api/sign" (no trailing slash / token) is not a token API.
     expect(isPublicSignRoute("/api/sign")).toBe(false);
     expect(isPublicSignRoute("/api/signatures")).toBe(false);
+  });
+});
+
+describe("isCronRoute", () => {
+  it("exempts the external-cron trigger path", () => {
+    expect(isCronRoute("/api/cron")).toBe(true);
+    expect(isCronRoute("/api/cron/run")).toBe(true);
+  });
+
+  it("does NOT exempt lookalikes (secret auth still lives in the route)", () => {
+    expect(isCronRoute("/api/cronx")).toBe(false);
+    expect(isCronRoute("/api/cronjobs")).toBe(false);
+    expect(isCronRoute("/cron")).toBe(false);
+    expect(isCronRoute("/api/tasks")).toBe(false);
   });
 });
 
