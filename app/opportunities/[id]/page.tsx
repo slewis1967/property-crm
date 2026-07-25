@@ -4,6 +4,9 @@ import { supabase } from "../../../utils/supabase";
 import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import type { OpportunityDoc } from "./OpportunityDocuments";
+import type { SupportingDoc } from "./OpportunitySupportingDocuments";
+import { DOC_BY_KEY } from "../../../utils/yla-documents";
+import { DOCUMENT_REQUESTS_TABLE } from "../../../utils/document-requests-db";
 import { log, errInfo } from "@/utils/logger";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +72,48 @@ async function fetchOpportunityDocuments(
   // Newest first across all types.
   out.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   return out;
+}
+
+/** The documents the CLIENT uploaded through their secure portal for this
+ * opportunity — payslips, photo ID, ATO income statements, super statements.
+ * Linked by opportunity_id (co-applicants share it; an applicant-2 request may
+ * carry no contact_id, so opportunity_id is the reliable key). Cancelled
+ * requests are excluded. Degrades to [] if the tables aren't migrated. */
+async function fetchSupportingDocuments(opportunityId: string): Promise<SupportingDoc[]> {
+  try {
+    const { data: reqs } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select("id,applicant_name,status,opportunity_id")
+      .eq("opportunity_id", opportunityId)
+      .neq("status", "cancelled");
+    const requests = reqs ?? [];
+    if (requests.length === 0) return [];
+
+    const nameById = new Map(
+      requests.map((r) => [String(r.id), (r.applicant_name as string) || "Applicant"]),
+    );
+    const { data: docs } = await supabase
+      .from("client_documents")
+      .select("id,request_id,doc_type,filename,original_name,size_bytes,status,check_notes,uploaded_at")
+      .in("request_id", requests.map((r) => String(r.id)))
+      .neq("status", "replaced")
+      .order("uploaded_at", { ascending: true });
+
+    return (docs ?? []).map((d) => ({
+      id: String(d.id),
+      applicant: nameById.get(String(d.request_id)) || "Applicant",
+      docType: d.doc_type as string,
+      docLabel: DOC_BY_KEY[d.doc_type as string]?.label || (d.doc_type as string),
+      filename: (d.original_name as string) || (d.filename as string) || "document",
+      sizeBytes: (d.size_bytes as number) ?? null,
+      status: (d.status as string) ?? null,
+      uploadedAt: (d.uploaded_at as string) ?? null,
+      checkNotes: (d.check_notes as string) ?? null,
+    }));
+  } catch (e) {
+    log.warn("opportunity_supporting_documents.fetch_failed", { ...errInfo(e) });
+    return [];
+  }
 }
 
 /** Resolve this lead's live CRM contact by email (case-insensitive). NEXUS
@@ -164,12 +209,20 @@ export default async function OpportunityDetailPage({
     lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
   }
 
-  const [{ ghlContactId, archive }, documents] = await Promise.all([
+  const [{ ghlContactId, archive }, documents, supportingDocuments] = await Promise.all([
     resolveGhlArchiveForLead(lead.email),
     fetchOpportunityDocuments(lead.primary_contact_id, id),
+    fetchSupportingDocuments(id),
   ]);
 
   return (
-    <OpportunityDetail lead={lead} ghlArchive={archive} ghlContactId={ghlContactId} documents={documents} />
+    <OpportunityDetail
+      lead={lead}
+      ghlArchive={archive}
+      ghlContactId={ghlContactId}
+      documents={documents}
+      supportingDocuments={supportingDocuments}
+      opportunityId={id}
+    />
   );
 }
