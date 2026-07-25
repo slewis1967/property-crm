@@ -20,6 +20,7 @@ import {
   type PaidService,
   type ServiceAttention,
   type Severity,
+  BALANCE_SOURCES,
   type Summary,
 } from "../../utils/paid-services";
 
@@ -202,6 +203,24 @@ export default function PaidServicesClient() {
     }
   }
 
+  async function refreshBalances() {
+    setBusy("balances");
+    try {
+      const res = await fetch("/api/paid-services/balances", { method: "POST" });
+      const json = await res.json();
+      const r = json.result as { checked: number; failed: number; outcomes: { name: string; ok: boolean; remaining?: number; unit?: string; error?: string }[] } | undefined;
+      if (!r) throw new Error(json.error || "Refresh failed");
+      const good = r.outcomes.filter((o) => o.ok).map((o) => `${o.name} ${o.remaining} ${o.unit}`);
+      const bad = r.outcomes.filter((o) => !o.ok).map((o) => `${o.name}: ${o.error}`);
+      setFlash([good.length ? `Read ${good.join(", ")}.` : "", bad.length ? `Failed — ${bad.join("; ")}.` : ""].filter(Boolean).join(" "));
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Refresh failed");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function sendDigest() {
     if (!window.confirm(`Email the digest now to ${data?.alertRecipient ?? "the configured address"}?`)) return;
     setBusy("digest");
@@ -344,13 +363,23 @@ export default function PaidServicesClient() {
             ? `Emailing ${data.alertRecipient}`
             : "Email sending is OFF (set PAID_ALERTS_ENABLED=true) — checks still run as dry runs"}
         </span>
-        <button
-          onClick={sendDigest}
-          disabled={busy === "digest"}
-          className="ml-auto px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 text-xs hover:bg-gray-100 disabled:opacity-50"
-        >
-          {busy === "digest" ? "Sending…" : "Send digest now"}
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={refreshBalances}
+            disabled={busy === "balances"}
+            title="Read the live OpenRouter and ClickSend balances now"
+            className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 text-xs hover:bg-gray-100 disabled:opacity-50"
+          >
+            {busy === "balances" ? "Reading…" : "Refresh balances"}
+          </button>
+          <button
+            onClick={sendDigest}
+            disabled={busy === "digest"}
+            className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 text-xs hover:bg-gray-100 disabled:opacity-50"
+          >
+            {busy === "digest" ? "Sending…" : "Send digest now"}
+          </button>
+        </div>
       </div>
 
       {/* The point of the page */}
@@ -513,7 +542,17 @@ export default function PaidServicesClient() {
                     {s.balance_remaining !== null && s.balance_remaining !== undefined && (
                       <div className="text-xs text-gray-500">
                         bal {s.balance_remaining.toLocaleString("en-AU")} {s.balance_unit ?? s.currency}
+                        {/* Never let an old reading pass for a live one. */}
+                        {s.balance_source && (
+                          <span className={s.balance_check_error ? "text-red-600" : ""}>
+                            {" "}
+                            · {s.balance_check_error ? "check failing" : `read ${relative(s.balance_checked_at ?? null)}`}
+                          </span>
+                        )}
                       </div>
+                    )}
+                    {s.balance_source && (s.balance_remaining === null || s.balance_remaining === undefined) && (
+                      <div className="text-xs text-amber-700">balance not read yet</div>
                     )}
                   </td>
                   <td className={`px-3 py-2 whitespace-nowrap ${due.tone}`}>
@@ -727,6 +766,20 @@ function ServiceForm({
           value={d.low_balance_threshold ?? ""}
           onChange={(e) => set("low_balance_threshold", numOrNull(e.target.value))}
         />
+      </Field>
+      <Field label="Read balance automatically" hint="from the vendor's API">
+        <select
+          className={inputCls}
+          value={d.balance_source ?? ""}
+          onChange={(e) => set("balance_source", e.target.value || null)}
+        >
+          <option value="">No — enter it by hand</option>
+          {BALANCE_SOURCES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <Field label="Plan">

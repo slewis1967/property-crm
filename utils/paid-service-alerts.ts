@@ -24,6 +24,7 @@
 import { supabase } from "./supabase";
 import { sendBrevoEmail } from "./brevo";
 import { log, errInfo } from "./logger";
+import { refreshBalances } from "./paid-service-balances";
 import {
   actionable,
   assessAll,
@@ -65,6 +66,8 @@ export type PaidAlertRun = {
   recipient?: string;
   today: string;
   headlines: string[];
+  /** Live prepaid-balance pull done at the start of the run. */
+  balances?: { checked: number; failed: number };
   error?: string;
 };
 
@@ -242,6 +245,17 @@ export async function runPaidServiceAlerts(
     headlines: [],
     recipient,
   };
+
+  // Pull live prepaid balances FIRST, so the digest reasons about what's actually
+  // in the account rather than the last figure someone typed in. Best-effort: a
+  // vendor outage records itself on the row (and surfaces as its own attention
+  // item) instead of stopping the payment checks that don't depend on it.
+  try {
+    const refreshed = await refreshBalances();
+    run.balances = { checked: refreshed.checked, failed: refreshed.failed };
+  } catch (e) {
+    log.warn("paid_alerts.balance_refresh_failed", { detail: paidErrMessage(e, ""), ...errInfo(e) });
+  }
 
   let services: PaidService[];
   try {

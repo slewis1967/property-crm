@@ -211,6 +211,45 @@ describe("attentionFor — card, trial, balance", () => {
     expect(kinds(healthy.service)).not.toContain("low_balance");
   });
 
+  it("treats a FAILING automatic balance check as a warning, since the low-balance alert can't fire", () => {
+    const a = attentionFor(
+      svc({ balance_source: "openrouter", balance_check_error: "HTTP 401", balance_remaining: 30, balance_unit: "USD" }),
+      TODAY,
+    );
+    const item = a.items.find((i) => i.kind === "stale_balance")!;
+    expect(item.severity).toBe("warning");
+    expect(item.detail).toContain("HTTP 401");
+    expect(item.detail).toContain("last known balance 30 USD");
+    expect(actionable([a]).length).toBe(1); // does reach the digest
+  });
+
+  it("treats a merely STALE reading as info — one skipped run isn't an email", () => {
+    const now = new Date("2026-07-25T06:00:00Z");
+    const threeDaysAgo = new Date("2026-07-22T06:00:00Z").toISOString();
+    const a = attentionFor(svc({ balance_source: "clicksend", balance_checked_at: threeDaysAgo }), TODAY, now);
+    const item = a.items.find((i) => i.kind === "stale_balance")!;
+    expect(item.severity).toBe("info");
+    expect(item.headline).toContain("3 days old");
+    expect(actionable([a])).toEqual([]);
+  });
+
+  it("flags a source that has never reported", () => {
+    const a = attentionFor(svc({ balance_source: "openrouter", balance_checked_at: null }), TODAY);
+    expect(a.items.find((i) => i.kind === "stale_balance")!.headline).toContain("never been read");
+  });
+
+  it("stays quiet when the reading is fresh", () => {
+    const now = new Date("2026-07-25T06:00:00Z");
+    const fresh = new Date("2026-07-25T02:00:00Z").toISOString();
+    const a = attentionFor(svc({ balance_source: "openrouter", balance_checked_at: fresh }), TODAY, now);
+    expect(a.items.map((i) => i.kind)).not.toContain("stale_balance");
+  });
+
+  it("says nothing about staleness for a hand-maintained balance", () => {
+    const a = attentionFor(svc({ balance_source: null, balance_remaining: 100 }), TODAY);
+    expect(a.items.map((i) => i.kind)).not.toContain("stale_balance");
+  });
+
   it("nags (info only) about a missing cost", () => {
     const a = attentionFor(svc({ cost: null }), TODAY);
     expect(kinds(svc({ cost: null }))).toContain("missing_cost");

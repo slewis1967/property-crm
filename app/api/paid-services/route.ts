@@ -12,6 +12,7 @@ import {
   paidErrMessage,
   paidServicesTableMissing,
   summarise,
+  BALANCE_SOURCES,
   type PaidService,
 } from "../../../utils/paid-services";
 
@@ -157,6 +158,12 @@ export function coerceServiceBody(b: Record<string, unknown>, forInsert: boolean
   if (forInsert || has("cost")) row.cost = num(b.cost);
   if (forInsert || has("balance_remaining")) row.balance_remaining = num(b.balance_remaining);
   if (forInsert || has("low_balance_threshold")) row.low_balance_threshold = num(b.low_balance_threshold);
+  // Only a known reader may be named — an arbitrary string would make the row
+  // expect an automatic balance that nothing ever supplies.
+  if (has("balance_source")) {
+    const s = str(b.balance_source);
+    row.balance_source = s && (BALANCE_SOURCES as readonly string[]).includes(s) ? s : null;
+  }
 
   if (forInsert || has("next_due_date")) row.next_due_date = date(b.next_due_date);
   if (forInsert || has("last_paid_on")) row.last_paid_on = date(b.last_paid_on);

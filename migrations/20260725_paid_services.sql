@@ -24,8 +24,11 @@ create table if not exists public.paid_services (
   payment_method        text,                            -- e.g. "Amex ••1234", "PayPal", "direct debit"
   card_expiry           text,                            -- 'YYYY-MM' — warn before the card dies mid-renewal
   balance_remaining     numeric,                         -- prepaid credit balance (OpenRouter, ClickSend, Higgsfield)
-  balance_unit          text,                            -- 'AUD' | 'credits'
+  balance_unit          text,                            -- 'AUD' | 'USD' | 'credits'
   low_balance_threshold numeric,
+  balance_source        text,                            -- 'openrouter' | 'clicksend' → balance is pulled live; null = maintained by hand
+  balance_checked_at    timestamptz,                     -- when the live pull last succeeded OR failed
+  balance_check_error   text,                            -- last pull failure, cleared on success
   alert_lead_days       integer not null default 7,      -- how early "due soon" fires
   snoozed_until         date,                            -- suppress alerts up to and including this date
   notes                 text,
@@ -33,6 +36,13 @@ create table if not exists public.paid_services (
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );
+
+-- Idempotent top-up: `create table if not exists` above no-ops on an existing
+-- table, so the live-balance columns are also added explicitly. This makes the
+-- whole file safe to re-run if an earlier version was already applied.
+alter table public.paid_services add column if not exists balance_source      text;
+alter table public.paid_services add column if not exists balance_checked_at  timestamptz;
+alter table public.paid_services add column if not exists balance_check_error text;
 
 create index if not exists paid_services_next_due_idx on public.paid_services (next_due_date);
 create index if not exists paid_services_status_idx on public.paid_services (status);
@@ -48,7 +58,7 @@ alter table public.paid_services enable row level security;
 create table if not exists public.paid_service_alerts (
   id          uuid primary key default gen_random_uuid(),
   service_id  uuid references public.paid_services (id) on delete cascade,
-  kind        text not null,           -- run | overdue | due_soon | trial_ending | card_expiring | low_balance | missing_billing_date
+  kind        text not null,           -- run | digest | overdue | due_soon | trial_ending | card_expiring | low_balance | stale_balance | missing_billing_date | missing_cost
   severity    text not null default 'info',
   message     text,
   channel     text,                    -- email | none
@@ -91,3 +101,25 @@ values
   ('Domain — springboardhomes.com.au', 'domains', 'Springboard Homes public site and lead funnel.', 'important', 'annual', null, 'system-seed'),
   ('Domain — springboardhomesapp.com', 'domains', 'Springboard Workspace / portal domain.', 'important', 'annual', null, 'system-seed')
 on conflict (name) do nothing;
+
+-- ── Live balance pulls ───────────────────────────────────────────────────────
+-- These two vendors expose a readable balance, so the register pulls it instead
+-- of relying on someone remembering (OpenRouter: GET /api/v1/credits, USD;
+-- ClickSend: GET /v3/account, AUD). `balance_source` is what drives the pull —
+-- renaming the row in the panel won't break it.
+--
+-- The thresholds are STARTING POINTS, not measurements: OpenRouter has been
+-- running ~USD 50/month, so 40 gives roughly three weeks' notice; ClickSend
+-- sends the document reminders and has auto-recharge switched OFF, so 20 AUD is
+-- a few hundred messages of headroom. Tune both in the panel.
+update public.paid_services
+   set balance_source = 'openrouter',
+       balance_unit = 'USD',
+       low_balance_threshold = coalesce(low_balance_threshold, 40)
+ where name = 'OpenRouter' and balance_source is null;
+
+update public.paid_services
+   set balance_source = 'clicksend',
+       balance_unit = 'AUD',
+       low_balance_threshold = coalesce(low_balance_threshold, 20)
+ where name = 'ClickSend' and balance_source is null;

@@ -45,6 +45,17 @@ export type ServiceStatus = (typeof SERVICE_STATUSES)[number];
 export const CRITICALITIES = ["critical", "important", "optional"] as const;
 export type Criticality = (typeof CRITICALITIES)[number];
 
+/**
+ * Accounts whose prepaid balance can be read from the vendor's API.
+ *
+ * Lives here rather than next to the fetchers in `paid-service-balances.ts`
+ * because the panel (a client component) needs the list, and that module imports
+ * the server-only Supabase client — pulling it into the browser bundle would ship
+ * a module that reads SUPABASE_SERVICE_KEY.
+ */
+export const BALANCE_SOURCES = ["openrouter", "clicksend"] as const;
+export type BalanceSource = (typeof BALANCE_SOURCES)[number];
+
 export type PaidService = {
   id: string;
   name: string;
@@ -66,6 +77,10 @@ export type PaidService = {
   balance_remaining: number | null;
   balance_unit: string | null;
   low_balance_threshold: number | null;
+  /** 'openrouter' | 'clicksend' when the balance is pulled live; null = by hand. */
+  balance_source?: string | null;
+  balance_checked_at?: string | null;
+  balance_check_error?: string | null;
   alert_lead_days: number;
   snoozed_until: string | null;
   notes: string | null;
@@ -81,6 +96,7 @@ export type AttentionKind =
   | "trial_ending"
   | "card_expiring"
   | "low_balance"
+  | "stale_balance"
   | "missing_billing_date"
   | "missing_cost";
 
@@ -219,6 +235,12 @@ export function cardExpiryLastDay(cardExpiry: string | null): string | null {
 /** Warn this far ahead of a card expiring. */
 export const CARD_EXPIRY_LEAD_DAYS = 60;
 
+/**
+ * How long a live balance reading stays trustworthy. The pull runs with the
+ * daily sweep, so anything past two days means it has missed a run.
+ */
+export const BALANCE_STALE_HOURS = 48;
+
 function plural(n: number, word: string): string {
   return `${n} ${word}${Math.abs(n) === 1 ? "" : "s"}`;
 }
@@ -238,7 +260,7 @@ function money(service: PaidService): string {
  * accounts still compute their items (the panel shows them, greyed) but the
  * caller filters them out of the digest via `snoozed`.
  */
-export function attentionFor(service: PaidService, today: string): ServiceAttention {
+export function attentionFor(service: PaidService, today: string, now: Date = new Date()): ServiceAttention {
   const snoozed = (daysUntil(service.snoozed_until, today) ?? -1) >= 0;
   const items: Attention[] = [];
 
@@ -372,7 +394,41 @@ export function attentionFor(service: PaidService, today: string): ServiceAttent
     }
   }
 
-  // 5. Data quality: an active account with no cost can't be budgeted.
+  // 5. The live balance pull itself. If a prepaid account's balance is supposed
+  //    to arrive automatically and isn't, the low-balance alert above can never
+  //    fire — so the broken pull has to be the alert. A recorded failure is a
+  //    warning (something is actually broken, e.g. a rotated key); merely stale
+  //    is info, since one skipped run isn't worth an email.
+  if (service.balance_source) {
+    const checkedAt = service.balance_checked_at ? new Date(service.balance_checked_at).getTime() : null;
+    const ageHours = checkedAt && Number.isFinite(checkedAt) ? (now.getTime() - checkedAt) / 3_600_000 : null;
+    if (service.balance_check_error) {
+      items.push({
+        kind: "stale_balance",
+        severity: "warning",
+        headline: `${service.name} — automatic balance check is failing`,
+        detail: `The ${service.balance_source} balance couldn't be read: ${service.balance_check_error}. Until it's fixed, the low-balance warning can't fire${
+          service.balance_remaining !== null && service.balance_remaining !== undefined
+            ? ` (last known balance ${service.balance_remaining.toLocaleString("en-AU")} ${service.balance_unit ?? ""})`.trimEnd()
+            : ""
+        }.`,
+        days: null,
+      });
+    } else if (ageHours === null || ageHours > BALANCE_STALE_HOURS) {
+      items.push({
+        kind: "stale_balance",
+        severity: "info",
+        headline:
+          ageHours === null
+            ? `${service.name} — balance has never been read automatically`
+            : `${service.name} — balance reading is ${Math.floor(ageHours / 24)} days old`,
+        detail: `The ${service.balance_source} balance pull runs with the daily check. Use "Refresh balances" in the panel to read it now.`,
+        days: null,
+      });
+    }
+  }
+
+  // 6. Data quality: an active account with no cost can't be budgeted.
   if (service.status === "active" && (service.cost === null || service.cost === undefined) && service.billing_cycle !== "usage") {
     items.push({
       kind: "missing_cost",
@@ -423,8 +479,8 @@ export type Summary = {
 };
 
 /** Attention for every service, worst first, then by soonest date. */
-export function assessAll(services: PaidService[], today: string): ServiceAttention[] {
-  const assessed = services.map((s) => attentionFor(s, today));
+export function assessAll(services: PaidService[], today: string, now: Date = new Date()): ServiceAttention[] {
+  const assessed = services.map((s) => attentionFor(s, today, now));
   return assessed.sort((a, b) => {
     const ra = a.worst && !a.snoozed ? SEVERITY_RANK[a.worst] : -1;
     const rb = b.worst && !b.snoozed ? SEVERITY_RANK[b.worst] : -1;
@@ -448,8 +504,8 @@ export function actionable(assessed: ServiceAttention[], min: Severity = DIGEST_
     .filter((a) => a.items.length > 0);
 }
 
-export function summarise(services: PaidService[], today: string): Summary {
-  const assessed = assessAll(services, today);
+export function summarise(services: PaidService[], today: string, now: Date = new Date()): Summary {
+  const assessed = assessAll(services, today, now);
   const live = actionable(assessed, "warning");
 
   const byCur = new Map<string, number>();

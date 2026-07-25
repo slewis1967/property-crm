@@ -25,6 +25,7 @@ sidebar badge and the email digest can't drift apart:
 | `trial_ending` | warning (critical once past) | `status='trial'` and `next_due_date` within the lead window |
 | `card_expiring` | critical if already expired **or** it dies before `next_due_date`; warning within 60 days | from `card_expiry` (`YYYY-MM`, treated as the last day of that month — cards work through it) |
 | `low_balance` | critical at ≤0, warning at ≤`low_balance_threshold` | prepaid credit accounts |
+| `stale_balance` | warning if the last pull **errored**; info if merely stale (>48h) | only for rows with a `balance_source` — see *Live balance pulls* |
 | `missing_billing_date` | info | active + recurring cycle but no `next_due_date` — i.e. *this account cannot be warned about* |
 | `missing_cost` | info | active with no cost, so it's missing from the spend total |
 
@@ -33,6 +34,39 @@ keeps an account visible in the panel but out of the digest.
 
 Only **warning and critical** reach the email. `info` items are setup nags and
 stay in the panel — otherwise the digest becomes noise and gets filtered.
+
+## Live balance pulls (OpenRouter + ClickSend)
+
+A prepaid account is the one case where a renewal date tells you nothing — the
+service dies when the credit runs out, whenever that is. Both vendors expose a
+readable balance, so `utils/paid-service-balances.ts` reads them instead of
+relying on someone remembering:
+
+| Source | Endpoint | Notes |
+|--------|----------|-------|
+| `openrouter` | `GET /api/v1/credits`, bearer `OPENROUTER_API_KEY` | Returns `total_credits` + `total_usage`; **remaining is the difference**, the API doesn't give it directly. USD. Deliberately NOT `/auth/key`, which reports usage for the calling key only — with more than one key in play it under-reports and would show a comfortable balance on a nearly-dry account. |
+| `clicksend` | `GET /v3/account`, basic auth `CLICKSEND_USERNAME:CLICKSEND_API_KEY` | `data.balance` is a **string**; currency from `data._currency.currency_name_short`. Carries `auto_recharge` into meta — an account with it OFF is the one that can run out mid-send. |
+
+- Driven by `paid_services.balance_source`, **not** by matching the service name,
+  so renaming a row in the panel can't silently stop the pull.
+- Runs at the start of the daily sweep (so the digest reasons about live numbers)
+  and on demand via **Refresh balances** in the panel → `POST
+  /api/paid-services/balances`. Read-only against the vendors: it reads a
+  balance, it never spends or tops up.
+- One fetch per distinct source, not per row.
+- **A failed read never zeroes the balance** — that would fire a bogus "balance
+  empty" critical. It stamps `balance_check_error` + `balance_checked_at`, leaves
+  the last known figure visible, and the failure itself becomes a `stale_balance`
+  warning: if the balance can't be read, the low-balance alert can't fire, so the
+  broken pull has to be the alert.
+- The parsers are pure and pinned by tests against **verbatim live payload
+  captures** (`paid-service-balances.test.ts`), so a vendor contract change fails
+  loudly instead of writing `NaN` over the balance an alert depends on.
+
+Adding a third source: add it to `BALANCE_SOURCES` in `utils/paid-services.ts`
+(it lives in the pure module because the client panel needs the list, and the
+fetcher module imports the server-only Supabase client), write a parser + fetcher
+in `paid-service-balances.ts`, and add it to `FETCHERS`.
 
 ## Alerting
 
@@ -89,9 +123,10 @@ looked healthy while returning zero for weeks.
 2. Open `/paid-services` and fill in the seeded rows: **cost, billing cycle, next
    due date, payment method, card expiry**. Accounts with no due date can't be
    alerted on, and the panel lists them as such.
-3. For prepaid accounts (OpenRouter, ClickSend, Higgsfield) set
-   `balance_remaining` + `low_balance_threshold`. These are manual — nothing reads
-   the vendors' APIs.
+3. OpenRouter and ClickSend balances arrive automatically (seeded with
+   `balance_source` + starting thresholds of USD 40 / AUD 20 — tune in the panel).
+   Any other prepaid account (e.g. Higgsfield credits) is manual: set
+   `balance_remaining` + `low_balance_threshold` by hand.
 4. Set `PAID_ALERTS_ENABLED=true` (and optionally `PAID_ALERTS_TO`) in the Netlify
    env once the dates are in.
 5. Confirm the schedule ran: the panel's "Daily check" line should show a recent
@@ -99,10 +134,11 @@ looked healthy while returning zero for weeks.
 
 ## Deliberate limits
 
-- **Nothing reads the vendors' billing systems.** A date is only as good as the
-  last person to update it. `Mark paid` rolls `next_due_date` forward by the
-  cycle (from the scheduled date, so a late payment doesn't move the
-  anniversary), which keeps it current with one click.
+- **Renewal dates and amounts are manual.** Only the two prepaid *balances* are
+  read live; no vendor here exposes "your next invoice is due on X". A date is
+  only as good as the last person to update it, so `Mark paid` rolls
+  `next_due_date` forward by the cycle (from the scheduled date, so a late
+  payment doesn't move the anniversary) to keep it current with one click.
 - **No FX conversion.** Spend is totalled per currency; a USD row is never
   silently added to an AUD total.
 - **No credentials.** `payment_method` is a label ("Amex ••1234"), `account_ref`
