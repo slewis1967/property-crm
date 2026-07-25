@@ -59,8 +59,15 @@ function origin(): string {
 function fromName(): string {
   return process.env.REMINDER_FROM_NAME || "Glenn from Springboard Homes";
 }
+// Send from the Springboard brand, not NextKey: these are Springboard Homes'
+// clients, so the reminder must come from the verified, domain-authenticated
+// Springboard sender — otherwise "Glenn from Springboard Homes" arrives from a
+// nextkey.com.au address, which is exactly the mismatch we're removing.
+function fromEmail(): string {
+  return process.env.REMINDER_FROM_EMAIL || process.env.SPRINGBOARD_SENDER_EMAIL || "hello@springboardhomes.com.au";
+}
 function replyTo(): string {
-  return process.env.REMINDER_REPLY_TO || "glenn.m@nextkey.com.au";
+  return process.env.REMINDER_REPLY_TO || process.env.SPRINGBOARD_REPLY_TO || "hello@springboardhomes.com.au";
 }
 export function remindersEnabled(): boolean {
   return process.env.REMINDERS_ENABLED === "true";
@@ -401,6 +408,7 @@ export async function runDocumentReminders(opts?: { dryRun?: boolean; now?: Date
           subject: rendered.subject,
           html: rendered.html,
           text: rendered.text,
+          fromEmail: fromEmail(),
           replyTo: replyTo(),
           fromName: fromName(),
           tags: ["document-reminder", due.kind],
