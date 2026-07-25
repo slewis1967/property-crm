@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
 import { normaliseToPdf } from "./normalise";
+import MyGovGuide from "./MyGovGuide";
 
 type Slot = {
   docKey: string;
@@ -41,6 +42,7 @@ export default function PortalClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [guideOpen, setGuideOpen] = useState(false);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Pure fetch — returns a result rather than setting state, so the effect below
@@ -244,14 +246,25 @@ export default function PortalClient({ token }: { token: string }) {
                         <p className="font-medium text-gray-900">{label}</p>
                         {!uploaded && <p className="mt-1 text-sm text-gray-500">{s.hint}</p>}
                         {!uploaded && s.docKey === "ato_income" && (
-                          <a
-                            href="/api/portal/mygov-guide"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:underline"
-                          >
-                            📄 Step-by-step: get this from myGov
-                          </a>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                            {/* The guided walkthrough, not a PDF in another app —
+                                this document is where clients get stuck. */}
+                            <button
+                              type="button"
+                              onClick={() => setGuideOpen(true)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                            >
+                              👉 Show me how to get this
+                            </button>
+                            <a
+                              href="/api/portal/mygov-guide"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-gray-500 hover:underline"
+                            >
+                              Printable guide
+                            </a>
+                          </div>
                         )}
                         {uploaded && (
                           <p className="mt-1 truncate text-sm text-green-700">
@@ -308,6 +321,8 @@ export default function PortalClient({ token }: { token: string }) {
           </p>
         </footer>
       </div>
+
+      {guideOpen && <MyGovGuide token={token} onClose={() => setGuideOpen(false)} />}
     </div>
   );
 }
