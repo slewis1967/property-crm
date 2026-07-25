@@ -31,11 +31,24 @@ export function clientDocFixupEnabled(): boolean {
 function origin(): string {
   return (process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://crm.nextkey.com.au").replace(/\/+$/, "");
 }
-function fromName(): string {
-  return process.env.BREVO_SENDER_NAME || "NextKey";
+// These document-collection clients are SPRINGBOARD HOMES' (the community-
+// funding product that feeds YLA), so this email carries the Springboard brand —
+// from Glenn at Springboard Homes, NOT NextKey. Sends from the verified,
+// domain-authenticated Brevo sender hello@springboardhomes.com.au. All
+// overridable via env for a future NextKey-direct flow.
+function senderEmail(): string {
+  return process.env.SPRINGBOARD_SENDER_EMAIL || "hello@springboardhomes.com.au";
 }
-function replyTo(): string | undefined {
-  return process.env.BREVO_REPLY_TO || undefined;
+function senderName(): string {
+  return process.env.SPRINGBOARD_SENDER_NAME || "Glenn Mayes — Springboard Homes";
+}
+function replyToEmail(): string {
+  return process.env.SPRINGBOARD_REPLY_TO || "hello@springboardhomes.com.au";
+}
+function signature(): { html: string; text: string } {
+  const raw = process.env.SPRINGBOARD_SIGNATURE || "Glenn Mayes\nSpringboard Homes";
+  const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+  return { html: lines.map(escapeHtml).join("<br>"), text: lines.join("\n") };
 }
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -93,7 +106,7 @@ function renderFixup(opts: { applicantName: string | null; link: string; flagged
     return { label, why, how };
   });
 
-  const subject = "NextKey — a quick fix on your uploaded documents";
+  const subject = "Springboard Homes — a quick fix on your uploaded documents";
 
   const htmlRows = rows
     .map(
@@ -111,7 +124,7 @@ function renderFixup(opts: { applicantName: string | null; link: string; flagged
     </p>
     <p style="font-size:13px;color:#555">Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(opts.link)}</span></p>
     <p>Getting these in as PDFs is the last step before we can move you forward. Any questions, just reply to this email.</p>
-    <p>Kind regards,<br>${escapeHtml(fromName())}</p>
+    <p>Kind regards,<br>${signature().html}</p>
   </div>`;
 
   const textRows = rows.map((r) => `• ${r.label} — ${r.why}. ${r.how}`).join("\n");
@@ -126,7 +139,7 @@ Re-upload here: ${opts.link}
 Getting these in as PDFs is the last step before we can move you forward. Any questions, just reply to this email.
 
 Kind regards,
-${fromName()}`;
+${signature().text}`;
 
   return { subject, html, text };
 }
@@ -195,9 +208,10 @@ export async function sendClientDocFixups(opts: {
       subject: rendered.subject,
       html: rendered.html,
       text: rendered.text,
-      replyTo: replyTo(),
-      fromName: fromName(),
-      tags: ["client-doc-fixup"],
+      fromEmail: senderEmail(),
+      fromName: senderName(),
+      replyTo: replyToEmail(),
+      tags: ["client-doc-fixup", "springboard"],
       commercial: true, // automated; honour email opt-out (Spam Act)
     });
     await supabase.from("document_reminder_log").insert({
