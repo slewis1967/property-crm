@@ -69,7 +69,7 @@ const FIX_GUIDANCE: Record<string, string> = {
   photo_id: "A clear image of your licence — both the front and the back.",
   ato_income:
     "This is the payment summary you download from the ATO section of your myGov account — NOT your tax return or notice of assessment, and not a PAYG summary from your employer. " +
-    "We need two: one for the PREVIOUS financial year and one for the CURRENT one — if you had more than one employer, that is still two years, not two employers. " +
+    "We need every statement you have for the PREVIOUS and the CURRENT financial year. myGov lists a separate statement for each employer, so if you had two jobs in a year we need both of that year's statements. " +
     "A screenshot of the screen won't be accepted — use the Save-as-PDF / download option.",
   super_statement: "Your most recent super statement as a PDF, from myGov or your fund's website.",
 };

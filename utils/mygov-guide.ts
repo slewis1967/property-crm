@@ -166,14 +166,14 @@ export function guideSteps(opts: { device: Device; years: [FinancialYear, Financ
       id: "year",
       title: "Choose the right year — this is the important bit",
       body: [
-        `We need two statements: one for ${newest.label} and one for ${previous.label}.`,
-        "That's two YEARS, not two employers. If you had more than one job in a year, that year's statement already covers all of them — you'll see each employer listed on the same statement.",
-        "Your list may show several years. Pick one year, save it, then come back and do the other.",
+        `We need every income statement you have for TWO financial years: ${newest.label} and ${previous.label}.`,
+        "Your list shows a separate statement for each employer. If you had two jobs in a year, that year has two statements and we need both — so it may be three or four files in total, not two.",
+        "Work through one year at a time: save every statement listed under it, then go back and do the other year.",
       ],
       actions: [
-        `Select the ${newest.label} income year.`,
-        "Save it (the next steps show you how).",
-        `Come back to this list and repeat for ${previous.label}.`,
+        `Under ${newest.label}, save EVERY statement listed — one per employer.`,
+        `Then do the same for ${previous.label}.`,
+        "If a year shows only one employer, one statement is all we need for that year.",
       ],
     },
     {
@@ -207,7 +207,7 @@ export function guideSteps(opts: { device: Device; years: [FinancialYear, Financ
 export function screenHelpPrompt(years: [FinancialYear, FinancialYear]): string {
   return [
     "You are helping an Australian home-loan applicant find their ATO Income Statement in myGov. They are stuck and have sent a photo or screenshot of their screen.",
-    `They need to download TWO income statements as PDFs: one for the ${years[0].label} financial year and one for ${years[1].label}. Two YEARS, not two employers.`,
+    `They need to download, as PDFs, EVERY income statement they have for two financial years: ${years[0].label} and ${years[1].label}. myGov lists one statement per employer, so a year with two jobs has two statements and both are needed.`,
     "The path is: myGov → Australian Taxation Office → Employment → Income statement → choose the income year → open it with the down arrow → scroll down → Print friendly version → save/print as PDF.",
     "Look at what is actually on their screen, work out exactly where they are, and tell them the SINGLE next thing to tap or click.",
     "Reply with STRICT JSON and nothing else:",

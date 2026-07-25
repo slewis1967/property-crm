@@ -97,45 +97,83 @@ describe("normaliseFinancialYear", () => {
 });
 
 describe("atoYearCoverageIssues", () => {
-  it("flags both statements when an applicant's pair covers the same year (NK-10010)", () => {
-    const issues = atoYearCoverageIssues([
-      { applicant: "Applicant 1", financialYear: "2025-26" },
-      { applicant: "Applicant 1", financialYear: "2025-26" },
-    ]);
-    expect(issues.size).toBe(2);
-    expect(issues.get(0)).toMatch(/2025-26/);
-    expect(issues.get(0)).toMatch(/previous AND the current/);
-  });
-  it("passes a proper previous + current pair", () => {
-    expect(
-      atoYearCoverageIssues([
+  const YEARS = ["2025-26", "2024-25"] as const;
+
+  it("does NOT flag two statements for the same year — myGov issues one per employer", () => {
+    // The bug this replaced: an applicant with two jobs in 2025-26 legitimately
+    // has two 2025-26 statements. There is no combined document, so flagging
+    // that told every multi-employer client to fix a set that was already right.
+    const issues = atoYearCoverageIssues(
+      [
+        { applicant: "Applicant 1", financialYear: "2025-26" },
         { applicant: "Applicant 1", financialYear: "2025-26" },
         { applicant: "Applicant 1", financialYear: "2024-25" },
-      ]).size,
+      ],
+      YEARS,
+    );
+    expect(issues.size).toBe(0);
+  });
+
+  it("flags the year that is actually missing (the real NK-10010 fault)", () => {
+    const issues = atoYearCoverageIssues(
+      [
+        { applicant: "Applicant 1", financialYear: "2025-26" },
+        { applicant: "Applicant 1", financialYear: "2025-26" },
+      ],
+      YEARS,
+    );
+    expect(issues.size).toBe(1);
+    expect(issues.get(0)).toMatch(/no ATO Income Statement for 2024-25/);
+    expect(issues.get(0)).toMatch(/one per employer/);
+  });
+
+  it("says it once per applicant, not once per file", () => {
+    const issues = atoYearCoverageIssues(
+      [
+        { applicant: "Applicant 1", financialYear: "2025-26" },
+        { applicant: "Applicant 1", financialYear: "2025-26" },
+        { applicant: "Applicant 1", financialYear: "2025-26" },
+      ],
+      YEARS,
+    );
+    expect(issues.size).toBe(1);
+  });
+
+  it("passes a complete set", () => {
+    expect(
+      atoYearCoverageIssues(
+        [
+          { applicant: "Applicant 1", financialYear: "2025-26" },
+          { applicant: "Applicant 1", financialYear: "2024-25" },
+        ],
+        YEARS,
+      ).size,
     ).toBe(0);
   });
-  it("scopes the check per applicant — two people may share a year", () => {
-    expect(
-      atoYearCoverageIssues([
+
+  it("scopes the check per applicant", () => {
+    const issues = atoYearCoverageIssues(
+      [
         { applicant: "Applicant 1", financialYear: "2025-26" },
         { applicant: "Applicant 1", financialYear: "2024-25" },
         { applicant: "Applicant 2", financialYear: "2025-26" },
-        { applicant: "Applicant 2", financialYear: "2024-25" },
-      ]).size,
-    ).toBe(0);
+      ],
+      YEARS,
+    );
+    // Only applicant 2 is short a year.
+    expect(issues.size).toBe(1);
+    expect(issues.get(2)).toMatch(/2024-25/);
   });
-  it("never flags on an unreadable year — silence is not evidence of a fault", () => {
+
+  it("never flags when no year could be read — silence is not evidence", () => {
     expect(
-      atoYearCoverageIssues([
-        { applicant: "Applicant 1", financialYear: null },
-        { applicant: "Applicant 1", financialYear: null },
-      ]).size,
-    ).toBe(0);
-    expect(
-      atoYearCoverageIssues([
-        { applicant: "Applicant 1", financialYear: "2025-26" },
-        { applicant: "Applicant 1", financialYear: null },
-      ]).size,
+      atoYearCoverageIssues(
+        [
+          { applicant: "Applicant 1", financialYear: null },
+          { applicant: "Applicant 1", financialYear: null },
+        ],
+        YEARS,
+      ).size,
     ).toBe(0);
   });
 });

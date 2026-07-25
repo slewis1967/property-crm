@@ -63,12 +63,16 @@ describe("guideSteps", () => {
   it("leads with the linking check — where clients are actually stuck", () => {
     expect(guideSteps({ device: "ios", years })[0]!.id).toBe("linked");
   });
-  it("names both years explicitly, and says years not employers", () => {
+  it("names both years explicitly, and says one statement PER EMPLOYER", () => {
+    // myGov issues a separate statement per employer — there is no combined
+    // document — so a year with two jobs needs both of that year's statements.
+    // An earlier version of this step told clients the opposite.
     const year = guideSteps({ device: "ios", years }).find((s) => s.id === "year")!;
     const all = [...year.body, ...(year.actions ?? [])].join(" ");
     expect(all).toContain("2025-26");
     expect(all).toContain("2024-25");
-    expect(all).toMatch(/not two employers/i);
+    expect(all).toMatch(/each employer|per employer/i);
+    expect(all).not.toMatch(/not two employers/i);
   });
   it("gives device-specific save instructions", () => {
     const ios = guideSteps({ device: "ios", years }).find((s) => s.id === "save")!;
