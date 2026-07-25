@@ -21,6 +21,7 @@ import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite } from "./yla-submit";
 import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
+import { sendClientDocFixups, clientDocFixupEnabled } from "./yla-remediation-email";
 
 export function ylaAutoSubmitEnabled(): boolean {
   return process.env.YLA_AUTOSUBMIT_ENABLED === "true";
@@ -41,9 +42,9 @@ type Candidate = {
 
 export type SweepAction =
   | { application: string; applicant: string; action: "submitted"; drive_folder_url: string }
-  | { application: string; applicant: string; action: "flagged"; issues: string[] }
+  | { application: string; applicant: string; action: "flagged"; issues: string[]; emailedClients?: string[] }
   | { application: string; applicant: string; action: "would_submit" }
-  | { application: string; applicant: string; action: "would_flag"; issues: string[] }
+  | { application: string; applicant: string; action: "would_flag"; issues: string[]; emailedClients?: string[] }
   | { application: string; applicant: string; action: "error"; error: string };
 
 export type SweepResult = {
@@ -131,8 +132,20 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
 
     if (!run.result.pass) {
       const issues = run.result.docs.filter((d) => !d.pass).flatMap((d) => d.issues);
+      // Tell the client exactly what to re-upload (gated separately by
+      // CLIENT_DOC_FIXUP_ENABLED; forced dry when the sweep itself is dry).
+      const fixups = await sendClientDocFixups({
+        applicationId: rep.application_id,
+        repId: rep.id,
+        docs: run.result.docs,
+        now,
+        dryRun: dryRun || !clientDocFixupEnabled(),
+      });
+      const emailedClients = fixups
+        .filter((f) => f.action === "emailed" || f.action === "would_email")
+        .map((f) => `${f.applicant}${f.action === "would_email" ? " (dry)" : ""}`);
       if (dryRun) {
-        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_flag", issues });
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_flag", issues, emailedClients });
       } else {
         await supabase
           .from(DOCUMENT_REQUESTS_TABLE)
@@ -143,7 +156,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
             updated_at: now.toISOString(),
           })
           .in("id", ids);
-        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "flagged", issues });
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "flagged", issues, emailedClients });
       }
       continue;
     }
