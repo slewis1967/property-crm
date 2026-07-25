@@ -19,7 +19,7 @@ export function docTableMissing(error: { code?: string; message?: string } | nul
 
 /** Columns safe to return to the rep UI. Never the token_hash. */
 export const REQUEST_LIST_COLUMNS =
-  "id,client_ref,application_id,applicant_name,applicant_email,applicant_phone,opportunity_id,status,drive_folder_url,submitted_at,created_by,expires_at,created_at";
+  "id,client_ref,application_id,applicant_name,applicant_email,applicant_phone,opportunity_id,status,drive_folder_url,submitted_at,created_by,expires_at,created_at,verification_status,yla_submitted_at";
 
 export function isValidEmail(v: unknown): v is string {
   return typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);

@@ -23,7 +23,18 @@ type RequestRow = {
   submitted_at: string | null;
   created_by: string | null;
   created_at: string;
+  verification_status: string | null;
+  yla_submitted_at: string | null;
 };
+
+/**
+ * HELD = the sweep verified and packaged it to Drive, but YLA_SUBMIT_HOLD kept
+ * a human in the loop, so nothing has been sent. "passed" with no submission
+ * timestamp is exactly that state (a real submission always stamps both).
+ */
+function isHeldForRelease(r: RequestRow): boolean {
+  return r.verification_status === "passed" && !r.yla_submitted_at && !!r.drive_folder_url;
+}
 
 type WeeklyEntry = {
   title: string;
@@ -65,6 +76,7 @@ export default function DocumentRequestsClient() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [sending, setSending] = useState<string | null>(null);
   const [exportMsg, setExportMsg] = useState<{ id: string; text: string; url?: string; error?: boolean } | null>(null);
 
   // Weekly YLA calendar entry
@@ -249,6 +261,41 @@ export default function DocumentRequestsClient() {
       setExportMsg({ id, text: "Could not reach the server.", error: true });
     } finally {
       setExporting(null);
+    }
+  }
+
+  /** Release a held package: email YLA the COMP-8317 invite with the Drive link. */
+  async function sendToYla(id: string, applicant: string) {
+    setExportMsg(null);
+    if (!confirm(`Send ${applicant}'s application to Your Loan Assist now?\n\nThis emails programs@yourloanassist.com.au the calendar invite with the Drive link. It can't be unsent.`)) {
+      return;
+    }
+    setSending(id);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/submit-to-yla`, { method: "POST" });
+      const json = await res.json();
+      if (json.ok && json.submitted) {
+        setExportMsg({ id, text: "Sent to YLA." });
+      } else if (json.ok && json.dryRun) {
+        // YLA_AUTOSUBMIT_ENABLED is off, so the primitive only ever previews.
+        setExportMsg({ id, text: "Nothing sent — YLA sending is switched off (YLA_AUTOSUBMIT_ENABLED).", error: true });
+      } else {
+        setExportMsg({ id, text: json.error || `Could not send to YLA (${json.stage || res.status}).`, error: true });
+      }
+      await reload();
+      await loadWeekly();
+    } catch {
+      // The release re-verifies with the AI before sending, so a slow request can
+      // time out at the gateway AFTER the email has gone. Never claim it failed —
+      // reload and let the row's own state say whether it sent.
+      setExportMsg({
+        id,
+        text: "Lost contact before the result came back — reloading. Check whether it now shows as sent before trying again.",
+        error: true,
+      });
+      await reload();
+    } finally {
+      setSending(null);
     }
   }
 
@@ -499,6 +546,38 @@ export default function DocumentRequestsClient() {
                                 Not all documents are in yet.
                               </span>
                             )}
+                          </div>
+                        )}
+
+                        {/* Held by YLA_SUBMIT_HOLD: verified and packaged, waiting
+                            on a human to release it to YLA. */}
+                        {isHeldForRelease(r) && (
+                          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                            <p className="text-sm font-semibold text-amber-900">
+                              Ready for YLA — held for your check
+                            </p>
+                            <p className="mt-1 text-sm text-amber-800">
+                              Verified and packaged to Drive, including the signed Needs Analysis and
+                              Credit File Authorisation. Nothing has been sent yet.
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              <a
+                                href={r.drive_folder_url!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-md bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm ring-1 ring-amber-300 hover:bg-amber-100"
+                              >
+                                Check the Drive folder ↗
+                              </a>
+                              <button
+                                type="button"
+                                disabled={sending === r.id}
+                                onClick={() => void sendToYla(r.id, r.applicant_name)}
+                                className="rounded-md bg-amber-700 px-3 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-50"
+                              >
+                                {sending === r.id ? "Sending…" : "Send to YLA"}
+                              </button>
+                            </div>
                           </div>
                         )}
 
