@@ -14,6 +14,7 @@ import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
 import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
 import OpportunitySupportingDocuments, { type SupportingDoc } from "./OpportunitySupportingDocuments";
+import OpportunityTasks, { type LiveTask } from "./OpportunityTasks";
 import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
@@ -108,6 +109,7 @@ export default function OpportunityDetail({
   ghlContactId = null,
   documents = [],
   supportingDocuments = [],
+  liveTasks = [],
   opportunityId,
 }: {
   lead: Lead;
@@ -115,6 +117,7 @@ export default function OpportunityDetail({
   ghlContactId?: string | null;
   documents?: OpportunityDoc[];
   supportingDocuments?: SupportingDoc[];
+  liveTasks?: LiveTask[];
   opportunityId: string;
 }) {
   const router = useRouter();
@@ -752,6 +755,9 @@ export default function OpportunityDetail({
 
           {/* Supporting documents the client uploaded through their portal */}
           <OpportunitySupportingDocuments opportunityId={opportunityId} documents={supportingDocuments} />
+
+          {/* Live tasks (the "Add task" TODOs) — also shown in the War Room */}
+          <OpportunityTasks tasks={liveTasks} onAddTask={() => setShowAddTask(true)} />
 
           {/* Linked Contacts */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "../utils/supabase";
 import WarRoomCalculators from "./components/WarRoomCalculators";
 import AIDashboardBrief from "./components/AIDashboardBrief";
+import WarRoomTasks, { type WarRoomTask } from "./components/WarRoomTasks";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,16 @@ type HotContactRow = {
   status: string | null;
 };
 
+// Supabase types an embedded resource as an array even for a many-to-one FK;
+// at runtime task→contact is a single object. Accept both and normalise.
+type ContactEmbed = { name: string | null; email: string | null };
+type RawTaskRow = {
+  id: string;
+  title: string | null;
+  due_date: string | null;
+  contact: ContactEmbed | ContactEmbed[] | null;
+};
+
 // property_leads has no top-level `temperature` column — it's stashed in the
 // free-text `notes` blob (a JSON-encoded string) alongside triage metadata.
 const leadTemperature = (notes: string | null): string | null => {
@@ -63,6 +74,7 @@ const statusColor = (s: string | null) => {
 export default async function Home() {
   let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
   let hotLeads: HotContactRow[] = [], recentLeads: LeadRow[] = [], recentContacts: ContactRow[] = [];
+  let openTasks: WarRoomTask[] = [];
   let dataFetchError = false;
 
   try {
@@ -73,6 +85,9 @@ export default async function Home() {
       supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
       supabase.from("property_leads").select("name,email,state,buyer_type,triage_score,match_status,created_at,notes").order("created_at", { ascending: false }).limit(8),
       supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
+      // Open live tasks (the "Add task" TODOs), soonest due first, with the
+      // contact they're on so the War Room shows what needs doing and for whom.
+      supabase.from("tasks").select("id,title,due_date,completed,created_at,contact:contacts(name,email)").eq("completed", false).order("due_date", { ascending: true, nullsFirst: false }).limit(12),
     ]);
 
     leadsCount = results[0].count ?? 0;
@@ -81,6 +96,15 @@ export default async function Home() {
     hotLeads = results[3].data ?? [];
     recentLeads = results[4].data ?? [];
     recentContacts = results[5].data ?? [];
+    openTasks = ((results[6].data ?? []) as RawTaskRow[]).map((t) => {
+      const c = Array.isArray(t.contact) ? t.contact[0] : t.contact;
+      return {
+        id: String(t.id),
+        title: t.title || "(untitled task)",
+        due_date: t.due_date ?? null,
+        contactName: c?.name || c?.email || null,
+      };
+    });
   } catch (error) {
     console.error("Failed to fetch dashboard data:", error);
     dataFetchError = true;
@@ -145,6 +169,11 @@ export default async function Home() {
           <p className="text-3xl font-bold mt-2 text-red-600">{hotLeads?.length ?? 0}</p>
           <a href="/leads?filter=hot" className="text-xs text-red-500 mt-2 block hover:underline">View hot leads →</a>
         </div>
+      </div>
+
+      {/* Open live tasks set on opportunities */}
+      <div className="mb-6">
+        <WarRoomTasks tasks={openTasks} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

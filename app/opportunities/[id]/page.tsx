@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import type { OpportunityDoc } from "./OpportunityDocuments";
 import type { SupportingDoc } from "./OpportunitySupportingDocuments";
+import type { LiveTask } from "./OpportunityTasks";
 import { DOC_BY_KEY } from "../../../utils/yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../utils/document-requests-db";
 import { log, errInfo } from "@/utils/logger";
@@ -116,6 +117,34 @@ async function fetchSupportingDocuments(opportunityId: string): Promise<Supporti
   }
 }
 
+/** The live advisor TODOs (the `tasks` table) for this opportunity's contact —
+ * the tasks set via "Add task", so they surface on the page rather than only
+ * living in the DB. Ordered open-first, then soonest due. Empty if no contact
+ * or the table isn't present. */
+async function fetchLiveTasks(contactId: string | null): Promise<LiveTask[]> {
+  if (!contactId) return [];
+  try {
+    const { data } = await supabase
+      .from("tasks")
+      .select("id,title,body,due_date,completed,created_at")
+      .eq("contact_id", contactId)
+      .order("completed", { ascending: true })
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(50);
+    return (data ?? []).map((t) => ({
+      id: String(t.id),
+      title: (t.title as string) || "(untitled task)",
+      body: (t.body as string) ?? null,
+      due_date: (t.due_date as string) ?? null,
+      completed: Boolean(t.completed),
+      created_at: (t.created_at as string) ?? null,
+    }));
+  } catch (e) {
+    log.warn("opportunity_live_tasks.fetch_failed", { ...errInfo(e) });
+    return [];
+  }
+}
+
 /** Resolve this lead's live CRM contact by email (case-insensitive). NEXUS
  * doesn't always stamp primary_contact_id even when a matching contact exists,
  * which left appointment/task linking blocked ("no matched contact") for leads
@@ -209,10 +238,11 @@ export default async function OpportunityDetailPage({
     lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
   }
 
-  const [{ ghlContactId, archive }, documents, supportingDocuments] = await Promise.all([
+  const [{ ghlContactId, archive }, documents, supportingDocuments, liveTasks] = await Promise.all([
     resolveGhlArchiveForLead(lead.email),
     fetchOpportunityDocuments(lead.primary_contact_id, id),
     fetchSupportingDocuments(id),
+    fetchLiveTasks(lead.primary_contact_id),
   ]);
 
   return (
@@ -222,6 +252,7 @@ export default async function OpportunityDetailPage({
       ghlContactId={ghlContactId}
       documents={documents}
       supportingDocuments={supportingDocuments}
+      liveTasks={liveTasks}
       opportunityId={id}
     />
   );
