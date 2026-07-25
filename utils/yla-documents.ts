@@ -145,3 +145,25 @@ export function ylaFilename(
 
   return `${name}.pdf`;
 }
+
+/**
+ * The filename for an APPLICATION-level document — the signed Needs Analysis
+ * and Credit File Authorisation, which the CRM produces rather than the client
+ * uploading (see utils/yla-package.ts).
+ *
+ * These land in the same Drive folder as the client's files, and YLA's standard
+ * is "named to reflect the document", so they take the same shape as
+ * ylaFilename(): "<Document> - <Surname> (NK-10010).pdf".
+ */
+export function packageFilename(
+  base: string,
+  applicantName: string | null,
+  clientRef: string | null,
+): string {
+  const surname = (surnameOf(applicantName) || (applicantName ?? "")).replace(/[^\w\- ]+/g, "").trim();
+  let name = base;
+  if (surname) name += ` - ${surname}`;
+  const ref = (clientRef || "").trim();
+  if (ref) name += ` (${ref})`;
+  return `${name}.pdf`;
+}
