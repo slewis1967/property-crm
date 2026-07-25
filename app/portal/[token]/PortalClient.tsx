@@ -24,13 +24,19 @@ type Slot = {
   label: string;
   hint: string;
   slot: number;
+  /** True for a document supplied beyond the required minimum (extra employer). */
+  extra?: boolean;
   document: { id: string; filename: string; status: string; notes: string | null; size: number | null } | null;
 };
+
+/** An optional slot the client MAY fill — "another employer's statement". */
+type ExtraSlot = { docKey: string; label: string; slot: number };
 
 type State = {
   applicant_name: string;
   status: string;
   slots: Slot[];
+  extra_slots?: ExtraSlot[];
   outstanding: number;
   complete: boolean;
 };
@@ -309,6 +315,39 @@ export default function PortalClient({ token }: { token: string }) {
                 );
               })}
             </ul>
+
+            {/* Another employer's statement. myGov issues one per employer, so a
+                year with two jobs has two — and a fixed slot list left the
+                client nowhere to put the second. Optional: never counts as
+                outstanding, so it can't make a complete set look incomplete. */}
+            {(state.extra_slots ?? []).map((x) => {
+              const id = `${x.docKey}:${x.slot}`;
+              return (
+                <div key={id} className="mt-3">
+                  <input
+                    ref={(el) => {
+                      inputs.current[id] = el;
+                    }}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={(ev) => {
+                      const f = ev.target.files?.[0];
+                      ev.target.value = "";
+                      if (f) void handleFile({ docKey: x.docKey, label: x.label, hint: "", slot: x.slot, document: null }, f);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!!busy[id]}
+                    onClick={() => inputs.current[id]?.click()}
+                    className="w-full rounded-lg border border-dashed border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-600 hover:border-amber-400 hover:text-amber-700 disabled:opacity-50"
+                  >
+                    {busy[id] ? busy[id] : `+ Add another ${x.label} (if you had more than one employer)`}
+                  </button>
+                </div>
+              );
+            })}
         </section>
 
         <footer className="mt-10 border-t border-gray-200 pt-6 text-sm text-gray-500">

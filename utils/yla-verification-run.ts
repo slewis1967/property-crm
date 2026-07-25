@@ -8,7 +8,7 @@
  * (Supabase reads, storage fetch, the vision model call).
  */
 import { supabase } from "./supabase";
-import { requiredSlots } from "./yla-documents";
+import { requiredSlots, allowsExtra } from "./yla-documents";
 import { MODELS, orChat } from "./openrouter";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import {
@@ -118,6 +118,26 @@ export async function runApplicationVerification(
         filename: m.filename,
         storage_path: m.storage_path,
         mime: m.mime_type || "application/pdf",
+      });
+    }
+
+    // Documents BEYOND the required slots — a third or fourth ATO statement,
+    // because myGov issues one per employer. They must still be checked (an
+    // extra statement can be a screenshot too) and must reach the year-coverage
+    // check, or a client's 2024-25 statement would be invisible simply because
+    // they had two employers in the other year.
+    for (const d of docs ?? []) {
+      if (used.has(d.id) || !allowsExtra(d.doc_type)) continue;
+      used.add(d.id);
+      received++;
+      const nth = matched.filter((m) => m.applicant === who && m.docKey === d.doc_type).length + 1;
+      matched.push({
+        applicant: who,
+        docKey: d.doc_type,
+        slot: nth,
+        filename: d.filename,
+        storage_path: d.storage_path,
+        mime: d.mime_type || "application/pdf",
       });
     }
   }

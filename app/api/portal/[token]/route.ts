@@ -10,7 +10,15 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
-import { requiredSlots, YLA_MAX_BYTES, ACCEPTED_MIME } from "../../../../utils/yla-documents";
+import {
+  requiredSlots,
+  allowsExtra,
+  maxSlotFor,
+  DOC_BY_KEY,
+  YLA_DOC_KEYS_WITH_EXTRA,
+  YLA_MAX_BYTES,
+  ACCEPTED_MIME,
+} from "../../../../utils/yla-documents";
 import { resolveToken } from "../_shared";
 
 export const dynamic = "force-dynamic";
@@ -42,8 +50,18 @@ export async function GET(
 
   // Fill each required slot with an uploaded document, in upload order, so the
   // client sees "Payslip 1 done, Payslip 2 outstanding" rather than a count.
+  type FilledSlot = {
+    docKey: string;
+    label: string;
+    hint: string;
+    slot: number;
+    /** Supplied beyond the required minimum — another employer's statement. */
+    extra?: boolean;
+    document: { id: string; filename: string; status: string; notes: string | null; size: number | null } | null;
+  };
+
   const used = new Set<string>();
-  const filled = slots.map((slot) => {
+  const filled: FilledSlot[] = slots.map((slot) => {
     const match = (docs ?? []).find((d) => !used.has(d.id) && d.doc_type === slot.docKey);
     if (match) used.add(match.id);
     return {
@@ -60,6 +78,38 @@ export async function GET(
     };
   });
 
+  // EXTRA slots the client has already filled beyond the required minimum —
+  // a third or fourth ATO income statement, because myGov issues one per
+  // employer. They aren't "required" (so they never count as outstanding) but
+  // they must be visible, or the client can't tell they landed.
+  for (const d of docs ?? []) {
+    if (used.has(d.id) || !allowsExtra(d.doc_type)) continue;
+    used.add(d.id);
+    const spec = DOC_BY_KEY[d.doc_type];
+    const nth = filled.filter((s) => s.docKey === d.doc_type).length + 1;
+    filled.push({
+      docKey: d.doc_type,
+      label: spec?.label ?? d.doc_type,
+      hint: spec?.hint ?? "",
+      slot: nth,
+      extra: true,
+      document: {
+        id: d.id,
+        filename: d.filename,
+        status: d.status,
+        notes: d.check_notes,
+        size: d.size_bytes,
+      },
+    });
+  }
+
+  // Where the client may add one more (the "another employer" case).
+  const extraSlots = YLA_DOC_KEYS_WITH_EXTRA.map((key) => {
+    const usedCount = filled.filter((s) => s.docKey === key && s.document).length;
+    const next = usedCount + 1;
+    return next <= maxSlotFor(key) ? { docKey: key, label: DOC_BY_KEY[key]?.label ?? key, slot: next } : null;
+  }).filter(Boolean);
+
   const outstanding = filled.filter((s) => !s.document).length;
 
   return NextResponse.json({
@@ -68,6 +118,7 @@ export async function GET(
     applicant_name: request.applicant_name,
     status: request.status,
     slots: filled,
+    extra_slots: extraSlots,
     outstanding,
     complete: outstanding === 0,
     limits: { max_bytes: YLA_MAX_BYTES, accepted_mime: ACCEPTED_MIME },
