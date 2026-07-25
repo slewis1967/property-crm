@@ -18,11 +18,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports";
+type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports" | "paidAccounts";
 type Item = { href: string; icon: string; label: string; badge?: BadgeKey };
 type Group = { key: string; label: string; icon: string; items: Item[] };
 
-export type SidebarCounts = { pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number };
+export type SidebarCounts = {
+  pendingReview: number;
+  draftBuilders: number;
+  dealPackets: number;
+  amlReports: number;
+  paidAccounts: number;
+};
 
 const GROUPS: Group[] = [
   {
@@ -88,7 +94,10 @@ const GROUPS: Group[] = [
     key: "system",
     label: "System",
     icon: "⚙️",
-    items: [{ href: "/settings", icon: "⚙️", label: "Settings" }],
+    items: [
+      { href: "/paid-services", icon: "💳", label: "Paid Accounts", badge: "paidAccounts" },
+      { href: "/settings", icon: "⚙️", label: "Settings" },
+    ],
   },
   {
     key: "elvis",
