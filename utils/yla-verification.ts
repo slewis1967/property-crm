@@ -17,7 +17,13 @@ import { YLA_DOCUMENTS, YLA_MAX_BYTES } from "./yla-documents";
 export const EXPECTED_DOC_DESCRIPTION: Record<string, string> = {
   payslip: "a recent payslip / payroll income advice",
   photo_id: "photo identification — an Australian driver licence or passport",
-  ato_income: "an ATO Income Statement or PAYG payment summary (from myGov)",
+  // Deliberately still accepts the "PAYG payment summary" title — that is what
+  // myGov itself called the same download in earlier years — while ruling out
+  // the two things clients actually send by mistake.
+  ato_income:
+    "an ATO Income Statement downloaded from the ATO section of myGov (it may be titled " +
+    '"Income statement" or "PAYG payment summary"). A tax return, a notice of assessment, ' +
+    "or a payment summary issued by an employer is NOT this document",
   super_statement: "a superannuation account statement",
 };
 
