@@ -45,6 +45,11 @@ describe("the myGov video", () => {
     expect(MYGOV_VIDEO.src).not.toMatch(/^https?:\/\//);
     expect(MYGOV_VIDEO.src).not.toMatch(/youtube|vimeo|wistia/i);
   });
+
+  it("has a poster, so the player doesn't open on a black rectangle", () => {
+    expect(MYGOV_VIDEO.poster.startsWith("/api/portal/")).toBe(true);
+    expect(MYGOV_VIDEO.poster).not.toMatch(/^https?:\/\//);
+  });
 });
 
 describe("the journey", () => {
