@@ -23,6 +23,9 @@
  */
 export const MYGOV_VIDEO = {
   src: "/api/portal/mygov-video",
+  /** The video's own title card. Without it the player opens on black, which
+   *  reads as broken rather than as a video waiting to be played. */
+  poster: "/api/portal/mygov-poster",
   title: "Finding your income statement on the ATO myGov portal",
   /** Shown while the video loads, and to anyone with media disabled. */
   caption: "Springboard Homes — 1 min 16",

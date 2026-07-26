@@ -113,6 +113,7 @@ export function HelpSection({ onOpenWalkthrough }: { onOpenWalkthrough: () => vo
         <div className="mt-3 overflow-hidden rounded-lg bg-black" style={{ aspectRatio: "16 / 9" }}>
           <video
             src={MYGOV_VIDEO.src}
+            poster={MYGOV_VIDEO.poster}
             title={MYGOV_VIDEO.title}
             controls
             playsInline
