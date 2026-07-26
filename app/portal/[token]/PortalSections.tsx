@@ -108,14 +108,19 @@ export function HelpSection({ onOpenWalkthrough }: { onOpenWalkthrough: () => vo
           This is the one most people get stuck on. The video walks through it, or use the
           step-by-step guide on your phone.
         </p>
+        {/* Self-hosted, same origin — no third-party player, no third-party
+            branding, no cookie set on a page that also handles identity documents. */}
         <div className="mt-3 overflow-hidden rounded-lg bg-black" style={{ aspectRatio: "16 / 9" }}>
-          <iframe
-            src={MYGOV_VIDEO.embedUrl}
+          <video
+            src={MYGOV_VIDEO.src}
             title={MYGOV_VIDEO.title}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+            controls
+            playsInline
+            preload="metadata"
             className="h-full w-full"
-          />
+          >
+            {MYGOV_VIDEO.caption}
+          </video>
         </div>
         <button
           type="button"

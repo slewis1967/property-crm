@@ -38,10 +38,12 @@ describe("help content", () => {
 });
 
 describe("the myGov video", () => {
-  it("embeds through youtube-nocookie so no tracking cookie is set before play", () => {
-    expect(MYGOV_VIDEO.embedUrl).toContain("youtube-nocookie.com");
-    // The CSP frame-src must match this host exactly — see next.config.ts.
-    expect(MYGOV_VIDEO.embedUrl.startsWith("https://www.youtube-nocookie.com/embed/")).toBe(true);
+  it("is served from our own origin, not a third party", () => {
+    // Self-hosting is the point: no other firm's branding on a client page, no
+    // CSP exception, and no third-party cookie beside identity documents.
+    expect(MYGOV_VIDEO.src.startsWith("/api/portal/")).toBe(true);
+    expect(MYGOV_VIDEO.src).not.toMatch(/^https?:\/\//);
+    expect(MYGOV_VIDEO.src).not.toMatch(/youtube|vimeo|wistia/i);
   });
 });
 
