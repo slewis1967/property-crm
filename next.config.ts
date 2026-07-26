@@ -41,11 +41,6 @@ const SECURITY_HEADERS = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      // The myGov walkthrough embedded in the client portal's Help section.
-      // youtube-nocookie, not youtube.com: the privacy-enhanced player sets no
-      // tracking cookie until the viewer presses play. Narrow on purpose —
-      // this is the only third-party frame we allow.
-      "frame-src https://www.youtube-nocookie.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

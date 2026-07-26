@@ -14,12 +14,18 @@
  * content stays strictly on "what this document is and how to get it".
  */
 
-/** The myGov walkthrough video, embedded in the ATO help entry. */
+/**
+ * The myGov walkthrough — Springboard's own video, self-hosted.
+ *
+ * Served from our own origin (see app/api/portal/mygov-video/route.ts) rather
+ * than embedded from a third party: it keeps another firm's branding off a
+ * client-facing page, needs no CSP exception, and sets no third-party cookie.
+ */
 export const MYGOV_VIDEO = {
-  /** youtube-nocookie: no tracking cookies until the viewer presses play. */
-  embedUrl: "https://www.youtube-nocookie.com/embed/1jy5s4yEOrI",
-  watchUrl: "https://www.youtube.com/watch?v=1jy5s4yEOrI",
-  title: "How to find your income statements on the ATO myGov portal",
+  src: "/api/portal/mygov-video",
+  title: "Finding your income statement on the ATO myGov portal",
+  /** Shown while the video loads, and to anyone with media disabled. */
+  caption: "Springboard Homes — 1 min 16",
 } as const;
 
 export type HelpEntry = {
