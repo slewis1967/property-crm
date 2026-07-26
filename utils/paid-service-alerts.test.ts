@@ -6,7 +6,7 @@
  * are covered by paid-services.test.ts.
  */
 import { describe, it, expect } from "vitest";
-import { digestHtml, digestSubject, digestText } from "./paid-service-alerts";
+import { digestHtml, digestSubject, digestText, withinSendWindow } from "./paid-service-alerts";
 import { attentionFor, type PaidService, type ServiceAttention } from "./paid-services";
 
 const TODAY = "2026-07-25";
@@ -48,6 +48,28 @@ function flagged(over: Partial<PaidService>): ServiceAttention {
 
 const overdue = flagged({ id: "a", name: "Supabase", next_due_date: "2026-07-18", cost: 35, criticality: "critical" });
 const dueSoon = flagged({ id: "b", name: "Hostinger", next_due_date: "2026-07-29", cost: 180, billing_cycle: "annual" });
+
+describe("withinSendWindow", () => {
+  // The Brisbane day rolls over at 14:00 UTC, so the 2-hourly `job=all` sweep
+  // would otherwise claim the day's one digest before dawn. These are the actual
+  // observed run times from production.
+  it("holds the pre-dawn sweeps that used to win the race", () => {
+    expect(withinSendWindow(new Date("2026-07-25T14:30:00Z"))).toBe(false); // 00:30 Brisbane
+    expect(withinSendWindow(new Date("2026-07-25T19:39:00Z"))).toBe(false); // 05:39 Brisbane
+    expect(withinSendWindow(new Date("2026-07-25T20:59:00Z"))).toBe(false); // 06:59 Brisbane
+  });
+
+  it("allows the dedicated 21:00 UTC schedule and the rest of the working day", () => {
+    expect(withinSendWindow(new Date("2026-07-25T21:00:00Z"))).toBe(true); // 07:00 Brisbane
+    expect(withinSendWindow(new Date("2026-07-25T21:41:00Z"))).toBe(true); // 07:41 Brisbane
+    expect(withinSendWindow(new Date("2026-07-26T04:04:00Z"))).toBe(true); // 14:04 Brisbane
+    expect(withinSendWindow(new Date("2026-07-26T08:59:00Z"))).toBe(true); // 18:59 Brisbane
+  });
+
+  it("closes at 19:00 Brisbane", () => {
+    expect(withinSendWindow(new Date("2026-07-26T09:00:00Z"))).toBe(false); // 19:00 Brisbane
+  });
+});
 
 describe("digestSubject", () => {
   it("leads with the worst item, because that's all a phone shows", () => {

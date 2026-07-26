@@ -138,6 +138,17 @@ export function brisbaneToday(now: Date = new Date()): string {
   return fmt.format(now);
 }
 
+/** Hour of day (0–23) in Australia/Brisbane. */
+export function brisbaneHour(now: Date = new Date()): number {
+  const h = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Australia/Brisbane",
+    hour: "2-digit",
+    hour12: false,
+  }).format(now);
+  // en-GB gives "07"; midnight can format as "24" in some ICU versions.
+  return Number(h) % 24;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function ymdToUtc(ymd: string): number | null {

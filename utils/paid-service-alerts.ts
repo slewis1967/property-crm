@@ -28,6 +28,7 @@ import { refreshBalances } from "./paid-service-balances";
 import {
   actionable,
   assessAll,
+  brisbaneHour,
   brisbaneToday,
   paidErrMessage,
   paidServicesTableMissing,
@@ -40,6 +41,27 @@ import {
 
 export function paidAlertsEnabled(): boolean {
   return process.env.PAID_ALERTS_ENABLED === "true";
+}
+
+/**
+ * Civil hours (Australia/Brisbane) for the automatic digest.
+ *
+ * Needed because `/api/cron/run?job=all` — the 2-hourly client sweep — also runs
+ * this job, and the Brisbane day rolls over at 14:00 UTC. Without a window, the
+ * first sweep after the rollover claims that day's one digest, so the email could
+ * land at 00:30 or 05:39 Brisbane instead of the 07:00 the dedicated schedule
+ * aims for. A payment alert that arrives at 1am gets read half-asleep or not at
+ * all.
+ *
+ * The operator's "Send digest now" (force) ignores this — an explicit click at
+ * 11pm should still send.
+ */
+export const SEND_HOUR_START = 7;
+export const SEND_HOUR_END = 19;
+
+export function withinSendWindow(now: Date = new Date()): boolean {
+  const h = brisbaneHour(now);
+  return h >= SEND_HOUR_START && h < SEND_HOUR_END;
 }
 
 export function paidAlertRecipient(): string {
@@ -294,6 +316,14 @@ export async function runPaidServiceAlerts(
   }
 
   if (!force) {
+    // Hold outside civil hours rather than burning the day's one digest on a
+    // pre-dawn sweep. The next in-window run picks it up — nothing is lost.
+    const now = opts.now ?? new Date();
+    if (!withinSendWindow(now)) {
+      run.reason = `outside the ${SEND_HOUR_START}:00–${SEND_HOUR_END}:00 Brisbane send window (now ${brisbaneHour(now)}:00)`;
+      await writeLog(run, flagged, `Held until civil hours — ${flagged.length} account(s) waiting`);
+      return run;
+    }
     try {
       if (await alreadySentToday(today)) {
         run.reason = "a digest already went out today";
