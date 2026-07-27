@@ -8,7 +8,7 @@
  * existing folder rather than duplicating it.
  */
 import { supabase } from "./supabase";
-import { requiredSlots, surnameOf, allowsExtra } from "./yla-documents";
+import { requiredSlots, surnameOf, allowsExtra, ylaFilename } from "./yla-documents";
 import { exportToDrive } from "./google-drive";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import { buildYlaPackageDocs } from "./yla-package";
@@ -21,6 +21,32 @@ const DL_CONCURRENCY = 6;
 export type ExportRunResult =
   | { ok: false; status: number; error: string; folderUrl?: string; missing?: number }
   | { ok: true; alreadyExported: boolean; folderUrl: string; folderId: string | null; uploaded: number; applicants: number; warning?: string };
+
+/**
+ * What YLA see on the file, as opposed to what we stored it as.
+ *
+ * The stored name carries the SURNAME, which is enough while a document sits in
+ * one applicant's portal — but the export puts every applicant's files in ONE
+ * flat folder, and co-applicants are usually a couple. Two people called
+ * Halliday produced seventeen files of which fourteen came in identical pairs:
+ * two "Payslip 1 - Halliday (NK-10010).pdf", two photo IDs, two super
+ * statements, with nothing on the file to say whose income was whose. For an
+ * assessment that reads each applicant's position separately, that is not a
+ * cosmetic problem.
+ *
+ * Naming from the applicant's full name fixes it and still satisfies YLA's
+ * "named to reflect the document". Done HERE rather than at upload on purpose:
+ * the stored filename is what supersession matches on when a client re-uploads,
+ * so changing it would orphan every document already on file.
+ */
+function exportName(
+  applicantName: string,
+  clientRef: string | null,
+  docKey: string,
+  slot: number,
+): string {
+  return ylaFilename(docKey, slot, applicantName, clientRef);
+}
 
 export async function exportApplicationToDrive(id: string, opts?: { force?: boolean }): Promise<ExportRunResult> {
   const force = opts?.force === true;
@@ -71,17 +97,22 @@ export async function exportApplicationToDrive(id: string, opts?: { force?: bool
         continue;
       }
       used.add(match.id);
-      matches.push({ filename: match.filename, storage_path: match.storage_path, mime: match.mime_type || "application/pdf" });
+      matches.push({
+        filename: exportName(sib.applicant_name, sib.client_ref, slot.docKey, slot.slot),
+        storage_path: match.storage_path,
+        mime: match.mime_type || "application/pdf",
+      });
     }
 
     // Anything beyond the required slots — extra ATO income statements, one per
     // employer. Without this the folder would silently omit a statement the
     // client did supply, and YLA would reject the set for being incomplete.
+    let extra = slots.filter((s) => s.docKey === "ato_income").length;
     for (const d of docs ?? []) {
       if (used.has(d.id) || !allowsExtra(d.doc_type as string)) continue;
       used.add(d.id);
       matches.push({
-        filename: d.filename as string,
+        filename: exportName(sib.applicant_name, sib.client_ref, d.doc_type as string, ++extra),
         storage_path: d.storage_path as string,
         mime: (d.mime_type as string) || "application/pdf",
       });

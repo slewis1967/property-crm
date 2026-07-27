@@ -28,3 +28,25 @@ describe("packageFilename", () => {
     );
   });
 });
+
+describe("ylaFilename for the export folder", () => {
+  it("tells co-applicants apart when they share a surname", () => {
+    // Every applicant's files land in ONE flat folder, and co-applicants are
+    // usually a couple — so naming by surname alone gave YLA two identical
+    // "Payslip 1 - Halliday" files with nothing to say whose income was whose.
+    const david = ylaFilename("payslip", 1, "David Halliday", "NK-10010");
+    const melissa = ylaFilename("payslip", 1, "Melissa May-Anne Halliday", "NK-10010");
+    expect(david).toBe("Payslip 1 - David Halliday (NK-10010).pdf");
+    expect(melissa).toBe("Payslip 1 - Melissa May-Anne Halliday (NK-10010).pdf");
+    expect(david).not.toBe(melissa);
+  });
+  it("keeps front/back and the extra-statement numbering distinct per applicant", () => {
+    expect(ylaFilename("photo_id", 2, "David Halliday", "NK-10010")).toBe(
+      "Photo ID 2 Back - David Halliday (NK-10010).pdf",
+    );
+    // A third ATO statement — myGov issues one per employer.
+    expect(ylaFilename("ato_income", 3, "David Halliday", "NK-10010")).toBe(
+      "ATO Income Statement 3 - David Halliday (NK-10010).pdf",
+    );
+  });
+});
