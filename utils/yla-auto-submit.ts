@@ -10,6 +10,19 @@
  *    re-run the paid AI check on a static broken set every sweep),
  *  - re-checks a previously-failed set once the client uploads something new.
  *
+ * RUNS IN TWO STAGES, and this is load-bearing rather than tidiness. The sweep
+ * executes inside a serverless request with a ceiling of a few tens of seconds,
+ * and a two-applicant application costs ~40s to verify plus a packaging step
+ * that renders two PDFs and uploads a Drive folder. As one unit it never fit:
+ * every invocation was killed partway, recorded nothing, and the next one
+ * repeated the identical work — so a complete, passing application sat unsent
+ * indefinitely while the logs showed nothing wrong. Each stage now records its
+ * result the moment it has one, so an invocation that dies costs at most the
+ * stage it was in, and the next one resumes instead of restarting:
+ *   1. verify → write "passed"/"failed" (then email the client on a fail)
+ *   2. package to Drive → hold for release, or send
+ *
+ *
  * SAFETY: nothing is exported or emailed unless YLA_AUTOSUBMIT_ENABLED==="true".
  * Otherwise every run is a dry run that verifies + reports what it WOULD do.
  */
@@ -46,9 +59,11 @@ type Candidate = {
   id: string;
   application_id: string | null;
   applicant_name: string;
+  client_ref: string | null;
   contact_id: string | null;
   verification_status: string | null;
   verified_at: string | null;
+  drive_folder_url: string | null;
   submit_target: string | null;
   broker_name: string | null;
   broker_email: string | null;
@@ -99,7 +114,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   const { data: cands, error: candErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .select(
-      "id,application_id,applicant_name,contact_id,verification_status,verified_at,submit_target,broker_name,broker_email,broker_reference",
+      "id,application_id,applicant_name,client_ref,contact_id,verification_status,verified_at,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
     )
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
@@ -138,36 +153,54 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     if (rep.verification_status === "failed" && rep.verified_at && latestUpload && latestUpload <= rep.verified_at) {
       continue;
     }
-    // Skip a set already HELD for human release: it passed and was packaged to
-    // Drive, but yla_submitted_at is still null because a person hasn't pressed
-    // send. Without this it would re-verify, re-notify and re-pay for the AI
-    // pass every two hours until released.
-    if (rep.verification_status === "passed") continue;
+    // Skip a set already PACKAGED and waiting on a human: it passed, its Drive
+    // folder exists, and yla_submitted_at is null only because nobody has
+    // pressed send. Without this it would re-verify, re-notify and re-pay for
+    // the AI pass every two hours until released.
+    //
+    // "passed" WITHOUT a Drive folder is a different thing — a run that
+    // verified and was then cut short before it could package (see below). That
+    // one resumes at the export rather than paying for the AI pass again.
+    const packaged = sibs.some((s) => !!s.drive_folder_url);
+    if (rep.verification_status === "passed" && packaged) continue;
     processed++;
 
-    const run = await runApplicationVerification(rep.id, { visual: true });
-    if (!run.ok) {
-      actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: run.error });
-      continue;
-    }
+    let primaryApplicant = rep.applicant_name;
+    let clientRef = rep.client_ref;
 
-    if (!run.result.pass) {
-      const issues = run.result.docs.filter((d) => !d.pass).flatMap((d) => d.issues);
-      // Tell the client exactly what to re-upload (gated separately by
-      // CLIENT_DOC_FIXUP_ENABLED; forced dry when the sweep itself is dry).
-      const fixups = await sendClientDocFixups({
-        applicationId: rep.application_id,
-        repId: rep.id,
-        docs: run.result.docs,
-        now,
-        dryRun: dryRun || !clientDocFixupEnabled(),
-      });
-      const emailedClients = fixups
-        .filter((f) => f.action === "emailed" || f.action === "would_email")
-        .map((f) => `${f.applicant}${f.action === "would_email" ? " (dry)" : ""}`);
-      if (dryRun) {
-        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_flag", issues, emailedClients });
-      } else {
+    // STAGE 1 — verify. Skipped entirely when a previous invocation already
+    // recorded a pass, which is what makes the two stages add up to less than
+    // one serverless request each.
+    if (rep.verification_status !== "passed") {
+      const run = await runApplicationVerification(rep.id, { visual: true });
+      if (!run.ok) {
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: run.error });
+        continue;
+      }
+      primaryApplicant = run.primaryApplicant;
+      clientRef = run.clientRef;
+
+      if (!run.result.pass) {
+        const issues = run.result.docs.filter((d) => !d.pass).flatMap((d) => d.issues);
+        if (dryRun) {
+          const fixups = await sendClientDocFixups({
+            applicationId: rep.application_id,
+            repId: rep.id,
+            docs: run.result.docs,
+            now,
+            dryRun: true,
+          });
+          const emailedClients = fixups
+            .filter((f) => f.action === "emailed" || f.action === "would_email")
+            .map((f) => `${f.applicant} (dry)`);
+          actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_flag", issues, emailedClients });
+          continue;
+        }
+        // Record the verdict BEFORE emailing anyone. The emails are the slow
+        // part, and a run cut short between the two used to leave the client
+        // told to re-upload while the application still looked unchecked — so
+        // the next sweep paid for the whole AI pass again and re-sent the same
+        // email. Whatever else happens, the verdict is now durable.
         await supabase
           .from(DOCUMENT_REQUESTS_TABLE)
           .update({
@@ -177,16 +210,46 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
             updated_at: now.toISOString(),
           })
           .in("id", ids);
+        // Tell the client exactly what to re-upload (gated separately by
+        // CLIENT_DOC_FIXUP_ENABLED).
+        const fixups = await sendClientDocFixups({
+          applicationId: rep.application_id,
+          repId: rep.id,
+          docs: run.result.docs,
+          now,
+          dryRun: !clientDocFixupEnabled(),
+        });
+        const emailedClients = fixups
+          .filter((f) => f.action === "emailed" || f.action === "would_email")
+          .map((f) => `${f.applicant}${f.action === "would_email" ? " (dry)" : ""}`);
         actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "flagged", issues, emailedClients });
+        continue;
       }
-      continue;
-    }
 
-    // PASS.
-    if (dryRun) {
+      // PASS.
+      if (dryRun) {
+        actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_submit" });
+        continue;
+      }
+
+      // Bank the pass before the packaging starts, for the same reason as the
+      // failure above: packaging renders two PDFs and uploads a folder to
+      // Drive, and losing a 40s AI pass to a timeout during it meant the sweep
+      // never converged — every invocation redid the same work and was cut off
+      // at the same place. A pass with no Drive folder is picked up at STAGE 2
+      // by the next invocation. It reads as "verified, packaging" rather than
+      // "ready to send": releasing early is refused by the submit primitive,
+      // which requires an exported package.
+      await supabase
+        .from(DOCUMENT_REQUESTS_TABLE)
+        .update({ verification_status: "passed", verified_at: now.toISOString(), verification_issues: null, updated_at: now.toISOString() })
+        .in("id", ids);
+    } else if (dryRun) {
       actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_submit" });
       continue;
     }
+
+    // STAGE 2 — package to Drive, then hold or send.
 
     const exp = await exportApplicationToDrive(rep.id);
     if (!exp.ok) {
@@ -204,12 +267,13 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         .from(DOCUMENT_REQUESTS_TABLE)
         // Deliberately NOT yla_submitted_at — it isn't submitted. "passed" with
         // no submission timestamp IS the held state, and the candidate scan
-        // above skips it, so this notifies once rather than every two hours.
+        // above skips it (now that the folder exists), so this notifies once
+        // rather than every two hours.
         .update({ verification_status: "passed", verified_at: now.toISOString(), updated_at: now.toISOString() })
         .in("id", ids);
       await notifyYlaSubmissionHeld({
-        primaryApplicant: run.primaryApplicant,
-        clientRef: run.clientRef,
+        primaryApplicant,
+        clientRef,
         driveUrl: exp.folderUrl,
         requestId: rep.id,
       });
@@ -228,7 +292,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         brokerEmail: rep.broker_email,
         brokerReference: rep.broker_reference,
         contactId: rep.contact_id,
-        primaryApplicant: run.primaryApplicant,
+        primaryApplicant,
         driveUrl: exp.folderUrl,
       });
       if (!bres.ok) {
@@ -237,10 +301,10 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
       }
     } else {
       const invite = buildYlaInvite({
-        primaryApplicant: run.primaryApplicant,
+        primaryApplicant,
         driveUrl: exp.folderUrl,
-        clientRef: run.clientRef,
-        applicationId: run.applicationId,
+        clientRef,
+        applicationId: rep.application_id,
         requestId: rep.id,
         now,
       });

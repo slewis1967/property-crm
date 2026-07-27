@@ -30,7 +30,20 @@ import { financialYearsNeeded } from "./mygov-guide";
 const BUCKET = "client-documents";
 const SELECT =
   "id,client_ref,application_id,applicant_name,contact_id,status,created_at,drive_folder_url,yla_submitted_at";
-const AI_CONCURRENCY = 5;
+/**
+ * Documents checked at once. Sized so a whole application goes through in ONE
+ * wave, because the sweep runs inside a serverless request with a ceiling of a
+ * few tens of seconds: at 5, a two-applicant set (15 documents, including the
+ * extra ATO statements myGov issues per employer) took three waves and 43s end
+ * to end. That overran the window and the run was killed before it could record
+ * its verdict — silently, and identically on every retry. One wave costs about
+ * as long as the slowest single document.
+ *
+ * Safe to raise: each call goes through the OpenAI SDK, which already retries
+ * 429/5xx, so a burst that brushes a rate limit is retried rather than being
+ * turned into a spurious "this document couldn't be checked" fault.
+ */
+const AI_CONCURRENCY = 16;
 
 export type VerifyRunResult =
   | { ok: false; status: number; error: string }
