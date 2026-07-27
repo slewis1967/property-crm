@@ -93,6 +93,49 @@ async function launchBrowser(): Promise<Browser> {
   });
 }
 
+/**
+ * Launch failures that are worth another go rather than a 500.
+ *
+ * ETXTBSY is the one we actually hit: @sparticuz/chromium extracts its binary
+ * into /tmp on first use, and a second invocation reaching exec() while that
+ * write is still in flight gets "text file busy". It is purely a cold-start
+ * race — the same call succeeds moments later. It cost a YLA submission one
+ * failed attempt on 2026-07-27; the sweep's next run recovered it, but that is
+ * up to two hours of delay for something a 250 ms wait fixes.
+ *
+ * Deliberately narrow. A missing binary or a bad executablePath also surfaces
+ * as "Failed to launch the browser process", and retrying THAT just turns a
+ * clear configuration error into a slow one.
+ */
+export function isTransientLaunchFailure(err: unknown): boolean {
+  const msg = err instanceof Error ? `${err.message} ${err.stack ?? ""}` : String(err);
+  return /\bETXTBSY\b|\bEAGAIN\b|\bEBUSY\b/i.test(msg);
+}
+
+const LAUNCH_ATTEMPTS = 3;
+/** Waits before attempts 2 and 3. Short: we are inside a serverless budget. */
+const LAUNCH_BACKOFF_MS = [250, 750];
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Run a browser launch, retrying only the transient races above. Exported so the
+ * retry policy can be tested without spawning a real Chromium.
+ */
+export async function withLaunchRetry<T>(
+  launch: () => Promise<T>,
+  wait: (ms: number) => Promise<unknown> = sleep,
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await launch();
+    } catch (err) {
+      if (attempt >= LAUNCH_ATTEMPTS || !isTransientLaunchFailure(err)) throw err;
+      await wait(LAUNCH_BACKOFF_MS[attempt - 1] ?? LAUNCH_BACKOFF_MS.at(-1)!);
+    }
+  }
+}
+
 /** A4, backgrounds on, ~10 mm margins (the print doc lays out to a 190 mm body). */
 const DEFAULT_PDF_OPTIONS: PDFOptions = {
   format: "A4",
@@ -111,7 +154,7 @@ const RENDER_TIMEOUT_MS = 30_000;
 export async function htmlToPdf(html: string, options: PDFOptions = {}): Promise<Uint8Array> {
   let browser: Browser | null = null;
   try {
-    browser = await launchBrowser();
+    browser = await withLaunchRetry(launchBrowser);
     const page = await browser.newPage();
     // The HTML is fully self-contained (inline CSS + data-URI logo), so there are
     // no network requests to settle — "load" (fires after inline images decode)
