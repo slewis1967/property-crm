@@ -33,6 +33,24 @@ tokens are minted server-side from the logged-in user.
 4. The SFU POSTs lifecycle events to `/api/livekit/webhook` (signature
    verified) → rows in `video_call_events`, linked to the contact.
 
+### The webhook has to reach an origin Cloudflare Access doesn't guard
+
+The SFU is a machine with no Access session, so a POST to `crm.nextkey.com.au`
+gets 302'd to the login page. That broke the timeline silently for eleven days
+(2026-07-16 → 2026-07-27): calls worked, LiveKit logged every event as "sent",
+and `video_call_events` never took a single row. Two things fix it, and both
+are needed:
+
+- `proxy.ts` `isLivekitWebhookRoute` exempts the exact path from the CRM's own
+  tunnel gate (trust is the signed webhook JWT, verified in the route);
+- the SFU posts to the **Netlify origin** (`crmnex.netlify.app`), which has no
+  Access in front of it — see the comment in `deploy/livekit/livekit.yaml` for
+  how to move back to the public hostname behind an Access *bypass* app.
+
+If the timeline goes quiet again, check `flyctl logs -a nextkey-livekit` for
+`sent webhook` lines and then `select count(*) from video_call_events` — events
+being "sent" proves nothing about them landing.
+
 ## Deploy / config
 
 See [`deploy/livekit/README.md`](../deploy/livekit/README.md). Three CRM env

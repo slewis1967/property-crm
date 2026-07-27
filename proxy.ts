@@ -180,13 +180,36 @@ export function isPublicSignRoute(pathname: string): boolean {
 // the JWT before minting anything. Must mirror the CF Access bypass apps
 // (crm.nextkey.com.au/join/* + /api/livekit/guest-token) EXACTLY: the guest-token
 // exemption is the single exact path, NOT all of /api/livekit/*, so the authed
-// sibling routes (token, record, calls, guest-link, webhook) keep their CF
-// Access auth header. The CSRF origin check above still applies to the mutating
-// guest-token POST (it's same-origin from the /join page).
+// sibling routes (token, record, calls, guest-link) keep their CF Access auth
+// header. The CSRF origin check above still applies to the mutating guest-token
+// POST (it's same-origin from the /join page). The SFU's own webhook is
+// machine-to-machine and has its own exemption below — deliberately NOT folded
+// in here, so a guest-facing change can never widen it.
 export function isPublicGuestRoute(pathname: string): boolean {
   if (pathname === "/join" || pathname.startsWith("/join/")) return true;
   if (pathname === "/api/livekit/guest-token") return true;
   return false;
+}
+
+// LiveKit SFU -> CRM webhook. The SFU (deploy/livekit/livekit.yaml) POSTs call
+// lifecycle events here from a Fly machine that has no Cloudflare Access
+// identity, so the gate has to let it through — same machine-caller model as the
+// cron route below.
+//
+// This is what made the call timeline permanently empty: the route was written
+// machine-to-machine ("the request is NOT behind Cloudflare Access") but every
+// POST was in fact bounced at the edge, so `video_call_events` never took a
+// single row while calls themselves ran fine. LiveKit logs a redirect as a
+// successful send, so the failure was invisible from both ends.
+//
+// Trust is NOT this exemption — it's the signed webhook JWT in the Authorization
+// header, verified against the LiveKit API secret by `receiver.receive()` before
+// the handler touches Supabase; an unsigned POST gets 401 from the route itself.
+// Exact path only, mirroring the CF Access bypass app, so the authed siblings
+// keep their auth header. The CSRF origin check above still applies, and a
+// server-to-server POST sends no Origin header, so it passes.
+export function isLivekitWebhookRoute(pathname: string): boolean {
+  return pathname === "/api/livekit/webhook";
 }
 
 // Public self-book routes. A lead picks a meeting time WITHOUT a Cloudflare
@@ -299,6 +322,7 @@ export async function proxy(req: NextRequest) {
     PUBLIC_PATHS.has(pathname) ||
     isPublicSignRoute(pathname) ||
     isPublicGuestRoute(pathname) ||
+    isLivekitWebhookRoute(pathname) ||
     isPublicBookingRoute(pathname) ||
     isPublicPortalRoute(pathname) ||
     isCronRoute(pathname)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isLivekitWebhookRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -25,6 +25,25 @@ describe("isPublicGuestRoute", () => {
     expect(isPublicGuestRoute("/joined")).toBe(false);
     expect(isPublicGuestRoute("/api/livekit/guest-tokens")).toBe(false);
     expect(isPublicGuestRoute("/")).toBe(false);
+  });
+});
+
+describe("isLivekitWebhookRoute", () => {
+  it("exempts the SFU webhook so call events can actually land", () => {
+    // The SFU posts from Fly with no CF Access identity. Without this the gate
+    // 302s every event and `video_call_events` stays empty forever — which is
+    // exactly what happened between 2026-07-16 and this fix.
+    expect(isLivekitWebhookRoute("/api/livekit/webhook")).toBe(true);
+  });
+
+  it("exempts ONLY that exact path", () => {
+    expect(isLivekitWebhookRoute("/api/livekit/token")).toBe(false);
+    expect(isLivekitWebhookRoute("/api/livekit/record")).toBe(false);
+    expect(isLivekitWebhookRoute("/api/livekit/calls")).toBe(false);
+    expect(isLivekitWebhookRoute("/api/livekit/guest-link")).toBe(false);
+    expect(isLivekitWebhookRoute("/api/livekit/webhooks")).toBe(false);
+    expect(isLivekitWebhookRoute("/api/livekit/webhook/replay")).toBe(false);
+    expect(isLivekitWebhookRoute("/webhook")).toBe(false);
   });
 });
 
