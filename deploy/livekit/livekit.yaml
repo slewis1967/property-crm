@@ -37,27 +37,31 @@ rtc:
 # key ID only (NOT the secret) — safe to commit; the matching secret is
 # injected at runtime via the LIVEKIT_KEYS Fly secret.
 #
-# WHY THE NETLIFY ORIGIN AND NOT crm.nextkey.com.au: the public hostname sits
-# behind Cloudflare Access, which 302s any caller without a browser session —
-# and this SFU is a machine with no session. Every event from 2026-07-16 to
-# 2026-07-27 was bounced at the edge, so `video_call_events` stayed empty and
-# the call timeline showed nothing while calls themselves worked fine. LiveKit
-# logs a 302 as "sent webhook", so nothing looked wrong from either end.
+# THIS URL NEEDS A CLOUDFLARE ACCESS **BYPASS** APP FOR THE EXACT PATH
+# `crm.nextkey.com.au/api/livekit/webhook` — same as the one on /join/*.
 #
-# The Netlify origin serves the same app with no Access in front, and the route
-# is exempt from the CRM's own tunnel gate (proxy.ts isLivekitWebhookRoute).
-# Trust is unchanged either way: the handler verifies the signed webhook JWT
-# before it writes anything.
+# Without it, Access 302s the SFU (a machine with no browser session) at the
+# edge before Next.js ever runs. That is exactly what happened from 2026-07-16
+# to 2026-07-27: every room_started / participant_joined / room_finished was
+# bounced, `video_call_events` held zero rows, and the contact call timeline
+# stayed blank while the calls themselves worked perfectly. Nothing surfaced it
+# — LiveKit logs a 302 as "sent webhook".
 #
-# To move back to the pretty hostname, add a Cloudflare Access BYPASS app for
-# crm.nextkey.com.au/api/livekit/webhook (exact path, same as /join/*), flip the
-# URL below, and `fly deploy` from this folder. Don't flip it without the bypass.
-# Equally: if the Netlify origin is ever locked down to Cloudflare-only traffic,
-# this breaks — check here first if the timeline goes quiet.
+# The CRM side is already done: proxy.ts `isLivekitWebhookRoute` exempts this
+# exact path from the tunnel gate, and the handler verifies the signed webhook
+# JWT before writing anything, so the bypass gives up no trust.
+#
+# FALLBACK if the Access bypass isn't wanted: point this at the Netlify origin
+# instead — https://crmnex.netlify.app/api/livekit/webhook — which serves the
+# same app with no Access in front. That one needs a `fly deploy` from this
+# folder (the config is baked into the image), so it's the slower of the two.
+#
+# Either way: "sent webhook" in the SFU logs proves nothing about events
+# landing. `select count(*) from video_call_events` is the only real check.
 webhook:
   api_key: APIb5199261ab47
   urls:
-    - https://crmnex.netlify.app/api/livekit/webhook
+    - https://crm.nextkey.com.au/api/livekit/webhook
 
 # Optional: turn server for clients fully blocked from UDP. LiveKit has an
 # embedded TURN; enable + point a subdomain at it if you see connection

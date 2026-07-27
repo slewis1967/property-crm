@@ -41,11 +41,16 @@ gets 302'd to the login page. That broke the timeline silently for eleven days
 and `video_call_events` never took a single row. Two things fix it, and both
 are needed:
 
-- `proxy.ts` `isLivekitWebhookRoute` exempts the exact path from the CRM's own
-  tunnel gate (trust is the signed webhook JWT, verified in the route);
-- the SFU posts to the **Netlify origin** (`crmnex.netlify.app`), which has no
-  Access in front of it — see the comment in `deploy/livekit/livekit.yaml` for
-  how to move back to the public hostname behind an Access *bypass* app.
+- **Done (live 2026-07-27):** `proxy.ts` `isLivekitWebhookRoute` exempts the
+  exact path from the CRM's own tunnel gate — trust is the signed webhook JWT,
+  verified in the route, so an unsigned POST still gets 401.
+- **Still needed:** a Cloudflare Access **Bypass** application for the exact
+  path `crm.nextkey.com.au/api/livekit/webhook`, exactly like the one on
+  `/join/*`. Until that exists the edge keeps 302'ing the SFU and the timeline
+  stays empty.
+  *(Alternative if the bypass isn't wanted: repoint the SFU at the Netlify
+  origin `crmnex.netlify.app`, which has no Access in front — see the comment
+  in `deploy/livekit/livekit.yaml`. Needs a `fly deploy`.)*
 
 If the timeline goes quiet again, check `flyctl logs -a nextkey-livekit` for
 `sent webhook` lines and then `select count(*) from video_call_events` — events
