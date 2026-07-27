@@ -31,7 +31,8 @@ import { YLA_DOCUMENTS } from "./yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
 import { exportApplicationToDrive } from "./yla-export";
-import { buildYlaInvite } from "./yla-submit";
+import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
+import { driveFolderIdFromUrl, shareFolderWithReader } from "./google-drive";
 import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
 import { sendClientDocFixups, clientDocFixupEnabled } from "./yla-remediation-email";
@@ -278,6 +279,26 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         requestId: rep.id,
       });
       actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "held", drive_folder_url: exp.folderUrl });
+      continue;
+    }
+
+    // The recipient cannot read the folder until we say so: the export creates
+    // it inside a shared drive only we belong to, so an ungranted link opens
+    // EMPTY. Granting is the disclosure of the client's payslips, ID and TFN,
+    // so it happens here at the send rather than during packaging — and if it
+    // fails we send nothing, because an empty folder reads to the recipient as
+    // an incomplete submission.
+    const destination = (rep.submit_target ?? "yla") === "broker" ? rep.broker_email : YLA_INVITE_EMAIL;
+    if (!destination) {
+      actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: "broker destination has no email" });
+      continue;
+    }
+    const folderId = driveFolderIdFromUrl(exp.folderUrl);
+    const shared = folderId
+      ? await shareFolderWithReader(folderId, destination)
+      : { ok: false as const, error: "the Drive link isn't a folder link" };
+    if (!shared.ok) {
+      actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: `share: ${shared.error}` });
       continue;
     }
 

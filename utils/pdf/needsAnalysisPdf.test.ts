@@ -51,4 +51,35 @@ describe("renderNeedsAnalysisHtml", () => {
     // Falls back to the original src rather than injecting an empty one.
     expect(html).toContain('src="/yla-logo.png"');
   });
+
+  /**
+   * Ticked boxes must be DRAWN, not typed. These documents used the character
+   * "✕", which renders in a browser and disappears in the PDF — the headless
+   * Chromium has no font glyph for it — so every Needs Analysis, Credit
+   * Authorisation, Fact Find and EOI went out with every box on every page
+   * blank: no employment type, no pay frequency, no marital status.
+   */
+  it("draws the tick as an SVG rather than a font glyph", async () => {
+    const d = emptyNeedsAnalysis();
+    d.interview_type = "face_to_face";
+    d.applicants[0].marital_status = "married";
+    const html = await renderNeedsAnalysisHtml(hydrateNeedsAnalysis(d), DATA_URI);
+
+    // The selected option is marked, and the mark is vector.
+    expect(html).toContain('<span class="yla-box"><svg');
+    // Nothing relies on a glyph the PDF font set may not have.
+    expect(html).not.toContain("✕");
+  });
+
+  it("marks the option the data selected, and only that one", async () => {
+    const d = emptyNeedsAnalysis();
+    d.interview_type = "phone";
+    const html = await renderNeedsAnalysisHtml(hydrateNeedsAnalysis(d), DATA_URI);
+    const marked = html.slice(html.indexOf("Interview:"), html.indexOf("Location:"));
+    const boxes = marked.split('<span class="yla-box">');
+    // One box per interview type; exactly the "Phone" one carries the mark.
+    expect(boxes.filter((b) => b.startsWith("<svg"))).toHaveLength(1);
+    expect(marked.indexOf("<svg")).toBeLessThan(marked.indexOf("Voice call"));
+    expect(marked.indexOf("<svg")).toBeGreaterThan(marked.indexOf("Face to face"));
+  });
 });
