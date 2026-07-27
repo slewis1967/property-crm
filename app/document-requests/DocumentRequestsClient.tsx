@@ -25,6 +25,8 @@ type RequestRow = {
   created_at: string;
   verification_status: string | null;
   yla_submitted_at: string | null;
+  /** Optional: absent until the 20260727 migration runs, so the UI must cope. */
+  training_video_released_at?: string | null;
 };
 
 /**
@@ -78,6 +80,8 @@ export default function DocumentRequestsClient() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [exportMsg, setExportMsg] = useState<{ id: string; text: string; url?: string; error?: boolean } | null>(null);
+  const [videoBusy, setVideoBusy] = useState<string | null>(null);
+  const [videoMsg, setVideoMsg] = useState<{ id: string; text: string; error?: boolean } | null>(null);
 
   // Weekly YLA calendar entry
   const [weekly, setWeekly] = useState<WeeklyEntry | null>(null);
@@ -306,6 +310,40 @@ export default function DocumentRequestsClient() {
       if (json.ok) setDetail(json);
     } catch {
       /* keep prior detail */
+    }
+  }
+
+  /**
+   * Show or hide the director ID walkthrough for one client.
+   *
+   * Opt-in per client because the video is only correct where the SMSF has a
+   * CORPORATE trustee — releasing it to an individual-trustee fund would tell
+   * that client to obtain an identifier they are not required to hold.
+   */
+  async function toggleTrainingVideo(id: string, release: boolean) {
+    setVideoBusy(id);
+    setVideoMsg(null);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/training-video`, {
+        method: release ? "POST" : "DELETE",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) {
+        setVideoMsg({ id, text: json.error || "Could not update the video.", error: true });
+        return;
+      }
+      setVideoMsg({
+        id,
+        text: release
+          ? "Released — the client can now see it under Help."
+          : "Hidden again — the client can no longer see it.",
+        error: false,
+      });
+      await reload();
+    } catch {
+      setVideoMsg({ id, text: "Could not reach the server.", error: true });
+    } finally {
+      setVideoBusy(null);
     }
   }
 
@@ -580,6 +618,50 @@ export default function DocumentRequestsClient() {
                             </div>
                           </div>
                         )}
+
+                        {/* Director ID walkthrough — opt-in per client. Only
+                            correct for an SMSF with a corporate trustee. */}
+                        <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900">
+                                Director ID walkthrough
+                              </p>
+                              <p className="mt-0.5 text-xs text-gray-600">
+                                {r.training_video_released_at
+                                  ? "Visible to this client under Help."
+                                  : "Hidden. Release only if their fund will have a corporate trustee."}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={videoBusy === r.id}
+                              onClick={() =>
+                                void toggleTrainingVideo(r.id, !r.training_video_released_at)
+                              }
+                              className={`flex-shrink-0 rounded-md px-3 py-2 text-sm font-medium disabled:opacity-50 ${
+                                r.training_video_released_at
+                                  ? "bg-white text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
+                                  : "bg-[#020e40] text-white hover:bg-[#0a1a5a]"
+                              }`}
+                            >
+                              {videoBusy === r.id
+                                ? "Saving…"
+                                : r.training_video_released_at
+                                  ? "Hide from client"
+                                  : "Release to client"}
+                            </button>
+                          </div>
+                          {videoMsg?.id === r.id && (
+                            <p
+                              className={`mt-2 text-xs ${
+                                videoMsg.error ? "text-red-700" : "text-green-800"
+                              }`}
+                            >
+                              {videoMsg.text}
+                            </p>
+                          )}
+                        </div>
 
                         {r.status === "submitted" && r.drive_folder_url && (
                           <p className="mt-4 text-sm">

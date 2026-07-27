@@ -21,7 +21,7 @@ import {
   YLA_MAX_BYTES,
   ACCEPTED_MIME,
 } from "../../../../utils/yla-documents";
-import { resolveToken } from "../_shared";
+import { resolveToken, trainingVideoReleased } from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -128,8 +128,13 @@ export async function GET(
 
   const outstanding = filled.filter((s) => !s.document).length;
 
+  // Opt-in per client: only rendered once a rep has released it. Sent as a plain
+  // boolean — the client's browser never needs the release timestamp or who set it.
+  const trainingVideo = await trainingVideoReleased(request.id);
+
   return NextResponse.json({
     ok: true,
+    training_video: trainingVideo,
     client_ref: request.client_ref,
     applicant_name: request.applicant_name,
     status: request.status,

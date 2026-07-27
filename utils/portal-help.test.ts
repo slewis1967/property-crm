@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { HELP_ENTRIES, HELP_BY_KEY, HELP_FAQ, JOURNEY, MYGOV_VIDEO } from "./portal-help";
+import { DIRECTOR_ID_VIDEO, HELP_ENTRIES, HELP_BY_KEY, HELP_FAQ, JOURNEY, MYGOV_VIDEO } from "./portal-help";
 import { YLA_DOCUMENTS } from "./yla-documents";
 
 describe("help content", () => {
@@ -49,6 +49,28 @@ describe("the myGov video", () => {
   it("has a poster, so the player doesn't open on a black rectangle", () => {
     expect(MYGOV_VIDEO.poster.startsWith("/api/portal/")).toBe(true);
     expect(MYGOV_VIDEO.poster).not.toMatch(/^https?:\/\//);
+  });
+});
+
+describe("the director ID walkthrough", () => {
+  it("is served from our own origin, not a third party", () => {
+    const src = DIRECTOR_ID_VIDEO.src("abc123");
+    expect(src.startsWith("/api/portal/")).toBe(true);
+    expect(src).not.toMatch(/^https?:\/\//);
+    expect(src).not.toMatch(/youtube|vimeo|wistia/i);
+  });
+
+  it("scopes both assets to the caller's token", () => {
+    // The whole gate rests on this. A token-free path would be world-readable
+    // like the myGov video, and this video must not be — it is only correct for
+    // a client whose fund has a CORPORATE trustee.
+    expect(DIRECTOR_ID_VIDEO.src("tok-1")).toContain("tok-1");
+    expect(DIRECTOR_ID_VIDEO.poster("tok-1")).toContain("tok-1");
+    expect(DIRECTOR_ID_VIDEO.src("tok-1")).not.toEqual(DIRECTOR_ID_VIDEO.src("tok-2"));
+  });
+
+  it("escapes the token rather than interpolating it raw into the path", () => {
+    expect(DIRECTOR_ID_VIDEO.src("a/../b")).not.toContain("../");
   });
 });
 

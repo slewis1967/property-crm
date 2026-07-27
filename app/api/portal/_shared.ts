@@ -58,6 +58,28 @@ export async function resolveToken(token: string): Promise<Resolved> {
   return { ok: true, request: data as PortalRequest };
 }
 
+/**
+ * Has a rep released the director ID walkthrough to this client?
+ *
+ * Queried SEPARATELY rather than joined into resolveToken's select on purpose.
+ * Adding a new column to that shared select would take the entire portal down
+ * with "column does not exist" on every request if this feature shipped before
+ * its migration ran — which is precisely how the YLA sweep silently broke.
+ * Here, a missing column just means the video stays hidden.
+ *
+ * Fails CLOSED: any error returns false. For gated content the safe default is
+ * "not visible".
+ */
+export async function trainingVideoReleased(requestId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("document_requests")
+    .select("training_video_released_at")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (error || !data) return false;
+  return Boolean((data as { training_video_released_at?: string | null }).training_video_released_at);
+}
+
 /** Best-effort client IP, for audit on a public endpoint. */
 export function clientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");

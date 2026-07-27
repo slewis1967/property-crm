@@ -27,6 +27,8 @@ import {
   DOC_MIGRATION_HINT,
   docTableMissing,
   REQUEST_LIST_COLUMNS,
+  REQUEST_LIST_COLUMNS_WITH_VIDEO,
+  docColumnMissing,
   isValidEmail,
   publicOrigin,
 } from "../../../utils/document-requests-db";
@@ -185,21 +187,30 @@ export async function GET(req: Request) {
   const applicationId = url.searchParams.get("application_id");
   const status = url.searchParams.get("status");
 
-  let q = supabase
-    .from(DOCUMENT_REQUESTS_TABLE)
-    .select(REQUEST_LIST_COLUMNS)
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (opportunityId) q = q.eq("opportunity_id", opportunityId);
-  if (contactId) q = q.eq("contact_id", contactId);
-  // A joint application's per-applicant requests share an application_id. Its
-  // applicant-2 request carries no contact_id (that contact is the co-applicant,
-  // not the primary), so the contact-scoped list alone would miss it — callers
-  // gather the siblings by application_id.
-  if (applicationId) q = q.eq("application_id", applicationId);
-  if (status) q = q.eq("status", status);
+  const build = (columns: string) => {
+    let q = supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select(columns)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (opportunityId) q = q.eq("opportunity_id", opportunityId);
+    if (contactId) q = q.eq("contact_id", contactId);
+    // A joint application's per-applicant requests share an application_id. Its
+    // applicant-2 request carries no contact_id (that contact is the co-applicant,
+    // not the primary), so the contact-scoped list alone would miss it — callers
+    // gather the siblings by application_id.
+    if (applicationId) q = q.eq("application_id", applicationId);
+    if (status) q = q.eq("status", status);
+    return q;
+  };
 
-  const { data, error } = await q;
+  // Prefer the richer set; degrade to the legacy columns if the training-video
+  // migration hasn't run yet, so a pending migration costs the dashboard one
+  // toggle rather than the whole page.
+  let { data, error } = await build(REQUEST_LIST_COLUMNS_WITH_VIDEO);
+  if (error && docColumnMissing(error)) {
+    ({ data, error } = await build(REQUEST_LIST_COLUMNS));
+  }
   if (error) {
     if (docTableMissing(error)) {
       return NextResponse.json({ ok: true, requests: [], migration_hint: DOC_MIGRATION_HINT });
