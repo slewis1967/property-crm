@@ -32,6 +32,7 @@ import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
+import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
 import { driveFolderIdFromUrl, shareFolderWithReader } from "./google-drive";
 import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
@@ -331,6 +332,11 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
       });
       const emailRes = await sendBrevoEmail({
         to: [{ email: invite.to, name: "Your Loan Assist" }],
+        // From Springboard, whose client this is and whom YLA know through the
+        // COMP-8317 introducer chain — not the default NextKey sender.
+        fromEmail: springboardSenderEmail(),
+        fromName: springboardSenderName(),
+        replyTo: springboardReplyTo(),
         subject: invite.subject,
         html: invite.html,
         text: invite.text,

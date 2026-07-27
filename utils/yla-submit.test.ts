@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { springboardSenderEmail, springboardSenderName } from "./springboard-sender";
 import { nextThursday, buildYlaInvite, surnameOf, YLA_CALENDAR_TITLE, YLA_INVITE_EMAIL } from "./yla-submit";
 
 describe("nextThursday", () => {
@@ -55,5 +56,29 @@ describe("buildYlaInvite", () => {
 
   it("stamps the event on the upcoming Thursday", () => {
     expect(invite.eventStart.getUTCDay()).toBe(4);
+  });
+});
+
+describe("who the invite comes from", () => {
+  const invite = buildYlaInvite({
+    primaryApplicant: "David William Halliday",
+    driveUrl: "https://drive.google.com/drive/folders/ABC",
+    clientRef: "NK-10010",
+    applicationId: null,
+    requestId: "req-1",
+    now: new Date("2026-07-22T05:00:00Z"),
+  });
+
+  /**
+   * The client is Springboard's and YLA know this business through Springboard
+   * and the COMP-8317 introducer chain. A NextKey organiser on the invite reads
+   * to the Licensor as a forwarded invite from a third party.
+   */
+  it("names Springboard as the calendar organiser, not NextKey", () => {
+    // iCalendar folds long lines (CRLF + a leading space); unfold before matching.
+    const ics = invite.ics.split("\r\n ").join("");
+    expect(ics).toContain(`ORGANIZER;CN=${springboardSenderName()}:mailto:${springboardSenderEmail()}`);
+    expect(ics).not.toContain("nextkey.com.au");
+    expect(ics).not.toContain("NextKey Property Strategists");
   });
 });
