@@ -83,6 +83,25 @@ export default function VirtualBackgroundControl() {
     };
   }, [track, enabled]);
 
+  // Tell the stylesheet when the backdrop is actually live, so it can stop
+  // LiveKit mirroring the local tile. LiveKit flips your own camera view
+  // (rotateY(180deg)) to make it behave like a mirror — but the processor has
+  // already composited the office wall into that same frame, so the flip
+  // reversed the Springboard logo and its wording for whoever was looking at
+  // their own tile. Only while the background is on: with the raw camera, a
+  // mirrored self-view is the familiar, wanted behaviour.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (status === "on") {
+      root.dataset.lkBrandedBg = "on";
+    } else {
+      delete root.dataset.lkBrandedBg;
+    }
+    return () => {
+      delete root.dataset.lkBrandedBg;
+    };
+  }, [status]);
+
   // No camera track yet (camera disabled, still connecting) — nothing to toggle.
   if (!track) return null;
 
@@ -129,8 +148,8 @@ export default function VirtualBackgroundControl() {
       onClick={() => setEnabled((v) => !v)}
       title={
         enabled
-          ? "NextKey branded background is on — click to show your real background"
-          : "Show the NextKey branded background"
+          ? "Springboard office background is on — click to show your real background"
+          : "Show the Springboard office background"
       }
     >
       {enabled ? "🖼 Background: On" : "🖼 Background: Off"}
