@@ -13,7 +13,7 @@
  * utils/portal-help.ts, where it's unit-tested against that boundary.
  */
 import { useState } from "react";
-import { HELP_ENTRIES, HELP_FAQ, JOURNEY, MYGOV_VIDEO } from "../../../utils/portal-help";
+import { DIRECTOR_ID_VIDEO, HELP_ENTRIES, HELP_FAQ, JOURNEY, MYGOV_VIDEO } from "../../../utils/portal-help";
 
 export type PortalDoc = {
   id: string;
@@ -98,10 +98,56 @@ export function MyDocumentsSection({
 }
 
 /** What each document is, how to get it, and what gets a set rejected. */
-export function HelpSection({ onOpenWalkthrough }: { onOpenWalkthrough: () => void }) {
+export function HelpSection({
+  onOpenWalkthrough,
+  token,
+  showDirectorIdVideo = false,
+}: {
+  onOpenWalkthrough: () => void;
+  token: string;
+  /** Released per client by a rep. Absent by default — see DIRECTOR_ID_VIDEO. */
+  showDirectorIdVideo?: boolean;
+}) {
   const [open, setOpen] = useState<string | null>("ato_income");
   return (
     <div className="space-y-4">
+      {showDirectorIdVideo && (
+        <div className={CARD}>
+          <h2 className="text-base font-semibold text-gray-900">
+            Your director ID
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Your fund will have a company acting as its trustee, and you become a director of
+            it. You must hold a director ID <strong>before</strong> that company can be
+            registered. It is free and takes about fifteen minutes.
+          </p>
+          <div className="mt-3 overflow-hidden rounded-lg bg-black" style={{ aspectRatio: "16 / 9" }}>
+            <video
+              src={DIRECTOR_ID_VIDEO.src(token)}
+              poster={DIRECTOR_ID_VIDEO.poster(token)}
+              title={DIRECTOR_ID_VIDEO.title}
+              controls
+              playsInline
+              preload="metadata"
+              className="h-full w-full"
+            >
+              {DIRECTOR_ID_VIDEO.caption}
+            </video>
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            Apply at{" "}
+            <a
+              href="https://www.abrs.gov.au/director-identification-number"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#020e40] underline"
+            >
+              abrs.gov.au
+            </a>
+            . Send us the number once you have it — we need it to register your trustee company.
+          </p>
+        </div>
+      )}
       <div className={CARD}>
         <h2 className="text-base font-semibold text-gray-900">Getting your ATO income statement</h2>
         <p className="mt-1 text-sm text-gray-600">

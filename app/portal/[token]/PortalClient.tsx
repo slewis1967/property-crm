@@ -46,6 +46,8 @@ type State = {
   extra_slots?: ExtraSlot[];
   signed_documents?: SignedDoc[];
   booking_url?: string;
+  /** Rep-released, per client. Undefined/false = the card never renders. */
+  training_video?: boolean;
   outstanding: number;
   complete: boolean;
 };
@@ -272,7 +274,13 @@ export default function PortalClient({ token }: { token: string }) {
                 signedDocuments={state.signed_documents ?? []}
               />
             )}
-            {tab === "help" && <HelpSection onOpenWalkthrough={() => setGuideOpen(true)} />}
+            {tab === "help" && (
+              <HelpSection
+                onOpenWalkthrough={() => setGuideOpen(true)}
+                token={token}
+                showDirectorIdVideo={state.training_video === true}
+              />
+            )}
             {tab === "next" && <JourneySection />}
             {tab === "book" && <BookSection bookingUrl={state.booking_url ?? "/book/glenn"} />}
           </div>
