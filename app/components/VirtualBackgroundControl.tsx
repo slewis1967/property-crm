@@ -4,19 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { useLocalParticipant } from "@livekit/components-react";
 import type { LocalVideoTrack } from "livekit-client";
 import { VirtualBackground } from "@livekit/track-processors";
+import backdrop from "../assets/video-background.jpg";
 
 /**
  * Branded virtual background for the local camera feed.
  *
- * Replaces whatever is behind the presenter with a photographic office interior
- * carrying the Springboard Homes logo on the wall (public/video-background.jpg)
- * using MediaPipe selfie segmentation, wired through @livekit/track-processors.
- * The processing runs entirely client-side on the outgoing camera track, so
- * remote participants (and any recording) see the branded feed.
+ * Replaces whatever is behind the presenter with the Springboard Homes office
+ * (app/assets/video-background.jpg) using MediaPipe selfie segmentation, wired
+ * through @livekit/track-processors. The processing runs entirely client-side on
+ * the outgoing camera track, so remote participants (and any recording) see the
+ * branded feed.
  *
- * The signage sits in the LEFT THIRD of the image on purpose: the presenter is
- * composited over the middle, so anything centred gets hidden behind their head
- * and shoulders. Keep the centre of any replacement backdrop clear.
+ * The signage sits RIGHT OF CENTRE on purpose: the presenter is composited over
+ * the middle of the frame, so a centred logo just hides behind their head and
+ * shoulders. Keep the centre of any replacement backdrop clear.
  *
  * Behaviour: ON by default the moment a camera track appears, with a toggle to
  * turn it off. Fails soft — on browsers/devices where segmentation isn't
@@ -25,9 +26,15 @@ import { VirtualBackground } from "@livekit/track-processors";
  *
  * Must be rendered INSIDE <LiveKitRoom> (it reads room context).
  */
-// JPEG, not PNG: this is a photograph now, and the PNG of the same image was
-// ~1MB that every participant downloads before their camera can go live.
-const BG_URL = "/video-background.jpg";
+// IMPORTED, not served from public/ — and that's load-bearing. Everything under
+// public/ is behind Cloudflare Access (`/logo.png`, `/manifest.json` and the old
+// `/video-background.png` all 302 to the login page), while `/_next/*` is open.
+// A guest on /join has no Access session, so a public/ backdrop failed to fetch
+// for exactly the clients this is meant to impress, and they silently got their
+// real room instead. Importing it emits the file under /_next/static/media/,
+// which guests can actually load. JPEG, not PNG: a photo as PNG is ~1MB that
+// every participant downloads before their camera can go live.
+const BG_URL = backdrop.src;
 
 export default function VirtualBackgroundControl() {
   const { cameraTrack } = useLocalParticipant();
