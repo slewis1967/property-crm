@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import type { OpportunityDoc } from "./OpportunityDocuments";
 import type { SupportingDoc, UploadTarget } from "./OpportunitySupportingDocuments";
+import { fetchEmailEvents, summariseEmailEvents } from "../../../utils/email-events";
 import type { LiveTask } from "./OpportunityTasks";
 import { DOC_BY_KEY, requiredSlots } from "../../../utils/yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../utils/document-requests-db";
@@ -290,11 +291,12 @@ export default async function OpportunityDetailPage({
     lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
   }
 
-  const [{ ghlContactId, archive }, documents, supportingDocuments, uploadTargets, liveTasks] = await Promise.all([
+  const [{ ghlContactId, archive }, documents, supportingDocuments, uploadTargets, emailActivity, liveTasks] = await Promise.all([
     resolveGhlArchiveForLead(lead.email),
     fetchOpportunityDocuments(lead.primary_contact_id, id),
     fetchSupportingDocuments(id),
     fetchUploadTargets(id),
+    fetchEmailEvents(lead.email ?? "").then(summariseEmailEvents),
     fetchLiveTasks(lead.primary_contact_id),
   ]);
 
@@ -306,6 +308,7 @@ export default async function OpportunityDetailPage({
       documents={documents}
       supportingDocuments={supportingDocuments}
       uploadTargets={uploadTargets}
+      emailActivity={emailActivity}
       liveTasks={liveTasks}
       opportunityId={id}
     />

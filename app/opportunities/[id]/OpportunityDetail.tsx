@@ -14,6 +14,8 @@ import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
 import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
 import OpportunitySupportingDocuments, { type SupportingDoc, type UploadTarget } from "./OpportunitySupportingDocuments";
+import OpportunityEmailActivity from "./OpportunityEmailActivity";
+import type { EmailMessage } from "../../../utils/email-events";
 import OpportunityTasks, { type LiveTask } from "./OpportunityTasks";
 import { useOpportunityDocs } from "./useOpportunityDocs";
 import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
@@ -110,6 +112,7 @@ export default function OpportunityDetail({
   documents = [],
   supportingDocuments = [],
   uploadTargets = [],
+  emailActivity = [],
   liveTasks = [],
   opportunityId,
 }: {
@@ -119,6 +122,7 @@ export default function OpportunityDetail({
   documents?: OpportunityDoc[];
   supportingDocuments?: SupportingDoc[];
   uploadTargets?: UploadTarget[];
+  emailActivity?: EmailMessage[];
   liveTasks?: LiveTask[];
   opportunityId: string;
 }) {
@@ -761,6 +765,8 @@ export default function OpportunityDetail({
             documents={supportingDocuments}
             uploadTargets={uploadTargets}
           />
+
+          <OpportunityEmailActivity messages={emailActivity} />
 
           {/* Live tasks (the "Add task" TODOs) — also shown in the War Room */}
           <OpportunityTasks tasks={liveTasks} onAddTask={() => setShowAddTask(true)} />
