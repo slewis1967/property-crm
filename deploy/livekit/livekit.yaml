@@ -36,10 +36,28 @@ rtc:
 # which key signs the outgoing webhook JWT (verified CRM-side). This is the
 # key ID only (NOT the secret) — safe to commit; the matching secret is
 # injected at runtime via the LIVEKIT_KEYS Fly secret.
+#
+# WHY THE NETLIFY ORIGIN AND NOT crm.nextkey.com.au: the public hostname sits
+# behind Cloudflare Access, which 302s any caller without a browser session —
+# and this SFU is a machine with no session. Every event from 2026-07-16 to
+# 2026-07-27 was bounced at the edge, so `video_call_events` stayed empty and
+# the call timeline showed nothing while calls themselves worked fine. LiveKit
+# logs a 302 as "sent webhook", so nothing looked wrong from either end.
+#
+# The Netlify origin serves the same app with no Access in front, and the route
+# is exempt from the CRM's own tunnel gate (proxy.ts isLivekitWebhookRoute).
+# Trust is unchanged either way: the handler verifies the signed webhook JWT
+# before it writes anything.
+#
+# To move back to the pretty hostname, add a Cloudflare Access BYPASS app for
+# crm.nextkey.com.au/api/livekit/webhook (exact path, same as /join/*), flip the
+# URL below, and `fly deploy` from this folder. Don't flip it without the bypass.
+# Equally: if the Netlify origin is ever locked down to Cloudflare-only traffic,
+# this breaks — check here first if the timeline goes quiet.
 webhook:
   api_key: APIb5199261ab47
   urls:
-    - https://crm.nextkey.com.au/api/livekit/webhook
+    - https://crmnex.netlify.app/api/livekit/webhook
 
 # Optional: turn server for clients fully blocked from UDP. LiveKit has an
 # embedded TURN; enable + point a subdomain at it if you see connection
