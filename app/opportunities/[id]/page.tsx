@@ -7,7 +7,12 @@ import type { OpportunityDoc } from "./OpportunityDocuments";
 import type { SupportingDoc, UploadTarget } from "./OpportunitySupportingDocuments";
 import { fetchEmailEvents, summariseEmailEvents } from "../../../utils/email-events";
 import type { LiveTask } from "./OpportunityTasks";
-import { DOC_BY_KEY, requiredSlots } from "../../../utils/yla-documents";
+import {
+  DOC_BY_KEY,
+  requiredSlots,
+  maxSlotFor,
+  YLA_DOC_KEYS_WITH_EXTRA,
+} from "../../../utils/yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../utils/document-requests-db";
 import { log, errInfo } from "@/utils/logger";
 
@@ -153,15 +158,35 @@ async function fetchUploadTargets(opportunityId: string): Promise<UploadTarget[]
       for (const [type, n] of usedByType) {
         for (let i = 1; i <= n; i++) filledSlots.add(`${type}:${i}`);
       }
+      const slots = requiredSlots().map((s) => ({
+        docKey: s.docKey,
+        label: s.label,
+        slot: s.slot,
+        filled: filledSlots.has(`${s.docKey}:${s.slot}`),
+      }));
+
+      // Slots BEYOND the required minimum, for the types that allow them — ATO
+      // income statements only, because myGov issues one per employer, so a
+      // client with two jobs in each of the two required years genuinely has
+      // four. The portal already lets the client add those; without the same
+      // here, an advisor uploading a posted-in set had nowhere to put more than
+      // two and the extras were simply lost.
+      for (const key of YLA_DOC_KEYS_WITH_EXTRA) {
+        const required = DOC_BY_KEY[key]?.count ?? 0;
+        const label = DOC_BY_KEY[key]?.label ?? key;
+        const have = usedByType.get(key) ?? 0;
+        if (have < required) continue; // the required rows above still cover it
+        // The extras already on file, then ONE open slot so there is always
+        // somewhere to put the next one. Optional: never counts as outstanding.
+        for (let n = required + 1; n <= Math.min(have + 1, maxSlotFor(key)); n++) {
+          slots.push({ docKey: key, label, slot: n, filled: n <= have });
+        }
+      }
+
       return {
         requestId: String(r.id),
         applicant: (r.applicant_name as string) || "Applicant",
-        slots: requiredSlots().map((s) => ({
-          docKey: s.docKey,
-          label: s.label,
-          slot: s.slot,
-          filled: filledSlots.has(`${s.docKey}:${s.slot}`),
-        })),
+        slots,
       };
     });
   } catch (e) {
