@@ -16,7 +16,10 @@
  * upload runs the SAME three steps the portal does (normalise on this device →
  * PUT straight to storage → confirm), so a document that arrived by email is
  * indistinguishable to the verification gate and the Drive export from one the
- * client uploaded, except for a note recording who put it there.
+ * client uploaded, except for a note recording who put it there. Document types
+ * that allow extras — ATO income statements, one per employer from myGov — take
+ * several files in one pick and fill consecutive slots, mirroring the portal's
+ * "add another"; a two-slot-only form silently lost the third and fourth.
  *
  * Bytes are never embedded or proxied: rows link to the authed,
  * opportunity-scoped route which mints a short-lived signed URL on click, and
@@ -27,6 +30,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
 import { normaliseToPdf } from "../../portal/[token]/normalise";
+import { allowsExtra, maxSlotFor } from "../../../utils/yla-documents";
 
 export interface SupportingDoc {
   id: string;
@@ -109,23 +113,20 @@ export default function OpportunitySupportingDocuments({
     (groups.get(d.applicant) ?? groups.set(d.applicant, []).get(d.applicant)!).push(d);
   }
 
-  async function uploadFor(
+  /**
+   * One file into one slot. Returns an error string, or null on success — the
+   * caller owns the busy/message state, because a multi-file upload is a single
+   * action to the advisor even though it is several of these.
+   */
+  async function uploadOne(
     target: UploadTarget,
     slot: { docKey: string; label: string; slot: number },
     file: File,
-  ) {
-    const key = `${target.requestId}:${slot.docKey}:${slot.slot}`;
-    setBusy(key);
-    setMsg(null);
-
+  ): Promise<string | null> {
     // 1. Normalise here, exactly as the client's device would — a forwarded
     //    phone photo is otherwise the wrong format, too big and sideways.
     const norm = await normaliseToPdf(file);
-    if (!norm.ok) {
-      setBusy(null);
-      setMsg({ text: norm.error, error: true });
-      return;
-    }
+    if (!norm.ok) return norm.error;
 
     // 2. Signed slot. The server names the file the way YLA require.
     let signed: { token: string; path: string; bucket: string; document_id: string };
@@ -143,16 +144,10 @@ export default function OpportunitySupportingDocuments({
         }),
       });
       const json = await res.json();
-      if (!json.ok) {
-        setBusy(null);
-        setMsg({ text: json.error || "Could not start the upload.", error: true });
-        return;
-      }
+      if (!json.ok) return json.error || "Could not start the upload.";
       signed = json;
     } catch {
-      setBusy(null);
-      setMsg({ text: "Could not reach the server. Please try again.", error: true });
-      return;
+      return "Could not reach the server. Please try again.";
     }
 
     // 3. Straight to storage — the bytes never pass through our server.
@@ -177,13 +172,75 @@ export default function OpportunitySupportingDocuments({
       /* the row stays 'uploaded'; it's still visible */
     }
 
-    setBusy(null);
-    setMsg(
-      uploadOk
-        ? { text: `${slotLabel(slot)} uploaded for ${target.applicant}.` }
-        : { text: "The upload didn't finish. Please try again.", error: true },
+    return uploadOk ? null : "The upload didn't finish. Please try again.";
+  }
+
+  /**
+   * Everything the advisor picked, into consecutive slots from `slot`.
+   *
+   * ATO income statements are the reason this takes a list: myGov issues one
+   * statement per employer, so a client with two jobs across the two required
+   * years hands over four files — and picking them one at a time, waiting for
+   * each refresh to reveal the next slot, is how they got dropped. Types with a
+   * fixed shape (two payslips, ID front and back) still take one file each.
+   *
+   * Sequential on purpose: each upload claims the next slot, and running them
+   * concurrently would race for the same one.
+   */
+  async function uploadFiles(
+    target: UploadTarget,
+    slot: { docKey: string; label: string; slot: number },
+    files: File[],
+  ) {
+    const key = `${target.requestId}:${slot.docKey}:${slot.slot}`;
+    setBusy(key);
+    setMsg(null);
+
+    // Which slot each file lands in. The FIRST goes exactly where it was
+    // dropped — clicking "Replace" on a filled slot means replace that one —
+    // but the rest step over slots that already hold a document, so picking
+    // four statements can never quietly supersede one that was already there.
+    const ceiling = maxSlotFor(slot.docKey);
+    const taken = new Set(
+      target.slots.filter((s) => s.docKey === slot.docKey && s.filled).map((s) => s.slot),
     );
-    // Re-render the server component so the new file appears in the list.
+    const queued: { file: File; slot: number }[] = [];
+    let next = slot.slot;
+    for (const [i, file] of files.entries()) {
+      if (i > 0) while (next <= ceiling && taken.has(next)) next++;
+      if (next > ceiling) break;
+      queued.push({ file, slot: next });
+      next++;
+    }
+    const dropped = files.length - queued.length;
+
+    let done = 0;
+    let failure: string | null = null;
+    for (const { file, slot: slotNum } of queued) {
+      const err = await uploadOne(target, { ...slot, slot: slotNum }, file);
+      if (err) {
+        failure = err;
+        break;
+      }
+      done++;
+    }
+
+    setBusy(null);
+    if (failure) {
+      setMsg({
+        text: done > 0 ? `${done} uploaded, then: ${failure}` : failure,
+        error: true,
+      });
+    } else {
+      const what = done === 1 ? slotLabel(slot) : `${done} × ${slot.label}`;
+      setMsg({
+        text:
+          `${what} uploaded for ${target.applicant}.` +
+          (dropped > 0 ? ` ${dropped} file(s) skipped — no slots left for this document.` : ""),
+        error: dropped > 0,
+      });
+    }
+    // Re-render the server component so the new files appear in the list.
     router.refresh();
   }
 
@@ -283,6 +340,11 @@ export default function OpportunitySupportingDocuments({
             format — PDF, under 1MB, upright — automatically, exactly as the portal does, and
             recorded as uploaded by you.
           </p>
+          <p className="mt-1 text-xs text-gray-500">
+            ATO income statements can be uploaded several at a time — myGov issues one per
+            employer, so a client with two jobs in a year has two statements for that year, and
+            all of them belong in the application.
+          </p>
           <div className="mt-3 space-y-4">
             {uploadTargets.map((t) => (
               <div key={t.requestId}>
@@ -290,6 +352,9 @@ export default function OpportunitySupportingDocuments({
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {t.slots.map((s) => {
                     const key = `${t.requestId}:${s.docKey}:${s.slot}`;
+                    // ATO statements come one per employer, so this slot — and
+                    // the ones after it — can be filled in a single pick.
+                    const many = allowsExtra(s.docKey) && !s.filled;
                     return (
                       <div
                         key={key}
@@ -300,6 +365,9 @@ export default function OpportunitySupportingDocuments({
                         >
                           {s.filled ? "✓ " : ""}
                           {slotLabel(s)}
+                          {many && (
+                            <span className="ml-1 text-gray-400">· select several</span>
+                          )}
                         </span>
                         <input
                           ref={(el) => {
@@ -307,11 +375,12 @@ export default function OpportunitySupportingDocuments({
                           }}
                           type="file"
                           accept="application/pdf,image/*"
+                          multiple={many}
                           className="hidden"
                           onChange={(ev) => {
-                            const f = ev.target.files?.[0];
+                            const files = Array.from(ev.target.files ?? []);
                             ev.target.value = "";
-                            if (f) void uploadFor(t, s, f);
+                            if (files.length) void uploadFiles(t, s, files);
                           }}
                         />
                         <button
