@@ -19,12 +19,15 @@ import {
   type TermOption,
 } from "../../../utils/eoi";
 import type { SignatureMark } from "../../../utils/signatures";
+import PrintTick from "../../components/PrintTick";
 
 const t = (v: unknown): string => (v === null || v === undefined || v === "" ? "" : String(v));
 
 /** A bordered checkbox: empty or filled. */
 function Box({ on }: { on: boolean }) {
-  return <span className="eoi-box">{on ? "✕" : ""}</span>;
+  // The mark is drawn (PrintTick), not typed: the PDF renderer has no font
+  // glyph for "✕" and dropped it silently, leaving every box blank.
+  return <span className="eoi-box">{on ? <PrintTick /> : ""}</span>;
 }
 
 function Chk({ on, label }: { on: boolean; label: string }) {

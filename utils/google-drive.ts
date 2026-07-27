@@ -148,6 +148,53 @@ function now(): number {
   return Date.now() / 1000;
 }
 
+/**
+ * Give one external address read access to a packaged folder.
+ *
+ * The whole handoff is "send them one Drive link", and until now the export
+ * created the folder without granting anybody anything: the folder lives in a
+ * shared drive whose only members are the service account and the Springboard
+ * Workspace seat, so the link we emailed was one the recipient could open and
+ * find empty. Granting is deliberately NOT part of packaging — it is the moment
+ * a client's payslips, photo ID and TFN become visible to an outside party, so
+ * it belongs with the send, after the human release.
+ *
+ * `sendNotificationEmail: false` — the recipient gets OUR email with the link
+ * and the context; a second, bare Google notification would only confuse.
+ */
+export async function shareFolderWithReader(
+  folderId: string,
+  email: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const cfg = driveConfig();
+  if ("error" in cfg) return { ok: false, error: cfg.error };
+  try {
+    const token = await accessToken(cfg);
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}/permissions` +
+        "?supportsAllDrives=true&sendNotificationEmail=false",
+      {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ type: "user", role: "reader", emailAddress: email }),
+      },
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      return { ok: false, error: `Could not share the folder with ${email}: ${body.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not share the Drive folder." };
+  }
+}
+
+/** The folder id inside a Drive folder URL, or null if it isn't one. */
+export function driveFolderIdFromUrl(url: string | null | undefined): string | null {
+  const m = /\/folders\/([A-Za-z0-9_-]+)/.exec(url ?? "");
+  return m?.[1] ?? null;
+}
+
 export type ExportInput = {
   folderName: string;
   files: { name: string; bytes: ArrayBuffer; mime: string }[];

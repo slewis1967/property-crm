@@ -18,6 +18,7 @@ import { requireAuth } from "../../../../../utils/cf-access";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { runApplicationVerification } from "../../../../../utils/yla-verification-run";
 import { buildYlaInvite } from "../../../../../utils/yla-submit";
+import { driveFolderIdFromUrl, shareFolderWithReader } from "../../../../../utils/google-drive";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../../../utils/document-requests-db";
 
 export const runtime = "nodejs";
@@ -95,6 +96,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       verification: run.result,
       preview: { to: invite.to, subject: invite.subject, body_line: invite.bodyLine, event: invite.eventStart },
     });
+  }
+
+  // Give YLA access to the folder BEFORE the link reaches them. Packaging
+  // deliberately doesn't do this — the grant IS the disclosure of the client's
+  // payslips, ID and TFN — and without it the link opens empty for anyone
+  // outside the shared drive. A failure here has to stop the send: a link YLA
+  // can't open reads as an incomplete submission, and that costs a week.
+  const folderId = driveFolderIdFromUrl(run.driveFolderUrl);
+  if (!folderId) {
+    return NextResponse.json(
+      { ok: false, stage: "not_exported", error: "The Drive link on this application isn't a folder link." },
+      { status: 409 },
+    );
+  }
+  const shared = await shareFolderWithReader(folderId, invite.to);
+  if (!shared.ok) {
+    return NextResponse.json({ ok: false, stage: "share_failed", error: shared.error }, { status: 502 });
   }
 
   const emailRes = await sendBrevoEmail({
