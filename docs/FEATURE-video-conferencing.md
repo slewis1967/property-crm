@@ -44,13 +44,19 @@ are needed:
 - **Done (live 2026-07-27):** `proxy.ts` `isLivekitWebhookRoute` exempts the
   exact path from the CRM's own tunnel gate — trust is the signed webhook JWT,
   verified in the route, so an unsigned POST still gets 401.
-- **Still needed:** a Cloudflare Access **Bypass** application for the exact
-  path `crm.nextkey.com.au/api/livekit/webhook`, exactly like the one on
-  `/join/*`. Until that exists the edge keeps 302'ing the SFU and the timeline
-  stays empty.
-  *(Alternative if the bypass isn't wanted: repoint the SFU at the Netlify
+- **Done (2026-07-27):** the Cloudflare Access **Bypass** application
+  **"CRM LiveKit webhook (public)"** on the exact path
+  `crm.nextkey.com.au/api/livekit/webhook`, reusing the existing
+  **"Public webhooks" (bypass)** policy — the same shape as the `/join/*` app.
+  Verified: a POST to that path now reaches the route (401
+  `Invalid webhook signature` for an unsigned body) while `/api/livekit/token`,
+  `/api/livekit/calls` and `/contacts` still 302 to Access.
+  *(Alternative, if that bypass is ever removed: repoint the SFU at the Netlify
   origin `crmnex.netlify.app`, which has no Access in front — see the comment
   in `deploy/livekit/livekit.yaml`. Needs a `fly deploy`.)*
+
+Events are not replayed, so the timeline starts from the first call after this
+— nothing before 2026-07-27 is recoverable.
 
 If the timeline goes quiet again, check `flyctl logs -a nextkey-livekit` for
 `sent webhook` lines and then `select count(*) from video_call_events` — events
