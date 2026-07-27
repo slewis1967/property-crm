@@ -19,6 +19,11 @@ import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { runApplicationVerification } from "../../../../../utils/yla-verification-run";
 import { buildYlaInvite } from "../../../../../utils/yla-submit";
 import { driveFolderIdFromUrl, shareFolderWithReader } from "../../../../../utils/google-drive";
+import {
+  springboardSenderEmail,
+  springboardSenderName,
+  springboardReplyTo,
+} from "../../../../../utils/springboard-sender";
 import { DOCUMENT_REQUESTS_TABLE } from "../../../../../utils/document-requests-db";
 
 export const runtime = "nodejs";
@@ -117,6 +122,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const emailRes = await sendBrevoEmail({
     to: [{ email: invite.to, name: "Your Loan Assist" }],
+    // From Springboard, whose client this is and whom YLA know through the
+    // COMP-8317 introducer chain — not the default NextKey sender.
+    fromEmail: springboardSenderEmail(),
+    fromName: springboardSenderName(),
+    replyTo: springboardReplyTo(),
     subject: invite.subject,
     html: invite.html,
     text: invite.text,

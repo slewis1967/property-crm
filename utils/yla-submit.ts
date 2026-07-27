@@ -10,6 +10,7 @@
  * verification gate live in the submit route.
  */
 import { buildIcs, icsBase64, type IcsEvent } from "./ics";
+import { springboardSenderEmail, springboardSenderName } from "./springboard-sender";
 
 export const YLA_CALENDAR_TITLE = "COMP-8317 - NEXTKEY- New Leads Weekly";
 export const YLA_BODY_HEADER = "Add New Leads Below - INCLUDE Google Drive Link - as per example";
@@ -60,7 +61,10 @@ export function buildYlaInvite(args: {
   const description = `${YLA_BODY_HEADER}\n${bodyLine}`;
   const start = nextThursday(args.now);
   const end = new Date(start.getTime() + 30 * 60 * 1000);
-  const uid = `yla-${args.clientRef || args.applicationId || args.requestId}@nextkey.com.au`;
+  // A UID should belong to a domain the organiser controls, and the organiser
+  // is Springboard. Nothing has been sent under the old NextKey UID, so there
+  // is no calendar entry anywhere to orphan by changing it.
+  const uid = `yla-${args.clientRef || args.applicationId || args.requestId}@springboardhomes.com.au`;
 
   const ev: IcsEvent = {
     uid,
@@ -68,7 +72,12 @@ export function buildYlaInvite(args: {
     end,
     title: YLA_CALENDAR_TITLE,
     description,
-    organizer: { name: "NextKey Property Strategists", email: process.env.BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au" },
+    // Springboard, not NextKey: this is Springboard's client and Springboard's
+    // relationship with the Licensor. The organiser is what YLA see in their
+    // calendar once they accept, so it has to match the address the invite
+    // arrives from — a NextKey organiser on a Springboard email reads as a
+    // forwarded invite from a third party.
+    organizer: { name: springboardSenderName(), email: springboardSenderEmail() },
     attendees: [{ email: YLA_INVITE_EMAIL, name: "Your Loan Assist" }],
     sequence: args.sequence ?? 0,
   };

@@ -23,6 +23,7 @@ import { DOC_BY_KEY } from "./yla-documents";
 import { newToken } from "./sign-token";
 import { sendBrevoEmail } from "./brevo";
 import type { DocVerdict } from "./yla-verification";
+import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
 
 export function clientDocFixupEnabled(): boolean {
   return process.env.CLIENT_DOC_FIXUP_ENABLED === "true";
@@ -37,18 +38,13 @@ function logoUrl(): string {
 }
 // These document-collection clients are SPRINGBOARD HOMES' (the community-
 // funding product that feeds YLA), so this email carries the Springboard brand —
-// from Glenn at Springboard Homes, NOT NextKey. Sends from the verified,
-// domain-authenticated Brevo sender hello@springboardhomes.com.au. All
-// overridable via env for a future NextKey-direct flow.
-function senderEmail(): string {
-  return process.env.SPRINGBOARD_SENDER_EMAIL || "hello@springboardhomes.com.au";
-}
-function senderName(): string {
-  return process.env.SPRINGBOARD_SENDER_NAME || "Glenn Mayes — Springboard Homes";
-}
-function replyToEmail(): string {
-  return process.env.SPRINGBOARD_REPLY_TO || "hello@springboardhomes.com.au";
-}
+// from Glenn at Springboard Homes, NOT NextKey. The identity is shared with the
+// YLA submission itself (utils/springboard-sender.ts) so the client and the
+// Licensor never see the two halves of the same relationship under different
+// names.
+const senderEmail = springboardSenderEmail;
+const senderName = springboardSenderName;
+const replyToEmail = springboardReplyTo;
 function signature(): { html: string; text: string } {
   const raw = process.env.SPRINGBOARD_SIGNATURE || "Glenn Mayes\nSpringboard Homes";
   const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
