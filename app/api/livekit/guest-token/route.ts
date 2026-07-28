@@ -53,9 +53,19 @@ export async function POST(req: NextRequest) {
   }
 
   const guestName = claims.name || "Guest";
-  // Stable-ish identity per guest name so they show up named in the call.
+  // UNIQUE identity per redemption, NOT per guest name. LiveKit treats identity
+  // as the primary key of a participant in a room: a second connection with the
+  // same identity evicts the first with DUPLICATE_IDENTITY. One guest link is
+  // routinely opened by more than one person — the broker clicks the same link
+  // out of the calendar entry the client got, or two applicants join from
+  // separate devices — and with a shared `guest:<name>` identity they knocked
+  // each other out of the call, in turns, indefinitely. That is exactly what
+  // happened on a live client call on 2026-07-28.
+  //
+  // The display name stays the name on the link, so the call UI is unchanged;
+  // only the internal identity gains a random suffix.
   const token = await mintJoinToken({
-    identity: `guest:${guestName}`,
+    identity: `guest:${guestName}#${crypto.randomUUID().slice(0, 8)}`,
     name: guestName,
     room: claims.room,
     canPublish: true,

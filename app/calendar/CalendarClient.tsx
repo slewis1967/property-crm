@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { roomForContact } from "../../utils/livekit-rooms";
 
 type Appt = {
   id: string;
@@ -360,7 +361,15 @@ function ApptDetail({ appt, now, onClose }: { appt: Appt; now: Date; onClose: ()
           {appt.notes && <p className="text-gray-600 whitespace-pre-line border-t border-gray-100 pt-2">{appt.notes}</p>}
           {video && (
             <a
-              href={appt.location!}
+              // Staff join through the authed room page, not the guest link in
+              // `location`. That link carries the CLIENT's name, so a broker
+              // opening it joined the call labelled as the client (and, before
+              // guest identities were made unique, evicted them from it).
+              href={
+                appt.contact_id
+                  ? `/video/${roomForContact(appt.contact_id)}`
+                  : appt.location!
+              }
               target="_blank"
               rel="noreferrer"
               className="inline-block mt-1 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-4 py-2 rounded-lg"
