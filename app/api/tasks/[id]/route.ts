@@ -60,3 +60,39 @@ export async function PATCH(
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ task: data });
 }
+
+/**
+ * Delete a live task outright — the "I typed this by mistake" / "no longer
+ * relevant" case that completing it doesn't cover.
+ *
+ * Deliberately NOT behind the deletion_log gate (utils/deletion-log.ts). That
+ * exists because deleting a CLIENT or an OPPORTUNITY destroys a business record
+ * and needs a written reason plus a name against it. A task is one person's
+ * TODO; demanding a justification to clear a mistyped reminder would train
+ * people to route around the gate everywhere it does matter.
+ *
+ * Returns 404 rather than a silent 200 when nothing matched, so the UI can tell
+ * "already gone" from "deleted".
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json({ error: "id must be a UUID" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json({ ok: true, id: data.id });
+}

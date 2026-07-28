@@ -80,6 +80,27 @@ export default function TasksClient({
     }
   }
 
+  async function remove(t: LiveTask) {
+    // Confirmed because it is unrecoverable: unlike a contact or an
+    // opportunity, a deleted task is not snapshotted to deletion_log.
+    if (!confirm(`Delete “${t.title}”? This can’t be undone.`)) return;
+    setBusy(t.id);
+    setError("");
+    try {
+      const res = await fetch(`/api/tasks/${t.id}`, { method: "DELETE" });
+      // A 404 means it is already gone — the refresh below IS the fix, so
+      // don't shout at someone for deleting something twice.
+      if (!res.ok && res.status !== 404) {
+        throw new Error((await res.json().catch(() => ({}))).error || "Could not delete the task.");
+      }
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete the task.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function addTask() {
     const title = newTitle.trim();
     if (!title) return;
@@ -267,6 +288,17 @@ export default function TasksClient({
                     {label}
                   </span>
                 )}
+
+                <button
+                  type="button"
+                  aria-label={`Delete ${t.title}`}
+                  title="Delete"
+                  disabled={busy === t.id}
+                  onClick={() => void remove(t)}
+                  className="flex-shrink-0 rounded px-1.5 py-0.5 text-sm text-gray-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                >
+                  ✕
+                </button>
               </div>
             );
           })
