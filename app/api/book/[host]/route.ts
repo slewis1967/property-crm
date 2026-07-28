@@ -186,14 +186,21 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   // --- LiveKit video link (best-effort). Needs a room key; use the contact id
   // when we have one, else a booking-scoped room. ---
   let videoLink: string | null = null;
+  // Where the HOST joins: the authed room page, not the guest link. The guest
+  // link carries the lead's name, so a host clicking it joins labelled as the
+  // lead. Staff are behind Cloudflare Access anyway, so /video/<room> is the
+  // right door for them.
+  let hostVideoLink: string | null = null;
   if (livekitConfigured()) {
     try {
       const room = contactId ? roomForContact(contactId) : `book-${startMs}`;
       const ttlHours = Math.max(24, Math.ceil((endMs - now) / 3_600_000) + 6);
       const token = await signGuestToken({ room, name, ttlHours });
       videoLink = `${req.nextUrl.origin}/join/${encodeURIComponent(token)}`;
+      hostVideoLink = `${req.nextUrl.origin}/video/${encodeURIComponent(room)}`;
     } catch {
       videoLink = null;
+      hostVideoLink = null;
     }
   }
 
@@ -247,7 +254,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
     html: `<p>${name} booked a meeting via your self-book page.</p>
       <p><strong>When:</strong> ${whenLabel} (AEST)<br>
       <strong>Email:</strong> ${email}${body.phone ? `<br><strong>Phone:</strong> ${body.phone}` : ""}</p>
-      ${videoLink ? `<p><a href="${videoLink}">Join the video meeting</a></p>` : ""}
+      ${hostVideoLink ? `<p><a href="${hostVideoLink}">Join the video meeting</a></p>` : ""}
       ${body.notes ? `<p><strong>Notes:</strong> ${body.notes}</p>` : ""}`,
     tags: ["self-book-notify"],
   }).catch(() => undefined);
