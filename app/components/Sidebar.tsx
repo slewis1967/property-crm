@@ -65,7 +65,6 @@ const GROUPS: Group[] = [
       { href: "/appointments", icon: "🗓️", label: "Appointments" },
       { href: "/inbox", icon: "✉️", label: "Inbox" },
       { href: "/broadcast", icon: "📣", label: "Broadcast" },
-      { href: "/tasks", icon: "📌", label: "Tasks" },
     ],
   },
   {
@@ -109,6 +108,11 @@ const GROUPS: Group[] = [
       { href: "/sequences", icon: "📨", label: "Sequences" },
     ],
   },
+  // Read-only history from the retired GoHighLevel CRM. Everything here is
+  // sourced from a ghl_archive_* table and nothing writes back, so it belongs
+  // out of the working nav. Pages that merely READ an archive table alongside
+  // live data — Contacts, Opportunities, Appointments — are live tools and
+  // deliberately stay where they are.
   {
     key: "archive",
     label: "Archive",
@@ -116,6 +120,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/conversations", icon: "💬", label: "Conversations" },
       { href: "/notes", icon: "📝", label: "Notes" },
+      { href: "/tasks", icon: "📌", label: "Tasks" },
       { href: "/media", icon: "🗃️", label: "Media Library" },
     ],
   },
