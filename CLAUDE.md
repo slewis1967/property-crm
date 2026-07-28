@@ -200,10 +200,19 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/inbox` | Email inbox |
 | `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
 | `/broadcast` | Bulk email composer — runs through compliance review, then writes a one-step sequence + enrolments. See *Broadcast* in ARCHITECTURE |
-| `/conversations` | Conversations archive — read-only Supabase `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection; GHL was decommissioned) |
-| `/notes` | Notes archive — read-only Supabase `ghl_archive_notes` snapshot (frozen GoHighLevel export; new notes go via Quick Log on the contact detail page) |
-| `/tasks` | Tasks list |
-| `/media` | Media library |
+| `/tasks` | **Live** task list — the `tasks` table: everything the voice assistant, Quick Log, "Add task" and the opportunity pages create. Server-rendered (there is no GET on `/api/tasks`); tick-off, create and delete go through `PATCH` / `POST` / `DELETE` on `/api/tasks[/id]` then `router.refresh()`. Task delete is deliberately NOT behind the `deletion_log` reason+name gate (that is for contacts and opportunities — real business records); it is confirmed in the UI instead, and is unrecoverable. Filters open/overdue/completed, most-overdue first. Due-date reasoning is in `utils/tasks.ts` (pure + tested) — the table holds BOTH date-only and full-ISO due values, and a date-only one must be read as LOCAL midnight or every task due today looks overdue until 10am AEST. Not to be confused with `/tasks/archive` |
+
+**Archive** — read-only history from the decommissioned GoHighLevel CRM. Every
+page here is sourced from a `ghl_archive_*` table and nothing writes back, which
+is why they sit in their own collapsed nav group rather than in CRM. Pages that
+merely READ an archive table *alongside* live data — Contacts, Opportunities,
+Appointments — are live tools and stay in CRM.
+| Route | Description |
+|-------|-------------|
+| `/conversations` | Conversations archive — read-only `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection) |
+| `/notes` | Notes archive — read-only `ghl_archive_notes` snapshot (new notes go via Quick Log on the contact detail page) |
+| `/tasks/archive` | Tasks archive — read-only `ghl_archive_tasks`. The live task list is `/tasks` |
+| `/media` | Media library — read-only `ghl_archive_media_files` |
 
 **Compliance (AML/CTF)**
 | Route | Description |

@@ -31,6 +31,23 @@ export const MYGOV_VIDEO = {
   caption: "Springboard Homes — 1 min 16",
 } as const;
 
+/**
+ * The director ID walkthrough — for clients setting up an SMSF with a CORPORATE
+ * trustee, who must personally hold a director ID before the trustee company
+ * can be registered.
+ *
+ * Unlike MYGOV_VIDEO this is NOT shown to everyone. Its paths are token-scoped
+ * and a rep must release it per client (see the training-video routes): a fund
+ * with individual trustees carries no director ID obligation, and telling such
+ * a client to go and get one would be plain wrong.
+ */
+export const DIRECTOR_ID_VIDEO = {
+  src: (token: string) => `/api/portal/${encodeURIComponent(token)}/training-video`,
+  poster: (token: string) => `/api/portal/${encodeURIComponent(token)}/training-poster`,
+  title: "Getting your director ID for your SMSF trustee company",
+  caption: "Springboard Homes — 3 min 44",
+} as const;
+
 export type HelpEntry = {
   /** Matches client_documents.doc_type, so the UI can deep-link from a slot. */
   docKey: string;

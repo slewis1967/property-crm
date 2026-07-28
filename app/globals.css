@@ -62,3 +62,21 @@ body {
     display: none !important;
   }
 }
+
+/* ── Video calls: don't mirror the branded background ──────────────────────
+   LiveKit mirrors your own camera tile (`transform: rotateY(180deg)` on
+   [data-lk-facing-mode=user]) so your self-view behaves like a mirror. That
+   flips the WHOLE composited frame, and once a virtual background is applied
+   the office signage behind you is part of that frame — so every participant
+   saw the Springboard logo and its wording reversed behind themselves. (Remote
+   tiles were always correct; only the self-view was flipped.)
+
+   So while the branded background is on, the local tile is left un-mirrored:
+   readable branding beats a mirror-image of your own face. Turn the background
+   off and the normal mirror comes straight back — the attribute is set by
+   VirtualBackgroundControl and removed when it unmounts. */
+html[data-lk-branded-bg="on"]
+  [data-lk-facing-mode="user"]
+  .lk-participant-media-video[data-lk-local-participant="true"][data-lk-source="camera"] {
+  transform: none;
+}

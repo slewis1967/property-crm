@@ -35,6 +35,7 @@ import {
   type NeedsAnalysisData,
 } from "../../../utils/needsAnalysis";
 import type { SignatureMark } from "../../../utils/signatures";
+import PrintTick from "../../components/PrintTick";
 
 /* ── Enum → paper-label maps (values come from the util so they stay in sync) ─ */
 
@@ -75,7 +76,9 @@ const joinParts = (parts: (string | number | null | undefined)[], sep = " / "): 
 
 /** A bordered checkbox: empty (☐) or filled (☒). */
 function Box({ on }: { on: boolean }) {
-  return <span className="yla-box">{on ? "✕" : ""}</span>;
+  // The mark is drawn (PrintTick), not typed: the PDF renderer has no font
+  // glyph for "✕" and dropped it silently, leaving every box blank.
+  return <span className="yla-box">{on ? <PrintTick /> : ""}</span>;
 }
 
 /** An inline checkbox with its label. */

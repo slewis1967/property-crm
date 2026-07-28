@@ -73,6 +73,9 @@ export default function JoinClient({ guestToken }: { guestToken: string }) {
         token={state.token}
         serverUrl={state.url}
         onLeave={() => setState({ phase: "left" })}
+        // Guests get their room blurred, not our office wall behind them —
+        // a client shouldn't look like they work here.
+        background="blur"
       />
     </div>
   );

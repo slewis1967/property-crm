@@ -7,7 +7,9 @@ import {
   VideoConference,
   RoomAudioRenderer,
 } from "@livekit/components-react";
-import VirtualBackgroundControl from "./VirtualBackgroundControl";
+import VirtualBackgroundControl, {
+  type BackgroundMode,
+} from "./VirtualBackgroundControl";
 import { errMessage } from "../../utils/errors";
 
 /**
@@ -112,11 +114,19 @@ export default function VideoRoom({
   serverUrl,
   room,
   onLeave,
+  background = "brand",
 }: {
   token: string;
   serverUrl: string;
   room?: string;
   onLeave?: () => void;
+  /**
+   * What replaces the local camera's real background. Staff pages take the
+   * "brand" default (the Springboard office); the public /join page passes
+   * "blur", so a client joining from their kitchen isn't sat against our
+   * branded wall looking like they work here.
+   */
+  background?: BackgroundMode;
 }) {
   return (
     <div style={{ height: "100%", width: "100%", position: "relative" }}>
@@ -131,8 +141,9 @@ export default function VideoRoom({
         style={{ height: "100%" }}
       >
         {room && <RecordToggle room={room} />}
-        {/* Branded teal+logo virtual background, on by default (top-left toggle). */}
-        <VirtualBackgroundControl />
+        {/* Springboard office backdrop for staff, blur for guests; on by
+            default either way, with a top-left toggle. */}
+        <VirtualBackgroundControl mode={background} />
         <VideoConference />
         {/* Renders remote participant audio; VideoConference handles video. */}
         <RoomAudioRenderer />

@@ -24,6 +24,8 @@ import { renderCreditAuthorisationHtml } from "./pdf/creditAuthorisationPdf";
 import { hydrateNeedsAnalysis, NEEDS_ANALYSIS_TERMINAL_STATUS } from "./needsAnalysis";
 import { hydrateCreditAuthorisation, CREDIT_AUTHORISATION_TERMINAL_STATUS } from "./creditAuthorisation";
 import { packageFilename } from "./yla-documents";
+import { buildSignaturesArray, type SignatureMark, type SignerLike } from "./signatures";
+import { SIGNATURE_REQUESTS_TABLE } from "./signature-requests-db";
 
 /** One rendered application-level document, ready to upload. */
 export type PackageDoc = { name: string; bytes: ArrayBuffer; mime: string };
@@ -41,7 +43,7 @@ type Spec = {
   /** What the rep is told when it's absent or unsigned. */
   label: string;
   filenameBase: string;
-  render: (raw: unknown) => Promise<string>;
+  render: (raw: unknown, signatures: (SignatureMark | null)[]) => Promise<string>;
 };
 
 const SPECS: Spec[] = [
@@ -51,7 +53,7 @@ const SPECS: Spec[] = [
     terminal: NEEDS_ANALYSIS_TERMINAL_STATUS,
     label: "Needs Analysis",
     filenameBase: "Needs Analysis",
-    render: (raw) => needsAnalysisHtmlWithLogo(hydrateNeedsAnalysis(raw)),
+    render: (raw, sigs) => needsAnalysisHtmlWithLogo(hydrateNeedsAnalysis(raw), sigs),
   },
   {
     key: "credit_authorisation",
@@ -59,9 +61,50 @@ const SPECS: Spec[] = [
     terminal: CREDIT_AUTHORISATION_TERMINAL_STATUS,
     label: "Credit File Authorisation",
     filenameBase: "Credit Authorisation",
-    render: (raw) => renderCreditAuthorisationHtml(hydrateCreditAuthorisation(raw)),
+    render: (raw, sigs) => renderCreditAuthorisationHtml(hydrateCreditAuthorisation(raw), sigs),
   },
 ];
+
+/**
+ * The captured e-signatures for one document, and whether everyone who was
+ * asked has actually signed.
+ *
+ * The document row's own status is NOT sufficient evidence, which is how the
+ * first real package went out wrong: the Hallidays' Credit File Authorisation
+ * was `status: "signed"` and rendered with two empty signature boxes, because
+ * the render was never given the signatures at all. The row status is a lock
+ * flag; these rows are the signatures.
+ *
+ * Grouped by signer_index because a re-sent signing link leaves more than one
+ * request per applicant — the Hallidays have four rows for two people. Judging
+ * on "every row is signed" would fail a fully-signed document whose first link
+ * was simply superseded.
+ */
+async function loadSignatures(
+  spec: Spec,
+  docId: string,
+): Promise<{ marks: (SignatureMark | null)[]; allSigned: boolean }> {
+  const { data, error } = await supabase
+    .from(SIGNATURE_REQUESTS_TABLE)
+    .select("signer_index,signer_name,signature_image,signed_at,status")
+    .eq("doc_type", spec.key)
+    .eq("doc_id", docId);
+  // A missing signature table means e-signing isn't deployed here; that is not
+  // the same as "nobody signed", and shipping an unsigned copy is the failure
+  // we're fixing — so it's a hard error, like a missing document table.
+  if (error) {
+    if (tableMissing(error)) throw new Error("Signature storage isn't set up in this environment.");
+    throw new Error(`Could not read the ${spec.label} signatures: ${error.message}`);
+  }
+  const rows = (data ?? []) as SignerLike[];
+  const byIndex = new Map<number, SignerLike[]>();
+  for (const r of rows) {
+    (byIndex.get(r.signer_index) ?? byIndex.set(r.signer_index, []).get(r.signer_index)!).push(r);
+  }
+  const allSigned =
+    byIndex.size > 0 && [...byIndex.values()].every((rs) => rs.some((r) => r.status === "signed"));
+  return { marks: buildSignaturesArray(rows), allSigned };
+}
 
 /**
  * A missing TABLE means the feature isn't deployed in this environment, which
@@ -99,9 +142,23 @@ async function loadSigned(spec: Spec, contactId: string) {
 export async function missingComplianceDocs(contactId: string | null): Promise<string[]> {
   if (!contactId) return SPECS.map((s) => `${s.label} — this application isn't linked to a contact`);
   const found = await Promise.all(
-    SPECS.map(async (spec) => ({ spec, row: await loadSigned(spec, contactId) })),
+    SPECS.map(async (spec) => {
+      const row = await loadSigned(spec, contactId);
+      // Checking the signatures, not just the lock flag. A document can carry
+      // the terminal status while nobody's signature was ever captured, and
+      // that is precisely the package we must not send: YLA require the Credit
+      // File Authorisation signed by every applicant, and it is an Equifax
+      // Access Seeker consent under the Privacy Act — an unsigned copy is not
+      // a formatting problem.
+      const sigs = row ? await loadSignatures(spec, row.id) : null;
+      return { spec, row, sigs };
+    }),
   );
-  return found.filter(({ row }) => !row).map(({ spec }) => `${spec.label} — not signed yet`);
+  return found
+    .filter(({ row, sigs }) => !row || !sigs?.allSigned)
+    .map(({ spec, row }) =>
+      row ? `${spec.label} — not signed by every applicant yet` : `${spec.label} — not signed yet`,
+    );
 }
 
 /**
@@ -133,7 +190,14 @@ export async function buildYlaPackageDocs(opts: {
       const data = await loadSigned(spec, opts.contactId!);
       if (!data) return { spec, doc: null as PackageDoc | null };
 
-      const html = await spec.render(data.data);
+      // Render WITH the captured signatures. Omitting them produced a
+      // pixel-perfect blank consent form that read as though the clients had
+      // never signed — while their signatures sat in the signature table all
+      // along.
+      const { marks, allSigned } = await loadSignatures(spec, data.id);
+      if (!allSigned) return { spec, doc: null as PackageDoc | null };
+
+      const html = await spec.render(data.data, marks);
       const pdf = await htmlToPdf(html);
       const name = packageFilename(spec.filenameBase, opts.primaryApplicant, opts.clientRef);
       // Copy into a standalone ArrayBuffer — Buffer views share a pooled one.
@@ -144,7 +208,7 @@ export async function buildYlaPackageDocs(opts: {
 
   for (const { spec, doc } of results) {
     if (doc) docs.push(doc);
-    else missing.push(`${spec.label} — not signed yet`);
+    else missing.push(`${spec.label} — not signed by every applicant yet`);
   }
 
   return { docs, missing };

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
+import { roomForContact } from "../../utils/livekit-rooms";
 import AIPreMeetingBrief from "../components/AIPreMeetingBrief";
 
 export const dynamic = "force-dynamic";
@@ -284,7 +285,16 @@ function Section({ title, rows, emptyText, nowMs, pastView = false, showBrief = 
                     {start.toLocaleString("en-AU", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
                   </p>
                   {a.location && (a.location.startsWith("http") ? (
-                    <a href={a.location} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                    // Staff join at the authed room page. `location` holds the
+                    // GUEST link, which names the client — a broker opening it
+                    // joins under the client's name (and, before guest
+                    // identities were unique, evicted them from the call).
+                    <a
+                      href={a.contact_id ? `/video/${roomForContact(a.contact_id)}` : a.location}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                    >
                       Join meeting →
                     </a>
                   ) : (

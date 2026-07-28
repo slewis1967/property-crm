@@ -42,10 +42,12 @@ export function livekitConfigured(): boolean {
 /**
  * Deterministic room name for a contact so every participant who opens the
  * same contact lands in the same room. Kept URL/route safe.
+ *
+ * Defined in utils/livekit-rooms.ts and re-exported here so server code can
+ * keep importing it from this module: client components need the same helper,
+ * and they can't import this file (API secret + server SDK).
  */
-export function roomForContact(contactId: string): string {
-  return `contact-${contactId}`;
-}
+export { roomForContact } from "./livekit-rooms";
 
 export interface MintTokenOpts {
   /** Stable identity for the participant (we use their CRM email). */

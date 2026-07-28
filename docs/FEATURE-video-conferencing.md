@@ -33,6 +33,35 @@ tokens are minted server-side from the logged-in user.
 4. The SFU POSTs lifecycle events to `/api/livekit/webhook` (signature
    verified) → rows in `video_call_events`, linked to the contact.
 
+### The webhook has to reach an origin Cloudflare Access doesn't guard
+
+The SFU is a machine with no Access session, so a POST to `crm.nextkey.com.au`
+gets 302'd to the login page. That broke the timeline silently for eleven days
+(2026-07-16 → 2026-07-27): calls worked, LiveKit logged every event as "sent",
+and `video_call_events` never took a single row. Two things fix it, and both
+are needed:
+
+- **Done (live 2026-07-27):** `proxy.ts` `isLivekitWebhookRoute` exempts the
+  exact path from the CRM's own tunnel gate — trust is the signed webhook JWT,
+  verified in the route, so an unsigned POST still gets 401.
+- **Done (2026-07-27):** the Cloudflare Access **Bypass** application
+  **"CRM LiveKit webhook (public)"** on the exact path
+  `crm.nextkey.com.au/api/livekit/webhook`, reusing the existing
+  **"Public webhooks" (bypass)** policy — the same shape as the `/join/*` app.
+  Verified: a POST to that path now reaches the route (401
+  `Invalid webhook signature` for an unsigned body) while `/api/livekit/token`,
+  `/api/livekit/calls` and `/contacts` still 302 to Access.
+  *(Alternative, if that bypass is ever removed: repoint the SFU at the Netlify
+  origin `crmnex.netlify.app`, which has no Access in front — see the comment
+  in `deploy/livekit/livekit.yaml`. Needs a `fly deploy`.)*
+
+Events are not replayed, so the timeline starts from the first call after this
+— nothing before 2026-07-27 is recoverable.
+
+If the timeline goes quiet again, check `flyctl logs -a nextkey-livekit` for
+`sent webhook` lines and then `select count(*) from video_call_events` — events
+being "sent" proves nothing about them landing.
+
 ## Deploy / config
 
 See [`deploy/livekit/README.md`](../deploy/livekit/README.md). Three CRM env

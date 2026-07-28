@@ -7,6 +7,8 @@ import { roomForContact, livekitConfigured } from "../../../utils/livekit";
 import { signGuestToken } from "../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../utils/meeting-invite";
 import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS } from "../../../utils/appointments";
+import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
+import { meetingSmsBody } from "../../../utils/meeting-sms";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -40,6 +42,8 @@ type Body = {
   contact_id: string;
   contact_email: string;
   contact_name?: string;
+  /** Optional: overrides the contact record when sending the confirmation SMS. */
+  contact_phone?: string;
 
   // Meeting details
   title: string;
@@ -186,13 +190,64 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // --- Step 4: SMS confirmation (second channel) ---
+  //
+  // The invite email is a single point of failure. On 25 July one was delivered
+  // to a client's inbox, never opened — filed to spam or Promotions, which is
+  // what an .ics from a near-unknown sender attracts — and she missed a 9am
+  // meeting believing nothing had been sent. An SMS is read within minutes and
+  // costs a few cents.
+  //
+  // Best-effort and REPORTED, exactly like the invite: a failed text must never
+  // lose a saved booking, but the person who booked it has to know the attendee
+  // wasn't reached. Gated on MEETING_SMS_ENABLED so it can be switched off
+  // without a deploy, and it honours the SMS opt-out list (Spam Act).
+  let smsSent = false;
+  let smsWarning: string | null = null;
+  if (process.env.MEETING_SMS_ENABLED === "true") {
+    const phone = toE164AU(await contactPhone(body.contact_id, body.contact_phone));
+    if (phone) {
+      if (await isOptedOut(phone)) {
+        smsWarning = "Attendee has opted out of SMS — email only.";
+      } else {
+        const res = await sendSms({
+          contactId: body.contact_id ?? null,
+          phone,
+          body: meetingSmsBody({
+            firstName: body.contact_name ?? null,
+            startISO,
+            hostName: host.displayName ?? "Springboard Homes",
+          }),
+          campaign: "meeting-confirmation",
+        });
+        smsSent = res.ok;
+        if (!res.ok) smsWarning = `Confirmation SMS could not be sent (${res.error}).`;
+      }
+    } else {
+      smsWarning = "No valid mobile on file — email only.";
+    }
+  }
+
   return NextResponse.json({
     appointment: inserted,
     video_link: videoLink,
     invite_requested: wantInvite,
     invite_sent: inviteSent,
     invite_warning: inviteWarning,
+    sms_sent: smsSent,
+    sms_warning: smsWarning,
   });
+}
+
+/** The attendee's mobile: whatever the caller supplied, else the contact record. */
+async function contactPhone(
+  contactId: string | null | undefined,
+  supplied: string | null | undefined,
+): Promise<string | null> {
+  if (supplied) return supplied;
+  if (!contactId) return null;
+  const { data } = await supabase.from("contacts").select("phone").eq("id", contactId).maybeSingle();
+  return (data as { phone?: string | null } | null)?.phone ?? null;
 }
 
 /**
