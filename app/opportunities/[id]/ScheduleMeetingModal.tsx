@@ -12,6 +12,7 @@
  */
 import { useMemo, useState } from "react";
 import { errMessage } from "../../../utils/errors";
+import { roomForContact } from "../../../utils/livekit-rooms";
 
 type Lead = {
   lead_id: string;
@@ -199,10 +200,25 @@ export default function ScheduleMeetingModal({
             )}
             {success.videoLink && (
               <div className="flex flex-col gap-2 text-sm">
-                <a href={success.videoLink} target="_blank" rel="noopener noreferrer" className="text-teal-700 hover:underline font-medium">
-                  📹 Join the video meeting →
-                </a>
-                <p className="text-xs text-gray-500 break-all">{success.videoLink}</p>
+                {/* Two different doors on purpose: you join at the authed room
+                    page, the client uses the guest link below. Clicking the
+                    guest link yourself puts you in the call under the client's
+                    name. */}
+                {contactId && (
+                  <a
+                    href={`/video/${roomForContact(contactId)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-700 hover:underline font-medium"
+                  >
+                    📹 Join the video meeting →
+                  </a>
+                )}
+                <p className="text-xs text-gray-500">
+                  Link sent to the attendee:
+                  <br />
+                  <span className="break-all">{success.videoLink}</span>
+                </p>
               </div>
             )}
             <button
