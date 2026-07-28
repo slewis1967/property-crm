@@ -43,6 +43,8 @@ import {
 } from "../../../utils/factfind";
 import { mergeSeededApplicant } from "../../../utils/needsAnalysisToFactFind";
 import CapacityPanel from "./CapacityPanel";
+import ScheduleMeetingModal from "../../opportunities/[id]/ScheduleMeetingModal";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 import { LockedBanner, HistoryPanel, SaveStateIndicator } from "../../components/ComplianceDocAudit";
 import SigningPanel from "../../components/SigningPanel";
 import { useAutosave, type AutosaveOutcome } from "../../hooks/useAutosave";
@@ -259,6 +261,7 @@ export default function FactFindForm({ id }: { id: string }) {
   const [brokerId, setBrokerId] = useState("");
   const [sendingBroker, setSendingBroker] = useState(false);
   const [brokerMsg, setBrokerMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showSchedule, setShowSchedule] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -711,6 +714,15 @@ export default function FactFindForm({ id }: { id: string }) {
           title="Create an AML/CTF CDD case pre-filled from Applicant 1"
         >
           {creatingAml ? "Creating…" : "→ Create AML case"}
+        </button>
+        <button
+          onClick={() => setShowSchedule(true)}
+          disabled={!contactId}
+          title={contactId ? "Schedule a meeting with this applicant" : "Save the fact find with a matched contact first"}
+          className="px-4 py-2 text-sm font-semibold rounded-lg border transition disabled:opacity-50"
+          style={{ borderColor: TEAL, color: TEAL }}
+        >
+          📅 Schedule meeting
         </button>
         <button
           onClick={() => window.print()}
@@ -1607,6 +1619,25 @@ export default function FactFindForm({ id }: { id: string }) {
           </div>
         )}
       </fieldset>
+
+      {showSchedule && (
+        <ScheduleMeetingModal
+          lead={{
+            lead_id: id,
+            full_name: [data.applicants[0].given_names, data.applicants[0].family_name].filter(Boolean).join(" ") || null,
+            email: data.applicants[0].email || null,
+            buyer_type: null,
+            state: null,
+            budget: null,
+            timeframe: null,
+            message: null,
+          }}
+          hosts={SCHEDULING_HOSTS}
+          contactId={contactId}
+          onClose={() => setShowSchedule(false)}
+          onCreated={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
