@@ -73,6 +73,12 @@ in `paid-service-balances.ts`, and add it to `FETCHERS`.
 - One digest per Brisbane day, listing everything that needs attention — not one
   email per problem. Silent when nothing is wrong (an "all good" email trains you
   to ignore the sender).
+- **Civil hours only** (07:00–19:00 Brisbane) for the automatic send. `job=all` on
+  the 2-hourly client sweep also runs this job, and the Brisbane day rolls over at
+  14:00 UTC — so without a window the first sweep after the rollover claims the
+  day's one digest and the email lands at 00:30 or 05:39 Brisbane. Outside the
+  window the run holds (and logs that it held); the next in-window run sends, so
+  nothing is lost. "Send digest now" ignores the window.
 - **Gated**: nothing sends unless `PAID_ALERTS_ENABLED=true`. Until then every run
   is a dry run that records what it *would* have sent. Recipient is
   `PAID_ALERTS_TO` (falls back to `OWNER_EMAIL`, then `sean.l@nextkey.com.au`).
