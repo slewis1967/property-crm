@@ -65,6 +65,7 @@ const GROUPS: Group[] = [
       { href: "/appointments", icon: "🗓️", label: "Appointments" },
       { href: "/inbox", icon: "✉️", label: "Inbox" },
       { href: "/broadcast", icon: "📣", label: "Broadcast" },
+      { href: "/tasks", icon: "📌", label: "Tasks" },
     ],
   },
   {
@@ -120,7 +121,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/conversations", icon: "💬", label: "Conversations" },
       { href: "/notes", icon: "📝", label: "Notes" },
-      { href: "/tasks", icon: "📌", label: "Tasks" },
+      { href: "/tasks/archive", icon: "📌", label: "Tasks" },
       { href: "/media", icon: "🗃️", label: "Media Library" },
     ],
   },

@@ -200,6 +200,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/inbox` | Email inbox |
 | `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
 | `/broadcast` | Bulk email composer — runs through compliance review, then writes a one-step sequence + enrolments. See *Broadcast* in ARCHITECTURE |
+| `/tasks` | **Live** task list — the `tasks` table: everything the voice assistant, Quick Log, "Add task" and the opportunity pages create. Server-rendered (there is no GET on `/api/tasks`); tick-off and create go through `PATCH /api/tasks/[id]` + `POST /api/tasks` then `router.refresh()`. Filters open/overdue/completed, most-overdue first. Due-date reasoning is in `utils/tasks.ts` (pure + tested) — the table holds BOTH date-only and full-ISO due values, and a date-only one must be read as LOCAL midnight or every task due today looks overdue until 10am AEST. Not to be confused with `/tasks/archive` |
 
 **Archive** — read-only history from the decommissioned GoHighLevel CRM. Every
 page here is sourced from a `ghl_archive_*` table and nothing writes back, which
@@ -210,7 +211,7 @@ Appointments — are live tools and stay in CRM.
 |-------|-------------|
 | `/conversations` | Conversations archive — read-only `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection) |
 | `/notes` | Notes archive — read-only `ghl_archive_notes` snapshot (new notes go via Quick Log on the contact detail page) |
-| `/tasks` | Tasks archive — read-only `ghl_archive_tasks`. ⚠️ It does NOT show the LIVE `tasks` table (voice assistant, Quick Log, "Add task"): those surface on the War Room and the opportunity detail page, and have no list view of their own |
+| `/tasks/archive` | Tasks archive — read-only `ghl_archive_tasks`. The live task list is `/tasks` |
 | `/media` | Media library — read-only `ghl_archive_media_files` |
 
 **Compliance (AML/CTF)**
