@@ -200,10 +200,18 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/inbox` | Email inbox |
 | `/inbox/compose` | Compose / reply — thin server wrapper around `ComposeClient`; reads `?draft=` / `?reply=` from `searchParams` and passes them down |
 | `/broadcast` | Bulk email composer — runs through compliance review, then writes a one-step sequence + enrolments. See *Broadcast* in ARCHITECTURE |
-| `/conversations` | Conversations archive — read-only Supabase `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection; GHL was decommissioned) |
-| `/notes` | Notes archive — read-only Supabase `ghl_archive_notes` snapshot (frozen GoHighLevel export; new notes go via Quick Log on the contact detail page) |
-| `/tasks` | Tasks list |
-| `/media` | Media library |
+
+**Archive** — read-only history from the decommissioned GoHighLevel CRM. Every
+page here is sourced from a `ghl_archive_*` table and nothing writes back, which
+is why they sit in their own collapsed nav group rather than in CRM. Pages that
+merely READ an archive table *alongside* live data — Contacts, Opportunities,
+Appointments — are live tools and stay in CRM.
+| Route | Description |
+|-------|-------------|
+| `/conversations` | Conversations archive — read-only `ghl_archive_conversations` snapshot (a frozen GoHighLevel export, not a live GHL connection) |
+| `/notes` | Notes archive — read-only `ghl_archive_notes` snapshot (new notes go via Quick Log on the contact detail page) |
+| `/tasks` | Tasks archive — read-only `ghl_archive_tasks`. ⚠️ It does NOT show the LIVE `tasks` table (voice assistant, Quick Log, "Add task"): those surface on the War Room and the opportunity detail page, and have no list view of their own |
+| `/media` | Media library — read-only `ghl_archive_media_files` |
 
 **Compliance (AML/CTF)**
 | Route | Description |
