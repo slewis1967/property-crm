@@ -169,9 +169,20 @@ export type FieldReview = {
 export function applyFieldReviews(policy: LenderPolicy, reviews: FieldReview[]): LenderPolicy {
   if (reviews.length === 0) return policy;
   const next = { ...policy } as unknown as Record<string, unknown>;
+  // A spread of `policy` is SHALLOW — `next.servicing` is still the caller's
+  // object, so writing a confirmed fact into it would mutate the input. The
+  // sections a review touches are therefore cloned before being written to.
+  const cloned = new Set<string>();
   for (const review of reviews) {
     const [section, field] = review.field_path.split(".");
     if (!section || !field) continue;
+    if (!cloned.has(section)) {
+      const original = next[section];
+      if (original && typeof original === "object") {
+        next[section] = { ...(original as Record<string, unknown>) };
+      }
+      cloned.add(section);
+    }
     const bag = next[section];
     if (!bag || typeof bag !== "object") continue;
     const fact: Fact<unknown> = {
