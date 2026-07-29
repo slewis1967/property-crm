@@ -27,6 +27,8 @@ type RequestRow = {
   yla_submitted_at: string | null;
   /** Optional: absent until the 20260727 migration runs, so the UI must cope. */
   training_video_released_at?: string | null;
+  /** Optional: absent until the 20260729 migration runs. Gates the walkthrough. */
+  pa_received_at?: string | null;
 };
 
 /**
@@ -347,6 +349,34 @@ export default function DocumentRequestsClient() {
     }
   }
 
+  /** Mark the Preliminary Assessment back from YLA (or undo it). */
+  async function togglePaReceived(id: string, received: boolean) {
+    setVideoBusy(id);
+    setVideoMsg(null);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/pa-received`, {
+        method: received ? "POST" : "DELETE",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) {
+        setVideoMsg({ id, text: json.error || "Could not update the PA status.", error: true });
+        return;
+      }
+      setVideoMsg({
+        id,
+        text: received
+          ? "PA marked as received. You can now release the walkthrough."
+          : "PA marked as not received — the walkthrough is hidden again.",
+        error: false,
+      });
+      await reload();
+    } catch {
+      setVideoMsg({ id, text: "Could not reach the server.", error: true });
+    } finally {
+      setVideoBusy(null);
+    }
+  }
+
   function copyLink(link: string) {
     void navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
@@ -622,24 +652,59 @@ export default function DocumentRequestsClient() {
                         {/* Director ID walkthrough — opt-in per client. Only
                             correct for an SMSF with a corporate trustee. */}
                         <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
+                          {/* PA-back marker. The walkthrough stays hidden until this
+                              is set, because before the assessment returns we don't
+                              know the fund will have a corporate trustee. */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-900">
-                                Director ID walkthrough
+                                Preliminary Assessment from YLA
                               </p>
                               <p className="mt-0.5 text-xs text-gray-600">
-                                {r.training_video_released_at
-                                  ? "Visible to this client under Help."
-                                  : "Hidden. Release only if their fund will have a corporate trustee."}
+                                {r.pa_received_at
+                                  ? `Received ${new Date(r.pa_received_at).toLocaleDateString("en-AU")}.`
+                                  : "Not back yet."}
                               </p>
                             </div>
                             <button
                               type="button"
                               disabled={videoBusy === r.id}
+                              onClick={() => void togglePaReceived(r.id, !r.pa_received_at)}
+                              className="flex-shrink-0 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                              {videoBusy === r.id
+                                ? "Saving…"
+                                : r.pa_received_at
+                                  ? "Mark not received"
+                                  : "Mark PA received"}
+                            </button>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900">
+                                Director ID walkthrough
+                              </p>
+                              <p className="mt-0.5 text-xs text-gray-600">
+                                {!r.pa_received_at
+                                  ? "Locked until the Preliminary Assessment is back from YLA."
+                                  : r.training_video_released_at
+                                    ? "Visible to this client under Help."
+                                    : "Hidden. Release only if their fund will have a corporate trustee."}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={videoBusy === r.id || !r.pa_received_at}
+                              title={
+                                !r.pa_received_at
+                                  ? "The Preliminary Assessment has to be back from YLA first."
+                                  : undefined
+                              }
                               onClick={() =>
                                 void toggleTrainingVideo(r.id, !r.training_video_released_at)
                               }
-                              className={`flex-shrink-0 rounded-md px-3 py-2 text-sm font-medium disabled:opacity-50 ${
+                              className={`flex-shrink-0 rounded-md px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40 ${
                                 r.training_video_released_at
                                   ? "bg-white text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
                                   : "bg-[#020e40] text-white hover:bg-[#0a1a5a]"
