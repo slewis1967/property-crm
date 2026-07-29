@@ -724,6 +724,17 @@ export default function FactFindForm({ id }: { id: string }) {
         >
           📅 Schedule meeting
         </button>
+        {/* Deep-links into the lender matcher with this fact find prefilled.
+            The matcher shows what it had to ASSUME (employment basis, tenure,
+            residency, credit history — none of which are on this form) before
+            it shows the shortlist. */}
+        <Link
+          href={`/lenders/match?factFind=${id}`}
+          className="no-print px-4 py-2 text-sm font-semibold rounded-lg border transition"
+          style={{ borderColor: TEAL, color: TEAL }}
+        >
+          🏦 Match lenders
+        </Link>
         <button
           onClick={() => window.print()}
           className="px-4 py-2 text-sm font-semibold rounded-lg border transition"
