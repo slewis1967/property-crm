@@ -362,6 +362,22 @@ export type CapacityInputs = {
   dtiCap: number;
   /** Recognise the tax benefit of rental losses. Off = conservative. */
   negativeGearing: boolean;
+
+  // ─── Per-lender overrides (optional) ──────────────────────────────────
+  // Defaulted to the generic figures above so every existing caller is
+  // unaffected. Supplied by `utils/lender-policy/match.ts` when a scenario is
+  // assessed against ONE lender's published servicing parameters — this is the
+  // seam that turns the generic calculator into a per-lender one.
+
+  /** Monthly assessment on a credit card limit, as a fraction.
+   *  Defaults to `CREDIT_CARD_ASSESSMENT_RATE` (APG 223's 3.8%). */
+  creditCardAssessmentRate?: number;
+  /** Multiplier applied to the HEM benchmark, e.g. 1.10 for a lender that
+   *  loads it. Defaults to 1. Only ever raises the living-expense floor. */
+  hemLoading?: number;
+  /** Assessment-rate floor, %. Assessed at max(rate + buffer, floor).
+   *  Defaults to 0 (no floor), preserving existing behaviour. */
+  assessmentFloorRate?: number;
 };
 
 export type CapacityResult = {
@@ -504,12 +520,19 @@ function assessAtLoan(i: CapacityInputs, newLoan: number) {
   // Living expenses — HEM floor
   const adults: 1 | 2 = i.partner > 0 ? 2 : 1;
   const grossHousehold = i.income + i.partner + i.otherIncome + portfolioGrossAnnualRent;
-  const hem = hemMonthly(adults, i.dependents, grossHousehold);
+  // A lender-specific loading only ever RAISES the benchmark floor, so a
+  // missing or nonsensical value falls back to the unloaded HEM.
+  const hemLoading = i.hemLoading && i.hemLoading > 1 ? i.hemLoading : 1;
+  const hem = hemMonthly(adults, i.dependents, grossHousehold) * hemLoading;
   const livingExp = Math.max(hem, i.declaredExpenses);
 
   // Consumer debt
+  const cardRate =
+    typeof i.creditCardAssessmentRate === "number" && i.creditCardAssessmentRate > 0
+      ? i.creditCardAssessmentRate
+      : CREDIT_CARD_ASSESSMENT_RATE;
   const consumerDebtCommit =
-    Math.max(0, i.creditLimit) * CREDIT_CARD_ASSESSMENT_RATE +
+    Math.max(0, i.creditLimit) * cardRate +
     Math.max(0, i.personalLoan) +
     Math.max(0, i.carLoan) +
     Math.max(0, i.otherDebts);
@@ -527,7 +550,10 @@ function assessAtLoan(i: CapacityInputs, newLoan: number) {
     livingExp -
     consumerDebtCommit;
 
-  const stressRate = i.rate + i.buffer;
+  // Most lenders assess at rate + buffer, but several also publish an absolute
+  // assessment-rate FLOOR and use whichever is higher. Default floor is 0, so
+  // this is a no-op unless a lender policy supplies one.
+  const stressRate = Math.max(i.rate + i.buffer, i.assessmentFloorRate ?? 0);
   const maxLoanByServicing = surplus > 0 ? loanFromMonthly(surplus, stressRate, i.loanTerm) : 0;
 
   // DTI. Numerator is total debt including the new loan, existing mortgage

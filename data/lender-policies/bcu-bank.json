@@ -1,0 +1,168 @@
+{
+  "id": "bcu-bank",
+  "name": "BCU Bank",
+  "legalName": "Police & Nurses Limited (BCU Bank is a retail brand of Police & Nurses Limited, the same entity that trades as P&N Bank)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240701",
+  "abn": "69 087 651 876",
+  "brokerSiteUrl": "https://www.bcu.com.au/home-loans/broker/",
+  "policyDocUrl": "https://www.bcu.com.au/important-information/target-market-determinations/",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly. BCU directs accredited brokers to a broker hub for product and policy information, which requires a login; the public site (TMDs, credit guide, rates) states no assessment buffer or floor rate."
+    },
+    "notes": {
+      "value": "No serviceability parameters (buffer, floor rate, HEM basis, DTI cap, rent shading) are published on BCU Bank's public website.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bcu.com.au/home-loans/broker/",
+      "sourceTitle": "Why do brokers choose BCU Bank? | BCU Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/offset-home-loan-oo-tmd/",
+      "sourceTitle": "Offset Home Loan Owner Occupied Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 95% LVR (Lenders Mortgage Insurance may be required where applicable and as determined by BCU).\" The OMG Home Loan P&I OO TMD (effective 12/03/2026) states the same 95% ceiling."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/variable-home-loan-inv-tmd/",
+      "sourceTitle": "Variable Home Loan INV Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 90% LVR (Lenders Mortgage Insurance may be required where applicable and as determined by BCU).\" The Basic Investment Loan IO TMD (effective 22/04/2024) also caps at 90%."
+    },
+    "notes": {
+      "value": "Owner-occupied variable products are priced in three LVR bands: <=60%, >60-80%, >80-95%.",
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": ["Property used for predominantly residential purposes"],
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/offset-home-loan-oo-tmd/",
+      "sourceTitle": "Offset Home Loan Owner Occupied Target Market Determination",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "TMD security requirement only. No published acceptable/unacceptable security schedule, minimum unit size, postcode category list or high-density policy."
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination (effective 12/03/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$20,000.00 minimum stated on every BCU home-loan TMD reviewed (OMG OO, Offset OO, Variable INV, Basic Investment IO, Bridging)."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination (effective 12/03/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$5,000,000.00 maximum stated on every BCU home-loan TMD reviewed."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination (effective 12/03/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Loan term stated as \"5 - 30 years\"."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2024-04-22",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/basic-investment-loan-io-lvr-90-tmd/",
+      "sourceTitle": "Basic Investment Loan IO (<90% LVR) Target Market Determination (effective 22/04/2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Interest only terms of 3 or 5 years, then principal and interest for the remaining term.\""
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/offset-home-loan-oo-tmd/",
+      "sourceTitle": "Offset Home Loan Owner Occupied Target Market Determination",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"100% offset available, with up to 3 offset accounts permitted to be linked to the home loan account.\" Available on owner-occupied and investor variable products; the no-frills OMG loan has redraw only."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2024-04-19",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/bridging-loan-tmd/",
+      "sourceTitle": "Bridging Loan - OO Target Market Determination (effective 19/04/2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner-occupied bridging only; term 6 months (sale of existing property) or 12 months (construction), max 80% LVR, interest capitalised to end of term."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "BCU is named on Housing Australia's participating-lender list (page carries no publication date; captured 2026-07-29). IMPORTANT FOR BROKERS: the BCU TMDs state \"Loans originated under the Australian Government 5% Deposit Scheme are distributed through approved internal BCU Bank Home Lenders only\" (OMG Home Loan P&I OO TMD, effective 12/03/2026) - i.e. the scheme is NOT available through the broker channel at BCU."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted: the TMDs name \"an accredited Mortgage Broker\" as an approved distribution channel and set out obligations for \"Accredited aggregators and brokers\". BCU runs a public broker page, an accredited-broker hub, and an online broker accreditation eLearning module.",
+      "asAt": "2026-03-12",
+      "sourceUrl": "https://www.bcu.com.au/important-information/target-market-determinations/omg-home-loan-pi-oo-tmd/",
+      "sourceTitle": "OMG Home Loan Owner Occupied Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-03-12",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "BCU Bank and P&N Bank are the SAME legal entity (Police & Nurses Limited, ACL 240701) operating two retail brands with separately published TMDs; credit policy is likely shared but this is not stated publicly, so the two records are kept independent.",
+    "No public credit policy guide. Broker product/policy detail sits behind the BCU broker hub login, out of scope under the no-login source rule.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment not published.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, or residency/visa rules published.",
+    "No security policy detail: no minimum unit size, postcode category list, high-density or rural policy published.",
+    "Owner-occupied maximum interest-only term not captured; construction lending availability not confirmed from a public source.",
+    "Several BCU TMDs read (Bridging, Basic Investment IO) carry 2024 effective dates and may have been superseded."
+  ]
+}

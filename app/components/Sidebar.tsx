@@ -45,6 +45,8 @@ const GROUPS: Group[] = [
       { href: "/activity", icon: "⚡", label: "Activity Feed" },
       { href: "/pia", icon: "📊", label: "PIA Modeller" },
       { href: "/feasibility", icon: "🗺️", label: "Planning Feasibility" },
+      { href: "/lenders", icon: "🏦", label: "Lender Policy" },
+      { href: "/lenders/match", icon: "🎯", label: "Lender Match" },
     ],
   },
   {
