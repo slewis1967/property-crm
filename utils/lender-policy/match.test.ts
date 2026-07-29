@@ -340,3 +340,56 @@ describe("ranking", () => {
     expect(run.matches[0].verifiedFieldCount).toBeGreaterThan(run.matches[1].verifiedFieldCount);
   });
 });
+
+describe("material gaps — a thin record can't claim a fit", () => {
+  const thin = () =>
+    policy({
+      id: "thin",
+      name: "Thin Bank",
+      lvr: { maxLvrOwnerOccupiedPct: fact(95) },
+      product: { minLoanAmount: fact(50000), maxLoanTermYears: fact(30) },
+    });
+
+  it("is eligible for a vanilla client at 80% LVR", () => {
+    const m = matchLender(thin(), scenario(), TODAY);
+    expect(m.outcome).toBe("eligible");
+    expect(m.materialGaps).toHaveLength(0);
+  });
+
+  it("is NOT eligible once the client has defaults we have no policy for", () => {
+    const m = matchLender(
+      thin(),
+      scenario({ credit: { ...emptyCredit(), defaultsCount: 1, defaultsTotalAmount: 4000, defaultsPaid: false } }),
+      TODAY,
+    );
+    expect(m.outcome).toBe("insufficient_data");
+    expect(m.materialGaps.some((c) => c.code === "credit_defaults")).toBe(true);
+  });
+
+  it("is NOT eligible for a casual worker whose casual policy we've never read", () => {
+    const m = matchLender(
+      thin(),
+      scenario({
+        applicants: [
+          { ...emptyApplicant(), employmentBasis: "casual", monthsInCurrentRole: 18, incomeTypes: ["payg_casual"] },
+        ],
+      }),
+      TODAY,
+    );
+    expect(m.outcome).toBe("insufficient_data");
+  });
+
+  it("is NOT eligible at 95% LVR when genuine-savings policy is unknown", () => {
+    const m = matchLender(thin(), scenario({ loanAmount: 712000, propertyValue: 750000 }), TODAY);
+    expect(m.outcome).toBe("insufficient_data");
+  });
+
+  it("still reports a knock-out as ineligible, not as a gap", () => {
+    const m = matchLender(
+      policy({ lvr: { maxLvrOwnerOccupiedPct: fact(60) } }),
+      scenario({ credit: { ...emptyCredit(), defaultsCount: 1, defaultsTotalAmount: 4000 } }),
+      TODAY,
+    );
+    expect(m.outcome).toBe("ineligible");
+  });
+});

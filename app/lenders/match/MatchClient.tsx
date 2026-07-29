@@ -162,9 +162,20 @@ function MatchCard({ match }: { match: LenderMatch }) {
       </button>
 
       {/* The headline reason stays visible collapsed — a broker scanning the
-          list needs to know WHY a lender is out without expanding every row. */}
+          list needs to know WHY a lender is out, or what we couldn't check,
+          without expanding every row. */}
       {!open && match.failures.length > 0 && (
         <p className="px-4 pb-3 text-xs text-red-700">{match.failures[0].reason}</p>
+      )}
+      {!open && match.failures.length === 0 && match.materialGaps.length > 0 && (
+        <p className="px-4 pb-3 text-xs text-gray-600">
+          Can&apos;t confirm a fit — no policy on file for{" "}
+          {match.materialGaps
+            .slice(0, 3)
+            .map((c) => c.label.toLowerCase())
+            .join(", ")}
+          {match.materialGaps.length > 3 ? ` and ${match.materialGaps.length - 3} more` : ""}.
+        </p>
       )}
 
       {open && (

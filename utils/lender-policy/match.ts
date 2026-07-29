@@ -103,6 +103,80 @@ export const MATCH_OUTCOME_LABELS: Record<MatchOutcome, string> = {
   insufficient_data: "Not enough policy data",
 };
 
+/**
+ * Checks the engine only emits when the scenario actually carries that risk.
+ * If one of these comes back `unknown`, we are missing policy on something
+ * that specifically matters for THIS client — not a hypothetical.
+ */
+const RISK_TRIGGERED_CHECKS: readonly CheckCode[] = [
+  "credit_defaults",
+  "credit_judgments",
+  "credit_bankruptcy",
+  "credit_arrears",
+  "credit_score",
+  "residency",
+  "unit_size",
+  "high_density",
+  "rural_security",
+  "property_type",
+  "gifted_deposit",
+  "smsf",
+  "construction",
+  "cash_out_lvr",
+];
+
+/** Income types a mainstream lender assesses without special rules. */
+const VANILLA_INCOME_TYPES = new Set([
+  "payg_permanent_full_time",
+  "payg_permanent_part_time",
+]);
+
+/**
+ * Is this `unknown` check a MATERIAL gap for this scenario?
+ *
+ * The distinction that stops the shortlist lying. Without it, a lender whose
+ * record holds three facts — max LVR, minimum loan, loan term — passes all
+ * three and is reported as "Fits published policy", even for a casual worker
+ * with two defaults whose casual-income and default policy we have never read.
+ * Three passes out of twenty-five dimensions is not a fit; it is an untested
+ * hypothesis wearing a green badge.
+ *
+ * So a gap counts as material when it lands on a dimension where this
+ * particular client is NOT the vanilla case. A clean PAYG citizen buying a
+ * house at 80% LVR genuinely is well served by an LVR-and-loan-size check;
+ * the same check tells you nothing about a self-employed applicant on a visa.
+ */
+function isMaterialGap(check: PolicyCheck, scenario: LenderScenario, lvr: number | null): boolean {
+  if (RISK_TRIGGERED_CHECKS.includes(check.code)) return true;
+
+  if (check.code === "max_lvr") return lvr !== null && lvr > 80;
+
+  if (check.code === "income_type") {
+    return scenario.applicants.some((a) =>
+      (a.incomeTypes ?? []).some((t) => !VANILLA_INCOME_TYPES.has(t)),
+    );
+  }
+
+  if (
+    check.code === "employment_tenure" ||
+    check.code === "probation" ||
+    check.code === "self_employed_history"
+  ) {
+    return scenario.applicants.some(
+      (a) =>
+        a.employmentBasis !== "permanent_full_time" &&
+        a.employmentBasis !== "permanent_part_time",
+    ) ||
+      scenario.applicants.some(
+        (a) => typeof a.monthsInCurrentRole === "number" && a.monthsInCurrentRole < 12,
+      );
+  }
+
+  if (check.code === "genuine_savings") return lvr !== null && lvr > 80;
+
+  return false;
+}
+
 export type LenderMatch = {
   lenderId: string;
   lenderName: string;
@@ -113,6 +187,13 @@ export type LenderMatch = {
   failures: PolicyCheck[];
   referrals: PolicyCheck[];
   unknowns: PolicyCheck[];
+  /**
+   * The subset of `unknowns` that lands on a dimension where this client is
+   * not the vanilla case — i.e. the gaps that stop this being a real fit.
+   * Surfaced so the UI can say WHICH policy we're missing, not just that the
+   * record is thin.
+   */
+  materialGaps: PolicyCheck[];
   /** Indicative maximum loan under THIS lender's servicing parameters. */
   estimatedMaxLoan: number | null;
   /** Which of servicing / DTI / LVR / lender max bound the number. */
@@ -835,6 +916,16 @@ export function matchLender(
   const unknowns = checks.filter((c) => c.outcome === "unknown");
   const passes = checks.filter((c) => c.outcome === "pass");
 
+  // Gaps that land on a dimension where THIS client is not the vanilla case.
+  // See isMaterialGap — these are what separate "we checked and it fits" from
+  // "we checked the two things we happen to know".
+  const loanForLvr = scenario.loanAmount ?? estimate.maxLoan;
+  const lvrForGaps =
+    loanForLvr !== null && scenario.propertyValue !== null && scenario.propertyValue > 0
+      ? (loanForLvr / scenario.propertyValue) * 100
+      : estimate.lvr;
+  const materialGaps = unknowns.filter((c) => isMaterialGap(c, scenario, lvrForGaps));
+
   let outcome: MatchOutcome;
   if (failures.length > 0) outcome = "ineligible";
   else if (referrals.length > 0) outcome = "refer";
@@ -842,6 +933,11 @@ export function matchLender(
   // Requiring at least one real pass is what stops an empty policy record
   // sailing to the top of the shortlist.
   else if (passes.length === 0) outcome = "insufficient_data";
+  // ...and neither is one we couldn't check on something that actually
+  // matters for this client. Saying "fits published policy" about a lender
+  // whose casual-income rules we have never read is the single most damaging
+  // thing this tool could do.
+  else if (materialGaps.length > 0) outcome = "insufficient_data";
   else outcome = "eligible";
 
   const dataQuality = coverageScore(counts);
@@ -874,6 +970,7 @@ export function matchLender(
     failures,
     referrals,
     unknowns,
+    materialGaps,
     estimatedMaxLoan: estimate.maxLoan,
     bindingConstraint: estimate.bindingConstraint,
     parametersUsed: params,
