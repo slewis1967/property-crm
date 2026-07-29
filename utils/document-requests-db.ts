@@ -22,16 +22,17 @@ export const REQUEST_LIST_COLUMNS =
   "id,client_ref,application_id,applicant_name,applicant_email,applicant_phone,opportunity_id,status,drive_folder_url,submitted_at,created_by,expires_at,created_at,verification_status,yla_submitted_at";
 
 /**
- * The list columns PLUS the training-video release state.
+ * The list columns PLUS the training-video release state and the PA-received
+ * marker that gates it.
  *
  * Kept separate from REQUEST_LIST_COLUMNS on purpose. The insert/detail paths
- * keep using the narrower set, so a missing 20260727 migration can only affect
- * the dashboard listing — which falls back (see the GET handler) — instead of
- * breaking request creation. Adding a not-yet-migrated column to a shared
- * SELECT is how the YLA sweep silently returned zero rows for weeks.
+ * keep using the narrower set, so a missing 20260727/20260729 migration can only
+ * affect the dashboard listing — which falls back (see the GET handler) —
+ * instead of breaking request creation. Adding a not-yet-migrated column to a
+ * shared SELECT is how the YLA sweep silently returned zero rows for weeks.
  */
 export const REQUEST_LIST_COLUMNS_WITH_VIDEO =
-  `${REQUEST_LIST_COLUMNS},training_video_released_at,training_video_released_by`;
+  `${REQUEST_LIST_COLUMNS},training_video_released_at,training_video_released_by,pa_received_at,pa_received_by`;
 
 /** Postgres 42703 — the column itself is absent, distinct from a missing table. */
 export function docColumnMissing(error: { code?: string; message?: string } | null): boolean {

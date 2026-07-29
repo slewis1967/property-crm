@@ -27,6 +27,8 @@ export const dynamic = "force-dynamic";
 
 const MIGRATION_HINT =
   "Run migrations/20260727_portal_training_video.sql — the release columns are missing.";
+const PA_MIGRATION_HINT =
+  "Run migrations/20260729_pa_received.sql — the PA-received columns are missing.";
 
 /** A missing COLUMN reports 42703, distinct from the 42P01 missing-table case. */
 function columnMissing(error: { code?: string; message?: string } | null): boolean {
@@ -42,6 +44,39 @@ async function setReleased(req: Request, id: string, release: boolean) {
   if (limited) return limited;
 
   if (!id) return NextResponse.json({ ok: false, error: "id required" }, { status: 400 });
+
+  // Releasing is only meaningful once the Preliminary Assessment is back from
+  // YLA — before that we don't know the fund will have a corporate trustee, so
+  // a director ID may not even be required. Refuse here so the rep gets a clear
+  // reason; the portal gate independently requires the same thing, so an early
+  // release could never have leaked anyway.
+  if (release) {
+    const { data: pa, error: paErr } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select("pa_received_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (paErr) {
+      if (docTableMissing(paErr)) {
+        return NextResponse.json({ ok: false, error: DOC_MIGRATION_HINT }, { status: 503 });
+      }
+      if (columnMissing(paErr)) {
+        return NextResponse.json({ ok: false, error: PA_MIGRATION_HINT }, { status: 503 });
+      }
+      return NextResponse.json({ ok: false, error: paErr.message }, { status: 500 });
+    }
+    if (!pa) return NextResponse.json({ ok: false, error: "Request not found" }, { status: 404 });
+    if (!(pa as { pa_received_at?: string | null }).pa_received_at) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "The Preliminary Assessment isn't back from YLA yet. Mark it received first — until then a director ID may not even be required for this client.",
+        },
+        { status: 409 },
+      );
+    }
+  }
 
   const { data, error } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
