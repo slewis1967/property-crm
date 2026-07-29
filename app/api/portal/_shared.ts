@@ -59,7 +59,22 @@ export async function resolveToken(token: string): Promise<Resolved> {
 }
 
 /**
- * Has a rep released the director ID walkthrough to this client?
+ * Should this client see the director ID walkthrough?
+ *
+ * TWO conditions, both required:
+ *   1. a rep released it, AND
+ *   2. the Preliminary Assessment has come back from YLA.
+ *
+ * The PA condition is the substantive one. Until the assessment returns we do
+ * not reliably know the fund will have a CORPORATE trustee, and a director ID
+ * is only required because of that trustee company. Showing the walkthrough
+ * earlier risks telling a client to go and obtain a government identifier they
+ * may never need.
+ *
+ * Enforced HERE rather than only on the release button so that a request
+ * released before the PA landed still stays hidden, and re-hides itself if the
+ * PA marker is ever cleared. The gate is the source of truth; the button is
+ * just the ergonomics.
  *
  * Queried SEPARATELY rather than joined into resolveToken's select on purpose.
  * Adding a new column to that shared select would take the entire portal down
@@ -73,11 +88,12 @@ export async function resolveToken(token: string): Promise<Resolved> {
 export async function trainingVideoReleased(requestId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("document_requests")
-    .select("training_video_released_at")
+    .select("training_video_released_at,pa_received_at")
     .eq("id", requestId)
     .maybeSingle();
   if (error || !data) return false;
-  return Boolean((data as { training_video_released_at?: string | null }).training_video_released_at);
+  const row = data as { training_video_released_at?: string | null; pa_received_at?: string | null };
+  return Boolean(row.training_video_released_at) && Boolean(row.pa_received_at);
 }
 
 /** Best-effort client IP, for audit on a public endpoint. */
