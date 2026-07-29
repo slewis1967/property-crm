@@ -1,0 +1,650 @@
+{
+  "id": "mystate-bank",
+  "name": "MyState Bank",
+  "legalName": "MyState Bank Limited (a wholly owned subsidiary of MyState Limited; merged with Auswide Bank Ltd on 19 February 2025)",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "240896",
+  "abn": "89 067 729 195",
+  "brokerSiteUrl": "https://brokers.mystate.com.au/",
+  "policyDocUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "MyState Limited Mortgage Lending Procedure, Broker Version 1.0a, effective 1 July 2026 — s10.2 Interest Rate Buffer, p51",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The current interest rate servicing buffer for residentially secured consumer loan facilities is 3.00%.' Applied to all mortgage secured debt facilities, internal and external, on the current debt (including redraw) or the account limit."
+    },
+    "assessmentFloorRatePct": {
+      "value": 6.0,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s10.1 Floor Rate, p51",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The current Floor Rate for servicing residentially secured consumer loan facilities is 6.00%.' Applications are assessed at the higher of the Floor Rate or the actual product rate plus the Interest Rate Buffer (s10.3)."
+    },
+    "rentShadingPct": {
+      "value": 0.75,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.5 Rental Income, p37",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Under the heading 'Standard residential property': 'Net rent will be 75% of gross rent, provided property expenses are less than 20% of the gross' and 'Where property expenses exceed 20% of gross rent, net rent will be 95% of gross rent with property expenses then deducted.' Confidence is medium because the two-column PDF layout places this block adjacent to the s7.5.2 short-stay heading; the 'Standard residential property' sub-label is what identifies it. Short-stay/Airbnb is 65% (or 95% less expenses); commercial is 50% (or 70% less expenses)."
+    },
+    "rentShadingBasis": {
+      "value": "Shading is instead of itemised holding costs where property expenses are under 20% of gross rent; where expenses exceed 20% of gross rent a lighter shade (95% for standard residential) applies and the actual property expenses are then deducted.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.5, p37-38",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    },
+    "dtiCap": {
+      "value": 8.0,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, LVR Restrictions based on DTI, p73",
+      "confidence": "high",
+      "status": "verified",
+      "note": "DTI of 8 or above is 'Not accepted' for both owner occupied/non-housing and residential investment. Owner occupied & non-housing bands: below 5 no restriction; 5 to below 6 and 6 to below 7 capped at 80% LVR inclusive of LMI; 7 to below 8 capped at 75%. Residential investment bands: below 6 no restriction; 6 to below 7 capped at 90% LVR inclusive of LMI; 7 to below 8 capped at 75%. A $200 per month minimum surplus applies in the higher DTI bands."
+    },
+    "dtiReferThreshold": {
+      "value": 5.0,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, p73",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Recorded as the point at which LVR restrictions begin for owner-occupied/non-housing lending (DTI 5 and above caps LVR at 80% inclusive of LMI). It is an LVR restriction rather than a formal referral trigger; for residential investment the equivalent threshold is DTI 6."
+    },
+    "hecsTreatment": {
+      "value": "STSL / HECS / HELP commitments are assessed based on a loan term of 30 years.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9 Loan Commitments, p45",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Read from the loan commitments table; the surrounding calculation detail is in the servicing calculator."
+    },
+    "interestOnlyAssessment": {
+      "value": "Interest-only loans are assessed for servicing on a 'residual term' basis — the maximum loan term available for the product less the interest-only term sought — with the applicable buffer/floor rate applied. Exit strategy is considered in determining the maximum term available.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s10.5, p53",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Net Disposable Income ratio must be a minimum of 1.00 times cover with a positive surplus. Minimum monthly surplus of $50 applies generally and $200 per month where LVR exceeds 90% or in the higher DTI bands. Where an applicant is 55 or older, the security is owner occupied and the loan term exceeds the government retirement age (currently 67), a repayment/exit strategy owned by the borrower is required.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s10.2, s10.4, Appendix A",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Owner Occupied Purchase, p74",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential (or rural under 10 ha with residential primary use), P&I: 95% + capitalised LMI premium capped at 100% of value. Vacant land 90% + LMI. Rural/rural residential capped at 95% LVR total. Rural property over 10 ha: 70% uninsured / 90% plus LMI premium. Interest-only owner-occupied is not available above 80% LVR. Under the Australian Government 5% Deposit Scheme: 95% General Stream, 98% Single Parent Stream (MyState Bank only)."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Investment Purchase, p75",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential investment purchase, P&I: 80% uninsured / 95% inclusive of LMI. Investment IO: 80% uninsured / 90% plus LMI. Rural over 10 ha: 70% uninsured / 90% plus LMI."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, p74-77",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Max LVR Uninsured' is 80% for residential (owner occupied and investment, purchase and refinance) and 70% for rural property over 10 ha, serviced apartments, off-the-plan and Category A high-risk postcodes."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Equity Release or Cash Out, p76",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Equity release / cash out: 80% uninsured, 90% plus LMI premium for residential owner occupied and investment; rural over 10 ha 70% uninsured / 90%."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Construction, p76-77",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Construction: 80% uninsured (70% for rural over 10 ha) / 90% plus LMI premium. Construction is not available for Housing Australia Scheme loans."
+    },
+    "maxLvrRefinancePct": {
+      "value": 95,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Owner Occupied / Investment Refinance, p74-75",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Refinance without equity release or cash out, dollar for dollar plus reasonable costs: owner occupied residential P&I 95% + capitalised LMI capped at 100% of value; investment residential P&I 95% inclusive of LMI. Interest-only not available above 80% LVR for owner occupied."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, p74",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'95% + LMI premium capped at 100% total'."
+    },
+    "notes": {
+      "value": "Category A high-risk postcodes (Appendix B): maximum LVR 70% uninsured / 90% inclusive of LMI, and s11.6 states 'A maximum LVR of 70% is to be applied to these postcodes'. Serviced apartments (including time share) 50% LVR. Off-the-plan: not available in Category A postcodes; otherwise 70% uninsured with 80% (owner occupied P&I) to 90% inclusive of LMI. Luxury property thresholds: NSW/VIC $3.0M land/units/apartments/townhouses and $4.0M houses; all other states $2.0M and $3.0M — maximum 70% LVR above the threshold. Duplex or two dwellings on one title is restricted to 80% LVR. Islands without a sealed road connection to the mainland: maximum 70% LVR.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4-11.8, Appendix A and B, p55-58, 77-78",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        { "type": "payg_permanent_full_time", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Most recent 2 computer-generated payslips, latest no older than 30 days, most recent containing at least 3 months YTD, with employer name and ABN.", "conditions": "Minimum 6 months with the current employer at submission, or employed for the past 12 months in the same occupation or industry. No more than 2 jobs in the past 12 months. 100% of base income." },
+        { "type": "payg_permanent_part_time", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "As per permanent full time; minimum contracted hours confirmed from payslips and YTD (lowest hours used as base).", "conditions": "Additional part-time hours worked in excess of the contracted minimum are assessed under the overtime procedure (80%)." },
+        { "type": "payg_casual", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "2 payslips with the latest containing at least 6 months YTD.", "conditions": "Minimum 6 months in the position with the current employer. Income projected over 48 weeks using the YTD calculator (40 weeks for casual teachers and similar). Combined hours across jobs used for servicing must not exceed 60 hours per week." },
+        { "type": "second_job", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "As per the primary role.", "conditions": "Both positions must have been held for a minimum of 6 continuous months; total combined hours used for servicing not to exceed 60 per week." },
+        { "type": "payg_fixed_term_contract", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Proof as per PAYG employee plus the contract.", "conditions": "Minimum 6 months with the current employer and more than 3 months remaining on the existing contract (casual contract: minimum 6 months with current employer). 100% of base contract income, with other components sensitised as per permanent or casual terms." },
+        { "type": "payg_probation", "accepted": null, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "The 2026 Mortgage Lending Procedure does not address probation directly; the tenure test is 6 months with the current employer or 12 months in the same occupation/industry. (The older 2019 Quick Reference Guide said probation was accepted with 3 months in role — superseded, do not rely on it.)" },
+        { "type": "overtime_other", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": 6, "evidence": "2 payslips with the latest containing at least 6 months YTD, or MyGov income statement / previous FY payslip / PAYG summary / tax return plus NOA.", "conditions": "'A maximum of 80% of overtime may be used for servicing.' Caution where average overtime on the two most recent payslips is more than 20% below the YTD average." },
+        { "type": "overtime_essential_services", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Minimum 6 months YTD on the latest payslip.", "conditions": "100% of overtime and penalty payments/shift allowances for essential workers: frontline healthcare, residential care and disability support (including doctors, nurses and medical professionals); police officers and PSOs; firefighters and rescue employees; paramedics and ambulance officers; Australian Border Force; Australian Defence Force; corrective services employees in correctional/detention centres and prison services." },
+        { "type": "shift_allowance", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": 6, "evidence": "As per overtime.", "conditions": "'80% of assessed work based shift allowances and penalties may be used for servicing', calculated as per the overtime procedure. 100% for essential workers." },
+        { "type": "commission", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": 6, "evidence": "Payslips, payment summary, employer letter or similar.", "conditions": "80% of commission. Income used is the lower of the annualised payment received for the most recent 6-month (minimum) period or the annualised average of the two latest commission payments." },
+        { "type": "bonus", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": 12, "evidence": "Evidence of the bonus payments.", "conditions": "80% of bonus. Yearly/half-yearly bonuses require two years of payments (2x yearly or 4x half-yearly); income is the lower of the 2-year average or the most recent annualised. Quarterly bonuses require a minimum of one year." },
+        { "type": "car_allowance", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Payslips.", "conditions": "100% of a fixed car allowance paid to cover use of a private motor vehicle for business purposes." },
+        { "type": "rental_residential", "accepted": true, "shadingPct": 0.75, "minHistoryMonths": null, "evidence": "1 month (or 3 months) rental statement, 6 months transaction statements, most recent tax return, or lease agreement. For purchases: written rental appraisal from a recognised property manager or a panel valuer rental assessment — the lower figure is used.", "conditions": "See servicing.rentShadingPct for the shading rule and its caveat. Airbnb / B&B / short-stay rentals: 65% of gross rent shown on the latest tax return (or 85% with expenses deducted where expenses exceed 20% of gross)." },
+        { "type": "rental_commercial", "accepted": true, "shadingPct": 0.5, "minHistoryMonths": null, "evidence": "Personal tax return and ATO NOA for the latest financial year, not exceeding 18 months from application.", "conditions": "Only where the commercial property is rented by a non-related party. 50% of gross rent where property expenses are under 20% of gross; 70% of gross with expenses then deducted where they exceed 20%." },
+        { "type": "self_employed_sole_trader", "accepted": true, "shadingPct": null, "minHistoryMonths": 24, "evidence": "ASIC ABN search, latest 2 years personal tax returns and ATO NOAs, latest 2 years business tax returns and financial statements, depreciation schedule where used as an add-back.", "conditions": "Income used is the average of the last 2 years unless the most recent year is lower, in which case the most recent year is used. Net profit from the normal course of business is shaded by 10%; all income from the entity including add-backs (except interest) is shaded." },
+        { "type": "self_employed_company", "accepted": true, "shadingPct": null, "minHistoryMonths": 24, "evidence": "As per sole trader plus business financial statements.", "conditions": "Net profit shaded by 10% (all entity income including directors' wages and add-backs, except interest). Where using wages paid from own company only and not company profit, the latest year is used in isolation. Company loan commitments must be included in servicing." },
+        { "type": "self_employed_trust", "accepted": true, "shadingPct": null, "minHistoryMonths": 24, "evidence": "Trust deed, latest 2 years trust tax returns and financial statements, latest 2 years personal tax returns and ATO NOAs.", "conditions": "Distribution as shown on the individual tax return shaded by 10%. Trust liabilities are subtracted from the shaded income." },
+        { "type": "trust_distributions", "accepted": true, "shadingPct": 0.9, "minHistoryMonths": 24, "evidence": "Trust deed and 2 years trust and personal tax returns.", "conditions": "Trust distributions where the applicant is not the trustee (other than spousal) are listed as unacceptable income." },
+        { "type": "dividends", "accepted": true, "shadingPct": null, "minHistoryMonths": null, "evidence": "s7.6.1 Interest and Dividends.", "conditions": "Accepted per s7.6.1; the 2026 procedure's shading for dividends was not read. Overseas dividends are unacceptable." },
+        { "type": "government_age_pension", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Letter from the government department, fund manager or income provider (e.g. Centrelink) listing the benefit amount and frequency.", "conditions": "Pensions and government allowances accepted at 100% on the basis they are of a permanent and irrevocable nature." },
+        { "type": "government_disability_support", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Letter from Centrelink listing the benefit amount and frequency.", "conditions": "Permanent and irrevocable government allowances accepted at 100%." },
+        { "type": "government_family_tax_benefit", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Centrelink statement.", "conditions": "Payments must be payable for the next 5 years — i.e. only for dependants aged 13 and under." },
+        { "type": "child_support_maintenance", "accepted": true, "shadingPct": 1, "minHistoryMonths": 3, "evidence": "Maintenance agreement registered with the Child Support Agency plus 3 months of consistent payments evidenced from bank statements.", "conditions": "Must be a permanent payment for no less than the next 5 years — only for dependants aged 13 and under." },
+        { "type": "superannuation_pension", "accepted": true, "shadingPct": null, "minHistoryMonths": null, "evidence": "s7.6.3 Self-funded Superannuation.", "conditions": "Addressed at s7.6.3; the shading was not read from the document." },
+        { "type": "government_jobseeker", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Unemployment/JobSeeker/Newstart allowance' is listed as unacceptable income." },
+        { "type": "government_parenting_payment", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Parenting Payment' is listed as unacceptable income (as are Austudy and Youth Allowance)." },
+        { "type": "boarder_income", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Board' is listed as unacceptable income." },
+        { "type": "foreign_income", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Any overseas income (including rental income, investment income, pensions and dividends)' is unacceptable. s15: MyState or Auswide will not accept consumer applications where the applicant is not living and working in Australia or is reliant to any extent on income derived from overseas." },
+        { "type": "share_scheme", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Shares given as a bonus' is listed as unacceptable income." }
+      ],
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7 Employment and Income, p16-40",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Other unacceptable income: workers compensation / income protection, entertainment allowance, travel allowance, meal allowance, higher duty allowance, foster care, foreign currency loans, retained/previous years' company or business profits, income generated from cryptocurrency sources, and short-term or irregular income generally."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.4 Self-Employed, p26-35",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Latest two years personal and business tax returns, ATO notices of assessment and financial statements (or a one-year statement containing two consecutive years' performance). Income is the average of the last 2 years unless the most recent year is lower, in which case the most recent year is used."
+    },
+    "notes": {
+      "value": "Where an applicant has 20% or more ownership of a business whose income is not being relied on, an accountant's letter confirming the company's self-sufficiency is required. Under 20% ownership requires no further action.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Directorships",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This rule also appears in the 2019 broker Quick Reference Guide."
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.1, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Must have been employed by their current employer for a minimum of 6 months at submission date, or employed for the past 12 months in the same occupation or industry. No more than 2 jobs in the past 12 months.'"
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.1, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.1, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alternative to the 6-month current-employer test."
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.9, p22",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'For casual employees, applicants must have held their position for a minimum of 6 months with their current employer.'"
+    },
+    "minMonthsContract": {
+      "value": 6,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.8, p21",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Must have been with their current employer for a period of no less than 6 months'."
+    },
+    "minContractRemainingMonths": {
+      "value": 3,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.8, p21",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'greater than 3 months remaining on their existing contract'."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.4, p26-35",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the requirement for the latest two years of personal and business tax returns and financial statements; the procedure does not state a separate ABN-tenure minimum."
+    },
+    "notes": {
+      "value": "Applicants employed by family: minimum 6 months in the current position, or 12 months continuous previous experience in the same industry if employed as a permanent employee, with no more than 2 jobs in the past 12 months.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s7.2.10, p23",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "credit": {
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.3 Credit Report, p48",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Unpaid defaults are not acceptable and any loan with an outstanding default should be declined.' Refinancing of unpaid defaults or court judgements is also an unacceptable purpose."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.3 Credit Report, p48-49",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Case by case. Paid defaults and court judgements must be investigated thoroughly with a full explanation and suitable mitigants from the broker; the overall financial position should be strong; the credit report must show the default/judgement as paid or a letter confirming payment must be on file. Applications involving a paid default to another financial institution must be escalated to the Broker Relationship Manager. No minimum age since payment is published."
+    },
+    "judgmentsAccepted": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.3, p48-49",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only paid court judgements, case by case with escalation; unpaid judgements are not acceptable and cannot be refinanced."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": null,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.3 Credit Report, p48",
+      "confidence": "high",
+      "status": "verified",
+      "note": "There is no discharge period — 'Applications with credit reports showing and record of bankruptcies or Part IX debt agreements are not acceptable to MYS or AWB.' Any record on the credit report is a decline. An individual who is currently bankrupt is also an unacceptable applicant type."
+    },
+    "partIxDischargedMinYears": {
+      "value": null,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.3 Credit Report, p48",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Part IX debt agreements appearing on a credit report are not acceptable."
+    },
+    "notes": {
+      "value": "Any arrears on existing debts must be investigated and an acceptable explanation supplied by the broker; additional information may be requested case by case, with the intent of evidencing that adverse arrears in the bureau report are not more widespread across non-CCR-reported loans. Equifax comprehensive credit reporting is used.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s9.2-9.3, p47-49",
+      "confidence": "high",
+      "status": "verified",
+      "note": "No numeric arrears tolerance, credit score minimum or enquiry limit is published."
+    }
+  },
+  "security": {
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Retirement village units / aged care facilities",
+        "Properties without direct vehicle access via public road (land locked)",
+        "Commercial property development (more than 2 dwellings in a development)",
+        "Commercial usage properties including speciality rural properties",
+        "Security boundary within 50 metres of high voltage transmission lines",
+        "Recreational or special use properties",
+        "Properties converting from another purpose",
+        "Transportable or relocatable homes",
+        "Hotel/motel redevelopment",
+        "Properties larger than 40 hectares",
+        "Unique properties, or properties with adverse features affecting marketability",
+        "Flood affected properties with frequency worse than 1 in 100 year",
+        "Mixed usage properties including time share",
+        "Second mortgage security",
+        "Income producing property (apart from rent), including student accommodation, boarding houses and dual key",
+        "Dwelling or home unit with living area under 40 m2 excluding balcony and carpark, or under 50 m2 including balcony and carpark",
+        "Any dwelling without an individual bedroom and bathroom",
+        "Off-the-plan purchase in Category A of the high risk postcode register",
+        "Display homes (unless owner occupied purpose and valued as per vacant possession)",
+        "Split contracts where value is not allocated to land",
+        "Vacant land over 2.2 hectares where LVR is above 80%",
+        "Leasehold titles other than ACT or where the lease is held by a Federal or State/Territory Government and the term exceeds loan expiry by more than 10 years",
+        "Company title or community title",
+        "NRAS scheme properties",
+        "Any property affected by a life tenancy clause"
+      ],
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4 Unacceptable Security, p55-56",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable: any dwelling or home unit with a living area under 40 m2 excluding balcony and carpark, or under 50 m2 including balcony and carpark. The dwelling must also have an individual bedroom and bathroom."
+    },
+    "maxLandSizeHa": {
+      "value": 40,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Properties larger than 40 hectares' are unacceptable security. Rural property over 10 ha is capped at 70% LVR uninsured / 90% plus LMI. Vacant land over 2.2 ha is unacceptable above 80% LVR."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix B, High Risk Postcode Register, p78",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Category A postcodes are listed in full in Appendix B of the broker lending procedure (includes 2835, 2880, 4413, 4415, 4455, 4615, 4680, 4715-4723, 4737, 4741-4746, 4804, 4805, 4825, 4874, 5722, 5725, 6225, 6429, 6430, 6432, 6440, 6442, 6713, 6714, 6718, 6720-6722, 6728, 6751, 6753, 7255, 7256, 7467, 7469)."
+    },
+    "postcodeListUrl": {
+      "value": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix B, p78",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The register is Appendix B of the lending procedure itself."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 70,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.6, p57 and Appendix A, p77",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "s11.6: 'A maximum LVR of 70% is to be applied to these postcodes'. Appendix A shows Category A high-risk postcodes at 70% uninsured / 90% inclusive of LMI — treat 70% as the uninsured cap and refer above it."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Company Title or community title' is unacceptable security."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable other than ACT, or where the lease is held by a Federal or State/Territory Government and the term exceeds loan expiry by more than 10 years."
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, Off the Plan Purchases, p77",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Not available in Category A high-risk postcodes. Otherwise 70% uninsured; 80% inclusive of LMI for owner occupied P&I and 90% for owner occupied IO and investment."
+    },
+    "servicedApartmentAccepted": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix A, p77",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum 50% LVR (owner occupied and investment), $200 per month minimum surplus. Time share is otherwise listed as an unacceptable mixed-usage property."
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Listed under income-producing property, along with boarding houses and dual key properties."
+    },
+    "nrasAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.4, p56",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'NRAS scheme properties' are unacceptable security."
+    },
+    "maxSecurities": {
+      "value": 4,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.7 Residential Unit/Subdivision concentration limits, p57",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Individual customers will be limited to ownership of no more than 4 units/properties in one development/complex/street.' The bank will also fund no more than 15% of the total units in one apartment complex across different borrowers (or up to 4 where the development has fewer than 27 units)."
+    },
+    "notes": {
+      "value": "A duplex or two dwellings on one property is acceptable where the dwellings are on separate titles, or where both are on one title and the valuation is 'in one line'. Value based on an unregistered subdivision is not acceptable. Granny flats do not need to meet this criteria as long as the dwelling is council approved.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s11.5, p57",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s4.1 Loan Repayment Terms, p10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum loan term for a residentially secured loan is 30 years.' Internal refinance returning the term to 30 years is permitted."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2019-01-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/quick_reference_guide.pdf",
+      "sourceTitle": "MyState Broker Quick Reference Guide (V1.0 - 0119)",
+      "confidence": "low",
+      "status": "verified",
+      "note": "SUPERSEDED RISK: this is the 2019 broker Quick Reference Guide still hosted on the current broker portal — 'MyState requires genuine savings of not less than 5%' above 90% LVR. Deliberately recorded at low confidence so it is excluded from matching; confirm against the current Mortgage Lending Procedure s6.1 before relying on it."
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2019-01-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/quick_reference_guide.pdf",
+      "sourceTitle": "MyState Broker Quick Reference Guide (V1.0 - 0119)",
+      "confidence": "low",
+      "status": "verified",
+      "note": "SUPERSEDED RISK: '90% LVR or under — No genuine savings required however applicants to confirm the funds to complete in an acceptable form. Over 90% LVR — MyState requires genuine savings of not less than 5%.' From the 2019 Quick Reference Guide; low confidence by design."
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": true,
+      "asAt": "2019-01-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/quick_reference_guide.pdf",
+      "sourceTitle": "MyState Broker Quick Reference Guide (V1.0 - 0119)",
+      "confidence": "low",
+      "status": "verified",
+      "note": "SUPERSEDED RISK: 3 months rental ledger proving rent paid can contribute to the 5% savings/deposit requirement. From the 2019 Quick Reference Guide."
+    },
+    "guarantorAccepted": {
+      "value": false,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s13.3 Guarantors, p64",
+      "confidence": "high",
+      "status": "verified",
+      "note": "MAJOR CHANGE FROM THE OLDER GUIDE: 'MyState and Auswide will not accept new loan applications that require a guarantee, other than guarantees to capture income under a company or trust structure for self-employed consumer borrowers where required.' The parental-guarantee product described in the 2019 Quick Reference Guide is therefore no longer available."
+    },
+    "guarantorConditions": {
+      "value": "Guarantees are only accepted to capture income under a company or trust structure for self-employed consumer borrowers. Where an individual gives a guarantee to which the ABA Banking Code applies, the guarantee is limited to a specific amount or category of amounts, or to the value of a specified property under a specified security at the time of recovery.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s13.3, p64-65",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": ["Australian Government 5% Deposit Scheme (Housing Australia) — MyState Bank only", "First Home Owner Grant"],
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — Appendix C, p79",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The Australian Government 5% Deposit Scheme is available via MyState Bank only (not offered by Auswide bank).' 95% LVR General Stream, 98% Single Parent Stream. MyState's own LVR acceptance policy still applies — if a property cannot be accepted at 80% (rural, high risk postcode etc.) the application cannot proceed. Construction is not available for Housing Australia Scheme loans."
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 55,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s10.4 Exit Strategy, p52",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Where the applicant is 55 or older, the security is owner occupied and the loan term exceeds the government retirement age (currently 67), a repayment or exit strategy must be documented, owned by the borrower and assessed for plausibility."
+    },
+    "notes": {
+      "value": "Pre-approvals are valid for 90 days from the date the application is received. Formal approvals lapse if the signed offer and loan contract is not returned within the stated period (180 days for construction loans). Cash-out purpose evidence tiers: up to $50,000 — PAYG no details required, self-employed full breakdown and no working capital; $50,000-$350,000 — specific details of purpose; over $350,000 — high-level supporting documentation (accountant/financial planner letter for shares, contract of sale or statutory declaration for property).",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s4.3 Approval period; cash out requirements",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The cash-out tiers also appear in the 2019 Quick Reference Guide; the approval periods are from the 2026 procedure."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": true, "maxLvrPct": null, "conditions": "Must be aged 18 or over. Proof of citizenship via passport, citizenship certificate or birth certificate." },
+        { "status": "permanent_resident", "accepted": true, "maxLvrPct": null, "conditions": "VEVO search results confirming a Permanent Resident visa, or an electronic copy of the visa record from the Department of Home Affairs with evidence the applicant can remain in Australia." },
+        { "status": "nz_citizen_444", "accepted": true, "maxLvrPct": null, "conditions": "Recorded from the 2019 Quick Reference Guide ('Permanent residents or citizens of Australia or New Zealand'); a temporary resident of New Zealand is an unacceptable applicant type. Confirm against the current procedure." },
+        { "status": "temporary_visa_work", "accepted": null, "maxLvrPct": null, "conditions": "CONFLICTING SOURCES: the 2019 Quick Reference Guide allowed a Temporary Skills Shortage visa holder with no less than 2 years until expiry, while also listing 'a temporary resident of Australia' as an unacceptable applicant type. The 2026 Mortgage Lending Procedure requires Australian citizenship or permanent residency. Treat as unknown and confirm with the Broker Relationship Manager." },
+        { "status": "temporary_visa_student", "accepted": false, "maxLvrPct": null, "conditions": "'A temporary resident of Australia' is listed as an unacceptable applicant type (2019 Quick Reference Guide)." },
+        { "status": "temporary_visa_partner_309_820", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "expat_citizen_overseas", "accepted": false, "maxLvrPct": null, "conditions": "s15: 'MyState or Auswide will not accept consumer applications for finance where the applicant is not living and working in Australia or is reliant to any extent on income derived from overseas in servicing assessment.'" },
+        { "status": "foreign_non_resident", "accepted": false, "maxLvrPct": null, "conditions": "s15 Foreign Income Loans — applicants not living and working in Australia are not accepted." }
+      ],
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s15 Foreign Income Loans (p71) and Appendix C eligibility (p85)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Citizen/PR and the foreign-income exclusion are from the current 2026 procedure; the NZ and temporary-visa entries lean on the older 2019 Quick Reference Guide and are flagged accordingly."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s15 Foreign Income Loans, p71",
+      "confidence": "high",
+      "status": "verified",
+      "note": "No overseas income is accepted at all — applications reliant to any extent on income derived from overseas are declined."
+    },
+    "notes": {
+      "value": "Unacceptable applicant types also include minors, borrowers/guarantors of convenience, and an individual who is currently bankrupt. For owner-occupied loans all applicants must reside in the property as their principal place of residence. Non-spousal co-borrowers are limited to parent/child and sibling/sibling with equal property ownership.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://brokers.mystate.com.au/wp-content/uploads/broker_home_lending_procedure.pdf",
+      "sourceTitle": "Mortgage Lending Procedure v1.0a — s13, p62-63",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The single credit-policy document (Mortgage Lending Procedure, Broker Version 1.0a, effective 1 July 2026) covers BOTH MyState Bank (MSB) and Auswide Bank (AWB) following the 19 February 2025 merger — see the auswide-bank record, which cites the same source.",
+    "Minimum and maximum loan amounts are not stated in the 2026 broker lending procedure; the 2019 Quick Reference Guide's product minimums ($30,000/$100,000) are 7 years old and their column alignment in the PDF is ambiguous, so they were deliberately NOT recorded.",
+    "Genuine savings requirement (5% above 90% LVR) is only sourced from the 2019 Quick Reference Guide still hosted on the broker portal — recorded at low confidence so it is excluded from matching.",
+    "Rental income shading (75%) is recorded at medium confidence: the 'Standard residential property' block sits adjacent to the s7.5.2 short-stay heading in the PDF's two-column layout.",
+    "LMI provider is not named in the lending procedure.",
+    "Maximum interest-only period (owner occupied and investment) is not stated numerically; the procedure only sets the residual-term servicing method and the 80% LVR ceiling for IO.",
+    "No HEM basis or living-expense loading is stated numerically — the procedure requires categorised declared expenses.",
+    "No credit-card assessment percentage, minimum credit score, arrears tolerance or enquiry limit is published.",
+    "Temporary-visa policy is contradictory between the current procedure and the legacy Quick Reference Guide — recorded as unknown.",
+    "Offset / redraw / SMSF / bridging product availability was not established from the lending procedure."
+  ]
+}

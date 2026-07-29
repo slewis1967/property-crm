@@ -1,0 +1,47 @@
+{
+  "id": "bank-of-heritage-isle",
+  "name": "Bank of Heritage Isle",
+  "legalName": "Bank of Heritage Isle, a division of Police Bank Ltd",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": "Police Bank Ltd",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "BRAND RETIRED — DO NOT SHORTLIST. Bank of Heritage Isle was a Launceston-based mutual (formerly Heritage Isle Credit Union) that merged with Police Bank in 2018 and operated as a division of Police Bank Ltd. The brand has since been retired: heritageisle.com.au now 302-redirects to policebank.com.au/bank-of-heritage-isle-announcement, which states \"Bank of Heritage Isle banking and services are now delivered under the Police Bank name\" and \"The Bank of Heritage Isle website is no longer available, you've been redirected to policebank.com.au\". Member numbers, BSB, account details and existing loan terms are unchanged; new business is written under Police Bank. Any live policy for this book should be researched under Police Bank Ltd, not here.",
+      "asAt": null,
+      "sourceUrl": "https://www.policebank.com.au/bank-of-heritage-isle-announcement",
+      "sourceTitle": "Police Bank — Bank of Heritage Isle announcement",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "asAt is null because the announcement page carries no publication or effective date; the redirect from heritageisle.com.au was observed live on 2026-07-29. The 2018 Heritage Isle Credit Union / Police Bank merger is separately reported."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": null,
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The Bank of Heritage Isle brand no longer exists as a distinct lender — all its former product pages (including the Value Home Loan) redirect to Police Bank. No current policy can be sourced under this name.",
+    "No effective date could be established for the brand retirement: the Police Bank announcement page carries no date, so every fact on this record is date-less and will be demoted to unverified. That is the correct outcome.",
+    "ABN/ACL not recorded — the division operated under Police Bank Ltd's licence.",
+    "Police Bank Ltd should be researched as a separate record if it is to appear on the panel; nothing about Police Bank's own lending policy was researched in this tranche.",
+    "Whether Police Bank distributes through mortgage brokers was not established."
+  ]
+}

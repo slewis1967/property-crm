@@ -1,0 +1,169 @@
+{
+  "id": "newcastle-permanent",
+  "name": "Newcastle Permanent",
+  "legalName": "Newcastle Greater Mutual Group Ltd (Newcastle Permanent is a retail brand of NGM Group, formed 1 March 2023 by the merger of Newcastle Permanent Building Society Limited and Greater Bank Limited; both brands are retained)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "238273",
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-premium-plus-variable-loan.pdf",
+  "panels": ["AFG", "Connective", "Mortgage Choice", "Plan", "Smartline", "Lendi"],
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the home-loan TMDs, product pages, rate pages and the full public sitemap; Newcastle Permanent has no public broker section and publishes no assessment buffer, floor rate, DTI cap or rent-shading figure."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published on any public Newcastle Permanent page. The site's XML sitemap contains no broker/introducer page at all - broker resources are not publicly indexed.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/sitemap.xml",
+      "sourceTitle": "Newcastle Permanent XML sitemap (retrieved 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent (page current 29/07/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "CAUTION - the published wording is \"Maximum Loan to Value Ratio (LVR): Less than 95% of the value of the property for owner occupied and investment loans. Lower LVR's apply to Interest Only loans.\" The cap is strictly LESS THAN 95%, so an exact 95.00% LVR does NOT qualify. Recorded as 95 for matching; treat 94.9% as the real ceiling. The product page separately says \"an LVR of up to < 95% for Principal and Interest loans\"."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent (page current 29/07/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same \"Less than 95%\" ceiling stated for owner occupied AND investment loans. Interest-only loans are capped lower but the interest-only figure is not published."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2023-09-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-premium-plus-variable-loan.pdf",
+      "sourceTitle": "Premium Plus Package Variable Rate Loan Target Market Determination (effective 29 September 2023)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the TMD eligibility criterion requiring a deposit of at least 5%, combined with the product page's LVR pricing tiers of \"LVR 80% and below\" vs \"LVR above 80%\". Newcastle Permanent does not state an LMI threshold in as many words on a public page; the 80% figure is the standard LMI trigger implied by its own pricing bands. Treat as indicative."
+    },
+    "notes": {
+      "value": "Published pricing tiers are LVR 80% and below, and LVR above 80%. Rate discounts are set by LVR: LVR <=80% and LVR >80% and <95%.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent (page current 29/07/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Loan features table: \"Maximum loan term: 30 years.\""
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"100% Interest offset account - Ability to link multiple Everyday Accounts with 100% interest offset.\" On the Premium Plus Package products (annual package fee). The no-frills Real Deal / Real Options loans are explicitly \"not suitable for customers who want to use their savings to reduce the interest they pay on the loan via the use of 100% offset accounts\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/personal/home-loans/premium-plus-package-variable",
+      "sourceTitle": "Premium Plus Package Variable | Newcastle Permanent",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Redraw facility: Available to redraw repayments in advance, fee free.\""
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2025-02-28",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-bridging-loan.pdf",
+      "sourceTitle": "Bridging Loan Target Market Determination (effective 28 February 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Fixed-rate bridging for up to 12 months, interest capitalised (no repayments during the loan period). Owner-occupied only: \"not suitable for customers who are seeking finance for the purchase of an investment property or for business purposes\"."
+    },
+    "governmentSchemesSupported": {
+      "value": ["First Home Guarantee", "Family Home Guarantee"],
+      "asAt": "2023-09-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-premium-plus-variable-loan.pdf",
+      "sourceTitle": "Premium Plus Package Variable Rate Loan Target Market Determination (effective 29 September 2023)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD eligibility: \"Depending on their circumstances, hold a deposit of at least 5%; or 5% if eligible for a First Home Guarantee loan or 2% if eligible for a Family Home Guarantee loan.\" Newcastle Permanent is also named on Housing Australia's participating-lender list for the Australian Government 5% Deposit Scheme (https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders, no publication date, captured 2026-07-29)."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted, and the approved aggregator panel is published: the Premium Plus Package Variable Rate TMD names distribution through \"Mortgage Brokers (in person, via phone or video conferencing) that are authorised credit representatives of the aggregators listed below\" and then lists AFG, Connective, Mortgage Choice, Plan, Smartline and Lendi. A broker outside those six aggregators is not an approved distributor. Minimum loan amount on the Premium Plus Package Variable is stated as \"No minimum\".",
+      "asAt": "2023-09-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-premium-plus-variable-loan.pdf",
+      "sourceTitle": "Premium Plus Package Variable Rate Loan Target Market Determination (effective 29 September 2023)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "conditions": "Must be 18 years of age or over."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "conditions": "TMD eligibility: \"Be permanent residents of Australia or New Zealand\"."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": null,
+          "conditions": "The TMD wording is \"permanent residents of Australia or New Zealand\", which is ambiguous as to whether a NZ citizen on a subclass 444 visa living in Australia qualifies. Sister brand Greater Bank (same legal entity, NGM Group) words it as \"a citizen or permanent resident of Australia or a New Zealand citizen\", but that is a different brand's document and was not applied here."
+        }
+      ],
+      "asAt": "2023-09-29",
+      "sourceUrl": "https://www.newcastlepermanent.com.au/siteassets/documents/target-market-determination/home-loans/target-market-determination-premium-plus-variable-loan.pdf",
+      "sourceTitle": "Premium Plus Package Variable Rate Loan Target Market Determination (effective 29 September 2023)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Verbatim eligibility criterion: \"Be permanent residents of Australia or New Zealand\". Temporary-visa holders and non-residents are not addressed. Identical wording appears in the Real Deal, Real Options and Bridging Loan TMDs."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The published maximum LVR is 'LESS THAN 95%', not 95%. It is recorded as 95 so the matcher has a number; a scenario at exactly 95% LVR will falsely pass and must be checked by hand.",
+    "Newcastle Permanent has no public broker/introducer website - the XML sitemap contains no broker page - so no broker credit policy guide could be read. Everything here comes from TMDs and retail product pages.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, genuine-savings policy or LMI-waiver profession list published.",
+    "No security policy at all: no acceptable/unacceptable property types, minimum unit size, postcode category list, high-density or rural policy.",
+    "The lower interest-only LVR cap is referenced (\"Lower LVR's apply to Interest Only loans\") but the figure is not published. Maximum interest-only term is also not published.",
+    "Minimum and maximum loan amounts are not published (the Premium Plus Package Variable page says \"No minimum\" and states no maximum).",
+    "Home-loan TMDs carry a 29 September 2023 effective date and are reviewed only every two years - they may be close to superseded.",
+    "Sister brand Greater Bank is the SAME legal entity (NGM Group Ltd, ACL 238273) but is direct-only and has separate products; the two records are deliberately kept independent."
+  ]
+}

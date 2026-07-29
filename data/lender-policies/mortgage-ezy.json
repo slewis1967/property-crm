@@ -1,0 +1,234 @@
+{
+  "id": "mortgage-ezy",
+  "name": "Mortgage Ezy",
+  "legalName": "Mezy Assets Pty Ltd T/A Mortgage Ezy",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "494807",
+  "abn": null,
+  "brokerSiteUrl": "https://mezybroker.com.au/",
+  "policyDocUrl": "https://mezybroker.com.au/featured-products/",
+  "funder": "Mortgage Ezy is a mortgage manager that describes itself as having become 'a fully securitised lender'; individual wholesale funders behind each Solution are not named on the public site.",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Mortgage Ezy's Solution Guides and servicing calculators sit behind the partners.mezybroker.com.au broker login; the public 'Mezy Solutions' page shows 'You are not logged in' and lists product names only."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap is published. One product goes the other way: the Propel Lo Doc Jumbo is advertised with 'No DTI, CCR or Credit Score'."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No full-doc owner-occupied maximum LVR is published. The four publicly advertised products top out at 80% (Ezy Lo Doc Accountants Declaration), 75% (Propel Lo Doc Jumbo; Propel Ezy Vacant Land) and 70% (Ezy SMSF)."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Mortgage Ezy publicly lists both a 'Lo Doc Loan' and an 'Alt Doc Loan' solution for self-employed borrowers using alternative documentation, plus a live 'Ezy Lo Doc (Accountants Dec)' product."
+    },
+    "altDocEvidence": {
+      "value": "Ezy Lo Doc (Accountants Dec): an accountant's declaration, self-funded, with 'No minimum time with Accountant'.",
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Other accepted alt-doc evidence types (BAS, business bank statements) are not specified on the public site."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Ezy Lo Doc (Accountants Dec) (No Clawback) — Up to 80% LVR, Loan Amount up to $2,000,000, Interest Only up to 80% LVR, Unlimited cash-out with stated purpose only, 100% Offset Available, Risk Fee 1% (No Clawback version)'. The larger Propel Lo Doc Jumbo is capped at 75% LVR."
+    },
+    "notes": {
+      "value": "Publicly advertised solutions: Full Doc, SMSF, Expat, Non Resident, Construction, Lo Doc, Alt Doc, Non Conforming (PAYG or self-employed with credit challenges, 'even bankruptcy') and Commercial Business Loan. No criteria are published for any of them.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://mezybroker.com.au/mezy-solutions/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Solutions (logged out view)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Live page with no publication date — as-at is the date accessed."
+    }
+  },
+  "employment": {},
+  "credit": {
+    "minCreditScore": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum score is published, and one product explicitly does not use one: the Propel Lo Doc Jumbo advertises 'No DTI, CCR or Credit Score'."
+    },
+    "notes": {
+      "value": "Mortgage Ezy publicly offers a 'Non Conforming Loan' for PAYG or self-employed applicants who 'have credit challenges, even bankruptcy'. No default, arrears, judgment or discharge-period criteria are published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://mezybroker.com.au/mezy-solutions/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Solutions (logged out view)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "security": {
+    "notes": {
+      "value": "Vacant land is lendable via the 'Propel Ezy Vacant Land' product (construction and permanent rates) up to 75% LVR and $3,000,000. No acceptable/unacceptable security list, minimum unit size, postcode matrix, high-density or rural policy is published.",
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "maxLoanAmount": {
+      "value": 15000000,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Product-specific, not a single house limit. Propel Lo Doc Jumbo: 'Loans up to $15,000,000' at up to 75% LVR with 'No Risk Fee up to $3M'. Ezy SMSF: $3,000,000 at 70% LVR. Propel Ezy Vacant Land: $3,000,000 at 75% LVR. Ezy Lo Doc (Accountants Dec): $2,000,000 at 80% LVR."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to 40 Year Loan Term' on both the Propel Ezy Vacant Land and Propel Lo Doc Jumbo products. The Ezy SMSF and Ezy Lo Doc tiles do not state a term."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'100% Offset Available' on the Propel Ezy Vacant Land, Propel Lo Doc Jumbo and Ezy Lo Doc (Accountants Dec) products."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Propel Ezy Vacant Land product quotes separate construction (7.74% p.a. variable) and permanent (8.20% p.a. variable) rates; a 'Construction Loan' solution is also listed on the Solutions page."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Ezy SMSF Fee Waiver Special — Up to 70% LVR, Loans up to $3,000,000, $0 Application Fee, $0 Valuation Fee (up to $300 incl. GST), $0 Legal Documentation Fee, $0 Settlement Fee, Express Rental Cover Only (no loading), Instant Online Approvals'. Off-the-plan and established, purchase or refinance."
+    },
+    "notes": {
+      "value": "Ezy Lo Doc (Accountants Dec) carries a 1% No-Clawback Risk Fee; brokers can instead 'add 0.20% to the rate, remove No Clawback Risk Fee of 1%'. Mortgage Ezy accredits brokers directly as well as through aggregators (ACL-holder, credit-rep/aggregator and direct off-panel accreditation forms are all published).",
+      "asAt": "2026-07-24",
+      "sourceUrl": "https://mezybroker.com.au/featured-products/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Featured Products, current as at 24 July 2026",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Mortgage Ezy publishes an 'Expat Loan' solution described as for Australian Citizens / Permanent Residents living abroad, and for temporary residents. No LVR, currency or shading terms are published."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "A separate 'Non Resident Loan' solution is published for non-residents of Australia. No LVR, currency or shading terms are published."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://mezybroker.com.au/mezy-solutions/",
+      "sourceTitle": "Mortgage Ezy (Mezy Broker) — Solutions (logged out view)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only the existence of the products is public; every parameter is behind the partner login. Live page with no publication date — as-at is the date accessed."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-24",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Mortgage Ezy's Solution Guides — the documents that actually hold the policy — are behind the partners.mezybroker.com.au broker login. The public 'Mezy Solutions' page renders as 'You are not logged in' and lists product names with one-line descriptions only. Everything recorded here comes from the four public Featured Products tiles.",
+    "No servicing policy: no assessment buffer, floor rate, DTI cap, HEM basis, rental shading or credit-card assessment rate.",
+    "No full-doc maximum LVR, no minimum loan amount, no employment tenure rules, no income-type table, no credit-history criteria and no security/postcode policy are published.",
+    "The Expat and Non Resident solutions exist publicly but carry no published LVR, accepted-country, accepted-currency or foreign-income-shading terms.",
+    "Only four products are advertised publicly (Ezy SMSF Fee Waiver Special, Propel Ezy Vacant Land, Propel Lo Doc Jumbo, Ezy Lo Doc Accountants Dec) out of nine named solutions — the Full Doc, Expat, Non Resident, Construction, Alt Doc, Non Conforming and Commercial products have no public figures at all.",
+    "An older public SMSF Solution Guide exists (mezybroker.com.au/wp-content/uploads/openforms/MEZY_Solution-Guide_SMSF_20220912_reduced.pdf, dated 12 September 2022) but was NOT used — at nearly four years old it would be stale and is contradicted by the current 70% SMSF LVR tile.",
+    "ABN not recorded: a Mortgage Ezy SMSF application form on the site shows 'ABN : 56 606 554 321' but the site footer names the credit licensee as 'Mezy Assets Pty Ltd T/A Mortgage Ezy ACL 494807' without an ABN, and the two could not be tied together from a public source.",
+    "Source pages (mezybroker.com.au) sit behind a bot filter that returns HTTP 403 to any automated client, so scripts/check-lender-sources.mjs cannot re-verify them on a schedule. Both URLs were opened and confirmed live by hand on 2026-07-29; treat the values as needing a manual re-check rather than an automated one."
+  ]
+}

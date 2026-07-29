@@ -1,0 +1,233 @@
+{
+  "id": "great-southern-bank",
+  "name": "Great Southern Bank",
+  "legalName": "Credit Union Australia Ltd (Great Southern Bank is a business name of Credit Union Australia Ltd)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "238317",
+  "abn": "44 087 650 959",
+  "brokerSiteUrl": "https://www.greatsouthernbank.com.au/brokers",
+  "policyDocUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the home-loan TMDs, the rates pages and the home-loan hub; Great Southern Bank does not publish an assessment buffer or floor rate on any no-login page. The broker landing page (greatsouthernbank.com.au/brokers) is served behind a Cloudflare bot block and its policy resources sit behind a broker login."
+    },
+    "notes": {
+      "value": "No serviceability parameters (buffer, floor rate, HEM basis, DTI cap, rent shading, credit-card assessment) are published publicly.",
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Great Southern Bank does not publish a numeric maximum LVR. The published rate card's top pricing band is simply \"LVR is more than 90%\" with no stated ceiling (https://www.greatsouthernbank.com.au/home-loans/interest-rates, effective 22 May 2026), and the TMDs say only \"Maximum LVR applies\". A 90% cap IS published, but only for the >30-year loan term product variant."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD financial-situation criteria include \"paying Lenders Mortgage Insurance (LMI) for this home loan if the loan to value ratio is above 80%\". The rates page states the same: \"having an LVR of 80% or lower also means you could avoid paying Lenders Mortgage Insurance (LMI)\"."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/home-loans/interest-rates",
+      "sourceTitle": "Home Loan Interest Rates | Great Southern Bank (rates effective 22 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Footnote: \"Maximum LVR applies and includes Lenders' Mortgage Insurance and Great Southern Bank loan setup fees where applicable.\" Also \"*Loan-to-value ratio (LVR) inclusive of Lenders' Mortgage Insurance (LMI).\" So LMI and setup fees are counted INSIDE the LVR ceiling, not on top of it."
+    },
+    "notes": {
+      "value": "Published LVR pricing bands: 70% or less; above 70% and up to 80%; above 80% and up to 90%; more than 90%. LVR is calculated inclusive of LMI and Great Southern Bank loan setup fees.",
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/home-loans/interest-rates",
+      "sourceTitle": "Home Loan Interest Rates | Great Southern Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": ["Residential property (owner occupied or investment)", "Land purchase"],
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the TMD's stated loan purposes: purchase, construct or renovate a residential owner-occupied or investment property; purchase land; refinance; access equity; consolidate personal debts. No acceptable/unacceptable security schedule, minimum unit size, postcode category list or high-density policy is published."
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum Loan amount - (a) new home loans with a minimum application amount of $100,000; or (b) switching or restructuring of existing Great Southern Bank home loans when it includes new borrowing of at least $10,000.\" So $100,000 for a new-to-bank application; $10,000 of new borrowing for an internal restructure. Same wording in the Offset Variable Home Loan TMD."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan term - from 1 to 40 years.\" A term ABOVE 30 years is heavily conditioned: at least one applicant must be a first home buyer, ALL applicants must be aged 40 or under at approval, and maximum 90% LVR (inclusive of fees). Terms above 30 years are NOT available on Green Home Offer loans, government scheme loans, shared equity loans, loans with guarantors, or loans to businesses/companies/trusts/non-resident borrowers. Standard maximum term is therefore 30 years."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 3,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"interest only repayments (up to 3 years for owner occupiers or 5 years for investors). Interest only repayments on loan terms above 30 years are only available for construction loans.\""
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0018/431073/great-southern-bank-offset-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination (effective July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Separate Offset Variable Home Loan product. The TMD's effective date is stated only as \"July 2025\" (no day); recorded as the 1st of that month."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-03-01",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0019/431074/great-southern-bank-home-loan-bridging-loan-target-market-determination.pdf",
+      "sourceTitle": "Bridging Loan - Home Loan Target Market Determination (effective March 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Redraw - allows customers to access extra payments made over the minimum amount.\" Read on the Bridging Loan TMD; redraw is a standard feature across the variable range. TMD effective date stated as \"March 2025\" (no day)."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD purposes include \"purchase, construct or renovate a residential owner occupied or investment property\", and the rate card prices construction as a separate repayment type."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2025-03-01",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0019/431074/great-southern-bank-home-loan-bridging-loan-target-market-determination.pdf",
+      "sourceTitle": "Bridging Loan - Home Loan Target Market Determination (effective March 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Interest-only term up to 6 months (up to 12 months for construction), minimum $100,000, maximum $5,000,000, interest capitalises monthly. Requires an existing Great Southern Bank loan and registered first mortgage over the property being sold, and a maximum 70% LVR ACROSS BOTH loans and properties."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Great Southern Bank is named on Housing Australia's participating-lender list (page carries no publication date; captured 2026-07-29). The bank's own scheme page says it is \"our sixth year taking part\" and covers both the 5% first-home-buyer guarantee and the 2%-deposit single-parent guarantee: https://www.greatsouthernbank.com.au/home-loans/government-scheme"
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the TMD's exclusion list for >30-year terms, which names \"Loans with guarantors\" as a category that exists but is ineligible for the extended term - i.e. guarantor loans are offered on standard terms. No published guarantor policy detail (security limits, guarantor age, family relationship) was found."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted. The Basic Variable Home Loan TMD names \"Accredited Mortgage Brokers\" as a distribution channel: \"This product can be distributed by Mortgage Brokers who hold an Australian Credit Licence or are a credit representative of an aggregator group which holds an Australian Credit Licence.\" It also imposes reporting obligations on \"Home loan brokers who distribute Great Southern Bank Home Loans\". Borrower types accepted: individuals; an Australian registered company with a simple structure; individuals in a partnership; individuals or companies as trustee of an Australian registered family discretionary trust (maximum loan term 30 years for non-individual borrowers).",
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "conditions": "All borrowers must be 18 years of age or above."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "conditions": "All borrowers must be 18 years of age or above."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "conditions": "TMD eligibility reads \"Australian citizens or permanent residents of Australia (including New Zealand citizens)\"."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "conditions": "The TMD's eligibility criteria admit only Australian citizens or permanent residents (including NZ citizens), and non-resident borrowers are named in the exclusion list for extended loan terms."
+        }
+      ],
+      "asAt": "2025-07-31",
+      "sourceUrl": "https://www.greatsouthernbank.com.au/__data/assets/pdf_file/0016/431071/great-southern-bank-basic-variable-home-loan-target-market-determination.pdf",
+      "sourceTitle": "Basic Variable Home Loan Target Market Determination (effective 31 July 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim eligibility criterion: \"Australian citizens or permanent residents of Australia (including New Zealand citizens)\". Temporary-visa holders are not mentioned and, on the face of the TMD, do not meet the eligibility criterion - but the TMD does not name them explicitly, so treat temporary-visa acceptance as unresearched rather than as a published decline."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-07-31",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No numeric maximum LVR is published anywhere. The rate card's top band is open-ended (\"LVR is more than 90%\"). The bank's first-home-buyer page says \"loan options available from as little as a 5% deposit\", which implies 95%, but that was not treated as a policy statement of the cap.",
+    "The broker landing page https://www.greatsouthernbank.com.au/brokers returns HTTP 403 to non-browser clients (Cloudflare bot protection) and its resources sit behind a broker login, so no broker policy guide could be read.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental). A commonly-repeated claim that GSB accepts two years' ATO Notices of Assessment for self-employed borrowers up to 80% LVR appears only on third-party broker sites and was NOT recorded.",
+    "No employment tenure minimums, credit-history knock-outs, genuine-savings policy or LMI-waiver profession list published.",
+    "No security policy detail: no minimum unit size, postcode category list, high-density, rural or company-title policy.",
+    "Temporary-visa (work/student/partner) acceptance is not addressed in any public document.",
+    "Whether the Home Guarantee Scheme is available through the broker channel at Great Southern Bank is not stated publicly (note: sister mutuals P&N and BCU explicitly restrict scheme loans to internal lenders)."
+  ]
+}

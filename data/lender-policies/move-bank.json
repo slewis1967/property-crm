@@ -1,0 +1,143 @@
+{
+  "id": "move-bank",
+  "name": "MOVE Bank",
+  "legalName": "Railways Credit Union Limited, trading as MOVE Bank",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "234536",
+  "abn": "91 087 651 090",
+  "brokerSiteUrl": "https://www.movebank.com.au/brokers/broker-hub/",
+  "policyDocUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.movebank.com.au/home-loans/",
+      "sourceTitle": "MOVE Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Everyday Variable Home Loan, Everyday Fixed Home Loan and Offset Variable Home Loan are each advertised as 'Borrow up to 95% (with LMI)'. asAt is the date the page was read; the page carries no effective date, so confidence is medium."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank Target Market Determination — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Borrow up to a maximum of 90% of the property value (with Lenders Mortgage Insurance)'. This is the Straightforward Plus Investment Loan specifically; other investment products may differ. The TMD is due for periodic review every 2 years from the 7 September 2023 initial review date, so it may be superseded."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.movebank.com.au/home-loans/",
+      "sourceTitle": "MOVE Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Rates are tiered at 'Owner Occupied <80% LVR' and LMI is described as required for loans over 80% LVR."
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "notes": {
+      "value": "Borrowers must be 'willing and able to offer a first registered mortgage over real property'.",
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 150000,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Loan amounts between $150,000 and $3,000,000' — this product only. A $150,000 floor is a genuine knock-out for small loans."
+    },
+    "maxLoanAmount": {
+      "value": 3000000,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "This product only."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Loan terms up to 30 years available.'"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'100% offset account' on the Straightforward Plus Investment Loan; the MOVE Bank home loans page also lists an Offset Variable Home Loan and an Offset Fixed Home Loan with 100% offset."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Redraw facility available with free online redraw'; uncapped additional repayments without penalty."
+    },
+    "notes": {
+      "value": "PRODUCT-LEVEL BANKING CONDITION: MOVE Bank's Everyday Variable and Everyday Fixed home loan rates require that '$1500 a month must be deposited into a MOVE Bank transaction account'. This is a salary-credit condition attached to the advertised rate and should be raised with any client who banks elsewhere. The Straightforward Plus Investment Loan is not suitable for owner-occupied or commercial purposes, or for bridging finance.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.movebank.com.au/home-loans/",
+      "sourceTitle": "MOVE Bank — Home Loans; MOVE Bank TMD — Straightforward Plus Investment Loan",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "asAt for the $1,500 condition is the date the page was read."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": null, "maxLvrPct": null, "conditions": "MOVE Bank publishes only that applicants must be 'aged 18 years or more and meet the credit assessment criteria for the product'. Citizenship and residency criteria are not published." },
+        { "status": "permanent_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "nz_citizen_444", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "temporary_visa_work", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "foreign_non_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not published." }
+      ],
+      "asAt": "2023-09-01",
+      "sourceUrl": "https://www.movebank.com.au/media/5152/tmd-straightforward-plus-home-loan-inv.pdf",
+      "sourceTitle": "MOVE Bank TMD — Straightforward Plus Investment Loan, effective 1 September 2023",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Recorded as unknown rather than inferred."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2023-09-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "BROKER CHANNEL CONFIRMED. The Straightforward Plus Investment Loan TMD lists 'Accredited Mortgage Brokers' as a distribution channel alongside the Brisbane CBD branch, the contact centre and movebank.com.au, with the condition that 'distribution through our broker network is only conducted by accredited brokers who receive regular training on the MOVE Bank product range'. A broker hub exists at movebank.com.au/brokers/broker-hub/ (an interest rates page under it resolves), but the hub landing page could not be retrieved and no broker lending policy document was found on it.",
+    "MEMBERSHIP ELIGIBILITY NOT ESTABLISHED — the key open question for this lender. MOVE Bank was founded in 1968 as the Railways Credit Union and describes itself as serving 'members of the rail, transport and logistics industries and their families', having rebranded in March 2016 'to reflect its commitment to serving the broader transport and logistics industry at a national level'. Neither the About page nor the Join Us page states whether membership is restricted to those industries or open to all Australians. Confirm with MOVE Bank before ruling a non-transport client in or out.",
+    "NO CREDIT POLICY PUBLISHED. No public servicing buffer, floor rate, DTI cap, rent shading, income-type shading, employment tenure, credit-history, security-type or residency policy.",
+    "The investment TMD used is effective 1 September 2023 with a 2-yearly review cycle — it may be superseded. Re-check the MOVE Bank Target Market Determinations index at movebank.com.au/tools-support/product-membership-documents/target-market-determinations/.",
+    "The $150,000 minimum loan amount and $3,000,000 maximum are specific to the Straightforward Plus Investment Loan; the owner-occupied product minimums were not established.",
+    "Owner-occupied maximum LVR (95% with LMI) comes from an undated product page rather than a TMD — recorded at medium confidence.",
+    "Interest-only availability and maximum term, construction lending, genuine savings, guarantor policy, government scheme participation and maximum age at maturity are not published."
+  ]
+}

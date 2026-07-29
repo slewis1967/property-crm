@@ -1,0 +1,1241 @@
+{
+  "id": "macquarie-bank",
+  "name": "Macquarie Bank",
+  "legalName": "Macquarie Bank Limited",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "237502",
+  "abn": "46 008 583 542",
+  "brokerSiteUrl": "https://www.macquarie.com.au/brokers/home-loan-brokers.html",
+  "policyDocUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3A Serviceability Assessment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The minimum assessment rate buffer is 3.00% with an assessment rate floor of 5.30%.\" Buffer is applied to the higher of the carded rate or revert rate, by loan split."
+    },
+    "assessmentFloorRatePct": {
+      "value": 5.3,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Assessed at the higher of (carded/revert rate + 3.00%) or the 5.30% floor."
+    },
+    "refinanceBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No reduced like-for-like refinance buffer is published in Credit Guidelines v14.0."
+    },
+    "rentShadingPct": {
+      "value": 0.75,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3D Income - Rental Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential 75%. Short-term stay (holiday letting/serviced apartments) and room rental 65%. Non-residential (commercial/industrial/office) 65%. Applied in line with borrower's % ownership."
+    },
+    "rentShadingBasis": {
+      "value": "Shading is instead of itemised holding costs, but only up to a limit: \"If the investment property expenses exceed 20% of the gross rental income, the actual expense will be applied for servicing purposes (i.e. Gross rent - 5% - Investment property expenses).\" For short-term stay the equivalent is Gross rent - 15% - investment property expenses.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3D",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "existingCommitmentTreatment": {
+      "value": "greater_of",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3F Commitments - Existing financial obligations",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Other secured/unsecured loans: \"The higher of: Repayment amount on the loan commitment assessed at the assessment rate (higher of interest rate for this loan plus buffer or assessment rate floor) with the actual remaining P&I loan term; or Declared actual repayment amount.\""
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3F",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Policy states credit cards are assessed at \"45.6% pa of the card limit\". 45.6% / 12 = 3.8% per month of the limit, which is the monthly fraction this field records. Charge cards: 0% of repayment/limit if 3 months' statements are provided and the balance is paid in full each statement period for at least 3 statement periods."
+    },
+    "bnplTreatment": {
+      "value": "Buy Now Pay Later is assessed at the lower of the declared annualised repayment amount, or the outstanding balance. The declared repayment cannot be $0 where an outstanding balance greater than $0 is evident, and vice versa.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3F",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Read from a multi-row table (Credit cards / Charge card / Rental expense / BNPL); row-to-value pairing inferred from ordering in the PDF."
+    },
+    "hecsTreatment": {
+      "value": "\"Where HELP/HECS and mandatory child support are visible on payslips these must be deemed as involuntary and included in as an expense item in the existing commitments section. If evidence is provided confirming the HELP/HECS debt has been paid out in full then the associated payments can be excluded.\"",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "No de-minimis balance threshold is published - the payment is counted regardless of balance size unless the debt is fully paid out."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3H Commitments - Living expenses",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"the applicant(s) declared 'General living expenses' are compared to the income tiered HEM value with the maximum of these two figures plus any 'Additional living expenses' used in the servicing calculation.\" Additional living expenses (personal insurances, private education, OO strata, secondary residence costs) are added on top of the HEM floor, not absorbed by it."
+    },
+    "dtiCap": {
+      "value": 8.0,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3A Debt to income (DTI) cap",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"A maximum DTI cap of 8 times applies to all loans.\" DTI caps do not apply where the predominant (>50%) income is non-taxable superannuation pensions, or where joint commitments with non-applicants are included at 100%, provided minimum NSR/servicing surplus is met."
+    },
+    "dtiReferThreshold": {
+      "value": 6.0,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"where the DTI is greater than 6 times, a maximum LVR of 80% applies. Please note, any application in this category deemed to have an overall high risk profile will be considered on a case-by-case basis.\" This is an LVR restriction plus case-by-case scrutiny, not an automatic decline."
+    },
+    "negativeGearingAddBack": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3G Commitments - Negative gearing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Accepted for residential investment purposes up to 100% of the purchase price where all funds are borrowed. NOT allowed on vacant land, and not applied on loans in the name of a company or trust. Non-residential investment negative gearing permitted where debt is evidenced by the most recent loan statement and the property is held in an individual's name. Cash-out negative gearing only where an executed purchase contract or transfer/separation evidence exists."
+    },
+    "depreciationAddBack": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Guidelines v14.0 address property depreciation add-back only for self-employed BUSINESS depreciation (allowable up to 20% of business net profit, s3C). No rule published for depreciation add-back on an investment property's rental loss."
+    },
+    "interestOnlyAssessment": {
+      "value": "\"For all repayment types (P&I or Interest Only), serviceability is assessed using P&I repayments. For loans with an interest only period, the P&I repayment is calculated using the remaining loan term. For example, a 30 year loan with a 5 year interest only period, [will] be assessed using a 25 year P&I repayment.\"",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3A",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Minimum servicing surplus of $500pa is required. That minimum does not apply (but a minimum Net Serviceability Ratio of 1.00 does) if declared living expenses are >= 120% of HEM, OR savings >= $10,000 are held post-settlement. A notional rental expense of $650 per month per household applies where an investment applicant declares they live rent-free or at an unusually low rent. Where an applicant guarantees or borrows via a company/trust, the introducer must confirm the entity can meet its liabilities with a 3% pa serviceability buffer applied, or the shortfall is added as an ongoing expense.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss2D, 3A, 3H",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D Maximum LVR per loan facility",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Owner occupied purchases with principal and interest repayments: 95% LVR inclusive of low deposit fee capitalisation.\" Any interest-only portion caps the facility at 80%."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Investor loans with principal and interest repayments: 90% LVR inclusive of low deposit fee capitalisation. Note: If any portion of the loan has an interest only repayment method, the maximum LVR is 80%.\""
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/help/brokers/credit-guidelines-and-processes/understanding-who-and-what-we-finance/accessing-our-credit-policy-and-calculators.html",
+      "sourceTitle": "Macquarie Broker Help Centre - Accessing our credit policy and calculators (Low Deposit Fee Calculator)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Macquarie does not charge conventional LMI; it charges a Low Deposit Fee (LDF). The LDF Calculator on the broker help centre is described as calculating indicative fees for applications exceeding 80% LVR, and the credit guidelines' LVR matrix bands break at 70% / 80% / '>80% and <=95% (LDF inclusive)' - so 80% is the highest LVR with no low-deposit charge. Inferred from those two statements rather than an explicit 'no LMI below 80%' sentence."
+    },
+    "maxLvrCashOutPct": {
+      "value": 80,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss1A, 1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Equity release loans: 80% LVR - refer policy section 1A.\" Up to 80% LVR there is no limit on the cash-out component subject to risk profile/capacity/collateral; above 80% up to 90% LVR \"No cash out, equity release or debt consolidation is allowed (beyond a $5,000 allowance for costs).\""
+    },
+    "maxLvrConstructionPct": {
+      "value": 80,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, Construction Loans s1B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR 80%\". LVR is based on the lower of the on-completion valuation or cost to complete (contracted construction price plus land value). Construction is limited to Metro (Category 1) and non-metro (Category 2) locations only."
+    },
+    "maxLvrRefinancePct": {
+      "value": 90,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Refinance loans: 90% LVR inclusive of low deposit fee capitalisation.\""
+    },
+    "maxLvrCompanyTrustPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Credit Guidelines v14.0 states borrowers and guarantors \"must be natural persons\", so no company/trust borrower LVR is published for standard residential lending."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Macquarie charges a Low Deposit Fee rather than a conventional LMI premium. Every maximum LVR in s1D is expressed as \"inclusive of low deposit fee capitalisation\", i.e. the fee may be capitalised but must fit inside the stated maximum LVR."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum LVRs are stated \"inclusive of low deposit fee capitalisation\" - the capitalised fee sits inside the cap."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No external LMI provider is named. Macquarie uses its own Low Deposit Fee above 80% LVR (LDF Calculator published on the broker help centre)."
+    },
+    "lmiWaiverProfessions": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No professional LMI/LDF waiver list is published in Credit Guidelines v14.0. (A professional-specialisation list exists in s3C but it governs self-employed income verification, not an LMI waiver.)"
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Metro (Category 1): security property value limit $10m. For properties >$10m a maximum LVR of 60% applies (or $7m loan amount where higher)." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Metro (Category 1): security property value limit $5m." },
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Metro (Category 1), LDF inclusive: security property value limit $1.5m." },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Non-metro & Regional (Categories 2 & 3): security property value limit $3m. For properties >$3m a maximum LVR of 60% applies." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Non-metro & Regional (Categories 2 & 3): security property value limit $1.5m." },
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Non-metro & Regional (Categories 2 & 3), LDF inclusive: security property value limit $750,000; above that, outside policy." }
+      ],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D Maximum allowable LVR per security",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This matrix caps the SECURITY PROPERTY VALUE per LVR band, not the loan amount - so maxLoanAmount is left null and the constraint is recorded in the qualifier. Category 4 locations are outside policy (refer BDM). Where a facility is secured by multiple properties, a maximum LVR of 80% per security applies."
+    },
+    "notes": {
+      "value": "Valuation red flags (extended selling period >6 months, Market Segment Conditions Risk Rating of 4 or 5, any '5' risk ratings) cap the security at 80% LVR, and at 75% LVR for properties valued above $3m (Cat 1) or above $1m (Cat 2/3). Postcode category and high-risk/high-density flags are returned by the 'Security Details' section of the Manual Servicing Calculator once a postcode is entered.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Two computer-generated payslips, latest no more than 60 days old and oldest no more than 4 months old. One payslip plus a signed employment contract/letter is acceptable where base income only is relied on.",
+          "conditions": "Minimum 6 months in current employment OR 6 months in the same field/industry in a prior role. Time taken between roles need not be considered."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per permanent full-time PAYG payslip requirements.",
+          "conditions": "Permanent salary/wage employment (full-time or part-time): minimum 6 months in current employment OR 6 months in the same field/industry in a prior role."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Two computer-generated payslips; YTD can be annualised where it covers a minimum period of 6 months. Where YTD covers less than 6 months or is missing, add the most recent PAYG summary / ATO income statement (Tax Ready) or tax return, and use the lower of YTD annualised or the most recent financial year's income.",
+          "conditions": "Casual income is counted at 100% (\"Maximum proportion for servicing 100%\", conditions \"None.\"). Minimum 6 months in current employment OR 6 months in the same field/industry."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per PAYG payslip requirements.",
+          "conditions": "Contract employment: minimum 6 months in current employment OR 6 months in the same field/industry in a prior role. No minimum remaining contract term is published."
+        },
+        {
+          "type": "payg_contractor_abn",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Two computer-generated payslips; YTD annualised where it covers a minimum 6 months (same treatment as casual income).",
+          "conditions": "PAYG contractor income follows the additional casual/PAYG-contractor verification rules in s3B. Self-employed contract workers who previously worked PAYG in the same industry/field for over 2 years are assessed under s3C."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "PAYG payslips.",
+          "conditions": "\"Held for at least 12 months. However, where the applicant is employed within the healthcare, teaching or aged/disability care industries (applies to both roles), there is no minimum term applicable for the second job.\""
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Two payslips whose YTD covers at least 3 months, annualised.",
+          "conditions": "Overtime - non essential services: 80% maximum proportion for servicing. \"Confirmed as regular, ongoing and evidenced.\""
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two payslips whose YTD covers at least 3 months, annualised.",
+          "conditions": "100%. \"Essential services are limited to occupations in the following services: Public transport operations; Fire fighters; Provision of health services; Provision of garbage or sewerage services; Prison officers; Police; Power / energy technicians (this does not include electricians).\""
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Employer letter on letterhead, or a payslip confirming the payment(s), or the most recent financial year's ATO income statement/payment summary or tax return. The 3-month YTD rule does not apply to bonuses.",
+          "conditions": "\"Commission or bonus\" - 80% maximum proportion for servicing. Confirmed as regular, ongoing and evidenced."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Two payslips whose YTD covers at least 3 months, annualised.",
+          "conditions": "\"Commission or bonus\" - 80% maximum proportion for servicing. Confirmed as regular, ongoing and evidenced."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payslips; fixed allowances (e.g. car, phone) can be applied as base income and are exempt from the 3-month YTD rule.",
+          "conditions": "100%. \"Permanent part of income and any associated lease payments are included in liabilities.\""
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two payslips whose YTD covers at least 3 months, annualised.",
+          "conditions": "100%. Condition of employment and industry standard."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Business tax returns or accountant-prepared P&L and balance sheet for the most recent 2 years (1 year if it shows 2-year comparables), plus personal tax returns for the 2 most recent financial years and the most recent ATO notice of assessment.",
+          "conditions": "At least 2 years trading in the current business (1 year for listed self-employed professionals, LVR then capped at 80%). Upward trend: max 120% of the previous year, not exceeding the highest year, unless 6+ months of BAS support the most recent year at >=90% annualised. Downward trend: use the most recent year. Cash flow projections are unacceptable."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per standard self-employed evidence (2 years' business + personal returns).",
+          "conditions": "Add-backs allowed: directors'/partners' salaries not separately used, excess director superannuation, interest on loans being refinanced, business depreciation up to 20% of business net profit, non-recurring one-off items confirmed by the accountant, discretionary family trust distributions to children under 18. Minority shareholders (<50%) not spousally related to other shareholders must support company profits with actual dividends received. An applicant owning <25% of the entity and relying only on PAYG salary from it may be assessed under PAYG rules."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per standard self-employed evidence.",
+          "conditions": "Assessed in line with the borrower's ownership rights (shares, units). Distributions from a discretionary family trust to children under 18 are an allowable add-back."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": null,
+          "evidence": "Proposed purchases: lesser of the rent per the Macquarie-ordered valuation, a licensed agent's estimate/tenancy management agreement no more than 60 days old, or a current executed tenancy agreement. Existing properties: rental statement <=60 days old, current executed tenancy agreement, most recent tax return, annual rental statement, or bank statements showing rental credits for at least 3 months.",
+          "conditions": "75% of verified rental income in line with the borrower's % ownership. Short-term stay (holiday letting/serviced apartments) and room rental properties: 65%."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.65,
+          "minHistoryMonths": null,
+          "evidence": "Lease agreements should be obtained where significant reliance is placed on non-residential rent.",
+          "conditions": "Non-residential (e.g. commercial, industrial, office): 65% of verified rental income in line with the borrower's % ownership."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "The lower investment income figure from the two most recent tax returns, OR a deeming rate of 3% of the investment asset's value where actual income is unknown (asset value verified by holding reports/bank statements, using the lower of the current statement or one 12 months old).",
+          "conditions": "Investment income (interest on non-offset cash, franked/unfranked dividends and franking credits, managed fund distributions) is counted at 80%. Assets must be in the name of the borrower(s)/guarantor(s)."
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Confirmation from the superannuation provider that the pension is permanent and ongoing.",
+          "conditions": "100%. Includes government superannuation pensions (e.g. Comsuper and Military pensions). Where non-taxable superannuation pension is >50% of servicing income, the DTI cap does not apply."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Government-issued family allowance statements.",
+          "conditions": "100% as supporting or secondary income only. \"Dependent child must be under 11 years of age at the time of the application.\""
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Agreement registered with the Child Support Agency (or a court order with payments evidenced), plus six months' consistent payments evidenced on bank statements.",
+          "conditions": "100% as supporting or secondary income. Payments must be permanent for the next five years, the dependent child must be under 11 at application, and it cannot be the sole source of income."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": "Consistent and evidenced via the previous 2 years' Australian tax returns. All documents in English or translated by a registered licensed Australian translation service.",
+          "conditions": "80%. \"As a guide acceptable foreign income should be limited to annuity pension, rental or investment income. Cannot be sole source or majority of income required to meet loan serviceability.\" Where a PAYG applicant works for a foreign entity, is paid foreign income and holds a valid current Australian residential address, standard PAYG verification applies instead, still with an 80% haircut after conversion; overtime/commission/bonus take their own haircut in addition."
+        }
+      ],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss3B-3E",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Shading percentages are taken from the s3B \"Maximum proportion for servicing\" column and the s3D/s3E percentages, verified against a reading-order extraction of the source PDF."
+    },
+    "altDocAvailable": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No alt-doc/low-doc program is described in Credit Guidelines v14.0; all self-employed verification paths require tax returns or accountant-prepared financials."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3C",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Self-employed - at least 2 years trading in the current business. For self-employed professionals, require a minimum of 1 year trading in their current business.\""
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3C Professional Specialisation",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only for listed self-employed professionals (CA ANZ/CPA/CFA accountant, FIAA actuary, lawyer, registered medico, Engineers Australia engineer, vet, architect, pharmacist, psychologist, podiatrist, optometrist). Conditions: LVR must not exceed 80%; business trading at least 12 months; income evidence covering at least 12 months. Also available generally where the most recent year's financial statement shows two-year comparables."
+    },
+    "notes": {
+      "value": "Effective 1 April each year prior-year financials are required for all self-employed applicants, with a 2-week pipeline grace period (hard from 15 April). Salary sacrifice is counted at 100% where convertible to gross taxable income and evidenced on payslips; 'tax free' salary sacrifice arrangements require employment in public health, social work or charity work. Employer or government paid parental leave is 100% with evidence it continues until return to work, and return-to-work income can be used where savings cover the shortfall and an employer letter confirms the resume date and pay rate. Long service leave at full pay is used at 100%; at half pay, half pay is used unless return-to-work income criteria are met. Disability benefits and salary continuance / income protection payments are 100% but only as supporting/secondary income, and only where ongoing, not subject to medical review, and payable for the loan term or until retirement (assumed age 70).",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss3B, 3C, 3E",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B PAYG - Employment history (Tenure)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Permanent salary/wage employment (full-time or part-time) and contract employment - minimum 6 months in current employment OR employed for a minimum of 6 months in the same field/industry in prior role.\""
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Note, in relation to the above, the time taken between roles does not need to be considered.\""
+    },
+    "minMonthsSameIndustry": {
+      "value": 6,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alternative to 6 months in the current job, for permanent, contract and casual employment alike."
+    },
+    "probationAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Credit Guidelines v14.0 s3B sets tenure rules by employment type but does not mention probation. The 6-month current-employment / 6-month same-industry test is the only published tenure gate."
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Casual employment - minimum 6 months in current employment OR employed for a minimum of 6 months in the same field/industry.\""
+    },
+    "minMonthsContract": {
+      "value": 6,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Contract employment is grouped with permanent salary/wage employment for tenure purposes."
+    },
+    "minContractRemainingMonths": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum remaining fixed-term contract period is published in Credit Guidelines v14.0."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3C",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"at least 2 years trading in the current business\". Reduced to 12 months for listed self-employed professionals (LVR then capped at 80%), and self-employed contract workers who previously worked as PAYG in the same industry/field for over 2 years are acceptable."
+    },
+    "maxEmploymentGapMonths": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No maximum employment gap is published. Policy instead states the time taken between roles does not need to be considered where the same-industry test is met."
+    },
+    "notes": {
+      "value": "Applicants employed by a family owned or controlled business must satisfy any TWO of: computer-generated payslips (or a current-FY my.Gov income statement no older than 60 days); bank statements evidencing the most recent 6 months of regular salary credits; or the most recent individual tax return plus ATO notice of assessment (or a Tax Ready prior-year my.Gov income statement). This does not apply where a PAYG applicant works for a self-employed spouse and both are parties to the loan - self-employed verification is then followed.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3B",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "credit": {
+    "maxDefaults": {
+      "value": 0,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D Credit reports",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Unacceptable items: Bankrupts; Judgements; Court writs; Outstanding defaults, financial or non-financial.\" Any outstanding (unpaid) default is unacceptable. Paid defaults may be considered - see paidDefaultsAccepted and defaultIgnoredUnderAmount."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 500,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D Adverse items",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Paid non-financial defaults less than or equal to $500 can be considered if supported by a satisfactory explanation from the client.\" This is a consideration threshold for PAID NON-FINANCIAL defaults only, not a blanket disregard."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D Adverse items",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Conditional. \"Prior defaults greater than $500, can only be considered on an exception basis. Refer to your BDM. Any adverse findings must be supported by an explanation from the client.\" Paid non-financial defaults <= $500 can be considered with a satisfactory explanation."
+    },
+    "paidDefaultMinAgeMonths": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum age for a paid default is published; the test is size (>$500 = exception basis) and explanation, not age."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Outstanding defaults, financial or non-financial\" are listed as unacceptable items."
+    },
+    "judgmentsAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Judgements\" listed as an unacceptable item."
+    },
+    "writsAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Court writs\" listed as an unacceptable item."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": null,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2D",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "\"Bankrupts\" are listed as an unacceptable item, but no minimum period since discharge is published, so the number of years required cannot be sourced."
+    },
+    "partIxDischargedMinYears": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Part IX debt agreements are not mentioned in Credit Guidelines v14.0."
+    },
+    "maxArrears12Months": {
+      "value": 0,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2F Account Conduct (CCR RHI)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The published test is over 24 months, not 12: \"If any account shows any instances of RHI status code = 2, 3, 4, 5, 6 or X in the last 24 months we will not be able to proceed with the application.\" RHI code 2 = 30-59 days overdue. A single RHI code 1 (up to 29 days overdue) in the last 24 months \"we may be able to consider based on the overall strength of the application\". So zero payments 30+ days late is the effective requirement, but over a 24-month window."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum credit score is published in Credit Guidelines v14.0; policy says CCR data \"will be reviewed as part of the credit assessment\"."
+    },
+    "maxEnquiries6Months": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No general enquiry cap is published. A narrow rule exists: four or more non-Macquarie consumer real property mortgage enquiries with role type 'Guarantor' is an indicator of increased risk \"where present the credit analyst is to decline the application\" - that applies only to guarantor-role enquiries, not to enquiries generally, so it is recorded here as a note rather than as a value."
+    },
+    "paydayLendingPolicy": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Payday lending / SACC conduct is not addressed in Credit Guidelines v14.0."
+    },
+    "gamblingPolicy": {
+      "value": "Gambling is listed as an unacceptable purpose for equity release / cash out funds. No policy on gambling transactions appearing in transaction statements is published.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1A",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "All financial enquiries in the last 3 months must be confirmed as 'not proceeded' or 'proceeded' and entered in liabilities. CCR RHI is reviewed on all accounts held over the last 24 months, and CCR FHI (financial hardship) over the last 12 months - where an FHI status code of A or V is present, acceptable conduct is needed across all accounts for 24 months plus 6 months of full payments after the assistance arrangement ends. Where a refinance statement review is requested, statements must cover 6 months (3 months for credit cards) and show no more than 1 dishonoured/missed/late repayment or over-limit event per application, resolved within 30 days or by the next scheduled repayment; the most recent statement must be no more than 6 weeks old at submission.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss2D, 2F",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential house and land",
+        "Residential strata home unit with at least one bedroom and living floor space no less than 50m2 (excluding balcony and car space)",
+        "House & land on acreage or rural residential property with an acceptable dwelling, essential services connected, sealed roads and non-income producing",
+        "Off the plan purchases",
+        "Stratum title (VIC) home units",
+        "Mixed zoned properties where the property is for residential use and that is permitted under the zoning requirements"
+      ],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A Acceptable Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tank water and septic tank connections are acceptable on rural residential where common to the location with no adverse valuer comment."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Vacant land with no intent to build",
+        "More than two dwellings on one title",
+        "Leasehold property under national parks & wildlife authority (e.g. land in Thredbo or Kosciusko)",
+        "Property allotments in sparsely populated areas",
+        "Company title, Company Share title (VIC)",
+        "Purple Title (WA)",
+        "Moiety Title (SA)",
+        "Properties under a 'time share' arrangement",
+        "Land subject to licence to occupy or properties with 'lease of life' covenants on title",
+        "Properties subject to the Western Lands Act",
+        "Strata title hotel/motel room",
+        "Dual key apartments",
+        "Commercial or industrial zoned property",
+        "Properties not exclusively for residential use regardless of zoning",
+        "Stand-alone 2nd mortgage securities",
+        "Partially complete properties (only considered under construction loan parameters where the original builder completes the works)",
+        "Relocatable or transportable homes",
+        "Properties affected by contamination",
+        "Properties where essential services are not connected",
+        "Owner/builder construction",
+        "University or student apartments",
+        "Rural residential properties not meeting the acceptable criteria",
+        "Properties located in remote mining towns",
+        "Strata retirement village apartments",
+        "Serviced apartments",
+        "Third party securities",
+        "Properties affected by any government or state planning schemes",
+        "Properties in need of significant repair unless the repairs form part of the loan purpose and funds are adequately controlled",
+        "Properties adversely impacted by mine subsidence or landslip",
+        "Studio apartments/bed sitters with living floor space less than 50m2 excluding balcony and car space",
+        "Properties deemed unsuitable for home loan purposes by the valuer",
+        "Where the borrower owns >25% or more than 4 dwellings in a single development"
+      ],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A Unacceptable securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Residential strata home unit with at least one bedroom having a living floor space area no less than 50m2 (excluding balcony and car space)\" is acceptable; studio apartments/bed sitters under 50m2 are unacceptable. Studios/bedsitters at or above 50m2 are a restricted security - refer BDM."
+    },
+    "maxLandSizeHa": {
+      "value": 40,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D Maximum LVR/Loan amount per security - land size",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\">40 hectares: Unacceptable.\" Land-size LVR steps: up to 4ha standard LVR parameters; >4 up to 10ha 80% LVR; >10 up to 20ha 70% LVR; >20 up to 40ha 60% LVR - each subject to location category limits."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Not published as a standalone list. Policy directs brokers to the 'Security Details' section of the Manual Servicing Calculator, which flags High Risk and High Density postcodes and returns the location category (1 Metro / 2 Non-metro / 3 Regional / 4 Other - outside policy) once a postcode is entered."
+    },
+    "postcodeListUrl": {
+      "value": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie-bank-mortgage-solutions-serviceability-calculator.xlsm",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/help/brokers/credit-guidelines-and-processes/understanding-who-and-what-we-finance/accessing-our-credit-policy-and-calculators.html",
+      "sourceTitle": "Macquarie Broker Help Centre - Accessing our credit policy and calculators",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The postcode categorisation lives inside the publicly downloadable Macquarie serviceability calculator workbook ('Security Details' section), not in a published postcode list."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"High risk postcode location: 80% LVR.\" Separately, Category 4 locations are outside policy entirely (refer BDM), and Category 2 & 3 (non-metro/regional) carry lower property-value caps per LVR band."
+    },
+    "highDensityPolicy": {
+      "value": "\"High density apartment/unit(s): Up to 80% LVR can be considered where the repayment type is Principal and Interest. Where any portion of the loan is interest only, the LVR is capped at 70%.\" High Density postcodes are flagged by the 'Security Details' section of the Manual Servicing Calculator.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Macquarie defines high density by postcode flag rather than by storeys or number of units in the development."
+    },
+    "highDensityMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% with P&I repayments; 70% if any portion of the loan is interest only."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"House & land on acreage or rural residential property with acceptable dwelling, essential services connected sealed roads and non-income producing.\" Rural residential properties not meeting that criteria are unacceptable, as are allotments in sparsely populated areas and remote mining towns."
+    },
+    "ruralMaxLvrPct": {
+      "value": null,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1D",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No single rural LVR cap is published; rural exposure is limited instead by the land-size ladder (up to 4ha standard, >4-10ha 80%, >10-20ha 70%, >20-40ha 60%, >40ha unacceptable) and the location category property-value caps."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Company title, Company Share title (VIC)\" listed as unacceptable securities."
+    },
+    "leaseholdAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Case by case, refer BDM: \"Leasehold properties not in ACT where the unexpired lease term is 10 years greater than loan term\" sits in the higher-risk-but-considerable list. Leasehold property under national parks & wildlife authority (e.g. Thredbo, Kosciusko) is unacceptable."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential strata home units accepted where at least one bedroom and living floor space >= 50m2 excluding balcony and car space. Strata title hotel/motel rooms and strata retirement village apartments are unacceptable."
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss1D, 4A, 4B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Listed as an acceptable security. Land-size/other-features matrix shows off the plan at 90% LVR inclusive of low deposit fee capitalisation. Valuation must be no older than 90 days at submission including off-the-plan purchases; if the contract of sale exchanged more than 12 months before valuation, the on-completion valuation can be used so long as the loan does not exceed 100% of the purchase price."
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Serviced apartments\" listed as unacceptable securities. (Rent from serviced-apartment-style short-stay properties is separately shaded to 65% where such a property is owned but not offered as security.)"
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"University or student apartments\" listed as unacceptable securities."
+    },
+    "displayHomeLeasebackAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Display homes\" appear in the higher-risk list: \"The following higher risk security types may be considered on a case by case basis, Refer to your BDM to confirm if the security can be considered.\" The leaseback arrangement itself is not separately addressed."
+    },
+    "nrasAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "NRAS properties are not mentioned in Credit Guidelines v14.0."
+    },
+    "sdaNdisAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "SDA / NDIS housing is not mentioned in Credit Guidelines v14.0."
+    },
+    "maxSecurities": {
+      "value": 4,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s4A",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This is a concentration limit within ONE development, not a limit on total securities per facility: unacceptable \"Where the borrower owns >25% or more than 4 dwellings in a single development\". Where a facility is secured by multiple properties a maximum LVR of 80% per security applies."
+    },
+    "notes": {
+      "value": "For LVRs above 80% a full valuation is always required. Valuations must be no older than 90 days at submission and no older than 180 days at settlement. Developer discounts are not treated as part of the borrower's deposit - they reduce the sale price. In Queensland, where the builder/developer or a related party is the vendor, the valuer may request a Form 8 Certificate detailing total commission and marketing fees. Essential or structural repairs over $10k outside a construction loan require reasonable grounds that the borrower can afford them.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss4B, 4C",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 150000,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1B Loan Amount",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum loan amount $150,000\" (stated as a guide). Minimum principal increase amount $25,000. Construction loans also have a $150,000 minimum."
+    },
+    "maxLoanAmount": {
+      "value": 10000000,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1B",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum aggregate exposure per Borrower $10,000,000\" (stated as a guide). Construction loans are capped at $2,000,000 at 80% LVR, with the construction component not exceeding 50% of loan size for loans over $1,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1C Loan Term",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum loan term 30 years; minimum loan term 5 years."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1C",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum initial interest only period: Up to 5 years\", plus up to 5 years subsequent subject to credit approval. Policy is not split by occupancy. Critically: \"Interest only is unavailable within the last 20 years of a loan term\", and any interest-only portion caps the facility LVR at 80%."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s1C",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same rule as owner-occupied - the guidelines do not distinguish IO term by occupancy. Interest only is unavailable within the last 20 years of the loan term."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, Construction Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Up to 2 residential dwellings, licensed contracted builder, fixed-price fixed-term industry-standard contract, commencement within 3 months of initial settlement, completion within 24 months. Owner-builder, kit/demountable homes and construction of more than 2 dwellings are unacceptable. Metro (Cat 1) and non-metro (Cat 2) locations only."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E Contributions & Genuine Savings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where LVR > 85% (excluding low deposit fee capitalisation), 5% of purchase price is required to be evidenced as genuine savings.\""
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 85,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 85% threshold is measured excluding low deposit fee capitalisation."
+    },
+    "genuineSavingsMinMonths": {
+      "value": 3,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E Genuine savings source",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Funds held or accumulated in a personal savings account or term deposit for 3 or more months; shares/managed fund units purchased and held at least 3 months (or sold having been held 3 months); equity in real estate; off-the-plan deposits paid over 3 months ago; loan repayments in excess of contractual P&I. Unacceptable: First Home Owners' Grant, any form of loan, projected savings/savings plans/rental purchase plans, funds held in a business account without evidence of personal saving."
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": false,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The unacceptable list names \"Projected savings, savings plans and/or rental purchase plans of any type\" and \"Rental savings plans (e.g. where rent that is paid contributes to the deposit)\". A rent ledger is not named explicitly as a genuine-savings substitute anywhere in the acceptable list, so the answer is read as no."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Gifts are accepted as a contribution. They only count as GENUINE SAVINGS where the amount has been held for three months or more."
+    },
+    "giftedDepositConditions": {
+      "value": "\"Where the borrower receives a gift from a family member or friend to assist with the purchase, written confirmation must be received from the donor of the funds confirming the amount and that funds are not repayable.\" Where the funds are a loan rather than a gift, written confirmation from the lender of the funds is required confirming the amount, any conditions and repayment terms (and the repayment becomes a commitment). Gifts and inheritance count as genuine savings only where held for three months or more.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2E",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Credit Guidelines v14.0 does not list participation in the Home Guarantee Scheme or state first-home schemes. It does state \"Loans involving or offered in-conjunction with any shared equity schemes\" are an unacceptable loan purpose, and that the First Home Owners' Grant is not acceptable as genuine savings."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss2A, 2C",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Guarantors must be natural persons and mortgagors must be documented as either a borrower or a guarantor. The acceptable-structures table only permits a guarantor structure where the guarantor is in a spousal relationship with the borrower; 'A borrows, A mortgages, B guarantees' is explicitly not acceptable. Independent legal and financial advice is required for all guarantors (ILA only for directors of company borrowers). A security/family guarantee product is not described in these guidelines."
+    },
+    "guarantorConditions": {
+      "value": "Borrowers and guarantors must be natural persons aged 18+. Independent legal and financial advice is required for all guarantors, for all borrowers 70 years old and over, and for all non-English-speaking borrowers (with a translation certificate). Legal advice is not required for a practising lawyer, nor financial advice for a practising accountant/financial planner - but their spouse must still obtain advice independent of them and their firm. Third party securities are an unacceptable security type.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss2A, 2C, 4A",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 55,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3J Exit Strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "An exit strategy is required where an applicant is BOTH 55 or older at application AND will be 70 or older at loan maturity (or has advised an intention to retire before maturity). For joint spousal applicants the test applies to any applicant whose income is required to service; for non-spousal joint applicants it applies to any applicant regardless of whether their income is used."
+    },
+    "maxAgeAtMaturity": {
+      "value": null,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3J",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No hard maximum age at maturity is published - age 70 at maturity triggers an exit-strategy requirement rather than a decline. Retirement age is assumed to be 70 for income-protection income purposes unless advised earlier."
+    },
+    "notes": {
+      "value": "Maximum LVR on a purchase is 100% of the purchase price (i.e. the valuation cannot be used to lend above the price). Where the LVR is greater than 85% of the purchase price, the genuine savings requirement must be met. Downsizing exit strategies are assessed at current market value with no assumed capital growth, and the applicant must be able to buy the new property and extinguish all debt on the existing one.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss3J, 4C",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard loan parameters apply ONLY where a current/valid Australian residential address is held. Where no current/valid Australian residential address is held, the application is outside guidelines - including for Australian citizens."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard loan parameters apply where a current/valid Australian residential address is held. No Australian residential address = outside guidelines."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Residency Matrix: single applicant who is an Australian citizen/permanent resident with no current/valid Australian residential address = \"Outside guidelines\". Same outcome for two or more applicants where no applicant holds a current/valid Australian residential address, including two Australian citizens."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "As a sole applicant, or as a non-spousal co-applicant whose income IS required to service the debt, or as a spousal co-applicant who IS the predominant servicer: outside guidelines. Standard loan parameters DO apply where an Australian citizen/PR borrows with a temporary-resident co-applicant whose income is not required to service the debt, or a spousal temporary-resident co-applicant who is not the predominant servicer, and all applicants hold a current/valid Australian residential address."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not separately named. The Residency Matrix treats all \"non-Australian citizen/non-permanent resident (i.e. temporary resident or temporary visa holder)\" applicants alike - outside guidelines other than as a non-servicing co-applicant alongside an Australian citizen/PR."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Non-Australian citizen/non-permanent resident (any)\" with no current/valid Australian residential address: outside guidelines."
+        }
+      ],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s2B Residency Matrix",
+      "confidence": "high",
+      "status": "verified",
+      "note": "New Zealand citizens on a subclass 444 visa are not separately addressed in the Residency Matrix, so no rule is recorded for nz_citizen_444."
+    },
+    "acceptedVisaSubclasses": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No visa subclasses are named. The Residency Matrix works on citizen / permanent resident / temporary resident status and whether a current Australian residential address is held."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3E Foreign income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where foreign currency is to be converted to Australian dollars, only 80% of the amount after conversion at current exchange rates is to be used for loan servicing.\" Overtime, commission or bonus take their own variability haircut IN ADDITION to the 80% foreign-income haircut. Foreign income cannot be the sole source or majority of servicing income."
+    },
+    "acceptedForeignCurrencies": {
+      "value": ["GBP", "EUR", "HKD", "NZD", "SGD", "USD", "CAD", "JPY", "CHF"],
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, s3E",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Acceptable foreign currencies are GBP, EUR, HKD, NZD, SGD, USD, CAD, JPY and CHF.\" This applies to the pathway where a PAYG applicant is employed by a foreign entity, is paid foreign income and holds a valid current Australian residential address."
+    },
+    "firbRequiredNote": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "FIRB is not mentioned in Credit Guidelines v14.0 - consistent with non-residents being outside guidelines entirely."
+    },
+    "notes": {
+      "value": "All income documents must be in English or translated into English with an appropriate translation certificate from a registered licensed translation service domiciled in Australia. Independent legal and financial advice is required for all non-English-speaking borrowers, with the legal advice specifically going through the contracts and obligations of the loan.",
+      "asAt": "2026-07-08",
+      "sourceUrl": "https://www.macquarie.com.au/assets/bfs/documents/broker/mortgages/macquarie_broker-credit-guidelines.pdf",
+      "sourceTitle": "Macquarie Residential Home Loans Credit Guidelines v14.0, ss2C, 3E",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-08",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Product features (offset, redraw, bridging, SMSF residential lending) are not covered by the broker Credit Guidelines - they sit in the Home Loans Product Guide, which was not read for this pass.",
+    "No LMI provider is named because Macquarie charges its own Low Deposit Fee instead; the LDF scale itself is only available in the downloadable LDF Calculator workbook, not as published figures.",
+    "No LMI/LDF waiver for medical or other professions is published.",
+    "Bankruptcy and Part IX: bankrupts are an unacceptable item but no minimum period since discharge is published, so no years-since-discharge value could be sourced.",
+    "No minimum credit score, general credit-enquiry cap, or payday-lending conduct policy is published.",
+    "Probation policy is not addressed anywhere in the guidelines.",
+    "Postcode categories (Metro Cat 1 / Non-metro Cat 2 / Regional Cat 3 / Other Cat 4), high-risk postcode flags and high-density postcode flags are only resolvable inside the Macquarie Manual Servicing Calculator workbook - there is no published postcode list to mirror.",
+    "Government first-home scheme participation (Home Guarantee Scheme / FHG, state schemes) is not stated.",
+    "Depreciation add-back on an investment property's rental loss is not addressed (only business depreciation for self-employed applicants, capped at 20% of business net profit).",
+    "NRAS and SDA/NDIS security policy is not mentioned."
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "id": "bank-first",
+  "name": "Bank First",
+  "legalName": "Victoria Teachers Limited, trading as Bank First (formerly Victoria Teachers Mutual Bank)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240960",
+  "abn": "44 087 651 769",
+  "brokerSiteUrl": "https://www.bankfirst.com.au/brokers-page",
+  "policyDocUrl": null,
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Bank First's broker resource centre (bankfirst.com.au/brokers-page) is public but its substantive content - including the periodic 'Broker news' policy bulletins - renders behind the broker portal; no buffer, floor rate, DTI cap or rent-shading figure appears on any no-login page."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published. Bank First runs a public Broker Resource Centre with a 'Broker Login', dated broker-news bulletins (e.g. 'Broker news May/June 2026'), an existing-member pricing request form and a valuation request form, but the content of those pages is not served to unauthenticated clients.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankfirst.com.au/brokers-page",
+      "sourceTitle": "Broker Resource Centre | Bank First",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No numeric maximum LVR is published. The Premier Package Home Loan rate card's top band is open-ended: \"LVR above 90%\" (https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan, rates effective 6 July 2026). Lending above 90% clearly exists but the ceiling is not disclosed."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Lenders Mortgage Insurance (LMI) is a one-off payment that is generally required when the loan is in excess of 80% of the property value that you are purchasing.\""
+    },
+    "lmiWaiverProfessions": {
+      "value": ["Education sector worker", "Healthcare sector worker"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankfirst.com.au/about-us/articles/waiving-lmi-premiums-for-teachers-and-healthcare-sectors",
+      "sourceTitle": "Waiving LMI premiums for teachers and healthcare sectors | Bank First",
+      "confidence": "high",
+      "status": "verified",
+      "note": "IMPORTANT CONDITIONS, verbatim: \"Normally, LMI is required if a home loan exceeds 80% of the property's value. But for First Home Buyer's who work in the education and healthcare sectors, we raise that up to 90%. (When approval conditions are met. Loans over 80% carry a higher interest rate.) There are some other terms and conditions too: the home needs to be an owner occupied property, with no equity release with refinanced loans. We also don't waive premiums for off the plan or construction loans.\" So the waiver is FIRST HOME BUYERS ONLY, owner-occupied only, no equity release on refinance, and not available on off-the-plan or construction. Note the same site's Premier Package FAQ states a lower figure - \"If you work in the education or healthcare sectors, it's possible you could take out a home loan up to 85% LVR and avoid paying Lenders Mortgage Insurance\" - so 85% vs 90% is inconsistent across Bank First's own pages; confirm with the BDM before relying on 90%."
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankfirst.com.au/about-us/articles/waiving-lmi-premiums-for-teachers-and-healthcare-sectors",
+      "sourceTitle": "Waiving LMI premiums for teachers and healthcare sectors | Bank First",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "90% per the dedicated LMI-waiver article and the Premier Package promo panel (\"you can now have a deposit of 10% and can borrow up to 90% of the property value without having to pay Lenders Mortgage Insurance\"). Confidence reduced to medium because the Premier Package FAQ on the same site says 85%."
+    },
+    "notes": {
+      "value": "Published Premier Package LVR pricing bands (variable, P&I): up to 60%; above 60-70%; above 70-80%; above 80-90%; above 90%. Fixed-rate bands: up to 80%; above 80-90%; above 90%.",
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "APPLIES TO FIXED RATES ONLY: \"If you choose a fixed rate home loan, the Premier Package Home Loan has a minimum $50,000 loan amount and no maximum loan amount.\" For variable: \"the Premier Package Home Loan does not have a minimum or maximum loan amount.\""
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Better manage your money with up to 8 offset accounts.\" Variable rate only - \"Note that the offset feature is not available for fixed rates.\""
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Bank First does not charge a redraw fee.\""
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankfirst.com.au/about-us/articles/waiving-lmi-premiums-for-teachers-and-healthcare-sectors",
+      "sourceTitle": "Waiving LMI premiums for teachers and healthcare sectors | Bank First",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Established indirectly: the LMI-waiver article says \"We also don't waive premiums for off the plan or construction loans\", which presupposes construction lending exists. No construction LVR, drawdown or valuation policy is published."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/government-deposit-scheme",
+      "sourceTitle": "Australian Government 5% Deposit Scheme | Bank First",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"We're proud to be one of the participating lenders of the Australian Government 5% Deposit Scheme\", covering first home buyers with a minimum 5% deposit and single parents/legal guardians with a minimum 2% deposit. Bank First is also named on Housing Australia's participating-lender list (https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders, no publication date, captured 2026-07-29). Page carries no effective date; retrieval date used."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted: Bank First maintains a public Broker Resource Centre at /brokers-page with a Broker Login, dated broker-news bulletins, an existing-member pricing request and a valuation request form. Premier Package fees as published: $390 annual package fee, $595 settlement fee, $0 establishment fee, $0 redraw fee. Interest-only is available on the Premier Package but \"interest only loans are not available to all borrowers\". Bank First is the trading name of Victoria Teachers Limited and describes its focus as \"putting teachers, nurses and allied health professionals first\" - note this is stated as a market focus, NOT as a published membership eligibility restriction, and no eligibility/membership criteria page could be found.",
+      "asAt": "2026-07-06",
+      "sourceUrl": "https://www.bankfirst.com.au/loans/home-loans/premier-package-home-loan",
+      "sourceTitle": "Premier Package Home Loan | Bank First (rates effective 6 July 2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-07-06",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "MEMBERSHIP ELIGIBILITY UNRESOLVED. Bank First is Victoria Teachers Limited and is built around the Victorian education and healthcare communities, but no public page states a membership eligibility restriction. Do NOT assume open membership and do NOT assume a restriction - confirm with the BDM. This matters: it is the single most likely knock-out for this lender.",
+    "No numeric maximum LVR published; the rate card's top band is an open-ended 'LVR above 90%'.",
+    "Bank First's own pages disagree on the LMI-waiver ceiling for education/healthcare workers: the dedicated article and the product promo panel say 90%, the product FAQ says 85%. Recorded as 90% at medium confidence with both quotes in the note.",
+    "The public broker pages exist but their substance (broker news / policy bulletins) is not served to unauthenticated clients, so no broker policy guide, servicing calculator or SLA could be read.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, residency/visa rules, genuine-savings or guarantor policy published.",
+    "No security policy at all: no acceptable/unacceptable property types, minimum unit size, postcode category list, high-density or rural policy.",
+    "Maximum loan term and maximum interest-only term are not published. Investment-loan maximum LVR was not captured separately.",
+    "No aggregator panel is published."
+  ]
+}

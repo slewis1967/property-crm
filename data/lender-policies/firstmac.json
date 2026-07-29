@@ -1,0 +1,949 @@
+{
+  "id": "firstmac",
+  "name": "Firstmac",
+  "legalName": "Firstmac Limited",
+  "tier": "non_bank",
+  "status": "active",
+  "brokerSiteUrl": "https://www.firstmac.com.au/brokers",
+  "policyDocUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Lending Group Residential Lending Policy (Broker), July 2026, version 2026-07 (1.0) dated 28 Jul 2026 — s15.1 'Firstmac Serviceability Assessment Rate'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "New lending, variable or fixed < 5 years: 'the higher of the weighted average interest rate of the total loan being sought or the assessment rate floor... plus the standard assessment buffer of 2.00% pa.' IMPORTANT EXCEPTION: 'Loan splits that have a fixed rate term of 5 years - the actual rate is used as the assessment rate, with no buffer or floor rate applicable.' Existing Firstmac and other-lender loans also carry the 2.00% buffer."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The policy repeatedly refers to 'the assessment rate floor (as determined by Firstmac and applied in the serviceability calculator)' but never publishes the number. The calculator itself is behind broker accreditation. Looked in s15.1 and s31.10.1 (SMSF) of the July 2026 Residential Lending Policy."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s11.1 'Acceptable sources of income', Rental income row",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'80% of confirmed gross rental income for a standard residential tenancy'; '65% of confirmed gross rental income for short stay / holiday rental (eg Airbnb; Stayz etc)'; up to 70% for commercial rental used for home-loan serviceability. Firstmac may reduce or exclude rental income entirely where it is considered volatile (student accommodation, mining-influenced local economy, over/under-supplied rental markets)."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.03227,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15 'Loan serviceability calculation'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Minimum of 3.227% on the total credit card limit (equivalent to repaying the fully drawn limit over a 3 year term)'. All loans and lines of credit are also assumed drawn to their approved limit."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15.4.1 'Household Expenditure Measure (HEM)'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "HEM data subscribed from the Melbourne Institute of Applied Economic and Social Research. The method is based on the borrower's geographic location (capital city or not) and household income band. Applied as: the higher of stated 'General living expense + Childcare' or the HEM living allowance, PLUS education fees, private health cover and other living expenses on top."
+    },
+    "dtiReferThreshold": {
+      "value": 8.0,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s5.2 'Investor Risk Fee (PRF)'",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This is NOT a decline threshold. A borrower is treated as a 'Professional Investor' and charged an Investor Risk Fee where ALL of: investment lending only with Firstmac; DTI of 8.0:1 or above; and LVR > 70%. Consequences: maximum LVR 80% before the PRF is capitalised; P&I repayments required if capitalising the fee pushes LVR over 80%; and an exit strategy must be provided regardless of the borrower's age. Firstmac's DTI definition: 'the total of all credit facility / debt limits divided by the total gross income'. No hard DTI cap is published."
+    },
+    "negativeGearingAddBack": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15.2 'Negative gearing treatment' (new section, 30 Mar 2026) and s11.1 'Investment loan interest add back'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "100% add-back of deductible interest paid on Australian investment home loans (overseas investment loans excluded), calculated at a maximum rate set by Firstmac in its calculator. Firstmac has encoded the negative-gearing reform: benefits apply to investment properties acquired ON OR BEFORE 12 May 2026 (including refinances of the original acquisition debt); for properties acquired AFTER 12 May 2026 the benefit applies only where the security is an 'eligible new build', otherwise losses are deductible only against other residential property income."
+    },
+    "interestOnlyAssessment": {
+      "value": "Interest-only loans are assessed on a P&I repayment over the RESIDUAL P&I term — e.g. a 30-year term with 5 years IO is assessed as P&I over the remaining 25 years. Ongoing loans elsewhere default to a 30-year term if P&I and 25 years if IO.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Where the total DECLARED repayments on ongoing home/investment loans with other financial institutions exceed the calculated repayment, the higher declared figure is used."
+    },
+    "hecsTreatment": {
+      "value": "HELP/HECS debt repayments are included as a fixed regular monthly commitment and 'to be shown as a liability, not a living expense'. No de-minimis balance exemption is published.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Firstmac uses the Net Disposable Income (NDI) method with a minimum NDI of 1.00:1. Where LMI is required, the relevant insurer's serviceability calculator must be used AND a minimum NDI of 1.00:1 must also be demonstrated on the Firstmac calculator. Notional rental expense: where the borrower is buying an investment property and boarding with family or friends rent-free or unusually cheaply, the higher of the stated board or $500/month (single) or $650/month (couple) is applied on top of the standard living allowance. Joint commitments with non-applicants are counted at 100%, while shared positive income is counted only at the borrower's ownership percentage.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s15, s15.5, s15.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.2 'Maximum LVR & loan amount per Security'",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "READ THE WORDING CAREFULLY: the top band is expressed as '> 80% < 90%', with LMI, owner occupied, P&I repayments only. Taken literally the ceiling is BELOW 90%, so an exactly-90% owner-occupied purchase should be treated as outside policy. Firstmac does NOT offer 95% LVR lending on this policy. Confidence medium purely because of that exclusive-bound ambiguity."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.2",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Same '> 80% < 90%' band as owner-occupied, with LMI. Investment may be P&I or interest-only in that band, whereas owner-occupied must be P&I only. Below 80%, investment interest-only is capped at 70% LVR."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s6.1 'When LMI is required', s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Any loan where LVR exceeds 80% that does not [meet] Lender Risk Fee (LRF) criteria' must be mortgage insured. So above 80% the loan is either LMI-insured or carries a Lender Risk Fee — the '> 80% < 90% with LRF' band is P&I only and available in Category 1a/1b postcodes only. Firstmac pays the LMI premium itself on new loans where LVR < 80% and the total loan does not exceed $1,000,000."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Construction loans — 90% OO & INV (LMI required > 80% < 90%)'. Owner-occupied construction is interest-only during construction, reverting to P&I on completion. Max loan per security $1,500,000 (Cat 1a and 1b), $1,000,000 (Cat 2), $700,000 (Cat 3)."
+    },
+    "lmiProvider": {
+      "value": ["Helia Insurance Pty Limited", "QBE Lenders' Mortgage Insurance Limited"],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s6 'Lender's Mortgage Insurance (LMI)'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'and respective related companies of these two insurers, as advised.' Cash Flow Cover is required on all mortgage-insured loans with LVR > 80%. Firstmac will not allow a loan to settle with any outstanding LMI condition, and the insurer's requirements must be observed in addition to (not instead of) Firstmac policy."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 70, "maxLoanAmount": 2000000, "qualifier": "Investment, interest-only. Category 1a $2,000,000; Cat 1b $1,400,000; Cat 2 $1,100,000; Cat 3 $700,000." },
+        { "maxLvrPct": 80, "maxLoanAmount": 3000000, "qualifier": "Owner occupied or investment, P&I (and OO interest-only). Category 1a $3,000,000; Cat 1b $2,000,000; Cat 2 $1,400,000; Cat 3 $850,000." },
+        { "maxLvrPct": 90, "maxLoanAmount": 2000000, "qualifier": "Expressed as '> 80% < 90%'. With Lender Risk Fee (OO & INV, P&I only): Cat 1a $1,000,000, Cat 1b $750,000, Cat 2 and Cat 3 not available. With LMI (OO P&I only; INV P&I or IO): Cat 1a $2,000,000, Cat 1b $1,500,000, Cat 2 $1,000,000, Cat 3 $700,000. Excludes SMSF loans, non-resident borrowers and construction loans." }
+      ],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.2 'Maximum LVR & loan amount per Security'",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Limits are PER SECURITY and vary by postcode category (1a / 1b / 2 / 3), occupancy, loan purpose and security type. The overall cap still applies: 'Regardless of the number of securities offered, the maximum loan size is $3,000,000.' Confidence medium — the source is a multi-column matrix reconstructed from the PDF text layer. Category 3 postcodes with a 'Mining' sub-category are further restricted to 70% LVR P&I for owner-occupied and are not acceptable security for investment."
+    },
+    "notes": {
+      "value": "Postcodes are classified 1a, 1b, 2 or 3 in the Firstmac Acceptable Security Location list, based on census population and geographic spread. 'Postcodes not listed are classified by Firstmac as non-lend postcodes and will generally not be accepted.' Sub-categories add further restrictions: 'Mining' (some Category 3 mining towns — owner-occupied max 70% LVR P&I, investment not acceptable) and 'Do not lend' (e.g. islands not connected to mainland Australia or Tasmania by road).",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s29 'Self-Certified (Lo Doc) loans'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Self-Certified (Lo Doc) loans are no longer available.' Existing lo-doc borrowers seeking additional borrowings must convert to a full-doc loan with full supporting documents. This is a hard knock-out: Firstmac is a full-doc-only lender and cannot be used for any alt-doc/self-certified scenario."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 employment table, s10.1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum two (2) years trading in the current business.' Evidence: two most recent financial years' full personal tax returns with ATO notices, plus either two years' full financial statements signed by the accountant or two years' full business tax returns."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 employment table",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only as a named discretionary exception, not as policy: 'Specific Firstmac DLA Discretion - exceptions may be considered on case by case basis where a borrower has only 12 months trading in the current business and 2 years in previous PAYG employment with similar occupation or field.' Do not treat as an entitlement."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "2 most recent consecutive computer-generated payslips, most recent no more than 4 weeks old, showing borrower name, employer name and ABN, current salary and YTD earnings. For LVR > 80%, also 1 month's bank statement showing salary credits from the employer.",
+          "conditions": "'Gross salary, net of superannuation.' Minimum 6 months with the current employer, or if less than 6 months, minimum 12 months continuous in the same occupation and industry. Overall, a minimum of 2 years employment history must be provided. Non-resident and foreign-sourced income is limited to 90%."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "Grouped with full-time and contract in the same policy row: 'Permanent full time / part time / contract'."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG; 'If short term contract, copy of current Contract and / or most recent financial year PAYG Summary may be required.'",
+          "conditions": "Same tenure rule as permanent PAYG. No minimum remaining contract term is published."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'Probation Period — Application may be considered if the borrower has 12 months continuous employment in the same occupation & industry.' The 12 months is same-occupation-and-industry continuity, not 12 months in the current job."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Payslips showing a minimum 6 months YTD income; where YTD is absent or covers less than 6 months, the prior year's 'Tax Ready' ATO income statement (or the prior tax year's last payslip from the current employer showing YTD).",
+          "conditions": "Minimum 6 months with the current employer AND at least 12 months continuous employment in the same occupation and industry. Income is 'Gross salary, net of superannuation, annualised over 48 weeks' — i.e. a 48/52 haircut is applied to the annualised figure even though the headline allowance is 100%."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "As per casual.",
+          "conditions": "'Minimum 12 months with the second employer with 2 jobs held concurrently over that period.' Also annualised over 48 weeks."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Most recent financial year Tax Ready ATO income statement or PAYG Payment Summary.",
+          "conditions": "'Must be regular over minimum of last 12 months and / or a condition of employment.' Firstmac warns: 'Where overtime/allowance is not a condition of employment and / or is not considered regular or typical for the employment type / industry, % adopted may be reduced.' Shift and other allowances sit in the same row."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Most recent financial year Tax Ready ATO income statement or PAYG Payment Summary.",
+          "conditions": "Same policy row as overtime — regular over at least 12 months and/or a condition of employment."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payslips AND the most recent financial year Tax Ready ATO income statement or PAYG Payment Summary.",
+          "conditions": "'100% may be considered for servicing provided it is a permanent part of income.' No explicit minimum history is stated for commission/bonus, though the overtime row's 12-month regularity test sits immediately above it."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payslips AND the most recent financial year Tax Ready ATO income statement or PAYG Payment Summary.",
+          "conditions": "Same row as commission — must be a permanent part of income."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payslips; must be shown as taxable income.",
+          "conditions": "'Must be a permanent part of income.' Where applicable the corresponding car loan/lease payment must be shown as an ongoing liability. Separately, a fully maintained company car adds up to $5,000 pa to gross income where it is part of the employment contract, fully maintained by the employer with no restriction on personal use, evidenced by an employer letter."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Two most recent financial years' full personal tax returns with ATO Tax Assessment Notices, plus either two years' full business financial statements (balance sheet and P&L) signed by the accountant, or two years' full business tax returns. Current ABN registered for GST (unless legitimately exempt).",
+          "conditions": "Income taken is '100% of most recent year's taxable income, or 120% of the previous year's taxable income, whichever is lower'. If income varied by +/- 20% or more over the two years, the reason must be noted. Allowable add-backs to NPBT: directors' income/salaries not already counted; directors' super above the SGC; business depreciation up to a maximum of 20% of assessed NPBT; interest on loans being refinanced; and non-recurring expenses. An individual is self-employed where they receive more than 50% of income from a business in which they are sole trader/partner/director/shareholder AND have management control — which expressly captures owner-operators paying themselves PAYG wages."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "'Net Profit Before Tax (NPBT) is used for serviceability where the Company is the borrower.' Critically: 'Company profit is not relied on for serviceability of a loan in the individual's names' — for an individual borrower only the income actually paid out (wages, dividends, directors' fees) counts, and the company assessment merely tests that it can keep paying it."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "Family, discretionary and unit trusts are acceptable borrowers. Since March 2026: 'Trust borrowers to have a company trustee only; individual trustees not accepted.'"
+        },
+        {
+          "type": "payg_contractor_abn",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed.",
+          "conditions": "Sub-contractors (building and transport) and professional consultants (IT, professional services) are expressly treated as SELF-EMPLOYED, not PAYG — so the 2-year trading requirement and full financials apply."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Valuation report (for the security), or recent rental statements / current lease from the managing agent, or 3 months bank statements identifying rental credits, or the most recent tax return with rental schedule, or a rental appraisal from a local independent agent where the property is being purchased.",
+          "conditions": "80% of confirmed gross rent for a standard residential tenancy; 65% for short-stay/holiday rental (Airbnb, Stayz). Up to 80% for granny-flat rent, subject to specific evidence. 'Where the Borrower is moving out of their current owner-occupied property to board or live with parents' and serviceability relies on the new rent, a commenced (or within-30-days) agent-managed tenancy agreement is required."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.7,
+          "minHistoryMonths": null,
+          "evidence": "Rental statements or current lease from the managing agent, or 3 months bank statements identifying rental credits, or the most recent tax return.",
+          "conditions": "'Up to 70% of Gross rental for commercial property may be considered for serviceability of a Home Loan.' If the actual NET rental (gross less expenses, excluding depreciation and interest, per the tax return) is less than 70% of gross, the lower figure must be used."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": "Two most recent years' tax returns, plus a shareholding or investment statement confirming the investment is still held in the borrower's name.",
+          "conditions": "Dividends 80% (interest received 100%). Use the LOWER investment income figure from the two most recent years' tax returns, provided the current investment value is consistent. 'Franking credits are not to be included in the amount used for serviceability.'"
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "3 months bank statements clearly identifying the source and confirming regular receipt, or a provider statement no older than 3 months.",
+          "conditions": "Self-funded retirees / superannuation — allocated pension or similar, at 100%."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "3 months bank statements identifying the source and confirming regular receipt, or a letter from the paying authority issued within the last 3 months.",
+          "conditions": "Accepted at 100% but ONLY where the payment 'must be considered ongoing for next 5 years at the time of application'."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per age pension.",
+          "conditions": "Named in the 'Government benefits and pensions' row (Disability / Carer's allowance), subject to the 5-year ongoing test. Carer's payment is 'only considered if paid for care of the borrower's spouse or dependent child (including adult child)'."
+        },
+        {
+          "type": "government_carer_payment",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per age pension.",
+          "conditions": "Only where paid for care of the borrower's spouse or dependent child (including an adult child), and ongoing for 5 years."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Centrelink letter stating the annual payment, plus tax return and ATO NOA from the same year.",
+          "conditions": "HARD AGE LIMIT: 'Family Assistance Part A & B - only considered for borrower's dependent children who are 10 years of age or younger' (so the payment is still running in 5 years' time)."
+        },
+        {
+          "type": "government_parenting_payment",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per family tax benefit.",
+          "conditions": "'Single parenting payment - youngest child is 8 years of age or younger; Partnered parenting payment - youngest child is less than 1 year old.'"
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": 0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Expressly unacceptable: 'Government unemployment benefits; youth or student allowances etc' are listed under 'Unacceptable Income type'."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 3,
+          "evidence": "Current letter or notice of assessment from the Child Support Agency showing the amount payable and the names and dates of birth of each eligible child, and/or 3 consecutive months bank statements identifying the payments.",
+          "conditions": "The agreement must be REGISTERED with the Child Support Agency and ongoing for the next 5 years — i.e. dependent children 12 years of age or younger at application. 'Private child support arrangements are not an acceptable income source for serviceability.'"
+        },
+        {
+          "type": "boarder_income",
+          "accepted": false,
+          "shadingPct": 0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Income from boarders' is expressly listed as unacceptable for serviceability."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "Standard income evidence, translated into English and converted to Australian dollars at the current exchange rate.",
+          "conditions": "'Maximum of 90% of overseas sourced income (converted to Australian dollars) may be used for assessing serviceability.' The same 90% cap is stated in the base PAYG row for non-residents and any acceptable foreign-sourced income. Non-resident self-employed, overseas company or business borrowers are not acceptable."
+        }
+      ],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 'Employment and income' and s11.1 'Acceptable sources of income'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Also expressly UNACCEPTABLE for serviceability: government benefits not considered ongoing for 5 years; government unemployment benefits, youth or student allowances; Workers Compensation; income from boarders; and undeclared or cash income that could not be evidenced in tax returns. Parental leave income is accepted at 100% at the lower of the leave income being paid or the return-to-work income, subject to written employer confirmation and inclusion of post-return childcare costs in living expenses."
+    },
+    "notes": {
+      "value": "Salary sacrifice and non-compulsory pre-tax deductions (non-compulsory super, loan repayments, living-expense repayments, social club and union fees) can be added back to taxable income where needed to support serviceability, but any loan commitment associated with the sacrifice must be shown as an ongoing liability. Where salary-sacrifice amounts are not shown as separate line items on an ATO income statement, 53% of the linked reportable fringe benefits amount can be added to gross payments.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s11.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 employment table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 6 months with current employer; or if < 6 months with current employer, minimum 12 months continuous in same occupation & industry.'"
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Explicitly an alternative to the 6-month current-employer test for permanent PAYG, and the route by which probationary applicants are considered."
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same occupation AND industry. For casual it is required IN ADDITION to 6 months with the current employer, not as an alternative."
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 employment table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Conditional, not automatic — requires 12 months continuous employment in the same occupation and industry."
+    },
+    "probationConditions": {
+      "value": "Application may be considered if the borrower has 12 months continuous employment in the same occupation and industry. More generally: 'While consideration may be given to applicants with short term current employment, and / or applicants on probation, the type of employment and reasons for recent employment change needs to be investigated to mitigate and support acceptance.'",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10 employment table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 6 months with current employer, with at least 12 months continuous employment in same occupation & industry' — BOTH tests must be met for casual."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10, s11.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Current ABN to be provided to confirm self-employment (2 years minimum term of registration)' and 'Minimum two (2) years trading in the current business'."
+    },
+    "notes": {
+      "value": "'Minimum of 2 years employment history to be provided.' Employment and income 'should be considered ongoing and stable with no foreseeable changes expected'. Firstmac must satisfy itself the employer is a legitimate business, e.g. by checking the stated ABN on abr.gov.au. Where the borrower is employed by a family-owned or controlled business, additional verification is required (payslips plus 3 months bank statements showing the salary credits — mandatory above 80% LVR — plus the most recent prior-year ATO income statement).",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s10, s10.1.1, s10.1.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "credit": {
+    "maxDefaults": {
+      "value": 0,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6 'Credit History'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Zero FINANCIAL defaults. Quote: 'Firstmac considers borrowers with any history of financial defaults (ie default listed by a credit provider), non-financial defaults that do not meet the criteria below, court writs, petitions, and bankruptcies, to be high risk and the application will be declined.' Firstmac is a clean-credit lender — it belongs on a prime shortlist only."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 1000,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Applies ONLY to non-financial defaults listed by a telco or utility provider. All four conditions must be met: not listed by a financial institution; amount does not exceed $1,000; the credit report is updated to show the default as paid (or the lister evidences payment in full); and a reasonable written explanation is provided by the borrower."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TRUE only in the narrow telco/utility case above (paid, <= $1,000, written explanation). A paid default listed by a FINANCIAL institution is still a decline."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Even the telco/utility concession requires the default to be shown as paid in full."
+    },
+    "judgmentsAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "s9.6 names 'court writs, petitions, and bankruptcies' as automatic declines. Judgments are not separately named, so this is inferred from the same sentence's treatment of court-originated listings — confidence medium."
+    },
+    "writsAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'court writs' are named explicitly as high risk and an automatic decline."
+    },
+    "notes": {
+      "value": "Bankruptcy is an automatic decline with no published rehabilitation period — 'petitions, and bankruptcies' are named in the same decline sentence as financial defaults, so no minimum years-since-discharge is recorded. Credit enquiries: recording the outcome of previous enquiries is not mandatory, but the Equifax report must be reviewed for undisclosed or under-disclosed debts, adverse listings, possible-match files and directorships; for loans requiring LMI, ALL credit enquiries in the last 12 months must be queried against the assets and liabilities statement, with the outcome noted for each. Firstmac's credit reference agency is Equifax. Where an Equifax Ban Period is in place the credit report cannot be obtained and the assessment cannot be completed until the ban ends.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s9.5, s9.6, s9.7",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Houses",
+        "Home units",
+        "Flats",
+        "Apartments",
+        "Town houses and villas",
+        "Vacant land with a signed fixed cost building contract"
+      ],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16 'Security'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Acceptable titles: Torrens, Strata/Community, Common Law, and Crown leasehold provided the lease runs at least 5 years past loan maturity. Properties must be residential use, in good condition, free of defects, well presented and readily saleable, with drinkable water (mains or tank), public all-weather road access, and connection to the national electricity grid. Where a car space or garage is on a separate title, a first mortgage over that title must also be taken."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Income producing properties including rural properties or farms, backpacker hostels or boarding houses",
+        "Properties not connected to a drinkable water supply (mains or tank) and/or the national electricity grid",
+        "Properties with an area in excess of 10 hectares",
+        "Properties designed, zoned or used for non-residential purposes (commercial, industrial, retail) — excluding residential home units in a commercially zoned development; may be considered for SMSF loans",
+        "Properties to be constructed by an owner-builder (in whole or part)",
+        "Properties that are unique or have restrictive usage",
+        "Properties considered remote / bush style / shack",
+        "Properties located on an island without sealed road connection to the mainland",
+        "Security boundary located within 50 metres of High Voltage Transmission lines",
+        "Vacant land without a signed fixed cost building contract",
+        "Conversions (other than warehouse conversions)",
+        "Unit developments held on one title where the number of dwellings exceeds 2",
+        "A strata title home unit with living area under 50sqm in non-metropolitan locations, or under 40sqm in metropolitan locations (excluding balcony and car space)",
+        "Any house or duplex / auxiliary unit with a living area less than 50sqm",
+        "Studio apartment or bed-sitter (no separate bedroom)",
+        "Serviced apartments, dual key apartments and resort style dwellings",
+        "Units in a strata hotel/motel",
+        "Time share arrangements",
+        "Kit homes",
+        "Retirement homes and villages",
+        "NDIS properties",
+        "Leasehold properties other than ACT Crown Land with a term at least 5 years past loan maturity, including leasehold strata title",
+        "Company title / Company Share Title (VIC), Purple Title (WA), Moiety Title (SA)",
+        "Limited Title (any defects)",
+        "Properties with life tenancy",
+        "Properties subject to the Western Lands Act",
+        "Properties adversely impacted by mine subsidence, land slip or contaminated land"
+      ],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4 'Unacceptable securities'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Any exception to unacceptable security requires acceptance by Firstmac Credit.'"
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "50sqm is the NON-METROPOLITAN minimum; the metropolitan minimum is 40sqm. Both exclude balcony and car space. The stricter figure is recorded so the matcher fails safe. Separately, ANY house or duplex/auxiliary unit under 50sqm is unacceptable regardless of location, and high-density units have their own 50sqm (40sqm metro) minimum."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Properties with an area in excess of 10 hectares' are unacceptable security."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.1, s19.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 'Firstmac Acceptable Security Location guide' classifies every postcode 1a/1b/2/3, plus 'Mining' and 'Do not lend' sub-categories and a High Density postcode flag. Unlisted postcodes are non-lend and generally not accepted, though s16.1 allows case-by-case consideration subject to LMI approval. The guide itself was NOT found on a public no-login URL."
+    },
+    "highDensityPolicy": {
+      "value": "A High Density unit is a strata titled home unit or apartment in a development comprising MORE THAN 6 FLOORS that is in a postcode classified as High Density in the Firstmac Acceptable Security Location guide. Requirements: minimum floor size 50sqm (40sqm in metropolitan locations) in living area, excluding balconies and car space; the valuation must include comparable sales outside the development and details of any resales within it; maximum LVR 80%, with additional LVR and concentration restrictions possible on individual developments. Developments of 6 floors or fewer are not high density regardless of postcode.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.5 'High Density apartments / units'",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "highDensityMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Both the >6-floor test AND the High Density postcode test must be met for this cap to apply."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Company title / Company Share Title (VIC); Purple Title (W.A.), or Moiety Title (S.A.)' all unacceptable."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16, s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable EXCEPT ACT Crown Land leasehold where the lease runs at least 5 years past the loan's maturity date. Leasehold strata title is unacceptable in all cases."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Strata Title and Community Title are named as acceptable title types."
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Serviced apartments, dual key apartments and / or Resort style dwellings' and 'Units in a strata hotel/motel' are unacceptable."
+    },
+    "sdaNdisAccepted": {
+      "value": false,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'NDIS properties' listed as unacceptable security."
+    },
+    "notes": {
+      "value": "All loans must be secured by registered first mortgages. Firstmac may impose case-by-case restrictions on the number of properties accepted in any one development, street, suburb or postcode, and may set prudential concentration limits by security type (vertical/horizontal development), geographic location and product. Off-the-plan purchases require a final valuation confirming completion prior to settlement.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s16, s16.2, s16.3, s16.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "maxLoanAmount": {
+      "value": 3000000,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19 'Loan amount', s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Regardless of the number of securities, the total loan amount for a single loan/application or multiple loans/applications sharing any common security, must not exceed $3,000,000.' Separately, 'The maximum exposure to any one borrower is up to $4 million.' Per-security limits are lower outside Category 1a postcodes."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s21 'Loan term'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum loan term available is 30 years.'"
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s20 'Repayment types', s21",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Blended Interest Only and Principal & Interest which allows for an initial interest only period of up to 5 years then amortising over the remaining loan term.' Note the LVR interaction: owner-occupied above 80% LVR must be P&I only, and owner-occupied interest-only is available only up to 80% LVR."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s20, s21",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same 5-year maximum. Investment interest-only is capped at 70% LVR under the sub-80% band, but is available in the '> 80% < 90% with LMI' band."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s28 'Offset sub-account'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "100% offset sub-account, available where the loan product includes it. Converting a variable loan with offset to a fixed rate affects the offset — check the product specification."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s25 'Redraw'",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Up to 90% LVR with LMI above 80%. Vacant land is only acceptable security WITH a signed fixed-cost building contract, and owner-builder construction is unacceptable."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s32 'Bridging loans'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Section 32 sets out bridging criteria, structure, bridge-period and end-debt serviceability, and valuation requirements. The specific parameters were not extracted in this pass."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s31 'Self Managed Super Funds (SMSF)', s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Both residential and commercial security. SMSF with residential security: 70% LVR investment P&I (Cat 1a $2,000,000 / Cat 1b $1,400,000 / Cat 2 $950,000 / Cat 3 $700,000) and 80% LVR investment P&I at lower per-category caps. SMSF with commercial security: up to 80% in Category 1a only. Independent financial advice is required where the property being purchased is more than 10% above market value and SMSF net wealth is $200,000 or less."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s13.2 'Gifted funds'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Gifted funds from an immediate family member (ie parents, grandparents, siblings or children of the borrower) are generally acceptable as part of the borrower's equity.'"
+    },
+    "giftedDepositConditions": {
+      "value": "The borrower must provide a written statement from the person gifting the funds, clearly stating whether the funds are repayable. If repayable, the full terms must be provided and included in serviceability calculations. For loans requiring LMI, evidence that the gifted funds are held in the borrower's account is required. (Since March 2025 a written statement with full details is sufficient — a statutory declaration is no longer required.)",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s13.2 and version history",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": ["First Home Owner Grant (FHOG)"],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s13.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Firstmac are accredited to process FHOG applications.' Requires the fully completed and signed original FHOG application plus certified copies with the completed Customer Identification Checklist. 'Mortgage Insurers may assess FHOG loans on different ratios and guidelines.' The Home Guarantee Scheme is not mentioned in this policy."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s7, s14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Borrowers and guarantors can be individuals, corporations or trusts (family, discretionary and unit trusts only). Excluded: limited liability companies, associations, churches, clubs and minors."
+    },
+    "guarantorConditions": {
+      "value": "Relying wholly or partly on a guarantor's repayment capacity is allowed 'only in clearly justifiable circumstances' — typically asset-protection structures where income has been disseminated to family members or diverted to related entities. The guarantor must be a common law spouse (or, for company loans, a related business whose directors/shareholders are the applicant and/or common law spouse), must obtain independent legal advice, and is assessed in the same way as a primary borrower with the ability to meet the borrower's commitments on default. 'A person must not be included as a borrower or a guarantor to a loan merely to add weight to the loan application e.g. borrower of convenience.' Non-resident guarantors are not acceptable.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s14, s8",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Repayment types: P&I amortising over the term, or blended interest-only (up to 5 years) then amortising. Interest rate options: variable, or fixed for 1, 2, 3, 4 or 5 years. A rate lock is available for a fee; otherwise the fixed rate is set on the settlement date. For loans with LVR > 80%, evidence of funds to complete (bank statements, deposit receipts) must accompany the application. A Certificate of Currency of building insurance noting the first mortgagee's interest is required for each security prior to settlement.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s20, s22, s13.1, s30",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard policy applies."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard policy applies to 'Applicants living and working in Australia who are not Australian or New Zealand citizens, provided at least one of the applicants holds permanent residency status', confirmed by certified passport copy and VEVO check."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard policy applies, including to Australian or New Zealand citizens living and working in New Zealand."
+        },
+        {
+          "status": "temporary_visa_partner_309_820",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Standard policy applies only where the non-PR applicant is the common law spouse of an applicant who is an Australian or New Zealand citizen (or holds PR) and holds an appropriate partner visa. A partner visa holder applying alone is not covered by this concession."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Treated as a 'non-resident borrower' unless living and working in New Zealand. Applicants should be high net worth clients with a strong net asset and cash flow position. Maximum 90% of overseas sourced income (converted to AUD) may be used for serviceability, with evidence translated into English. Cash out / equity release is NOT available. The borrower must hold an Australian bank account for rental credits and loan repayments (an offset sub-account on the new loan suffices). Non-resident self-employed, overseas company or business borrowers, Australian companies or trusts whose directors/trustees live and work overseas, and non-resident guarantors are all unacceptable. The 80% cap follows from s19.2, whose '> 80% < 90%' band expressly excludes non-resident borrowers."
+        }
+      ],
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s8 'Non-resident borrowers', s19.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Ordinary temporary work and student visa holders applying without an Australian/NZ citizen or PR co-applicant are NOT addressed by the standard-policy carve-outs in s8; no rule is recorded for them rather than inferring a decline. Note the July 2026 change: 'Non-resident borrowers - maximum loan amount / TXP aligned with standard policy; LMI not required for LVR > 70% < 80%.'"
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.9,
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s8.1.2, s11.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum of 90% of overseas sourced income (converted to Australian dollars) may be used for assessing serviceability.' The base PAYG income row repeats the 90% cap for non-residents and for any acceptable foreign-sourced income."
+    },
+    "firbRequiredNote": {
+      "value": "Where applicable, written evidence of Foreign Investment Review Board (FIRB) approval is required.",
+      "asAt": "2026-07-28",
+      "sourceUrl": "https://www.firstmac.com.au/media/pdf/brokers/Firstmac-Residential-Lending-Policy.pdf",
+      "sourceTitle": "Firstmac Residential Lending Policy July 2026 — s8.1.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-28",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The assessment rate FLOOR is not published — the policy only says it is 'determined by Firstmac and applied in the serviceability calculator'. Without it the buffer alone cannot reproduce Firstmac's assessment rate. Ask the BDM or read it off the accredited-broker calculator.",
+    "No hard DTI cap is published — only the 8.0:1 Investor Risk Fee trigger, which is a pricing/structure consequence rather than a decline.",
+    "No HEM loading percentage is published (the method is described but not any multiplier).",
+    "No LMI waiver / professional package (e.g. medico 90% no-LMI) is mentioned anywhere in the policy.",
+    "No genuine-savings percentage or minimum holding period is published; the policy only requires evidence of the source of funds to complete, with bank-statement evidence above 80% LVR.",
+    "No maximum applicant age at maturity or general exit-strategy trigger age. An exit strategy is required only for 'Professional Investor' files (DTI >= 8.0, investment-only, LVR > 70%), 'regardless of the age of Borrower'.",
+    "No published minimum credit score or maximum number of credit enquiries (enquiries must be investigated but no numeric limit is given).",
+    "No explicit payday-lending or gambling-transaction policy.",
+    "No maximum employment gap is stated — only that a minimum 2 years of employment history must be provided.",
+    "The Firstmac Acceptable Security Location guide (postcode categories 1a/1b/2/3, Mining, Do-not-lend and High Density flags) drives most LVR and loan-amount outcomes but was not found on a public, no-login URL.",
+    "Section 32 bridging-loan parameters and section 31 SMSF parameters (beyond the LVR matrix) were not extracted in this pass.",
+    "The '> 80% < 90%' LVR bands are exclusive bounds in Firstmac's own wording; whether a file at exactly 90% is acceptable should be confirmed before relying on maxLvr = 90."
+  ]
+}

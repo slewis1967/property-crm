@@ -1,0 +1,79 @@
+{
+  "id": "racq-bank",
+  "name": "RACQ Bank",
+  "legalName": "Members Banking Group Limited, trading as RACQ Bank. On 4 December 2025 RACQ announced the sale of its retail lending and deposit business to Bendigo and Adelaide Bank; completion is expected in the second half of calendar 2026, after which RACQ Bank customers and their loans transfer to Bendigo Bank and RACQ moves to a referral arrangement.",
+  "tier": "mutual_bank",
+  "status": "paused",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "panels": null,
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.racq.com.au/home/home-loans",
+      "sourceTitle": "RACQ Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Up to 40-year loan term for first home buyers' — a first-home-buyer-specific term, not a general maximum. asAt is the date the page was read; the page carries no effective date."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.racq.com.au/home/home-loans",
+      "sourceTitle": "RACQ Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Offset accounts are available on some products (Mortgage Breaker and Mortgage Breaker Investor), not across the range."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.racq.com.au/home/home-loans",
+      "sourceTitle": "RACQ Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Redraw available on variable rate products."
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not stated on the RACQ Bank home loans page. The page does refer to a '5% deposit for eligible loans' but does not name the scheme."
+    },
+    "notes": {
+      "value": "Membership: RACQ Bank home loans come with RACQ membership included ('your RACQ Bank home loan comes with RACQ membership'). Nothing on the public home loans page indicates that pre-existing RACQ membership is a prerequisite to applying — unlike the occupation mutuals, membership appears to be a benefit conferred rather than an eligibility gate. Confirm before relying on it.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.racq.com.au/home/home-loans",
+      "sourceTitle": "RACQ Bank — Home Loans",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2025-12-04",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STATUS IS THE HEADLINE FACT, NOT THE POLICY. On 4 December 2025 RACQ announced the sale of its retail lending and deposit business to Bendigo Bank ($2.7bn of retail loans and $2.5bn of retail deposits as at 30 June 2025, more than 90,000 customers), with completion expected in the second half of calendar 2026 and Bendigo then entering a referral arrangement with RACQ for deposits, savings and home loans. RACQ says 'it's business as usual for RACQ Bank as we continue to focus on supporting our members. This includes opening new bank accounts and helping members with new lending', and 'while we work through the transition to Bendigo Bank, your existing products remain unchanged'. Source: https://www.racq.com.au/news/corporate/racq-announces-sale-of-retail-lending-and-deposit-business-to-bendigo-bank. Status is recorded as 'paused' rather than 'active' because a lender whose entire lending book transfers to another ADI within months should not be ranked as a durable panel option — re-check before any placement, and expect the panel entry to migrate to Bendigo and Adelaide Bank.",
+    "BROKER CHANNEL UNVERIFIED. RACQ Bank did launch into the broker market in March 2023 and trade press in 2026 refers to cashback offers 'through direct and broker channels', but RACQ's own media release URL for the broker launch no longer resolves and no broker portal, accreditation page or broker policy document was found on racq.com.au. Do not assume broker accreditation is still open during the transition — confirm directly.",
+    "NO CREDIT POLICY PUBLISHED. No servicing buffer, floor rate, DTI cap, rent shading, income shading, employment tenure, credit-history, security or residency policy is publicly available.",
+    "Maximum LVR was not established. The home loans page shows rate tiers by LVR (roughly 60-90%) but those are pricing bands, not a policy maximum, so no maxLvr value was recorded.",
+    "Minimum and maximum loan amounts are not published — the key facts sheet page only says 'minimum lending amounts apply' and generates a personalised sheet.",
+    "RACQ Bank's ABN and Australian Credit Licence number were not captured from a first-party source.",
+    "The RACQ Bank Target Market Determinations were not located; they would be the best remaining public source for LVR, loan amounts and eligibility."
+  ]
+}

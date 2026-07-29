@@ -1,0 +1,154 @@
+{
+  "id": "police-bank",
+  "name": "Police Bank",
+  "legalName": "Police Bank Ltd",
+  "tier": "mutual_bank",
+  "status": "research_only",
+  "acl": "240018",
+  "abn": "95 087 650 799",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank Target Market Determination — Goldrate Home Loan, effective 31 October 2025 (PBL21-V1-31102025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Lender's Mortgage Insurance (LMI) may be required and a premium charged for this home loan if the Loan to Value Ratio (LVR) exceeds 80%.' The Police Bank home loans page states the same: maximum 80% LVR for standard loans, above which LMI is required, with the exception of the Australian Government 5% Deposit Scheme."
+    },
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the stated deposit requirement: the product is designed for borrowers who 'Have a minimum of 5% deposit for owner occupied or 10% for investment to contribute towards their purchase, accepting Lenders Mortgage Insurance will be applicable and capitalised onto the base loan amount'. Medium confidence — the TMD expresses this as a minimum deposit, not as a maximum LVR, and LMI is capitalised on top of the base loan amount. Separately, Police Bank's First Home Loan is described on the website as supporting 'up to 98% LVR'."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the 10% minimum deposit for investment stated in the same target-market bullet. Medium confidence for the same reason as the owner-occupied figure."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Lenders Mortgage Insurance will be applicable and capitalised onto the base loan amount'."
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025 (Variable rate key attributes)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Interest Only repayments available (Maximum 5 years term).' The Police Bank home loans page states the same maximum."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The 5-year maximum IO term is stated under the variable-rate key attributes without distinguishing owner occupied from investment; the product covers both purposes."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Offset facility, available on Principal & Interest home loans only' — i.e. not on interest-only loans. The home loans page adds that offset is available on variable and P&I fixed loans."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw facility available. On fixed rates, additional repayments are capped at $9,999 per calendar year of the fixed term, with redraw access allowed for those additional repayments. The website states variable-rate redraw up to $50,000."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Available for purchase, refinance, home improvements or construction for owner occupier, investment or other personal purposes.'"
+    },
+    "governmentSchemesSupported": {
+      "value": ["Australian Government 5% Deposit Scheme (Housing Australia)", "ACT Land Rent Scheme (owner occupied only)"],
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025; Police Bank Home Loans page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Under the Australian Government 5% Deposit Scheme, Police Bank can check eligibility for a 5% deposit (2% minimum for single parents or legal guardians) with no LMI. The Land Rent Scheme is an ACT initiative, owner occupied only. Police Bank also markets a dedicated First Home Loan and an Essential Workers Home Loan."
+    },
+    "notes": {
+      "value": "MEMBERSHIP IS A HARD KNOCK-OUT. The TMD's key eligibility requirements are: 'An existing, or becoming a member of Police Bank'; 'Be a permanent resident of Australia and 18 years of age or over'; 'Must meet the Bank's credit criteria'. The excluded class of consumers is expressly 'individuals who are not members of Police Bank'. Membership eligibility per the Police Bank home loans page: a current or former member of a State, Territory or Federal police force; a family member of an eligible member; an employee or contractor working in law enforcement or related services; or a member of various partner organisations and government agencies. There is no membership fee.",
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025 (product description and excluded class of consumers); membership criteria from https://www.policebank.com.au/loans/home-loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Police Value product is narrower still — designed for 'current or retired employees who are members of an Australian Police Force or Police organisation uniformed or civilian'."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": true, "maxLvrPct": null, "conditions": "Must be a member of Police Bank and 18 years of age or over." },
+        { "status": "permanent_resident", "accepted": true, "maxLvrPct": null, "conditions": "The TMD's key eligibility requirement is 'Be a permanent resident of Australia and 18 years of age or over'." },
+        { "status": "nz_citizen_444", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "temporary_visa_work", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the requirement to be a permanent resident of Australia." },
+        { "status": "temporary_visa_student", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the permanent-residency requirement." },
+        { "status": "temporary_visa_partner_309_820", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the permanent-residency requirement." },
+        { "status": "expat_citizen_overseas", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "foreign_non_resident", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the permanent-residency requirement." }
+      ],
+      "asAt": "2025-10-31",
+      "sourceUrl": "https://www.policebank.com.au/wp-content/uploads/2025/10/PBL21_Goldrate-Home-Loan-TMD-Effective-31-Oct-2025.pdf",
+      "sourceTitle": "Police Bank TMD — Goldrate Home Loan, effective 31 October 2025 (key eligibility requirements)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The temporary-visa exclusions are read directly off the stated permanent-residency requirement rather than from a separate visa policy."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-10-31",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "DIRECT-ONLY LENDER — DO NOT PUT ON A BROKER PANEL. The Goldrate Home Loan TMD (effective 31 October 2025) lists the distribution channels as: 'Online through the Bank's Website', 'In-store retail branch network' and 'Relationship Banking Team'. Mortgage brokers and third-party distributors are NOT listed. No broker portal, broker accreditation page or broker policy document exists on policebank.com.au. Status is therefore 'research_only'.",
+    "MEMBERSHIP KNOCK-OUT: membership is restricted to current or former police (State, Territory or Federal), their family members, employees or contractors in law enforcement and related services, and members of partner organisations/government agencies. Non-members are an expressly excluded class of consumers.",
+    "No credit policy is published. There is no public servicing buffer, floor rate, DTI cap, rent shading, income-type shading, employment tenure, credit-history or security policy.",
+    "Maximum LVR figures are inferred from the TMD's stated minimum deposits (5% owner occupied / 10% investment) rather than stated as LVR caps — recorded at medium confidence.",
+    "The website states the First Home Loan supports 'up to 98% LVR'; the underlying product TMD for that loan (PBL29, effective 31 October 2025) was not read.",
+    "Minimum and maximum loan amounts, maximum loan term and maximum age at maturity are not published.",
+    "Police Bank markets an Essential Workers Home Loan and an overtime-friendly assessment for police pay and allowances ('they understand police pay and allowances, such as overtime, and consider these when you apply'), but no shading percentage is published."
+  ]
+}

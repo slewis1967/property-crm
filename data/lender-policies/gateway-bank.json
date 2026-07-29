@@ -1,0 +1,76 @@
+{
+  "id": "gateway-bank",
+  "name": "Gateway Bank",
+  "legalName": "Gateway Bank Ltd (formerly Gateway Credit Union)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.gatewaybank.com.au/broker/",
+  "policyDocUrl": "https://www.gatewaybank.com.au/media/cjvnobqo/gateway_interest_rates_broker.pdf",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The broker rate card bands owner-occupier pricing up to a top tier labelled only '>85% LVR' with no stated ceiling, and Gateway publishes no credit policy guide. gatewaybank.com.au's robots.txt disallows automated crawling (User-agent: ClaudeBot, Disallow: /) so the broker site pages were not read."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The broker rate card's highest investment band is '85% - 90% LVR', which suggests but does not state a 90% ceiling."
+    },
+    "notes": {
+      "value": "Gateway's broker interest rate schedule (effective 2 June 2026) prices by LVR band. Owner-occupier bands: up to 50%, >50-60%, >60-70%, >70-75%, >75-80%, >80-85%, >85%. Fixed rates for 1, 2 and 3 years are quoted 'up to 75% LVR'. Investment bands: up to 50%, >50-60%, >60-70%, >70-80%, >80-85%, 85-90%. Product families are Premium Package, Low Rate Essentials, Standard Home Loans, Land Loans, Green Home Loan, Green Plus Home Loan, Construction Loan and EquitiSmart Line of Credit. Comparison rates are calculated on a $150,000 loan over 25 years. These are pricing bands, not stated policy maximums.",
+      "asAt": "2026-06-02",
+      "sourceUrl": "https://www.gatewaybank.com.au/media/cjvnobqo/gateway_interest_rates_broker.pdf",
+      "sourceTitle": "Gateway Bank Interest Rates: Loans (broker schedule), effective 2 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "Gateway Bank runs a broker channel with a dedicated broker team and a broker enquiry page at gatewaybank.com.au/broker, and publishes a broker-specific interest rate schedule. It also lends commercially and lodges commercial deals through NextGen ApplyOnline Commercial. The broker rate schedule states: \"Interest rates quoted are for new lending only. Existing borrowers should contact Gateway to discuss their requirements. Applications for finance are subject our standard credit assessment criteria.\" The Green Home Loan and Green Plus Home Loan are 'not eligible for borrowers under The Home Guarantee Scheme'.",
+      "asAt": "2026-06-02",
+      "sourceUrl": "https://www.gatewaybank.com.au/media/cjvnobqo/gateway_interest_rates_broker.pdf",
+      "sourceTitle": "Gateway Bank Interest Rates: Loans (broker schedule), effective 2 June 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The commercial/NextGen detail comes from trade coverage rather than the rate schedule and is context only."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-06-02",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "gatewaybank.com.au's robots.txt explicitly disallows automated crawling (User-agent: ClaudeBot / Disallow: /, plus Content-Signal: ai-train=no). Only the broker interest rate schedule PDF surfaced in search results was used. The broker landing page, commercial mortgage page and any lending guide were NOT read, and this record is thin as a direct result — it needs a manual pass by a person.",
+    "No credit policy guide or 'policy at a glance' document was found in public search.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate.",
+    "No published maximum LVR (owner-occupied, investment or without LMI), LMI provider or LMI waiver professions.",
+    "No published minimum or maximum loan amount, or maximum loan term.",
+    "No published income, employment tenure, credit history, security or residency policy.",
+    "ABN and Australian Credit Licence number were not read from a public source and are left null.",
+    "Aggregator panel membership not established."
+  ]
+}

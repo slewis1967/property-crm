@@ -1,0 +1,46 @@
+{
+  "id": "advantedge",
+  "name": "Advantedge",
+  "legalName": "Advantedge Financial Services Pty Ltd",
+  "tier": "white_label",
+  "status": "withdrawn",
+  "acl": "391202",
+  "abn": null,
+  "brokerSiteUrl": "https://www.advantedge.com.au/home/brokers",
+  "policyDocUrl": "https://www.advantedge.com.au/content/dam/advantedge/documents/advantedge-announcement-faqs-broker.pdf",
+  "funder": "National Australia Bank Limited (NAB) ACN 004 044 937, AFSL and Australian Credit Licence 230686, through its agent and credit representative AFSH Nominees Pty Ltd (AFSH) ACN 143 937 437, Australian Credit Licence 391192 and credit representative 567514. Advantedge Financial Services Pty Ltd ACN 130 012 930, ACL 391202, is the program loan servicer. Each of AFSH and Advantedge are members of the NAB Group. NAB replaced AFSH Nominees as the credit provider on 11 June 2025.",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "Advantedge has stopped accepting new home loan applications. 'Advantedge has now stopped accepting new home loan applications. Servicing activities and variation requests (except for adding new borrowers) will continue until advised.' All existing Advantedge home loans migrate to NAB Tailored Home Loans over the weekend of 17-18 October 2026, with customers able to access their NAB home loan from Monday 19 October 2026. Each existing loan split becomes its own NAB Tailored Home Loan account with its own BSB and account number, and the monthly service fee will not be charged after migration.",
+      "asAt": "2026-07-27",
+      "sourceUrl": "https://www.advantedge.com.au/content/dam/advantedge/documents/advantedge-announcement-faqs-broker.pdf",
+      "sourceTitle": "Advantedge Migration — Broker FAQs (PDF updated 27 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Closure statement quoted from https://www.advantedge.com.au/home/brokers/close-transition; migration dates from the Broker FAQ."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-27",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "ADVANTEDGE IS CLOSED TO NEW BUSINESS — this record is deliberately empty of policy. Status is 'withdrawn'. It must never return a match, and no LVR, servicing, income or credit values have been written, because writing them would put a dead lender into a live shortlist.",
+    "Timeline, all lender-sourced: 11 June 2025 — the NAB Group announced all existing Advantedge home loans will be migrated to NAB branded home loans in late 2026, and NAB replaced AFSH Nominees as the credit provider (advantedge.com.au/home/brokers/close-transition). 'Advantedge has now stopped accepting new home loan applications' (same page, read 2026-07-29). 17-18 October 2026 — migration weekend to NAB Tailored Home Loans; 19 October 2026 — customer access (Broker FAQ, PDF dated 27 July 2026).",
+    "Advantedge never published a credit policy guide publicly. The only documents on the broker site are a 'Preferred Lenders guide' dated October 2020 and a supporting-document checklist; policy sat inside aggregator CRMs. There is therefore no historical policy to record either.",
+    "Downstream impact worth carrying into other records: Advantedge funded several aggregator white-label products, including AFG Home Loans Edge and Connective Essentials. Those products' funding arrangements need re-checking rather than assuming they still run NAB/Advantedge policy."
+  ]
+}

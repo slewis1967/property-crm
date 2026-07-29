@@ -1,0 +1,44 @@
+{
+  "id": "illawarra-credit-union",
+  "name": "Illawarra Credit Union",
+  "legalName": "Brand of Community First Credit Union Limited (ABN 80 087 649 938, AFSL/ACL 231204); brand retired 1 April 2026",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": "231204",
+  "abn": "80 087 649 938",
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": "Community First Credit Union Limited, operating as Community First Bank",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "Illawarra Credit Union no longer exists as a separate lender. Community First Bank states: \"From 1 April 2026, the Illawarra Credit Union brand will transition to Community First Bank - this is final step in our member-approved merger\" and \"From 1 April 2026, the Illawarra Credit Union brand will be formally retired and we will operate under one unified brand - Community First Bank.\" The merger itself was approved at special general meetings in late 2024 and the entities were combined during 2025. From 1 April 2026 illawarracu.com.au redirects to communityfirst.com.au (confirmed live). Assess any new lending against the 'community-first-bank' record.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://communityfirst.com.au/news/illawarra-credit-union-is-becoming-community-first-bank/",
+      "sourceTitle": "Community First Bank — Illawarra Credit Union is becoming Community First Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The same page notes that Community First Credit Union Limited operates the brands Illawarra Credit Union, Community First Bank and Easy Street Financial Services under one banking licence."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-04-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "This lender no longer exists as a distinct brand — status is 'withdrawn'. The record exists only so the id resolves and nothing is matched to it.",
+    "No Illawarra Credit Union credit policy or broker material remains accessible; illawarracu.com.au redirects to communityfirst.com.au.",
+    "All policy fields are deliberately empty. Do not populate this record — populate 'community-first-bank' instead. Note that the Community First credit policy still names 'ICU' in one place: paid defaults listed by Community First or ICU are unacceptable."
+  ]
+}

@@ -1,0 +1,555 @@
+{
+  "id": "granite-home-loans",
+  "name": "Granite Home Loans",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://broker.granitehomeloans.com.au/",
+  "policyDocUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+  "funder": "ColCap — Granite states it was acquired 100% by ColCap on 1 November 2021 and is 'Funded only from ColCap' (Granite intro & product overview deck, granitehomeloans.com.au HubSpot-hosted PDF, created 2023-07-10). The Non-Resident / Expat program is 'powered by AAA Financial Corporation (AAA)'.",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the public Granite broker portal (products pages, FAQs) or the consumer site. Servicing calculator links are behind the broker portal's product pages."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the public broker portal."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'80% of rental used (70% for holiday accommodation) (Investment Only)'. Separately, for NDIS/SDA securities '80% of nett SDA evidenced rental income is accepted in servicing'. Live web page with no publication date — as-at is the date accessed."
+    },
+    "depreciationAddBack": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Yes. You can addback depreciation, capped to 20% of the client's taxable income.' Live page, no publication date — as-at is the date accessed."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No maximum DTI is published. DTI appears only in the notional-rent rule: 'Where evidence is provided that the customer is living rent free, then the minimal rent expense can be removed where the DTI is < 6.00%' (the '%' there appears to be a typo for a DTI multiple of 6.00)."
+    },
+    "notes": {
+      "value": "Notional Rent is $650 p/m per individual. Where evidence is provided that the customer is living rent free, the minimal rent expense can be removed where the DTI is < 6.00. SMSF servicing is done wholly within the SMSF with no external servicing on guarantors, calculated on confirmed SMSF contributions over the last two years plus rental income and SMSF outgoings. Granite has no liquidity or net asset test at 80% LVR; residential at 90% LVR requires 5% liquidity.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum LVR: 95% (including LMI)'. FAQs confirm the 90-95% bands are 'only permitted for established owner-occupied properties'."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No explicit investment ceiling is published. The FAQ says of 90-95% LVR: 'No, these LVR bands are only permitted for established owner-occupied properties', which caps investment below 90%, and the Lender Paid LMI page offers 85% for 'No LMI Owner Occupied/Investor'. The exact investment maximum is not stated."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "LMI is applied when the loan exceeds 80% LVR. Excludes the Lender Paid LMI products (Professional 95%, Essential Worker 90%, 85% OO/Investor), which are recorded as waivers."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page, Cash Out / Equity Release",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tiered, not a single cap: '>90% LVR (cash out not available)'; '>80% and <=90% LVR (limited to 20% of security value)'; '<=80% LVR (unlimited)'. 90 is the outer ceiling at which any cash out is possible; unlimited cash out requires <=80%."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "LMI is 'Payable at settlement or capitalised within the product'."
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Medical",
+        "Allied Health",
+        "Legal",
+        "Accountants",
+        "Auditors",
+        "Financial Planners",
+        "Engineers",
+        "IT",
+        "Senior Managers and Executives",
+        "State or Federal police officer (Essential Worker 90%)",
+        "Permanent full time firefighter (Essential Worker 90%)",
+        "Fully qualified paramedic (Essential Worker 90%)",
+        "Primary and secondary school teacher (Essential Worker 90%)",
+        "Registered nurse (Essential Worker 90%)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/lender-paid-lmi/",
+      "sourceTitle": "Granite Broker Portal — Lender Paid LMI product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Two tiers. Professional 95% requires a degree-qualified primary borrower (by income) in medical/allied health, legal, accounting, engineering, IT, senior manager/executive — 'Metro and Inner-City Location only'. Essential Worker 90% covers the first-responder/nurse/teacher list. FAQs add: IT professionals are an exception to the degree requirement; overseas qualifications accepted with an English translation; Lender Paid LMI is P&I only and established properties only."
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/lender-paid-lmi/",
+      "sourceTitle": "Granite Broker Portal — Lender Paid LMI product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Professional product: 'Maximum LVR: 95%', 'LMI: Paid by Lender', 'No genuine savings required, where client meets criteria', max term 30 years, 'Metro and Inner-City Location only'. Essential Worker product caps at 90% with $5,000 genuine savings. A third tier gives lender-paid LMI to 85% for owner occupied or investor."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": null,
+          "conditions": "'12 months, then annualise this over 46 weeks.'"
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": null,
+          "conditions": "Second-job income requires 12 months' tenure before it is accepted for servicing."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Two years' evidence.",
+          "conditions": "'Yes, must be demonstrated over 2 yrs, then we will take the lower of the 2 year's income.'"
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Two years' evidence.",
+          "conditions": "'Yes, must be demonstrated over 2 yrs, then we will take the lower of the 2 year's income.'"
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "'You only need to show us either one year's profitable financials/ tax returns OR a personal bank statement showing regular wages/ salary/ dividend deposits.'",
+          "conditions": "One year's profitable financials is sufficient. Depreciation may be added back, capped at 20% of the client's taxable income."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "One year's profitable financials/tax returns, or a personal bank statement showing regular wages/salary/dividend deposits.",
+          "conditions": "As for sole traders. Granite describes itself as 'a full-doc lender' (asked about low-doc commercial: 'No, we are a full-doc lender')."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Lease or agent rental estimate; where an AVM is used on an investment property Granite may require a second agent quote or a paid short-form valuation to confirm the rental figure.",
+          "conditions": "'80% of rental used (70% for holiday accommodation) (Investment Only)'."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs and Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rental shading is sourced from the Standard product page (https://broker.granitehomeloans.com.au/products/standard/); the remainder from the FAQs. Live pages with no publication date — as-at is the date accessed."
+    },
+    "selfEmployedMinYears": {
+      "value": 1,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'You only need to show us either one year's profitable financials/ tax returns OR a personal bank statement showing regular wages/ salary/ dividend deposits.'"
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "altDocAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Asked whether low-doc commercial is available, Granite answers 'No, we are a full-doc lender.' The statement is made in a commercial context but is framed as a whole-of-lender description; a personal bank statement showing regular salary/dividend credits is nonetheless accepted in place of financials for self-employed borrowers."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/",
+      "sourceTitle": "Granite Broker Portal — Products (Easy Refi criteria)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Stated for the Standard Easy Refi product: 'PAYG: In current role minimum of 6 months'. Granite does not publish a general PAYG tenure minimum across all products."
+    },
+    "minMonthsCasual": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'12 months, then annualise this over 46 weeks.'"
+    },
+    "probationConditions": {
+      "value": "'We require clients to be off probation for SMSF loans.' No general probation rule is published for the non-SMSF products.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/",
+      "sourceTitle": "Granite Broker Portal — Products (Standard Easy Refi criteria)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Stated for the Standard Easy Refi product only: 'Self Employed: Minimum 2 years ABN, (must be paying themselves regular salary credits or dividends - evidenced by bank statements)'. Not published as a general requirement, and sits alongside the FAQ that one year's financials is enough."
+    }
+  },
+
+  "credit": {
+    "minCreditScore": {
+      "value": 600,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Stated in answer to whether guarantors are credit checked: 'Yes. A minimum fully comprehensive credit score of 600 is required.' It is not clear from the public FAQ whether the same 600 floor applies to borrowers."
+    },
+    "notes": {
+      "value": "The Non-Resident / Foreign Income program requires 'Clear credit history'. No public policy is published on defaults, judgments, writs, bankruptcy, arrears, enquiries, payday lending or gambling.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://granitehomeloans.com.au/non-resident/",
+      "sourceTitle": "Granite Home Loans — Non-Resident product page",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'We can accept a strata unit with an internal living space of 30 square meters, excluding car space, balcony, and storage areas, if it is a proper one-bedroom (with a window in the bedroom).' The 2023 product overview deck stated a 40m2 minimum with no studio apartments for SMSF security — the SMSF minimum may differ."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to 10 hectares, if it has a liveable dwelling and is not used for farming.'"
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Granite publishes a Postcode Matrix with Cat 1 (Metro) and Cat 2 (Non-Metro) locations; regional lending is accepted subject to it. The matrix itself is on the broker portal — no public direct URL located."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'No, only freehold, strata and ACT crown leasehold.'"
+    },
+    "leaseholdAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only ACT crown leasehold is named: 'only freehold, strata and ACT crown leasehold'."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "New / off-the-plan properties: 'Yes, we do. Please submit the loan only when close to completion.'"
+    },
+    "sdaNdisAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/",
+      "sourceTitle": "Granite Broker Portal — Products / product overview",
+      "confidence": "high",
+      "status": "verified",
+      "note": "NDIS (SDA) and Co-Living securities available to 90% LVR for both construction and established compliant properties (Lender Protection Fees apply); 80% of net SDA evidenced rental income accepted in servicing; specialised long-form valuation required."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Vacant land ('No, but we can fund construction loans')",
+        "Company title"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Granite does not publish a full unacceptable-security list on the public portal; these are the only two explicit declines found."
+    },
+    "notes": {
+      "value": "Defence Force housing is accepted. Valuations are valid for 120 days from the date of inspection; AVMs ordered from Granite's system are accepted, but for an investment property Granite may require a second agent rental quote or a paid short-form valuation to confirm the rent.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum loan amount: $50,000'."
+    },
+    "maxLoanAmount": {
+      "value": 3500000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum loan amount: $3,500,000'. FAQs qualify this as '$3.5m for a Metro location'. The Non-Resident program caps at $3,000,000; SMSF commercial also $3.5m."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum loan term: 30 years' (FAQs: '360 months'). NDIS/Co-Living max term 25 years; SMSF max 359 months depending on the age of the eldest member."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Offset facility available'. FAQs: optional, must be requested upfront via the tick box under Product Features in the LoanApp submission."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/standard/",
+      "sourceTitle": "Granite Broker Portal — Standard product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Optional redraw facilities'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/",
+      "sourceTitle": "Granite Broker Portal — Products",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Construction product listed at up to 95% LVR with 15 months interest only and a Construction Risk Fee above 70% LVR. Lender Paid LMI is not available on construction."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/products/smsf/",
+      "sourceTitle": "Granite Broker Portal — SMSF product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Up to 90% LVR on residential purchases, 80% on commercial purchases and on refinances; corporate trustees only; no liquidity or minimum net-asset requirement at 80% LVR (5% liquidity at 90% residential); no external servicing on guarantors."
+    },
+    "maxAgeAtMaturity": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'We can consider a maximum of 80 years of age at the end of the loan term.' For the Standard Easy Refi, borrowers must be under 60, and over 55 requires an exit strategy with no extension of term or IO term."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Granite states genuine savings as dollar amounts / waivers per product rather than a percentage: Professional 95% — 'No genuine savings required, where client meets criteria'; Essential Worker 90% — 'Only need $5,000 in genuine savings, where client meets criteria'. No general percentage requirement is published for the Standard product."
+    },
+    "notes": {
+      "value": "Fees: valuation at cost, $275 legal fee, $295 annual investment fee (no annual fee for owner-occupied), $1,500 discharge fee. Pre-approvals valid up to 90 days. Additional repayments unlimited on variable splits, $20,000 p.a. on fixed splits. All applications must be lodged via LoanApp; residential valuations ordered via PropertyHub. Standard Easy Refi: dollar-for-dollar refinance plus costs up to $10,000, LVR <= 80%, existing loan settled over 12 months ago with clean conduct, variable only, and the Granite rate must be lower.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://broker.granitehomeloans.com.au/resources/faqs/",
+      "sourceTitle": "Granite Broker Portal — FAQs and Products pages",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "temporary_visa_work",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "'Yes, up to 80% LVR where they come from an approved country of origin and have at least six months remaining on their visa.'"
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": 90,
+          "conditions": "Granite Non-Resident / Foreign Income program (powered by AAA Financial Corporation): 'Up to 90% LVR Residential', loans up to a maximum of $3,000,000, purchase or refinance and house-and-land contract construction, 'All income types', 'Clear credit history'."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 90,
+          "conditions": "The Non-Resident program covers 'Non-Resident, Australian Citizens and acceptable VISA holders' up to 90% LVR residential."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://granitehomeloans.com.au/non-resident/",
+      "sourceTitle": "Granite Home Loans — Non-Resident & Foreign Income product page (temporary-resident LVR from the Broker Portal FAQs)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Australian citizen / permanent resident / NZ 444 terms are not separately published; they are covered by the Standard product. Live pages with no publication date — as-at is the date accessed."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the public Non-Resident page. Third-party summaries quote a 20% exchange-rate shading but no lender source states it."
+    },
+    "acceptedForeignCurrencies": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Granite publishes acceptable income COUNTRIES but not currencies. Countries listed: Australia, Brazil, Brunei, Canada, China, France, Germany, Hong Kong, India, Indonesia, Japan, Macau, Malaysia, Mexico, New Zealand, Philippines, Qatar, Saudi Arabia, Singapore, South Africa, South Korea, Switzerland, Taiwan, United Kingdom, United Arab Emirates, United States, Vietnam, and 'any other European Commission countries' (https://granitehomeloans.com.au/non-resident/)."
+    },
+    "firbRequiredNote": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "FIRB is not mentioned on the public Non-Resident page."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No assessment buffer, floor rate, DTI cap, HEM basis or credit-card assessment rate is published anywhere on the public Granite broker portal — the servicing calculator itself sits behind the product pages.",
+    "Granite's broker portal pages carry no publication or 'last updated' date; every as-at here is the date the live page was accessed (2026-07-29).",
+    "Legal entity name, ABN and Australian Credit Licence number were not located on the public site.",
+    "Investment maximum LVR is not published as a number — only that 90-95% is owner-occupied-only and that lender-paid LMI reaches 85% for investors.",
+    "No credit-history policy (defaults, arrears, bankruptcy, judgments, enquiries) is published; the only credit figure found is a minimum comprehensive score of 600, stated in a guarantor context.",
+    "The Granite Postcode Matrix (Cat 1 Metro / Cat 2 Non-Metro) is referenced repeatedly but is only available inside the broker portal — no public URL found.",
+    "Non-resident foreign-income shading percentage and accepted currencies are not published; only a list of acceptable income countries.",
+    "The Professional 95% / Essential Worker 90% maximum loan amounts by postcode category ($1M/$1.35M/$850K/$1M) appear only in a 2023 HubSpot-hosted product deck, which is three years old and marked 'Private and Confidential' — they have deliberately NOT been recorded as facts here. The same deck's 28-year maximum term is contradicted by the current broker portal (30 years)."
+  ]
+}

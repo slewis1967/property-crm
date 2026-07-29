@@ -1,0 +1,68 @@
+{
+  "id": "adelaide-bank",
+  "name": "Adelaide Bank",
+  "legalName": "Bendigo and Adelaide Bank Limited",
+  "tier": "regional_bank",
+  "status": "withdrawn",
+  "acl": "237879",
+  "abn": "11 068 049 178",
+  "brokerSiteUrl": "https://www.brokers.bendigobank.com.au/",
+  "policyDocUrl": null,
+  "funder": "Bendigo and Adelaide Bank Limited",
+  "panels": null,
+
+  "servicing": {
+    "notes": {
+      "value": "No Adelaide Bank servicing policy is published any more. The Adelaide Bank broker brand has been retired and the third-party channel now writes Bendigo Bank branded home loans, assessed with the Bendigo Bank broker serviceability calculator (see the bendigo-bank record for buffer, floor, DTI, rental shading and credit card assessment figures).",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/",
+      "sourceTitle": "Bendigo Brokers - broker site that https://www.brokers.adelaidebank.com.au/ now redirects to",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verified live on 2026-07-29: https://www.brokers.adelaidebank.com.au/ returns HTTP 301 Moved Permanently to https://www.brokers.bendigobank.com.au/, whose page title is 'Home | Bendigo Brokers' and which carries an 'Adelaide Bank customer migration' quick link."
+    }
+  },
+
+  "lvr": {
+    "notes": {
+      "value": "No Adelaide Bank LVR matrix is published. The retired Adelaide Bank broker product set (SmartFit, SmartFix, SmartSaver) has been replaced in the third-party channel by the Bendigo Flex Home Loan (up to 95% owner-occupied P&I) and Bendigo Easy Home Loan (up to 80%).",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/",
+      "sourceTitle": "Bendigo Brokers - Our home loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Bendigo Brokers home page lists only the Flex Home Loan, Fixed Rate Home Loan and Easy Home Loan. No Adelaide Bank product appears."
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "Adelaide Bank home loan products are no longer available to brokers. Bendigo retired the Adelaide Bank brand for the broker channel, making Bendigo Bank the sole brand available to the third party channel, and brokers were expected to be writing loans with Bendigo Bank rather than Adelaide Bank from Q1 2025. Bendigo Bank Broker itself launched on 28 November 2023, initially through Finsure and then nationally through 2024. Consumer-facing Adelaide Bank product pages (adelaidebank.com.au/products/residential-loans/) now redirect to bendigobank.com.au/welcome-to-bendigo-bank/.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mpamag.com/au/mortgage-industry/market-updates/bendigo-bank-letting-go-of-adelaide-bank-brand/491743",
+      "sourceTitle": "Mortgage Professional Australia - Bendigo Bank letting go of Adelaide Bank brand",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The retirement itself is corroborated by primary evidence checked live on 2026-07-29: brokers.adelaidebank.com.au 301-redirects to brokers.bendigobank.com.au, and adelaidebank.com.au residential loan pages redirect to bendigobank.com.au. The launch date of 28 November 2023 comes from Bendigo's own media release at https://www.bendigobank.com.au/media-centre/bendigo-bank-broker-launches/. The trade-press article is used only for the timing of the brand retirement, not for any policy value."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Adelaide Bank should be treated as WITHDRAWN from broker distribution, not as a live panel option - the brand has been retired for the third-party channel and every Adelaide Bank broker URL now redirects to Bendigo Bank.",
+    "No policy fields were populated because no Adelaide Bank credit policy, product guide, LVR matrix or serviceability calculator remains published anywhere public.",
+    "The legal entity (Bendigo and Adelaide Bank Limited, ACL 237879) is unchanged and still services existing Adelaide Bank customers through a migration program - so existing Adelaide Bank loans persist even though new broker-originated lending does not.",
+    "For any live scenario that previously would have gone to Adelaide Bank, use the bendigo-bank record instead.",
+    "The exact date the Adelaide Bank broker brand closed to new business could not be sourced from a Bendigo-published page; the only dated statements found were in trade press."
+  ]
+}

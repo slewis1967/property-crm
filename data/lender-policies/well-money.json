@@ -1,0 +1,197 @@
+{
+  "id": "well-money",
+  "name": "Well Money",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://wellmoney.com.au/target-market-determinations/",
+  "funder": "Well Nigh Capital Funding No. 1 Pty Ltd (ABN 17 603 911 995)",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the full Well Money TMD set (Ultimate, Next Step, Flex, Launchpad, SMSF, Expat) and the public rates/product pages — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Full-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime Full Doc Target Market Determination, dated 10 May 2024 (Next Step / Launchpad products)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan to Valuation Ratio (LVR): 95% including LMI.\" The Ultimate product caps at 80% and Flex at 85%."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 85,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Full-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime Full Doc Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Lenders Mortgage Insurance applies if LVR is above 85%.\""
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Full-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime Full Doc Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 95% ceiling is stated as \"including LMI\", i.e. the premium sits inside the maximum LVR."
+    },
+    "notes": {
+      "value": "Maximum LVR varies materially by product: Ultimate (Ultra Prime Essentials) 80%; Flex 85%; Flex Lo Doc / Next Step Lo Doc (\"Mere Doc\") 85%; Next Step / Launchpad (Prime Full Doc) 95% including LMI; Expat 80%.",
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/target-market-determinations/",
+      "sourceTitle": "Well Money — Target Market Determinations index",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Lo-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime — Mere Doc Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Lo Doc (\"Mere Doc\") variants are published for both the Next Step/Launchpad and Flex product families."
+    },
+    "altDocMaxLvrPct": {
+      "value": 85,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Lo-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime — Mere Doc Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan to Valuation Ratio (LVR): 85%\" on the Mere Doc product."
+    },
+    "notes": {
+      "value": "The Ultimate (Ultra Prime Essentials) product is stated to be unsuitable for consumers who \"are self-employed other than medical professionals\" — self-employed applicants outside that carve-out are directed to the other product families.",
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Ultra-Prime-May-2024.pdf",
+      "sourceTitle": "Well Nigh Ultra Prime (Essentials) Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-FLEX-Full-Doc-May2024.pdf",
+      "sourceTitle": "Well Nigh Flex Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$50,000 on Flex, Prime Full Doc, Mere Doc and Expat. The Ultimate product has a higher $150,000 minimum."
+    },
+    "maxLoanAmount": {
+      "value": 2000000,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-FLEX-Full-Doc-May2024.pdf",
+      "sourceTitle": "Well Nigh Flex Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Flex: \"Maximum loan amount $2,000,000 ($1,500,000 for SMSF loan)\". Prime Full Doc and Ultimate cap at $1,000,000; Mere Doc and Expat at $1,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-FLEX-Full-Doc-May2024.pdf",
+      "sourceTitle": "Well Nigh Flex Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "40 years on Flex, Prime Full Doc and Expat; 30 years on Ultimate and Mere Doc."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Ultra-Prime-May-2024.pdf",
+      "sourceTitle": "Well Nigh Ultra Prime (Essentials) Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Offset account is available\" on the Ultimate product; an annual facility fee applies where a 100% offset account is linked."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Ultra-Prime-May-2024.pdf",
+      "sourceTitle": "Well Nigh Ultra Prime (Essentials) Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Prime-Full-Doc-May-2024.pdf",
+      "sourceTitle": "Well Nigh Prime Full Doc Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Prime Full Doc and Flex TMDs cover \"purchase, refinance or construction\" of owner occupied and investment property. The Ultimate product excludes construction."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-SMSF-May-2024.pdf",
+      "sourceTitle": "Well Nigh SMSF Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "A dedicated SMSF product TMD is published; Flex also names a $1,500,000 SMSF loan cap."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Dedicated Expat product for \"Australian or New Zealand citizens working or living abroad\". Maximum LVR 80%, minimum loan $50,000, maximum loan $1,500,000, maximum term 40 years."
+        }
+      ],
+      "asAt": "2024-05-10",
+      "sourceUrl": "https://wellmoney.com.au/wp-content/uploads/TMD-WN-Expat-May-2024.pdf",
+      "sourceTitle": "Well Nigh Expat Target Market Determination, dated 10 May 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only the expat case is published. Citizen / PR / temporary-visa treatment on the domestic products is not stated in any TMD, so no rules have been recorded for them."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2024-05-10",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "All Well Money product TMDs are dated 10 May 2024 and are the most recent published — every fact on this record will read as more than two years old and may be demoted as stale. No newer public policy document exists.",
+    "Broker distribution: the TMDs list the distribution channel as \"Mortgage Management / White Label\" and refer to \"accredited mortgage brokers ... subject to a higher duty under BID\", so broker-originated business appears to be accepted via accredited mortgage managers, but Well Money publishes no broker portal or accreditation page. Status recorded as active on that basis and should be confirmed with the lender.",
+    "No servicing parameters published at all.",
+    "No income-type table, shading percentages, or self-employed document requirements beyond the existence of Lo Doc products.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published (defaults, bankruptcy, arrears).",
+    "No security policy published — property types, minimum unit size, high density, rural, postcode categories.",
+    "No genuine savings, gifted deposit or guarantor policy published.",
+    "Legal entity name, ABN and ACL of the Well Money retail brand were not established from public pages; only the funder entity (Well Nigh Capital Funding No. 1 Pty Ltd, ABN 17 603 911 995) is named in the TMDs."
+  ]
+}

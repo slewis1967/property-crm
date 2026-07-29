@@ -1,0 +1,241 @@
+{
+  "id": "ownhome",
+  "name": "OwnHome",
+  "legalName": "OwnHome Finance Pty Ltd",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "555197",
+  "abn": "47 673 239 604",
+  "brokerSiteUrl": "https://ownhome.com/brokers",
+  "policyDocUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+  "funder": "OwnHome Primary Loan is product-managed by Columbus Capital Pty Ltd (ACN 119 531 252, AFSL/ACL 337303) and issued by one of Perpetual Corporate Trust Ltd (ACL 392673), Pioneer First Australia Pty Ltd, Origin Mortgages Aus Pty Ltd, Origin Money Pty Ltd or Origin Mortgages Pty Ltd.",
+  "panels": null,
+
+  "servicing": {
+    "notes": {
+      "value": "No buffer, floor rate, DTI cap or rent shading is published. The published servicing standard is that the applicant must be able to service BOTH the OwnHome Deposit Boost Loan and the accompanying 80% LVR primary loan without substantial hardship — assessed by OwnHome/Columbus, not by the 80% lender alone. That double-servicing test is the practical knock-out on this product.",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations (Deposit Boost Loan + Primary Loan – Variable), 20 November 2025, v1.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The financial situation of consumers in the 'target market' must be strong enough to satisfy our eligibility and credit assessment criteria which includes demonstrating the ability to repay both an OwnHome Primary Loan and an OwnHome Deposit Boost Loan, without substantial hardship.\""
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 100,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "COMBINED structure only. The Deposit Boost Loan by itself is capped at 25% LVR; it enables consumers to \"finance up to 100% of the purchase price of an owner-occupied or investment residential property using this product (up to 25% LVR in combination with a loan from another lender)\". ownhome.com/loans states the offering as 81–100% LVR for owner-occupiers."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 98,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ownhome.com/loans",
+      "sourceTitle": "OwnHome — Deposit Boost Loan Features",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Investor (first home buyers only): 81-98% LVR.\" asAt is the retrieval date — the page carries no publication date. Confirmed independently by the Aussie Boost (OwnHome-powered white label) launch coverage using the same 81–98% investor band."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 100,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Structural, not a waiver: the whole design is that the buyer pays a one-off Low Deposit Premium to OwnHome instead of LMI, and the primary loan stays at 80% LVR so no LMI is triggered on it. \"Unlike LMI, the Low Deposit Premium is a one-off payment that is not charged again if a borrower refinances their accompanying 80% LVR loan.\""
+    },
+    "notes": {
+      "value": "Deposit Boost Loan maximum LVR is 25% in its own right (a second-ranking loan). The accompanying OwnHome Primary Loan – Variable has a maximum LVR of 80%, subject to postcode eligibility. Borrowers may pair the Deposit Boost Loan with an 80% LVR loan from a third-party lender instead.",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "notes": {
+      "value": "Consumers must \"provide sufficient evidence of income or are self-employed and can provide sufficient recent financial information\" and \"have a satisfactory credit rating\". Household income typically EXCEEDS the Federal Government's First Home Guarantee income caps — that is the stated target market, i.e. the product is aimed at good earners who have not saved a deposit, not at low-income buyers. No per-income-type shading, tenure or evidence table is published.",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": "Target market must \"have a satisfactory credit rating\"; OwnHome's own consumer guidance states applicants need \"an excellent credit history\". No default, arrears, bankruptcy or credit-score thresholds are published.",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "offThePlanAccepted": {
+      "value": false,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Listed under consumers for whom the product may not be suitable: \"require finance for an off-the-plan property\"."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Primary Loan – Variable TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Primary Loan TMD names an \"OwnHome's Accepted Postcode List\" and excludes consumers who \"require finance for a property not within OwnHome's Accepted Postcode List\", and the maximum 80% LVR is \"subject to postcode eligibility criteria\". The list itself is not published publicly."
+    },
+    "notes": {
+      "value": "Existing established residential property only. Vacant land and construction of a residential property are both excluded, as is off-the-plan. Property must be within OwnHome's Accepted Postcode List (not published). The purchase must be for a principal place of residence or investment; the Deposit Boost Loan TMD contemplates purchase in whole or in part (e.g. on separation).",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 30000,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum Loan Size $30,000\" — this is the Deposit Boost Loan (the deposit portion), not the total borrowing. The OwnHome Primary Loan minimum is $50,000."
+    },
+    "maxLoanAmount": {
+      "value": 600000,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan Size (subject to a maximum LVR of 25%) $600,000\" for the Deposit Boost Loan. The OwnHome Primary Loan maximum is $2,500,000, subject to LVR and postcode policy."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD gives the Deposit Boost Loan a minimum term of 10 years and a maximum of 30 years. OwnHome's marketing describes the standard Deposit Boost Loan term as 15 years (ownhome.com/loans and ownhome.com/articles/how-does-an-ownhome-deposit-boost-loan-work). The Primary Loan runs 20–30 years."
+    },
+    "offsetAvailable": {
+      "value": false,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Deposit Boost Loan: \"Offset No\", and consumers who \"require an offset account\" are listed as unsuitable. The Primary Loan does offer redraw."
+    },
+    "redrawAvailable": {
+      "value": false,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Deposit Boost Loan TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Deposit Boost Loan: \"Redraw No\". Additional repayments without penalty are allowed. The OwnHome Primary Loan – Variable does have redraw (\"Redraw Yes\")."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Both TMDs exclude consumers who \"require finance for construction of a residential property\" or \"require finance for vacant land\"."
+    },
+    "notes": {
+      "value": "THE STRUCTURE (this is the whole product). OwnHome's Deposit Boost Loan is a SECOND, separately-contracted mortgage loan that funds the DEPOSIT — up to 20% of the purchase price (TMD maximum LVR 25%) — which the buyer then pairs with a conventional 80% LVR first mortgage, either OwnHome's own Primary Loan or a loan from any other lender. Together the two loans can fund up to 100% of the purchase price for an owner-occupier (81–100% LVR band) or up to 98% for an investor buying their first or second property. It is NOT shared equity, NOT rent-to-own, NOT a guarantee and NOT a gifted deposit: the buyer owns 100% of the property from settlement and OwnHome takes no equity share, only a debt. In place of LMI the buyer pays a one-off, upfront 'Low Deposit Premium' of up to 2.20% of the purchase price (published as 1.1%–2.2% depending on how much of their own deposit the buyer contributes; buyers contributing 5% or more get a rate discount and may capitalise the premium). The Deposit Boost Loan is principal-and-interest at a variable rate, minimum term 10 years / maximum 30 (marketed as a 15-year term), no offset, no redraw, extra repayments allowed without penalty, no early repayment or exit fees, and the LDP is refundable until exchange. Because it is repaid over ~15 years alongside a 25–30 year first mortgage, the combined repayment burden in the first 15 years is materially higher than a single 95% LVR loan — the applicant must service BOTH loans. Distributed only through brokers accredited by OwnHome directly or via an aggregator. Also white-labelled as 'Aussie Boost' through Aussie Home Loans (launched November 2025).",
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Target Market Determinations, 20 November 2025 (LDP band and 15-year marketed term from ownhome.com/loans and ownhome.com/articles/how-does-an-ownhome-deposit-boost-loan-work)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The TMD states the LDP as \"up to 2.20% of the mortgaged property purchase price\"; the 1.1% floor comes from OwnHome's own consumer pages, not the TMD."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be an individual borrower (single or joint), aged 18 or over."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent Australian resident."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "TMD names \"NZ citizen\" without qualifying the visa subclass."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "TMD says \"or on an acceptable visa\" without naming subclasses — cannot be resolved to accept/decline from the public document."
+        }
+      ],
+      "asAt": "2025-11-20",
+      "sourceUrl": "https://storage.googleapis.com/ownhome-prod-static-assets-bucket/scripts/webflow/assets/ownhome-target-market-determination-2025-11-20.pdf",
+      "sourceTitle": "OwnHome Primary Loan – Variable TMD, 20 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Taken from the PRIMARY LOAN TMD: consumers must \"be an Australian citizen, NZ citizen, permanent Australian resident or on an acceptable visa\". The Deposit Boost Loan TMD does not restate residency; OwnHome's consumer article states \"Australian citizenship or permanent residency (at least one applicant)\"."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-11-20",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No servicing buffer, assessment floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate published anywhere public.",
+    "The Accepted Postcode List (which gates both the 80% Primary Loan LVR and the security) is not published — a scenario cannot be pre-qualified on location without it.",
+    "No income-type table: casual, contract, probation, bonus, commission, overtime, self-employed tenure and Centrelink treatment are all unpublished.",
+    "No employment tenure minimums published.",
+    "No credit-history thresholds published beyond 'satisfactory credit rating' / 'excellent credit history'.",
+    "The exact Low Deposit Premium grid (how the 1.1%–2.2% scales with the buyer's own contribution) is not published — only the 2.20% cap in the TMD and the 1.1%–2.2% range in marketing.",
+    "The Deposit Boost Loan interest rate is not published. The 5.40% p.a. figure seen on ownhome.com/loans is the OwnHome PRIMARY Loan rate and its 'effective 9 February' has no year stated — not recorded here.",
+    "Whether the Deposit Boost Loan is registered as a second mortgage or a caveat is not stated in the public documents (described only as a second/junior position).",
+    "Maximum applicant age, exit-strategy trigger age and maximum property value are not published.",
+    "Relevance to the Springboard deposit-gap use case: this is the closest published competitor structure, but note it is DEBT (a second loan the client must service for 15 years), priced with an upfront premium, and requires the client to service both loans — a different product from a community-funded deposit contribution."
+  ]
+}

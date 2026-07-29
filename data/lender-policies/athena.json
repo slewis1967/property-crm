@@ -1,0 +1,210 @@
+{
+  "id": "athena",
+  "name": "Athena Home Loans",
+  "legalName": "Athena Mortgage Pty Ltd",
+  "tier": "neobank_digital",
+  "status": "active",
+  "acl": "502611",
+  "abn": "24 619 536 506",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked athena.com.au TMD set (Straight Up/Power Up/Fixed, Tailored, Tailored Plus), /eligibility, /tailored and the borrowing-power calculator page — Athena publishes no assessment buffer, floor rate, DTI cap or rent shading."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 85,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-tailored-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Tailored), effective 17 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tailored product: \"Loan to value ratio (LVR) Up to 85% LVR\". The core Straight Up / Power Up / Fixed products cap at 80% LVR (separate TMD, same effective date)."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 85,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-tailored-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Tailored), effective 17 November 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD attribute table states 85% LVR across a single Owner Occupier / Investor row; it does not break the cap out by purpose, so the investment figure is read from the same row."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 85,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.athena.com.au/tailored",
+      "sourceTitle": "Athena — Tailored lending options (\"Lower deposit solution: 80-85% No LMI\")",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"We're one of the few lenders that offers 15% deposit home loans, meaning you can borrow up to 85% of your property's value, without LMI.\" Page carries no publication date; asAt is the date the page was read."
+    },
+    "notes": {
+      "value": "Core products (Straight Up, Power Up, Fixed) are capped at 80% LVR per the current TMD effective 17 November 2025; the Tailored product extends to 85% LVR with no LMI.",
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-tailored-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Tailored)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tailored is designed for customers who \"borrow funds by providing alternative proof of their self-employed income (i.e Alt Doc lending)\"."
+    },
+    "altDocEvidence": {
+      "value": "Lite Doc: flexible income verification options such as a letter from the applicant's accountant, where full/up-to-date financials are not available.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.athena.com.au/tailored",
+      "sourceTitle": "Athena — Tailored lending options",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Undated page; asAt is the date read."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.athena.com.au/tailored",
+      "sourceTitle": "Athena — Tailored lending options, FAQ \"I'm self-employed. Which loan options do I have?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"For our Tailored Lite Doc loan you need to have been in business for at least two years.\" Full-doc self-employed applicants may use Straight Up / Power Up with full financials. Undated page; asAt is the date read."
+    }
+  },
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {
+    "notes": {
+      "value": "Security must meet Athena credit policy: located within an acceptable postcode, an acceptable building type, not primarily used to operate a business, well maintained and in good condition, not requiring nor under construction, and within Athena's land size restrictions.",
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The acceptable-postcode list and land-size limits themselves are not published."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": false,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD refers to \"an acceptable postcode\" but no postcode list is published on the public site."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same minimum stated in the Tailored and Tailored Plus TMDs."
+    },
+    "maxLoanAmount": {
+      "value": 3000000,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same maximum stated in the Tailored and Tailored Plus TMDs."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan term 10 years to 30 years\"."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.0",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Offset sub-accounts are a Power Up feature; Straight Up has no offset."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.0",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unlimited additional repayments and redraw at any time on the variable options."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be living in Australia. TMD residency attribute: \"Australian/NZ permanent residents living in Australia\"."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be living in Australia."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "TMD requires the applicant to be living in Australia."
+        }
+      ],
+      "asAt": "2025-11-17",
+      "sourceUrl": "https://static.athena.com.au/public-documents/target-market-determination-current.pdf",
+      "sourceTitle": "Athena Target Market Determination (Straight Up, Power Up & Fixed), s2.1 Residency",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD wording \"Australian/NZ permanent residents living in Australia\" is ambiguous as to NZ citizens on subclass 444; that case has been left out rather than guessed. The expat exclusion is read from the \"living in Australia\" requirement, not from an explicit exclusion."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-11-17",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No servicing parameters published at all — no assessment buffer, floor rate, DTI cap, rent shading, credit-card assessment rate or HEM treatment appears anywhere on the public site.",
+    "No public broker credit policy guide. Athena's TMDs name accredited brokers and referrer networks as a distribution channel, but there is no public broker portal or policy document; accreditation appears to be by arrangement.",
+    "Employment tenure minimums (PAYG probation, casual, contract) are not published.",
+    "Credit-history knock-outs (defaults, bankruptcy, arrears, enquiries) are not published.",
+    "Acceptable-postcode list, land-size restrictions, minimum unit size and high-density policy are referred to in the TMD but not published.",
+    "Genuine savings, gifted deposit and guarantor policy are not published.",
+    "Interest-only maximum terms are not published (the TMD confirms IO is available but not for how long)."
+  ]
+}

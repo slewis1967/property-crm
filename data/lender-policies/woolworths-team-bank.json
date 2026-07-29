@@ -1,0 +1,114 @@
+{
+  "id": "woolworths-team-bank",
+  "name": "Woolworths Team Bank",
+  "legalName": "Woolworths Team Bank Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240720",
+  "abn": "67 087 651 803",
+  "brokerSiteUrl": "https://woolworthsteambank.com.au/",
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/home-loans/",
+      "sourceTitle": "Woolworths Team Bank - Our home loans (rates effective 1 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The product cards publish an explicit \"Max LVR\" per product. The Plain and Simple Home Loan and the Flexible Home Loan are each offered in a \"Max LVR 80%\" and a \"Max LVR 90%\" variant; the Team Member Home Loan (variable and 1/2/3 year fixed) is \"Max LVR 80%\". 90% is therefore the highest published owner-occupied LVR.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Woolworths Team Bank's own consumer material states that on its home loans \"You can borrow up to 80% of the property value requiring at least a 20% deposit\", while the rate cards publish 90% Max LVR variants of the Plain and Simple and Flexible Home Loans. Treat 90% as the published ceiling and 80% as the standard offer. Investment property loans are offered in variable and fixed-term versions; no separate investment Max LVR was published on the page.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/home-loans/",
+      "sourceTitle": "Woolworths Team Bank - Our home loans (rates effective 1 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No credit-history policy is published anywhere on woolworthsteambank.com.au."
+    }
+  },
+
+  "security": {},
+
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/home-loans/",
+      "sourceTitle": "Woolworths Team Bank - Our home loans, Key Features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan period: Up to 30 years\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/home-loans/",
+      "sourceTitle": "Woolworths Team Bank - Our home loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only the Flexible Home Loan has an offset account. The Team Member Home Loans and the Plain and Simple Home Loan each carry the note \"This loan does not have an offset account\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/home-loans/",
+      "sourceTitle": "Woolworths Team Bank - Our home loans, Key Features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Free online redraw facility: YES\". Also \"Variable and lump sum repayments: YES\"; repayments monthly, fortnightly or weekly.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Woolworths Team Bank Limited (ABN 67 087 651 803, AFSL/Australian Credit Licence 240720) is a customer-owned mutual bank and is NOT owned or operated by Woolworths Group Limited. MEMBERSHIP IS RESTRICTED: \"Membership is open to team members of Woolworths and Endeavour Groups, and their family members\"; those with an affinity to Woolworths (e.g. Everyday Rewards members, contractors) are eligible for certain products. Joining requires investing in one $1 share, which is fully refundable. Home loans are described as \"exclusively available to Woolworths and Endeavour Groups team members, and their family members\". A $299 establishment fee applies across the home loan range; there are no ongoing monthly or annual fees for owner occupiers or investors. NO BROKER CHANNEL WAS FOUND: the site has no broker page, no aggregator list, no broker accreditation form and no downloadable lending policy - it appears to be direct-to-member only.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://woolworthsteambank.com.au/becoming-member/",
+      "sourceTitle": "Woolworths Team Bank - Becoming a Member; Our home loans (rates effective 1 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No broker channel could be found - no broker page, aggregator panel, accreditation form or third-party lending guide exists on the public site. If this lender is to be matched at all it is likely direct-only, and that should be confirmed before putting it on a panel.",
+    "No credit policy document of any kind is published: nothing on assessment buffer, floor rate, DTI, rent shading, HEM or credit card assessment.",
+    "No minimum or maximum loan amount is published.",
+    "No income-type, employment tenure, credit-history, security or residency policy is published.",
+    "Investment loan maximum LVR is not published separately from owner-occupied.",
+    "LMI arrangements and provider are not published; whether the 90% Max LVR products are LMI-backed is not stated.",
+    "There is a public conflict on the headline LVR - marketing copy says borrow up to 80% with a 20% deposit, while the rate cards list Max LVR 90% variants. No policy document resolves it.",
+    "No merger or acquisition of Woolworths Team Bank was found for 2025-2026; it appears to remain an independent ADI."
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "icbc-australia",
+  "name": "ICBC (Industrial and Commercial Bank of China), Sydney Branch",
+  "legalName": "Industrial and Commercial Bank of China Limited, Sydney Branch",
+  "tier": "foreign_bank",
+  "status": "research_only",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No ICBC Australia residential lending policy of any kind could be located on a public, no-login source."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. No residential home loan product is advertised on icbc.com.au."
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The Australian site (https://www.icbc.com.au/) lists only deposit business, international settlement, trade financing, basic banking services, financial planning and wealth management, investment advisory and e-banking. No residential mortgage product page, rate schedule, Target Market Determination or broker page exists on it."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The residency section could not be prioritised as the brief intended because ICBC Australia publishes no residential lending policy at all."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": null,
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "NOTHING could be sourced. This is an empty record on purpose — every attempt to find a public ICBC Australia residential lending policy failed, and no number has been written.",
+    "Where I looked: https://www.icbc.com.au/ (the Sydney Branch site, 200 OK — corporate/private banking, e-banking, cards, remittance only; no mortgage product, no footer ABN/ACL); https://www.icbc.com.au/en/column/1438058341816746030.html (English products and services index — no home loan); au.icbc.com.cn/en/ and icbc.com.cn/australia/en/ (both 404); icbcaustralia.com.au (does not resolve). Web searches for an ICBC Australia home loan product page, LVR, residency policy or broker accreditation returned only Bank of China (Australia) results and third-party broker commentary.",
+    "No Australian Credit Licence or ABN for the Sydney Branch was found on any public page.",
+    "It could not be established from a public source whether ICBC Sydney Branch offers broker-distributed residential mortgages in Australia at all. Status is recorded as research_only rather than active or withdrawn, because an absence of evidence is not evidence of withdrawal.",
+    "Next pass: check ASIC Connect's professional registers for an Australian Credit Licence held by Industrial and Commercial Bank of China Limited, and APRA's register of authorised foreign bank branches. Neither was reachable in this pass.",
+    "Do not populate this record from a comparison site or a broker blog — several assert ICBC lending terms and none of them cite the bank."
+  ]
+}

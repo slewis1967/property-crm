@@ -1,0 +1,94 @@
+{
+  "id": "first-option-bank",
+  "name": "First Option Bank",
+  "legalName": "First Option Bank Ltd",
+  "tier": "mutual_bank",
+  "status": "research_only",
+  "acl": "236509",
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "panels": null,
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firstoptionbank.com.au/home-loans-complete/",
+      "sourceTitle": "First Option Bank — Home Loans, Complete Package",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'100% Offset' is a headline feature of the Complete Package home loan. asAt is the date the page was read; the page carries no effective date."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firstoptionbank.com.au/home-loans-complete/",
+      "sourceTitle": "First Option Bank — Home Loans, Complete Package",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Free Redraw' with access via internet banking at any time."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the Complete Package or Simple home loan pages, the lending rates schedule or the disclosure statements page."
+    },
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The Complete Package page's comparison-rate footnote references a $150,000 example loan, which is an illustration only and was deliberately not recorded as a minimum."
+    },
+    "notes": {
+      "value": "MEMBERSHIP IS A KNOCK-OUT AND IS NOT OPEN TO EVERYONE. First Option Bank's About page sets out eligible member categories: employees of the public service, recreation, energy, telecommunications and manufacturing sectors; self-employed persons and small businesses in approved industries; a family relation of an existing member; former members rejoining after at least one year; and persons with an 'affinity with First Option' approved by the board. First Option Bank is a member-owned bank created out of several credit unions, beginning in 1965, operating principally in Victoria (Melbourne) and New South Wales (Granville). Home loan applicants must be at least 18 and 'Australian citizens or residents of Australia'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firstoptionbank.com.au/about-us/",
+      "sourceTitle": "First Option Bank — About Us (membership eligibility)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "asAt is the date the page was read; the page carries no effective date. The eligibility categories were read from the About page; the exact constitutional wording should be confirmed against the bank's constitution or membership application form."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": true, "maxLvrPct": null, "conditions": "Borrowers must be at least 18 and Australian citizens or residents of Australia, and must be eligible for membership." },
+        { "status": "permanent_resident", "accepted": true, "maxLvrPct": null, "conditions": "'Residents of Australia' — the bank does not distinguish permanent from temporary residency on its public pages." },
+        { "status": "nz_citizen_444", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "temporary_visa_work", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed — the phrase 'residents of Australia' is not further defined." },
+        { "status": "temporary_visa_student", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "foreign_non_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firstoptionbank.com.au/about-us/",
+      "sourceTitle": "First Option Bank — About Us / home loan eligibility",
+      "confidence": "low",
+      "status": "unverified",
+      "note": "Recorded at low confidence: the citizenship/residency statement is loose consumer copy ('Australian citizens or residents of Australia'), not a published credit policy, and the temporary-residency position is undefined."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "BROKER CHANNEL NOT ESTABLISHED — treat as direct-only until confirmed. First Option Bank has no broker portal, broker accreditation page or broker landing page on firstoptionbank.com.au, and mortgage brokers are not mentioned on the home loan product pages. The only reference to brokers found on the site is in the privacy policy, listing 'lawyers, conveyancers, accountants, brokers and agents who represent customers' as third parties whose information may be handled — which is not evidence of a broker origination channel. Status is recorded as 'research_only'.",
+    "TARGET MARKET DETERMINATIONS ARE NOT PUBLICLY DOWNLOADABLE FOR HOME LOANS. The disclosure statements page links to 'All Product Target Market Determinations' and a Personal Loan TMD PDF is public, but no home loan TMD PDF could be located; the site also states TMDs are 'available on request by contacting info@firstoption.com.au'. That request path is the highest-value next step — a home loan TMD would give max LVR, loan amounts, term, LMI and distribution channels in one document.",
+    "NOTHING NUMERIC WAS SOURCED beyond product features. No maximum LVR, LMI threshold, minimum or maximum loan amount, loan term, servicing buffer, floor rate, DTI cap, rent shading, income-type shading, employment tenure, credit-history or security policy is published on any public no-login page. The lending rates schedule only shows rate tiers by LVR band (under 60%, 60-70%, 70%+), which are pricing bands and not a policy maximum — no maxLvr value was recorded from them.",
+    "MEMBERSHIP KNOCK-OUT: restricted to employees of the public service, recreation, energy, telecommunications and manufacturing sectors; self-employed persons and small businesses in approved industries; family relations of existing members; rejoining former members; and board-approved 'affinity' cases. This is narrower than a general-public mutual and needs confirming per client.",
+    "Geographic footprint (Victoria and New South Wales) is described in third-party sources and by branch location, but First Option Bank does not publish a lending geography restriction — unconfirmed.",
+    "First Option Bank's ABN was not captured from a first-party source; AFSL and Australian Credit Licence are both 236509."
+  ]
+}

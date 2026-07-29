@@ -1,0 +1,170 @@
+{
+  "id": "bank-of-us",
+  "name": "Bank of us",
+  "legalName": "B&E Ltd, trading as Bank of us",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "236870",
+  "abn": "32 087 652 088",
+  "brokerSiteUrl": "https://broker.bankofusonline.com.au",
+  "policyDocUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us Target Market Determination — Housing Loans: FlexiDiscount Variable Rate Home Loan (Residential, extended loan term option), effective 22 January 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This TMD describes a specific product for owner-occupiers 'seeking a loan with a loan to value ratio (LVR) of between 80% and 95%', supported by LMI underwritten by QBE, where serviceability over a 30-year term is not evident. It establishes that 95% is reachable for an owner-occupied purchase or land-and-construction, but it is NOT a statement of the bank's overall maximum LVR across its whole home-loan range. Confidence is medium for that reason."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the product being designed for LVRs between 80% and 95% and requiring LMI throughout that band; the TMD does not state an LMI threshold in those words."
+    },
+    "lmiProvider": {
+      "value": ["QBE"],
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'prepared to reimburse us for the lender's mortgage insurance (LMI) premium in respect of the loan which we pay to QBE' and 'loans must be supported by LMI underwritten by QBE'."
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "notes": {
+      "value": "The borrower must be 'willing and able to offer a first registered security of real property (or other acceptable security) as security for the loan'.",
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'available for: loan amounts of between $20,000 and $1,500,000'. Applies to this product."
+    },
+    "maxLoanAmount": {
+      "value": 1500000,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Applies to this product."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "This is the extended-term product: 'loan terms of more than 30 years up to a maximum of 40 years'. It is expressly 'not available if serviceability over a 30 year term is evident', so a 40-year term is a fallback for applicants who cannot service over 30 years, not a default option. The borrower must identify and commit to a strategy for repaying the loan during their expected working life."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 1.25,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "On this product interest-only is available ONLY during a construction period, to a maximum of 15 months (recorded here as 1.25 years). Consumers 'seeking interest only repayments other than during any construction period' are expressly outside the target market."
+    },
+    "offsetAvailable": {
+      "value": false,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'loan interest offset facility is not available' ON THIS PRODUCT. Other Bank of us home loans may offer offset — this is a product-level, not a bank-level, fact."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'both early repayments and the redraw of early (advance) repayments are permitted'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Product covers financing the purchase of land and construction of a new home to live in; interest-only during construction to a maximum of 15 months."
+    },
+    "governmentSchemesSupported": {
+      "value": ["MyHome — Tasmanian Government shared equity scheme"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://bankofus.com.au/my-home",
+      "sourceTitle": "Bank of us — MyHome Shared Equity Scheme Tasmania",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Bank of us is the accredited lending services provider for MyHome, a Tasmanian Government initiative helping eligible home buyers build or purchase a home to live in. asAt is the date the page was read — the page does not carry its own effective date."
+    },
+    "notes": {
+      "value": "MEMBERSHIP / GEOGRAPHY: Bank of us is Tasmania's only customer-owned bank. A third-party aggregator description states it is 'exclusively available to Tasmanian mortgage brokers, delivering competitive home, personal and business loans to Tasmania borrowers', but Bank of us's own public pages do not state a Tasmania-only lending restriction — only that specific deposit products (e.g. Spring Load) are 'Tasmanian residents only'. Treat a Tasmanian security/borrower nexus as likely but UNCONFIRMED and verify before matching an interstate client.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://bankofus.com.au/",
+      "sourceTitle": "Bank of us — Tasmania's Only Customer-Owned Bank (home page)",
+      "confidence": "low",
+      "status": "unverified",
+      "note": "Deliberately recorded at low confidence — the geographic restriction is the single most important knock-out for this lender and it is not stated on a first-party page."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": null, "maxLvrPct": null, "conditions": "The TMD states only that the product is for 'individuals aged at least 18 years of age' and excludes corporations. Citizenship and residency criteria are not published." },
+        { "status": "permanent_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "nz_citizen_444", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "temporary_visa_work", "accepted": null, "maxLvrPct": null, "conditions": "Not published." },
+        { "status": "foreign_non_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not published." }
+      ],
+      "asAt": "2024-01-22",
+      "sourceUrl": "https://bankofus.com.au/source-assets/documents/compliance/Target-Market-Determinations/26.-Bank-of-us-TMD-Home-Loans-Residential-FlexiDiscount-Variable-Home-Loan-40-year-term_FINAL-4.pdf",
+      "sourceTitle": "Bank of us TMD — Housing Loans (FlexiDiscount 40-year term), effective 22 January 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Recorded as unknown throughout rather than inferred — Bank of us does not publish residency criteria outside a broker login."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2024-01-22",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "BROKER CHANNEL CONFIRMED: the TMD lists 'Mortgage Brokers / Distributors' as a distribution channel alongside retail stores (Hobart, Rosny, Launceston, Devonport, Ulverstone, Burnie, Wynyard), the contact centre and the website, with a condition that broker authorisation is undertaken and brokers are trained in the product's acceptance criteria. A broker portal exists at broker.bankofusonline.com.au but is behind a login and was not used.",
+    "GEOGRAPHIC RESTRICTION UNRESOLVED — the biggest open question. Bank of us presents as Tasmania's only customer-owned bank and an aggregator page describes it as exclusively available to Tasmanian brokers, but no first-party page states a Tasmania-only lending rule. Confirm with the bank before matching a mainland client.",
+    "NO CREDIT POLICY PUBLISHED. Everything in this record comes from a public Target Market Determination, which describes a single product, not the credit policy. There is no public servicing buffer, floor rate, DTI cap, rent shading, income shading, employment tenure, credit-history or security-type policy.",
+    "The TMD used is effective 22 January 2024 and states it will be reviewed within the first year and then every 2 years — it may be superseded. Re-check the Bank of us TMD library for a newer Housing Loans TMD.",
+    "The LVR, loan amount, loan term, offset and interest-only values are specific to the FlexiDiscount Variable Rate Home Loan (Residential, extended 40-year term option). Other Bank of us home loans will differ — in particular offset IS likely available on other products.",
+    "Investment lending policy (max LVR, IO terms) was not established — the TMD read is owner-occupier only and expressly excludes investment purpose and refinance.",
+    "Residency/visa, membership eligibility, guarantor and genuine-savings policy are not published."
+  ]
+}

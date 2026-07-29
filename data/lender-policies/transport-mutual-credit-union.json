@@ -1,0 +1,112 @@
+{
+  "id": "transport-mutual-credit-union",
+  "name": "Transport Mutual Credit Union",
+  "legalName": "Transport Mutual Credit Union Ltd",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240718",
+  "abn": "78 087 650 600",
+  "brokerSiteUrl": "https://www.transportmutual.com.au/",
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Checked the home loans index and the Standard Variable, Basic Variable, Fixed Rate, Interest Only, Home Equity and Refi Special product pages - none publishes a maximum LVR, minimum deposit or LMI statement."
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No credit-history policy is published on transportmutual.com.au."
+    }
+  },
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 30000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.transportmutual.com.au/loans/home-loans/standard-variable-home-loan/",
+      "sourceTitle": "Transport Mutual - Standard Variable Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum Loan Amount: $30,000\". The page carries no effective date; asAt is the date observed (29 Jul 2026).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.transportmutual.com.au/loans/home-loans/standard-variable-home-loan/",
+      "sourceTitle": "Transport Mutual - Standard Variable Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 30 years\". The page carries no effective date; asAt is the date observed.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.transportmutual.com.au/loans/home-loans/standard-variable-home-loan/",
+      "sourceTitle": "Transport Mutual - Standard Variable Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Offset facility available: Yes\" on the Standard Variable Home Loan.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.transportmutual.com.au/loans/home-loans/standard-variable-home-loan/",
+      "sourceTitle": "Transport Mutual - Standard Variable Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Yes (free redraw, minimum amount $100)\", requiring \"at least one months repayment in advance plus $1,000\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Transport Mutual Credit Union Ltd (ABN 78 087 650 600, AFSL/Australian Credit Licence 240718) is a small mutual with its head office in Surry Hills, Sydney. It grew out of the transport industry but its own material presents it as open to Australians generally rather than occupation-restricted; the only stated requirement is membership itself - \"you must be a member of the credit union to have a loan\", the credit union being \"a mutual financial services organisation owned by its Members, each one of whom is a shareholder\". Six home loan products are advertised: Home Equity Loan, Basic Variable, Fixed Rate, Standard Variable, Refi Home Loan Special and Home Loan - Interest Only. Standard Variable establishment fee $395 plus legal and valuation fees; no account keeping fees. NO BROKER CHANNEL WAS FOUND: no broker page, aggregator panel, accreditation form or third-party lending guide exists on the site, and at the time of research the site noted \"Online Forms Currently Unavailable\".",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.transportmutual.com.au/about-us/",
+      "sourceTitle": "Transport Mutual - About us; Standard Variable Home Loan product page",
+      "confidence": "medium",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No broker channel could be found - Transport Mutual appears to be direct-to-member only. Confirm before putting it on a panel.",
+    "No maximum LVR, minimum deposit or LMI arrangement is published on any product page.",
+    "No credit policy document or serviceability calculator is published: nothing on assessment buffer, floor rate, DTI cap, rent shading, HEM or credit card assessment.",
+    "No formal membership eligibility statement (the 'who can join' / common bond wording) could be located on the site; the online membership forms were unavailable at the time of research.",
+    "No income-type, employment tenure, credit-history, security/property or residency policy is published.",
+    "No maximum loan amount is published.",
+    "Product pages carry no effective or 'rates current as at' date, so all asAt values are the date observed rather than a document date."
+  ]
+}

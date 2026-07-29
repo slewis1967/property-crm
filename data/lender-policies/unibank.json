@@ -1,0 +1,91 @@
+{
+  "id": "unibank",
+  "name": "UniBank",
+  "legalName": "A division of Teachers Mutual Bank Limited, ABN 30 087 650 459, AFSL/Australian Credit Licence 238981. Teachers Mutual Bank Limited also trades as Teachers Mutual Bank, Firefighters Mutual Bank and Health Professionals Bank.",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "238981",
+  "abn": "30 087 650 459",
+  "brokerSiteUrl": "https://www.unibank.com.au/broker",
+  "policyDocUrl": null,
+  "funder": "Teachers Mutual Bank Limited",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unibank.com.au/home-loans/owner-occupier",
+      "sourceTitle": "UniBank — Our Home Loans (owner occupier)",
+      "confidence": "low",
+      "status": "unverified",
+      "note": "UniBank's public pages state only the generic principle that 'Borrowing more than 80% of a property's value may attract Lenders Mortgage Insurance (LMI)'. That is general education copy, not a policy statement, so this is recorded at low confidence and should not be relied on for matching. asAt is the date the page was read."
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unibank.com.au/home-loans/owner-occupier",
+      "sourceTitle": "UniBank — Our Home Loans (owner occupier)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'An eligible transaction account linked to your home loan. The balance of an offset account reduces the amount of interest you're charged on your home loan while keeping your money accessible.' asAt is the date the page was read."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unibank.com.au/home-loans/owner-occupier",
+      "sourceTitle": "UniBank — Our Home Loans (owner occupier)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Available on variable loans and the variable portion of split loans, and on Your Way Plus fixed-rate loans up to the annual early repayment threshold."
+    },
+    "notes": {
+      "value": "MEMBERSHIP IS A HARD KNOCK-OUT. To join UniBank a person must 'Be either: Employed by, or retired from an Australian university; Studying or have graduated from an Australian university; Immediate family to a UniBank member', and must be an Australian citizen or permanent resident. UniBank is 'exclusively for students, staff and graduates of Australian universities'. To open a membership or account for a child, the parent or guardian must already be a member. NOTE for panel routing: Teachers Mutual Bank Limited runs four brands off one balance sheet with 'consistent rates and policies' — UniBank (university sector), Teachers Mutual Bank (education), Firefighters Mutual Bank (emergency services) and Health Professionals Bank (healthcare). A client who fails UniBank's eligibility test may still qualify under a sibling brand, and one broker accreditation covers all four.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unibank.com.au/about/why-join-us",
+      "sourceTitle": "UniBank — Why Join Us",
+      "confidence": "high",
+      "status": "verified",
+      "note": "asAt is the date the page was read; the page carries no effective date. The four-brand structure and single accreditation are stated on https://www.unibank.com.au/broker."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": true, "maxLvrPct": null, "conditions": "Membership requires Australian citizenship or permanent residency, plus the university-sector eligibility test." },
+        { "status": "permanent_resident", "accepted": true, "maxLvrPct": null, "conditions": "Membership requires Australian citizenship or permanent residency." },
+        { "status": "nz_citizen_444", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed on UniBank's public pages." },
+        { "status": "temporary_visa_work", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the membership requirement to be an Australian citizen or permanent resident." },
+        { "status": "temporary_visa_student", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the membership requirement to be an Australian citizen or permanent resident — notable, because UniBank otherwise serves university students." },
+        { "status": "temporary_visa_partner_309_820", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the membership residency requirement." },
+        { "status": "expat_citizen_overseas", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed." },
+        { "status": "foreign_non_resident", "accepted": false, "maxLvrPct": null, "conditions": "Excluded by the membership residency requirement." }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unibank.com.au/about/why-join-us",
+      "sourceTitle": "UniBank — Why Join Us (membership eligibility)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The temporary-visa exclusions are read off the membership citizenship/permanent-residency requirement, not from a published visa lending policy. Confirm with a Broker Development Manager before ruling out a temporary-visa applicant."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "BROKER CHANNEL CONFIRMED. unibank.com.au/broker invites brokers to 'Get accredited with the member-owned bank supporting academics and alumni and their families, and the brokers who serve them', with upfront valuations, digital VOI and e-signing, and states that one accreditation unlocks four member-focused brands with consistent rates and policies. Broker support is on 1300 862 265.",
+    "NO PUBLIC CREDIT POLICY. UniBank and Teachers Mutual Bank Limited do not publish a broker lending policy or credit policy guide outside a broker login. The only Teachers Mutual Bank Limited lending reference guide found online was a 2021 copy hosted on an aggregator/broker-group website, which the research brief forbids using as a source, so it was not used.",
+    "NOTHING NUMERIC WAS SOURCED. No maximum LVR, LMI threshold, loan amounts, loan term, servicing buffer, floor rate, DTI cap, rent shading, income-type shading, employment tenure, credit-history or security policy could be sourced from a public no-login page. The UniBank and Teachers Mutual Bank Target Market Determinations (e.g. Classic Home Loan, Classic Investor Home Loan, Your Way Plus Home Loan) exist at unibank.com.au/-/media/global/target-market-determinations/ but returned HTTP 404/403 to automated retrieval — these are the highest-value next targets for LVR, LMI and distribution-channel facts.",
+    "MEMBERSHIP KNOCK-OUT: employed by or retired from an Australian university; studying at or graduated from an Australian university; or immediate family of a UniBank member. Plus Australian citizenship or permanent residency.",
+    "A client failing UniBank eligibility may fit a sibling Teachers Mutual Bank Limited brand (Teachers Mutual Bank / Firefighters Mutual Bank / Health Professionals Bank) on the same policies — those brands should be researched as separate records.",
+    "Trade commentary suggests the TMBL brands take 'a common sense approach to shift work and allowances' tailored to their industries, which would matter for overtime and shift-allowance shading, but no percentage is published."
+  ]
+}
