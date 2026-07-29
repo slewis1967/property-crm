@@ -1,0 +1,171 @@
+{
+  "id": "peoples-choice",
+  "name": "People First Bank (formerly People's Choice)",
+  "legalName": "Heritage and People's Choice Ltd, trading as People First Bank (formed by the 2023 merger of Heritage Bank and People's Choice Credit Union; the People's Choice and Heritage Bank brands have been consolidated into People First Bank)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "244310",
+  "abn": "11 087 651 125",
+  "brokerSiteUrl": "https://www.peoplefirstbank.com.au/brokers",
+  "policyDocUrl": null,
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The public broker section (peoplefirstbank.com.au/brokers and /brokers/broker-tools-and-guides) carries only consumer calculators and marketing content; product and policy detail, SLAs and the servicing calculator sit behind the secure Broker Portal login."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published on the public broker pages. The Broker tools and guides page links only the consumer buying-costs, extra-repayments, mortgage-comparison, refinance and stamp-duty calculators; everything policy-related is behind the Broker Portal login.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/brokers/broker-tools-and-guides",
+      "sourceTitle": "Broker tools and guides | People First Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank (rate table as published 29 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The published rate table's own product metadata sets ProductRateLoanToValueRatioMaximum = 95 on the owner-occupied Basic Variable and the 1-5 year fixed products (LVR band \">80%\" resolves to 80-95). The page carries no effective date, so the retrieval date is used."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/loans/home-loans/medical-professional-package",
+      "sourceTitle": "Medical Professional Package | People First Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"To avoid paying Lenders Mortgage Insurance (LMI), you generally need to have a 20% deposit, which gives you a Loan to Value Ratio (LVR) of 80%.\" Page carries no effective date; retrieval date used."
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Dentist",
+        "General practitioner",
+        "Hospital employed doctor",
+        "Medical specialist",
+        "Optometrist",
+        "Pharmacist",
+        "Veterinary practitioner",
+        "Registered nurse",
+        "Fully qualified paramedic",
+        "Sworn in state or federal police officer"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/loans/home-loans/medical-professional-package",
+      "sourceTitle": "Medical Professional Package | People First Bank (and Essential Services Package)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TWO separate packages, both waiving LMI to 90% LVR but with different loan-size ceilings. Medical Professional Package (dentists, general practitioners, hospital employed doctors, medical specialists, optometrists, pharmacists, veterinary practitioners) - LMI premium waived on loans up to $2 million. Essential Services Package (registered nurse, fully qualified paramedic, sworn in state or federal police officer) - LMI waived and \"eligible essential services workers can borrow up to $1.2 million with a 90% LVR\" (https://www.peoplefirstbank.com.au/loans/home-loans/essential-services-package). Both available to owner occupiers AND investors. Income requirements apply and vary between single and joint applications; on a joint application only one applicant needs to hold the qualifying occupation. New business only. Neither page carries an effective date; retrieval date used."
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/loans/home-loans/medical-professional-package",
+      "sourceTitle": "Medical Professional Package | People First Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"With our Medical Professional Package, you can borrow up to 90% LVR and we'll waive the LMI premium for loans up to $2 million.\" The Essential Services Package uses the same 90% LVR ceiling."
+    },
+    "notes": {
+      "value": "Owner-occupied LVR pricing bands published: <70%, 70.01%-80%, >80% (to 95%) on the Basic Variable; <80% and >80% on the fixed terms.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank (rate table as published 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "ProductRateLoanSizeMinimum = 20000 on every owner-occupied product row in the published rate table (Basic Variable and 1-5 year fixed). Not stated in prose anywhere on the site."
+    },
+    "maxLoanAmount": {
+      "value": 2000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank (rate table as published 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "ProductRateLoanSizeMaximum = 2000000 on every owner-occupied product row in the published rate table. Corroborated indirectly by the Medical Professional Package waiving LMI \"for loans up to $2 million\". Treat as the published-rate ceiling rather than a confirmed absolute credit-policy maximum - larger loans may be available on referral."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank (rate table as published 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "ProductRateTermMaximum = 30 on every owner-occupied product row in the published rate table."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/rates/home-loan-rates",
+      "sourceTitle": "Home loan rates | People First Bank (rate table as published 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "ProductRateOffset = 100 (i.e. 100% offset) on the Basic Variable owner-occupied rows; = 0 on the fixed-rate rows, so offset is a variable-rate feature only."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/loans/home-loans/construction-loans",
+      "sourceTitle": "Construction loans | People First Bank",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "People First Bank publishes a dedicated construction-loans product page. No LVR, drawdown or valuation policy detail was captured from it."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"People First Bank\" is named on Housing Australia's participating-lender list (page carries no publication date; captured 2026-07-29). The bank also publishes a \"First Home Buyer - 3 Year Fixed\" product in its rate table."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted and actively courted. People First Bank runs a public broker section (peoplefirstbank.com.au/brokers) with a dedicated broker support team with embedded credit assessment, FASTRefi, DocuSign signing, Simpology electronic lodgement, BDMs, and a secure Broker Portal (accredited brokers only) where current SLA turnaround times are published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.peoplefirstbank.com.au/brokers",
+      "sourceTitle": "Brokers | People First Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "ENTITY NOTE: the id 'peoples-choice' is retained as the join key, but People's Choice no longer exists as a separate lender. Heritage Bank and People's Choice Credit Union merged in 2023; the combined entity is Heritage and People's Choice Ltd, trading as People First Bank (ABN 11 087 651 125, ACL 244310). If a separate 'heritage-bank' record exists in this pack it is the same legal entity and the two should be reconciled.",
+    "No public credit policy guide. All broker product/policy material and SLA times are behind the secure Broker Portal login, which is out of scope under the no-login source rule.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental). The Medical and Essential Services packages reference unspecified 'income requirements' that are not published.",
+    "No employment tenure minimums, credit-history knock-outs, residency/visa rules, genuine-savings policy or guarantor policy published.",
+    "No security policy at all: no acceptable/unacceptable property types, minimum unit size, postcode category list, high-density or rural policy.",
+    "Investment-loan maximum LVR could not be captured - the published rate table exposed only owner-occupied product rows.",
+    "The rate table and product pages carry no effective/as-at date, so the retrieval date (29 July 2026) is used for every fact sourced from them.",
+    "Maximum interest-only term, bridging availability and SMSF lending are not addressed on any public page."
+  ]
+}

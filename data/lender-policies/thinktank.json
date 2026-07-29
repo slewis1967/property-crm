@@ -1,0 +1,339 @@
+{
+  "id": "thinktank",
+  "name": "Thinktank",
+  "legalName": "Think Tank Group Pty Ltd",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "564080",
+  "abn": "75 117 819 084",
+  "brokerSiteUrl": "https://thinktank.au/brokers/",
+  "policyDocUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential: \"Net Servicing Ratio (NSR) >1.01x stressed at greater of loan rate +2.0% & 7.00% P&I\". Commercial/SMSF use an ICR/DSR test instead, not a buffer."
+    },
+    "assessmentFloorRatePct": {
+      "value": 7.0,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same sentence as the buffer — assessed at the greater of (loan rate + 2.0%) and 7.00% P&I."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": "2026-01-16",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Niches-v20260116.pdf",
+      "sourceTitle": "Thinktank Niches sheet v20260116",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential Lending niches list states \"No DTI cap, notional rent, or rental cap\" — i.e. no published hard DTI ceiling."
+    },
+    "notes": {
+      "value": "Residential: NSR > 1.01x, stressed at the greater of loan rate + 2.0% and 7.00% P&I. No DTI cap, no notional rent, no rental cap. SMSF (residential and commercial): serviceability is 1.50:1 minimum ICR (SMSF income + net rent + contributions) and 1.00:1 DSR — not a buffered NSR test.",
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-SMSF-Info-and-Rates-v20260709-1.pdf",
+      "sourceTitle": "Thinktank SMSF Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 80,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up To 80% LVR\". The published rate grid only offers the 80% column for loans $100K–$3M; above $3M the highest banded LVR is 75%, and above $3.5M it is 75%. Maximum LVR and loan size also vary by location (postcode calculator)."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 80,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The residential sheet is headed \"Owner Occupied & Investment\" with a single \"Up To 80% LVR\" figure and the same LVR rate grid; investment is priced with a +0.10% loading rather than a lower LVR ceiling. No separate investor LVR cap is published."
+    },
+    "notes": {
+      "value": "Vacant land is offered to a maximum banded LVR of 75% (owner-occupied and investment). SMSF residential and commercial both to 80% LVR. Private lending to 75% LVR.",
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Land LVR read off the published Full Doc/Mid Doc rate grid, which has no 80% column for vacant land."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "Full Doc PAYG: 2x payslips no more than 6 weeks old.",
+          "conditions": null
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Full Doc: minimum 2 years' self-employed; last 2 years' company/business/financial statements + tax returns + individual tax returns. Mid Doc: self-certified income plus one of six alternatives.",
+          "conditions": "Newly self-employed also eligible under the published niches (ABNs 3+ months)."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Full Doc: last 2 years' company/business financial statements + tax returns + individual tax returns.",
+          "conditions": "Individual, partnership, company and trust borrowers accepted."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "Investment — copies of leases and confirmation of rental income required.",
+          "conditions": "Niches sheet states there is no notional rent and no rental cap. No published shading percentage."
+        }
+      ],
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709 (self-employed tenure from the Niches sheet v20260116)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only the income types Thinktank actually documents on the public residential sheet are listed. Casual, overtime, bonus, commission and Centrelink treatment are NOT published."
+    },
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Mid Doc\" is the alt-doc product, available on residential, commercial and SMSF."
+    },
+    "altDocEvidence": {
+      "value": "Statement of self-certified income supported by one of: (1) Accountant's letter; (2) last 2 x BAS statements; (3) last 6 months' trading bank account statements; (4) 1 year tax return & NOA; (5) 1 year financial statement; (6) 1 year tax return & NOA plus 1 year financial statement (attracts a 0.20% rate discount).",
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Six options on residential; the SMSF sheet lists the same first five options for Group Servicing."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The published Mid Doc rate grid carries an 80% LVR column for residential property $100K–$3M, i.e. the same ceiling as Full Doc."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Full Doc self-employed: \"Minimum 2 years' self-employed, last 2x years' company/business/financial statements + tax returns + individual tax returns\". Mid Doc accepts one year."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Under Mid Doc: \"1 year tax return & NOA\" or \"1 year financial statement\" are each accepted as the single supporting document."
+    }
+  },
+
+  "employment": {
+    "minMonthsSelfEmployedAbn": {
+      "value": 3,
+      "asAt": "2026-01-16",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Niches-v20260116.pdf",
+      "sourceTitle": "Thinktank Niches sheet v20260116",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Newly self-employed eligible (ABNs 3+ months)\" — listed under both Residential Lending and Commercial Lending niches."
+    }
+  },
+
+  "credit": {
+    "defaultIgnoredUnderAmount": {
+      "value": 1000,
+      "asAt": "2026-01-16",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Niches-v20260116.pdf",
+      "sourceTitle": "Thinktank Niches sheet v20260116",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Residential Lending niche reads \"Combined paid defaults <$1,000\". Read as: combined PAID defaults below $1,000 are acceptable. The sheet does not say unpaid defaults are acceptable, nor state a seasoning period."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-01-16",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Niches-v20260116.pdf",
+      "sourceTitle": "Thinktank Niches sheet v20260116",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Implied by \"Combined paid defaults <$1,000\" appearing as a stated niche. Threshold applies; no age/seasoning rule published."
+    }
+  },
+
+  "security": {
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Off the plan purchases in buildings less than or equal to 10 levels are acceptable for loan amounts up to $3.5M.\" Same wording repeated on the Residential SMSF sheet."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum LVR and loan amount vary by location; Thinktank publishes an online Postcode Calculator to check LVRs and loan sizes. \"Flexible options accepting securities in country areas (<10,000 population), refer to Postcode Calculator on website.\" Direct URL of the calculator not found on the public resources index."
+    },
+    "notes": {
+      "value": "Minimum security property value $200,000. Residential and vacant land accepted; rates are set by security type, not loan purpose. Commercial security types accepted are office, retail, industrial, multi-residential, boarding houses, specialised securities and vacant land. Country areas under 10,000 population are considered subject to the postcode calculator. SMSF residential: maximum loan for houses and apartments is $5M in major capital cities and major metro areas.",
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential and SMSF Lending Information & Rates v20260709 + Niches sheet v20260116",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"$100K - $5M\" on residential. SMSF and commercial also start at $100K."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$5M is the residential (and residential-SMSF) ceiling. Commercial and commercial-SMSF go to $10M; private lending to $7.5M. Niches sheet qualifies residential as \"Up to $5M greater metro or $3M subject to location\"."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"15 to 30 years (P&I)\" — the minimum term is 15 years, which is unusual and worth noting on a scenario."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"up to 5 years interest only (IO) for owner occupied and investment\"; IO may be extended up to a further 1 year at the lender's discretion."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same sentence as owner-occupied."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Residential sheet lists an \"Offset/Redraw Facility\"; Thinktank also publishes an Offset Facility FAQ and an Offset Facility Withdrawal Request form."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-Resi-Info-and-Rates-v20260709.pdf",
+      "sourceTitle": "Thinktank Residential Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Redraw: Up to 2 per calendar month fee-free, $25 per redraw thereafter.\""
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/wp-content/uploads/2025/02/Thinktank-SMSF-Info-and-Rates-v20260709-1.pdf",
+      "sourceTitle": "Thinktank SMSF Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential SMSF to $5M and commercial SMSF to $10M, both up to 80% LVR, terms 15–30 years P&I with up to 5 years IO. New or established SMSFs; no liquidity or net asset requirement (except Commercial Max SMSF); one or more members must be in accumulation phase for loans up to $8M."
+    },
+    "notes": {
+      "value": "Thinktank is a specialist non-bank across four books: Residential ($100K–$5M, to 80% LVR, Full Doc or Mid Doc), Commercial ($100K–$10M, to 80% LVR, Full/Mid/Quick/Lease Doc), SMSF (residential to $5M and commercial to $10M, to 80% LVR) and Private lending (to $7.5M, to 75% LVR, 3 months to 3 years IO). Residential lending IS offered and is NCCP-regulated (an NCCP Residential Loan Addendum and residential TMD are published). SMSF servicing is an ICR/DSR test, not a buffered NSR: minimum 1.50:1 ICR (SMSF income + net rent + concessional and non-concessional contributions, actual or projected) and 1.00:1 DSR. Fund-only servicing is open to PAYG and self-employed investors; where group servicing is required, Full Doc or Mid Doc from the self-employed member or guarantor is acceptable. No liquidity or net asset requirement post-settlement and no annual reviews, ongoing fees or re-valuations. Complex SMSF structures considered: tenants in common for business real property, in-specie transfers of business real property, and unit trusts with SMSF unit holders.",
+      "asAt": "2026-07-09",
+      "sourceUrl": "https://thinktank.au/brokers/smsf-products/",
+      "sourceTitle": "Thinktank — SMSF loan specialists (broker site) + SMSF Lending Information & Rates v20260709",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-09",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No published rent shading percentage — the Niches sheet says there is no notional rent and no rental cap, but does not state what fraction of gross rent is counted.",
+    "No published credit card assessment rate, HEM basis, HEM loading or existing-commitment treatment.",
+    "No published policy for casual, probation, fixed-term contract, overtime, bonus, commission, car/shift allowance or any Centrelink income type.",
+    "No published PAYG employment tenure minimum (only the 3-month ABN rule for self-employed).",
+    "Credit policy is thin: only 'combined paid defaults <$1,000' is published. No bankruptcy, Part IX, judgment, writ, arrears, enquiry or credit-score policy found.",
+    "No published minimum unit floor area, high-density apartment policy, maximum land size, rural or company-title policy.",
+    "Postcode calculator drives max LVR and max loan size by location, but the calculator's URL and the underlying category list are not on the public resources index — LVR/loan-size caps here are the headline numbers, not the location-adjusted ones.",
+    "No residency/visa policy published at all — non-resident and temporary-visa treatment unknown.",
+    "No genuine-savings, gifted-deposit, guarantor or maximum-age-at-maturity policy published.",
+    "LMI: Thinktank lends to 80% LVR and no LMI provider or LMI policy is published; whether any LMI-backed product exists is unknown."
+  ]
+}

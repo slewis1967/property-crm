@@ -9,10 +9,18 @@
  * and lender websites reorganise constantly. A record whose citation 404s is
  * worse than no record — it still looks authoritative in the UI.
  *
- * `--fix` does not delete anything. It rewrites the affected facts to
- * confidence "low" with a note, which is enough for utils/lender-policy/verify.ts
- * to exclude them from matching while leaving them visible to a human who can
- * go and find the document's new home.
+ * Results are in three buckets, not two:
+ *   resolved     — the page is there.
+ *   dead         — 404/410/5xx/unreachable. Probably moved, possibly invented.
+ *   unverifiable — the host refused an automated request (403 and friends).
+ *                  Evidence of NOTHING: such a host answers 403 for a real page
+ *                  and for a fabricated path alike. Never auto-demoted; open it
+ *                  in a browser and judge.
+ *
+ * `--fix` does not delete anything, and only touches the DEAD bucket. It
+ * rewrites those facts to confidence "low" with a note, which is enough for
+ * utils/lender-policy/verify.ts to exclude them from matching while leaving
+ * them visible to a human who can go and find the document's new home.
  *
  * Deliberately NOT part of the test suite: it hits the public internet, so it
  * would make CI flaky and fail on a lender's five-minute outage. Run it by hand
@@ -53,12 +61,48 @@ for (const file of files) {
   }
 }
 
+/**
+ * Statuses that mean "a bot filter said no", not "this page is gone".
+ *
+ * This distinction is the whole point of the script. A WAF-protected host
+ * (reduceloans.com.au and mezybroker.com.au both are) returns 403 for every
+ * path, real or invented — so a 403 is not a failed check, it is the ABSENCE
+ * of a check. Reporting those as "dead" sent me chasing eight perfectly good
+ * source URLs; both sets of pages load fine in a real browser.
+ */
+const BLOCKED_STATUSES = new Set([401, 403, 405, 406, 429, 451]);
+
+/**
+ * Does this connection-level failure prove the page isn't there, or only that
+ * our client couldn't complete the request?
+ *
+ * A TLS chain error is the second kind. unity.bank serves an incomplete
+ * certificate chain: curl and every browser fetch the missing intermediate and
+ * load the page fine, Node's fetch refuses. The host plainly exists — it
+ * answered the handshake — so calling that "dead" would demote a set of
+ * perfectly good, human-verified policy facts.
+ */
+function isInconclusiveNetworkError(err) {
+  if (err.name === "AbortError") return true;
+  const code = err.cause?.code ?? err.code ?? "";
+  return (
+    code.startsWith("UNABLE_TO_") ||
+    code.startsWith("CERT_") ||
+    code.startsWith("SELF_SIGNED") ||
+    code.startsWith("DEPTH_ZERO") ||
+    code.startsWith("ERR_TLS") ||
+    code === "ETIMEDOUT" ||
+    code === "ECONNRESET" ||
+    code === "EPROTO"
+  );
+}
+
 async function check(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
     // Some bank sites reject HEAD outright, so use a ranged GET and a normal
-    // user agent — a 403 from a bot filter is not evidence the page is gone.
+    // user agent.
     const res = await fetch(url, {
       method: "GET",
       redirect: "follow",
@@ -69,9 +113,16 @@ async function check(url) {
         range: "bytes=0-2047",
       },
     });
-    return { ok: res.status < 400, status: res.status };
+    if (res.status < 400) return { ok: true, blocked: false, status: res.status };
+    return { ok: false, blocked: BLOCKED_STATUSES.has(res.status), status: res.status };
   } catch (err) {
-    return { ok: false, status: null, error: err.name === "AbortError" ? "timeout" : "unreachable" };
+    const inconclusive = isInconclusiveNetworkError(err);
+    return {
+      ok: false,
+      blocked: inconclusive,
+      status: null,
+      error: err.name === "AbortError" ? "timeout" : (err.cause?.code ?? "unreachable"),
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -79,6 +130,7 @@ async function check(url) {
 
 const urls = [...byUrl.keys()];
 const dead = [];
+const blocked = [];
 let done = 0;
 
 // Bounded concurrency — a hundred simultaneous requests to a handful of bank
@@ -92,16 +144,29 @@ async function worker() {
     const url = urls[i];
     const result = await check(url);
     done += 1;
-    if (!result.ok) dead.push({ url, ...result, uses: byUrl.get(url) });
+    const entry = { url, ...result, uses: byUrl.get(url) };
+    if (result.blocked) blocked.push(entry);
+    else if (!result.ok) dead.push(entry);
   }
 }
 await Promise.all(Array.from({ length: Math.min(CONCURRENCY, urls.length) }, worker));
 
 console.log(`Checked ${done} distinct source URLs across ${files.length} lender records.`);
-console.log(`  resolved: ${done - dead.length}`);
-console.log(`  dead:     ${dead.length}`);
+console.log(`  resolved:     ${done - dead.length - blocked.length}`);
+console.log(`  dead:         ${dead.length}`);
+console.log(`  unverifiable: ${blocked.length}  (host refused an automated request)`);
 
-if (dead.length === 0) process.exit(0);
+if (blocked.length > 0) {
+  console.log("\nUnverifiable — open these in a browser before trusting or demoting them:");
+  for (const b of blocked) {
+    console.log(`? ${b.status ?? b.error}  ${b.url}   (${b.uses.length} field(s))`);
+  }
+}
+
+if (dead.length === 0) {
+  console.log(blocked.length > 0 ? "\nNo dead sources." : "");
+  process.exit(0);
+}
 
 console.log("");
 for (const d of dead) {
@@ -110,7 +175,8 @@ for (const d of dead) {
 }
 
 if (!fix) {
-  console.log("\nRe-run with --fix to demote these facts so they stop matching.");
+  console.log("\nRe-run with --fix to demote the DEAD facts so they stop matching.");
+  console.log("Unverifiable sources are never auto-demoted — a bot block is not evidence.");
   process.exit(1);
 }
 

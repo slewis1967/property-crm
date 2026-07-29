@@ -1,0 +1,204 @@
+{
+  "id": "nab",
+  "name": "NAB",
+  "legalName": "National Australia Bank Limited",
+  "tier": "major_bank",
+  "status": "active",
+  "acl": "230686",
+  "abn": "12 004 044 937",
+  "brokerSiteUrl": "https://www.nabbroker.com.au/",
+  "policyDocUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+  "funder": null,
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.nabbroker.com.au/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public NAB page; the NAB Broker Portal (nabbroker.com.au) requires accreditation and login for policy and calculators.",
+      "sourceTitle": "NAB Broker Portal",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.nabbroker.com.au/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly; broker portal login required.",
+      "sourceTitle": "NAB Broker Portal",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.nabbroker.com.au/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published publicly.",
+      "sourceTitle": "NAB Broker Portal",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.nabbroker.com.au/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "NAB Broker Portal",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'Owner occupiers can borrow up to 95% of the property's value with principal and interest repayments or 80% with interest only repayments.'",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'Investors can borrow up to 90% of the property's value with principal and interest repayments or interest only repayments.'",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'LMI is charged when your LVR is more than 80%.'",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'If LMI is required, we will inform you of the cost and give you the option to pay for it up front or to add it to your loan balance.'",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'Minimum $20,000 with no maximum (subject to standard assessment)'.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "medium",
+      "status": "not_found",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "'Minimum $20,000 with no maximum (subject to standard assessment)' - no dollar cap is published.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "Up to 10 100% interest offset accounts can be linked to a variable rate NAB Tailored Home Loan.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "Variable rate loans: minimum $500 per redraw transaction, if at least one full repayment ahead of schedule.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "note": "Loan purposes include 'building/construction loans (only available on interest only loans)'; construction includes an interest-only payment period of one or two years.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme (Home Guarantee Scheme)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Listed as 'National Australia Bank' on the Housing Australia participating lender list. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Eligible borrowers: 'Individuals, non-trading companies and/or family trusts'. Ongoing $12 monthly loan service fee per loan account and no application fee.",
+      "asAt": "2025-02-10",
+      "sourceUrl": "https://www.nab.com.au/content/dam/nabrwd/documents/fact-sheets/loans/nab-variable-rate-with-offset-product-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "NAB Tailored Home Loan - variable rate with offset product sheet",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2025-02-10",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "NAB's broker portal is login-gated, so no NAB-published assessment buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis could be sourced.",
+    "No published income-type table, employment tenure minimums, credit knock-outs, security/postcode restrictions or residency/visa rules.",
+    "Maximum loan term and interest-only maximum terms are not stated on the public product sheet.",
+    "LMI waiver professions (NAB does operate a professional LMI waiver) are not published on a public NAB page.",
+    "Primary source is dated 10 February 2025 - re-check against a newer NAB product sheet."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

@@ -1,0 +1,47 @@
+{
+  "id": "hiver-bank",
+  "name": "Hiver",
+  "legalName": "Hiver was a division/brand of Teachers Mutual Bank Limited",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": "Teachers Mutual Bank Limited",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "CLOSED — DO NOT SHORTLIST. Hiver was a digital-only banking brand of Teachers Mutual Bank Limited, launched June 2021 and marketed as \"Australia's first digital bank for essential workers\". The hiver.bank site now carries a single notice: \"Hiver Bank closed on 12 May 2025\". Members were contacted on 3 March 2025 and given the option to close their accounts or convert them to UniBank (another Teachers Mutual Bank Limited division); accounts not responded to were closed or converted. Existing customers are directed to Teachers Mutual Bank, Health Professionals Bank, Firefighters Mutual Bank or UniBank. No lending products of any kind are offered under this brand.",
+      "asAt": "2025-05-12",
+      "sourceUrl": "https://www.hiver.bank/",
+      "sourceTitle": "Hiver — closure notice",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 3 March 2025 member-contact date and the migration-to-UniBank detail are also on the same notice."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2025-05-12",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Hiver ceased operating on 12 May 2025 — there is no current lending policy to research and none should ever be recorded against this id.",
+    "No evidence was found that Hiver ever offered HOME loans. Its published range was transaction and savings accounts, later extended to personal and car loans for essential workers. If a home loan product existed it was not publicly documented.",
+    "Tier is recorded as mutual_bank per the research tranche's assignment because Hiver was a brand of Teachers Mutual Bank Limited (a customer-owned bank); neobank_digital would be the more descriptive tier.",
+    "ABN/ACL not recorded separately — Hiver operated under Teachers Mutual Bank Limited's licence, not its own.",
+    "If a Hiver-branded home loan back book still exists it now sits with UniBank / Teachers Mutual Bank Limited; those entities are separate records and were not researched in this tranche."
+  ]
+}

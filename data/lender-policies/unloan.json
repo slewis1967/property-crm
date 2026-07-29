@@ -1,0 +1,355 @@
+{
+  "id": "unloan",
+  "name": "Unloan",
+  "legalName": "Unloan, a division of Commonwealth Bank of Australia",
+  "tier": "neobank_digital",
+  "status": "research_only",
+  "acl": "234945",
+  "abn": "48 123 123 124",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.unloan.com.au/eligibility",
+  "funder": "Commonwealth Bank of Australia",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public Unloan page.",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published publicly.",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'You have a loan-to-value ratio (LVR) of up to 80% (at least 20% equity or deposit)'. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "The same 80% LVR ceiling applies - the eligibility page covers 'a residential or land loan to live in or as an investment' under one LVR rule. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrRefinancePct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Refinance: 'You have at least 20% equity in your property (LVR is less than 80%)'. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'Please note Unloan currently doesn't offer loans with an LMI premium.' - so the 80% LVR ceiling is also the no-LMI ceiling. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "'In some cases depending on the property's location or type, we may only be able to lend you up to 70% of the property's value.' 'Unloan currently doesn't offer loans with an LMI premium.' If a customer holds an existing Unloan loan with an active LMI policy, the maximum across all Unloan loans is $3,000,000.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'PAYG employment income' is listed among accepted income types; income must be paid in Australian dollars."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Casual or variable income' is listed among accepted income types."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Self-employment income' is listed among accepted income types. The homepage FAQ states 'You earn a PAYG or self-employed income.'"
+        },
+        {
+          "type": "foreign_income",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Any income you provide needs to be paid in Australian dollars.'"
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "The eligibility page names the accepted income categories but the detailed sub-pages (shading, minimum history, evidence, and the 'Income types we don't accept' list) render dynamically and could not be read. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "employment": {},
+  "credit": {
+    "notes": {
+      "value": "Applicants must 'possess a good credit history'. No default, arrears or bankruptcy thresholds are published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential property (owner occupied or investment)",
+        "Land"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'You're applying for a residential or land loan to live in or as an investment (we don't offer construction loans).' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Construction",
+        "Off the plan",
+        "Property held by a trust or company",
+        "Property with more than two people on the title"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'There is a maximum of two people listed on the title (we don't accept properties held by a trust or company). All listed owners on the title are Unloan borrowers.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "'In some cases depending on the property's location or type, we may only be able to lend you up to 70% of the property's value.' Unloan does not publish the restricted location or property-type list.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 10000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'You'd like to borrow between $10,000 and $10,000,000.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanAmount": {
+      "value": 10000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'If you have multiple loans with Unloan, the total amount you can borrow across all of your loans is $10,000,000.' Reduced to $3,000,000 in total where an existing Unloan loan has an active LMI policy. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Unloan - Low Rate Home Loan (homepage FAQ)",
+      "note": "Homepage FAQ 'Can I offset interest in my Unloan account?' is answered with 'Unloan offers an unlimited redraw facility that lets you access extra repayments you've made on your home loan' - i.e. redraw is offered in place of an offset account. Unloan does not state 'no offset' in those words. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Low Rate Home Loan (homepage FAQ)",
+      "note": "'Our unlimited redraw means you can make additional payments to reduce the interest charged on your loan. And then access it instantly whenever you need, with no fees.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'we don't offer construction loans' / 'we don't offer construction or off-the-plan loans'. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offThePlanAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'we don't offer construction or off-the-plan loans'. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "guarantorAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'We're unable to support home loans with a security guarantor (for example a family member who offers their own property as a security).' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": [],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "'We don't participate in the Home Guarantee Scheme, Victorian Homebuyer Fund or other government home-buyer schemes.' First Home Buyer Grant funds cannot contribute to the 20% deposit. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Maximum of two borrowers, both of whom must be on the title. No application fees, ongoing account fees or exit fees. Loyalty discount of 0.01% p.a. per year to a maximum of 0.30% p.a.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Low Rate Home Loan (homepage FAQ)",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Applicants must 'live in Australia' and have an Australian mobile number."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Unloan publishes only 'You're at least 18 years old, live in Australia and have an Australian mobile number' plus an identity requirement for an Australian driver's licence or Australian passport. It does not enumerate citizenship, permanent residency or visa treatment, so no other residency status is recorded. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "'You're at least 18 years old, live in Australia and have an Australian mobile number.' 'You have a valid Australian Drivers Licence or Australian passport.'",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.unloan.com.au/eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Unloan - Check your eligibility",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Unloan has NO broker channel - 'As a digital-only home loan, Unloan is available exclusively via our website'. Recorded as status research_only for that reason.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis.",
+    "The 'Income and documents we accept' and 'Income types we don't accept' detail panels render dynamically and could not be read, so shading, minimum history and evidence per income type are unknown.",
+    "The restricted location/property-type list behind the 70% LVR cap is not published.",
+    "No published employment tenure minimums, credit-history thresholds, maximum loan term or interest-only terms.",
+    "Whether permanent residents or visa holders are eligible is not published - only 'live in Australia' plus an Australian licence/passport identity requirement."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

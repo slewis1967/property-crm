@@ -1,0 +1,779 @@
+{
+  "id": "brighten",
+  "name": "Brighten",
+  "legalName": "Brighten Home Loans",
+  "tier": "non_bank",
+  "status": "active",
+  "brokerSiteUrl": "https://brighten.com.au/",
+  "policyDocUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide, effective 15 May 2026 — 'Serviceability: Assessment Rate - Resident Loans' p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'The Principal and Interest (P&I) repayment for the new loan amount is calculated using the higher of the following: the Brighten Assessment Rate (currently set at 5.5%), 2% above the applicable rate for new loans, or 1% above the applicable rate for refinance loans, with a maximum of $25,000 cash out.' NON-RESIDENT loans use a different, larger buffer — 2.50% above the ongoing borrowing rate, or the 5.50% floor, whichever is greater."
+    },
+    "assessmentFloorRatePct": {
+      "value": 5.5,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'the Brighten Assessment Rate (currently set at 5.5%)' for resident loans; the non-resident program uses a 'floor rate (currently set at 5.50%)'. Both 5.5%."
+    },
+    "refinanceBufferPct": {
+      "value": 1.0,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Conditions are strict and all must be met: cash out no more than $25,000; the facility being refinanced must have been in place at least 12 months; no adverse credit events or debts being refinanced shown on CCR for the last 12 months; no adverse listings such as defaults or judgments on CCR for the last 24 months; and maximum LVR capped at 80%."
+    },
+    "rentShadingPct": {
+      "value": 0.9,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Income Requirements - Resident', Residential Rental Income row p16",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'90% of the gross rental income; OR 80% of gross rental income from the investment property held by the SMSF.' Confidence medium because the '% of income used for servicing' column in this table is offset from its income-type rows in the PDF text layer; the SMSF qualifier makes this particular cell a confident match, but re-check visually. 90% is high for the market — verify before relying on it in a marginal file."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Assessing commitments of other financial institutions' p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Ongoing commitment will be calculated by using 3.80% of the total limit for all credit cards (including store accounts).' Special rule for residents of China: the higher of 3.80% of the outstanding credit card BALANCE per their personal credit report, or 3.80% of the outstanding balance declared by the applicant."
+    },
+    "existingCommitmentTreatment": {
+      "value": "benchmark",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unusually punitive and easy to miss: 'Where the applicants have ongoing financial obligations with other financiers in Australia, these commitments will be assessed at 125% of the actual ongoing financial commitment.' The same 125% loading applies to offshore commitments unless it can be evidenced that the benchmark is not appropriate for the country where the debt is serviced. Also captured: approved future commitments, the full commitment on joint loans, the full commitment on any loan the applicant guarantees, private loan agreements, and the interest-only commitment on the full credit limit of revolving products."
+    },
+    "interestOnlyAssessment": {
+      "value": "Servicing on a further advance is completed over the REMAINING loan term. Revolving credit products are assessed on the interest-only commitment on the full credit limit.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp20-21",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The guide does not state a general P&I-over-residual-term rule for new interest-only lending."
+    },
+    "notes": {
+      "value": "Maximum loan exposure per applicant (or cumulatively to associated applicants) is $15,000,000; additional rate loadings may apply above $3,500,000. Where an application is in one name only but the applicants share income and expenditure, all joint and several commitments must be used. Tax debt consolidation is considered only under the Near Prime products, requires an acceptable explanation of why the debt arose and satisfaction that it will not recur, and requires 6 months repayment history on Alt Doc loans (otherwise the product must be Full Doc). Private/solicitor loan refinances are acceptable under Near Prime where 6 months of repayments are evident from the client's third-party transaction account — a ledger statement from the private lender or capitalised interest is not acceptable.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp19-21",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 80,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — product tables pp3-8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% is the ceiling across essentially the whole book: Brighten Empower Prime and Near Prime (Full Doc), Brighten Boss Prime and Near Prime (Alt Doc), Brighten Elevate (expat), construction for residents and expats, bridging, and SMSF. The exceptions are LOWER: non-resident construction 70%, Brighten Land (vacant land) 75%, and 'Easy Refinance' 75%. Brighten does not lend above 80% LVR on any published product."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 80,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The product tables state a single 'Max LVR: Up to 80%' against a loan purpose of 'Purchase, refinance or equity release of owner occupied or investment property' — no occupancy split is published. Confidence medium because the equality is read from the absence of a split rather than stated."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Brighten Boss Prime key features p2",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Brighten does not use LMI on these products — it charges a risk fee, and Brighten Boss Prime advertises '$0 Risk Fee Up to 80% LVR'. Since 80% is also the absolute product ceiling, the whole book is effectively LMI-free. Confidence medium because the guide never uses the words 'no LMI'."
+    },
+    "maxLvrConstructionPct": {
+      "value": 80,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Construction - Brighten Easy Builder' p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% for Empower Prime / Boss Prime and for Elevate (expat); 70% for non-residents. Minimum loan $200,000 (higher than the $50,000 standard minimum). Category 1 and 2 postcodes only for residents and expats; Category 1 only for non-residents. Requires 'a full and complete Fixed Price Building Contract dated within 12 months'. Excludes renovations. Interest-only during construction, then reverts to the underlying variable product."
+    },
+    "notes": {
+      "value": "Postcode category drives eligibility rather than LVR steps: Brighten Empower Prime, Boss Prime and Elevate accept Category 1 and 2 postcodes only; the Near Prime products (Empower and Boss) accept Category 1, 2 and 3. Refer to the Brighten Acceptable Security Location Postcodes List. Units in Victoria carry a maximum LVR of 70%. Where a valuation identifies the highest and best use as a development site, the security is acceptable only under the Near Prime products and only where the applicants are not developers or builders, there is no existing DA, and the improvement value is at least 10% of total security value (65% max LVR where improvement value is 5-10%; unacceptable below 5%).",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-5, 12",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Alt Doc - Brighten Boss' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Brighten Boss (Prime and Near Prime) is a dedicated alt-doc product for self-employed borrowers. Alt Doc is also available on construction and SMSF."
+    },
+    "altDocEvidence": {
+      "value": "'One Form of Income Documentation' (Brighten Boss Prime key feature). Prime Alt Doc additionally requires an active ABN for at least 2 years and GST registration for at least 12 months where turnover exceeds $75,000. Near Prime Alt Doc requires an active ABN for at least 1 year and GST registration for at least 1 day where turnover exceeds $75,000.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp2, 4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The specific list of acceptable alt-doc documents is on p18 of the guide ('Refer to p18') and was not extracted in this pass — only the ABN/GST gates and the 'one form of income documentation' headline."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Brighten Boss Prime and Brighten Boss (Near Prime) both 'Up to 80%' — the same ceiling as Full Doc, with '$0 Risk Fee Up to 80% LVR' on Boss Prime."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Employment: Minimum Employment Requirements' p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum of 2 years operation in the same business.' Named variance: 'Where an applicant only has 12 months trading in the current business and 2 years in previous employment within similar industry / profession, the application may be considered as a variance, based on the applicant's self-employment circumstances and the overall strength of the proposal.'"
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Self-Employed Full Doc Prime and Near Prime' p17; key features p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'1-Year Financials for Self employed borrowers' is a headline feature of Brighten Empower Prime. Requirement: 'The most recent 1 year Financial Statements (i.e. Statement of Financial Position / Performance), including business/trust and personal Income Tax Returns must be provided. This must also be supported by the latest available Tax Assessment Notice.' Income taken is '100% of most recent year's taxable income'."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "2 consecutive payslips no older than 45 days (monthly), 30 days (fortnightly) or 30 days (weekly).",
+          "conditions": "100% of income. PRIME: minimum 6 months with the current employer OR 12 months continuous employment within the same industry/profession. NEAR PRIME: more than 3 months with the current employer OR 12 months continuous employment (maximum 2 employers in a 12-month period) within the same industry/profession; if there is no 12 months experience, probation must be confirmed as passed."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "Permanent part time as PRINCIPAL employment is grouped with full time at 100%. Permanent part time as a SECOND job is treated as casual — see below."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 12,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'80% of income if employed for a minimum of 12 months'. Grouped as 'Part Time (Second job) / Casual'. This is the one materially shaded PAYG category in Brighten's table."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 12,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "Same row as casual — 80% where employed at least 12 months."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "As per full-time PAYG, plus the contract.",
+          "conditions": "PRIME: 'Minimum 12 months regular and ongoing contract work'. NEAR PRIME: 'Minimum 6 month or min 12-month continuous employment in same industry (Max 2 employers in a 12 month period)'. In both cases: 'Consideration needs to be given to the remaining term on the contract and the possibility of any extensions.'"
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payment must be regular (minimum of 2 pay periods), ongoing, and confirmable via the most recent PAYG summary or Single Touch Payroll summary.",
+          "conditions": "100%. Brighten runs a separate essential-services row for overtime and shift allowance."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payment must be regular (minimum of 2 pay periods), ongoing, and confirmable via the most recent PAYG/STP summary.",
+          "conditions": "100% — non-essential-services overtime and shift allowance carry the same 100% treatment as essential services in this table."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per overtime.",
+          "conditions": "Shift allowance shares the overtime rows (essential and non-essential)."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Evidenced over the two most recent financial years using PAYG payment summaries or tax assessment notices plus payslips; OR one payslip showing the bonus payment AND a letter from the employer detailing bonus amounts received over the past two years.",
+          "conditions": "100%."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Evidenced over the most recent 2 pay periods.",
+          "conditions": "100%, 'if evidenced that this income has been received for a minimum period of 6 months and is considered regular and ongoing'."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "Must be evidenced in recent payslips, a detailed employment letter, or the employment contract.",
+          "conditions": "'Any corresponding debt to be disclosed and used in determination of serviceability.' The servicing percentage cell reads 'Refer to verification requirement' rather than a number. Separately, a fully maintained company car allows up to $5,000 p.a. to be added back to gross income (PAYG applicants only), evidenced by an employer letter or employment contract confirming personal use is permitted."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "FULL DOC: the most recent 1 year financial statements (Statement of Financial Position / Performance) including business/trust and personal income tax returns, supported by the latest available tax assessment notice. Where the applicant draws company wages: a regular salary or director wages consistently for the last 6 months, 2 consecutive payslips, 6 months bank statements showing salary credits (or ATO income statements noting YTD income), and an accountant's letter confirming the company has sufficient profits to meet its business commitments and has traded profitably for the last two years.",
+          "conditions": "100% of the most recent year's taxable income; company wages at 100% of salary income. Minimum 2 years operation in the same business (12 months considered as a variance with 2 years prior similar employment). Allowable add-backs: interest on loans being refinanced; interest on loans paid out during the financial year; non-recurring expenses shown in the Statement of Financial Performance; superannuation in excess of the mandatory Superannuation Guarantee Levy for directors/partners/sole traders; and depreciation up to a total not exceeding 20% of business net profit."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "Where self-employment is SECONDARY to primary PAYG employment: Prime requires full-doc verification (minimum 2 years tax returns and trading in the current business); Near Prime requires minimum one year's tax returns and trading in the current business."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "One of: a legitimate letter from the managing real estate agent; a 1-month rental statement from the managing agent; a current signed tenancy/lease agreement disclosing duration and rent payable (a PRIVATE lease agreement additionally requires the most recent consecutive 3 months bank statements confirming the rental income); or taxation returns showing a breakdown of the gearing position.",
+          "conditions": "90% of gross rental income; 80% of gross rental where the investment property is held by an SMSF."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As for residential rental, PLUS a copy of the current formal lease agreement confirming a minimum of 24 months to expiry. If the property is vacant, Brighten relies on the lower of an agent's market appraisal or the rental amount per the valuation report.",
+          "conditions": "The servicing percentage for commercial rent could not be attributed with confidence from the offset column layout, so none is recorded."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "Evidenced via the prior year tax return or prior year dividend statement, plus confirmation the investments are still held.",
+          "conditions": "'Income from interest / dividend earning investments to be assessed using a deeming rate of 3.5% (if using a higher rate, proof that it has been received for the past 2 years must be provided).' This is a deemed-return rule on the capital value, not a shading percentage on declared income."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Current Centrelink statements confirming receipt of the allowance.",
+          "conditions": "'100% for ongoing disability pensions, widow allowance etc'. Brighten adds: 'This income should only be considered as a supplementary source of income.' Newstart, Youth Allowance and Parenting Payment (single parent etc.) are EXCLUDED."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent letter from Centrelink confirming details of the income.",
+          "conditions": "'100% Family Tax benefit types A & B are accepted' — but only 'where the allowance is determined to be permanent for a minimum 5 years (i.e. children under 11 years of age)'."
+        },
+        {
+          "type": "government_parenting_payment",
+          "accepted": false,
+          "shadingPct": 0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Expressly excluded: 'Excludes Newstart, Youth Allowance & Parenting Payment (Single Parent etc.).'"
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": 0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Newstart is expressly excluded from acceptable government income."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 3,
+          "evidence": "Child Support Agency Assessment plus 3 months current bank statements confirming receipt of payments.",
+          "conditions": "'Private arrangements are not acceptable under any circumstances.' No servicing percentage could be attributed with confidence."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "All offshore income must be fully verified; for Brighten Elevate loans, equivalent foreign documents are required where foreign income is used.",
+          "conditions": "'Foreign income is acceptable where applicant/s is an Australian or New Zealand Citizen / Resident or on the Brighten Acceptable Visa List.' 'A maximum of 90% of overseas income converted to Australian Dollars may be used for serviceability purposes.' Employment tenure must be as per the Australian equivalent. Self-employed foreign income is accepted from Australia, New Zealand, China, Hong Kong SAR, Singapore, United Kingdom and USA."
+        }
+      ],
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Income Requirements - Resident' pp15-18, 'Employment: Minimum Employment Requirements' p14",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Every percentage is quoted from Brighten's own '% of income used for servicing' column. The Fact is marked medium overall because that column is rendered as a separate block from its income-type rows in the PDF text layer; the cells recorded above are the ones whose wording uniquely identifies their row (e.g. the SMSF qualifier on rental, the 12-month qualifier on casual). Where a cell could not be uniquely attributed — commercial rent, car allowance, child maintenance — shadingPct is left null rather than guessed. Also accepted at 100%: Workers Compensation (only where a current insurer letter confirms payments will be ongoing for the life of the loan term WITHOUT restriction — if subject to annual medicals the income is unacceptable), and Employer Maternity Leave / Government Paid Parental Leave (unacceptable where the leave income ceases more than 30 days before the return-to-work date). Salary packaging: 100% of the package can be treated as gross income less compulsory superannuation, provided the package is available in cash at the applicant's option; a confirmed COMPULSORY salary sacrifice (e.g. QSuper in QLD Health) must instead be deducted from gross income."
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 'Minimum 6 months with current employer or 12 months continuous employment within the same industry / profession.' NEAR PRIME drops to more than 3 months with the current employer."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "12 months continuous same-industry employment is an express alternative to the current-employer tenure test on both Prime and Near Prime."
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "On Near Prime the 12 months allows a maximum of 2 employers within that period."
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p14",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Conditional. Near Prime: 'If no 12 months experience, need to confirm probation is passed' — i.e. an applicant WITH 12 months same-industry experience can be considered while still on probation. Prime probation policy: 'Minimum of 12 months in the current position, or if < 12 months with current employer, minimum 2 years continuous in same occupation / industry.' Near Prime probation: 'Minimum 6 months or min 12 month in same industry'. Brighten adds a general merits test: 'The application may be considered based on the merits and strength of the applicant's overall position e.g. reason for new job, previous employment history, level of previous income vs. new income.'"
+    },
+    "minMonthsCasual": {
+      "value": 12,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp14-15",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Casual and second-job income is only counted where the applicant has been 'employed for a minimum of 12 months', and then only at 80%."
+    },
+    "minMonthsContract": {
+      "value": 12,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: minimum 12 months regular and ongoing contract work. NEAR PRIME: minimum 6 months, or 12 months continuous in the same industry."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Brighten Boss Prime, ABN & GST row p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alt Doc PRIME: 'Active ABN for at least 2 years'. Alt Doc NEAR PRIME: 'Active ABN for at least 1 year'."
+    },
+    "minMonthsGstRegistered": {
+      "value": 12,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alt Doc PRIME: 'GST registration for at least 12 months (if Turnover >$75,000)'. Alt Doc NEAR PRIME: 'GST registration for at least 1 day (if Turnover >$75,000)' — headlined on p2 as 'Min. 1 Day GST Registration'."
+    }
+  },
+  "credit": {
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Credit History rows pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME (Empower Prime, Boss Prime and Elevate): 'Default paid up to $500 may be considered'. NEAR PRIME (Empower and Boss): 'Unlimited defaults up to $1,000 accepted (Paid or Unpaid); Unlimited paid defaults > $1,000, registered > 24 months accepted'. Non-resident construction requires 'Clean credit history'."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 500,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME threshold, and it must be PAID. On NEAR PRIME the threshold rises to $1,000 and unpaid defaults are accepted at that level."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "NEAR PRIME ONLY: 'Unlimited defaults up to $1,000 accepted (Paid or Unpaid)'. Above $1,000 the default must be PAID and registered more than 24 months ago. Prime requires the default to be paid and no more than $500."
+    },
+    "paidDefaultMinAgeMonths": {
+      "value": 24,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Applies to Near Prime defaults ABOVE $1,000: 'Unlimited paid defaults > $1,000, registered > 24 months accepted'. Defaults at or under $1,000 have no age requirement on Near Prime."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Unacceptable borrowers list p11",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Read from the decline side: 'Bankrupts discharged (including Part IV & X) < 2 years ago' are UNACCEPTABLE borrowers. So a bankruptcy discharged 2 or more years ago is not an automatic decline."
+    },
+    "partIxDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p11",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The guide's wording is 'including Part IV & X' — Part IV is bankruptcy proper and Part X is a personal insolvency agreement. Part IX (debt agreement) is not named. Confidence medium: recorded on the basis that Brighten's 2-year post-discharge bar covers formal personal-insolvency arrangements, but confirm Part IX specifically."
+    },
+    "maxArrears6Months": {
+      "value": 1,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Credit History rows pp3-4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 'Arrears less than 1 month in last 6 months accepted'. NEAR PRIME: 'Max 1 month arrears in last 6 months accepted'. Note the Prime wording is LESS than 1 month, i.e. tighter than Near Prime's 'max 1 month'."
+    },
+    "notes": {
+      "value": "It is mandatory to run an Australian 'Individual Consumer and/or Commercial' enquiry with Equifax for all loan applications. Each applicant and guarantor must also provide a copy of their credit report from their country of residence, less than 90 days old as at the formal approval date. Unacceptable borrowers also include: applicants whose business is the development or re-sale of property (unless purchasing or refinancing their own owner-occupied residence, with cash out limited to $10,000); applicants under external administration; superannuation funds as applicant or security provider; public companies; owner builders; limited liability companies; associations, churches and clubs; borrowers of convenience; and politically exposed persons or applicants located in countries identified by FATF as having AML/CTF deficiencies.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp11, 21",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential houses",
+        "Townhouses",
+        "Units (dwelling size must be greater than 40sqm, excluding balcony and car parking)",
+        "Apartments",
+        "Villas",
+        "Vacant land with a signed fixed cost building contract as part of a construction loan",
+        "Vacant land as sole security (only acceptable for a Brighten Land loan)"
+      ],
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Security Types' p12",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'All properties are subject to concentration risk restrictions for exposure in a postcode and/or within a development.' Acceptable title types: Torrens, Strata, Community and Old System Title; Crown Leases including ACT leases also fall within guidelines."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Income producing rural properties",
+        "Units/apartments in a building or development with non-compliant or non-conforming external cladding, or where compliance cannot be confirmed",
+        "Rural properties which are not suitable for residential use",
+        "Properties designed, zoned or used for commercial purposes (excluding residential home units in a commercially zoned development)",
+        "Englobo land",
+        "Properties without a legal street address (e.g. land-locked property)",
+        "Land or improvements that are contaminated",
+        "Construction, development or partially completed dwellings",
+        "Boarding house / hostel"
+      ],
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Unacceptable security types' p12",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The list continues onto p13 ('Unacceptable security types (continued)') which was not extracted, so this list is INCOMPLETE. Note the cladding exclusion — it is a common decline reason that other lenders handle case by case."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Apartment Unit Securities' p12",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Unit dwelling size must be greater than 40sqm, excluding balcony & car parking.' Between 40 and 50sqm the LVR is stepped down — see highDensityPolicy."
+    },
+    "highDensityPolicy": {
+      "value": "A 'HD Unit' is a strata titled home unit or apartment in a development comprising MORE THAN 6 FLOORS in a postcode classified as High Density in the Brighten Acceptable Security Location guide. RESIDENT: a unit with 40-50sqm internal space has a maximum LVR of 60%; an HD Unit with 40-50sqm internal space has a maximum LVR of 50%. NON-RESIDENT: a unit with 40-45sqm internal space has a maximum LVR of 60%; a unit with 45-50sqm has a maximum LVR of 65%; an HD Unit over 50sqm has a maximum LVR of 75%. Separately, units within VICTORIA have a maximum LVR of 70%.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Apartment Unit Securities' p12",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "highDensityMaxLvrPct": {
+      "value": 50,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — p12",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "50% is the resident cap for a HIGH DENSITY unit of 40-50sqm — the tightest published figure. A high-density unit over 50sqm is not given an explicit reduced cap for residents, so it presumably reverts to the 80% product maximum; do not assume 50% applies to every HD unit."
+    },
+    "companyTitleAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Acceptable title types are listed as Torrens, Strata, Community, Old System and Crown Lease — company title is neither named as acceptable nor listed on the (incomplete) unacceptable list. Looked at p12 of the 15 May 2026 Product Guide."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — product tables pp3-8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Acceptable Security Location Postcodes List' with Categories 1, 2 and 3, plus a separate High Density postcode classification. Prime, expat and non-resident products accept Category 1 and 2 only; Near Prime accepts Categories 1, 2 and 3; non-resident construction is Category 1 only. The list itself was not retrieved as a public document."
+    },
+    "notes": {
+      "value": "Valuation reports must be no more than 3 months old for residents and no more than 6 months old for non-residents at the time of settlement. Partial discharges require a written signed request and a formal credit submission; a revaluation is required if the remaining security valuations are more than 6 months old. Substitution of security requires the new security to fully comply with current underwriting policy (type, zoning, population density) and a formal panel valuation.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp21-22",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — product tables pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$50,000 on Empower (Prime and Near Prime), Boss (Prime and Near Prime) and Elevate. Construction is much higher at $200,000."
+    },
+    "maxLoanAmount": {
+      "value": 15000000,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp2-6, 19",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$15,000,000 on Empower Prime, Boss Prime, Elevate (expat), Evergreen/Platinum (non-resident), construction, bridging and land. The NEAR PRIME products are capped much lower at $2,500,000. 'Brighten's maximum loan exposure per applicant (or cumulatively to associated applicants) is $15,000,000', with additional rate loadings above $3,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "30 years on Empower, Boss, Elevate, construction (resident and expat) and SMSF. Non-resident construction is 'Up to 29 years and 11 months'. Brighten Land is up to 2 years; bridging is a 6-12 month bridging period, with a total term up to 30 years if there is end debt."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — Repayment Options rows pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Principal and Interest | Interest only up to 5 years followed by Principal and Interest' across Empower, Boss and Elevate. SMSF is 'Maximum loan term 30 years with 5 years IO'."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The same single 5-year maximum applies; no owner-occupied vs investment split is published."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'100% offset facility available' on Empower and Boss; '100% offset facility included for variable rate loans' on Elevate; '100% Redraw Offset Facility Included' on the non-resident, construction and bridging products."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum online daily redraw limit is $5,000 | Unlimited manual redraw ($50 per manual redraw)'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Construction - Brighten Easy Builder' p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "House and land construction with progress payments; EXCLUDES renovations. Available to Full Doc Prime, Alt Doc Prime, expat and non-resident borrowers — notably NOT to Near Prime. Requires a full and complete fixed price building contract dated within 12 months. Owner builders are unacceptable borrowers."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Bridging - Brighten Connect' pp2, 7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "For Full Doc Prime and Alt Doc Prime borrowers. Peak debt up to $5,000,000 at maximum 80% LVR (the headline elsewhere says loan size up to $15,000,000). Single and multiple security structures with 'No End Debt' or 'End Debt' options. Bridging period minimum 6 months, maximum 12 months. No repayment required during the bridging period. 'For No End Debt scenarios, serviceability is not required; however, a clear and acceptable exit' strategy is required."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Brighten Super Star' p2, pp13-14",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Full Doc and Alt Doc SMSF. 'LVR up to 80%, Max $3M'. Maximum loan term 30 years with 5 years interest only. Category 1 and 2 postcodes accepted, INVESTMENT PROPERTY ONLY. There is an Alt Doc solution based on proposed superannuation contributions, and a 'Simple Refinance' path where no further serviceability assessment is required for an established SMSF meeting stated conditions."
+    },
+    "notes": {
+      "value": "Debt consolidation: PRIME allows up to 5 unsecured debts (fewer than 3 credit cards; ATO debts NOT accepted); NEAR PRIME allows an unlimited number of debts including payout of ATO debts. Cash out is unlimited on both, but business purpose is capped at $500,000 on Prime and unlimited on Near Prime (where the security must be an investment property and not the only significant asset). All cash out must be disbursed into an Australian bank account in all applicants' names, and may be required to be controlled at the credit assessor's discretion. Up to 5 loan splits. Repayment methods: direct debit, BPAY, pay anyone. Additional advances: minimum $10,000, updated application form, current Equifax report for each borrower, 3 months satisfactory repayment history, evidence of employment and current income, servicing over the remaining loan term, a new valuation, and written consent from all borrowers and guarantors.",
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — pp3-4, 13, 21",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Standard resident products (Brighten Empower, Brighten Boss), maximum 80% LVR."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Standard resident products, maximum 80% LVR. Foreign income is acceptable for Australian or New Zealand citizens/residents at up to 90% of the AUD-converted amount."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "New Zealand citizens/residents are named alongside Australians in the foreign-income rule."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Brighten Elevate: Full Doc home loans for Australian citizens, permanent residents or temporary residents with income in AUD or an acceptable foreign currency. $50,000 to $15,000,000, maximum 80% LVR, up to 30 years, unlimited cash out, 100% offset included on variable loans, Category 1 and 2 postcodes only. Self-employed income accepted from Australia, New Zealand, China, Hong Kong SAR, Singapore, United Kingdom and USA. Requires proof of address if not confirmed by driver licence, plus a Brighten Supplementary Residency Form. Credit history: default paid up to $500 may be considered."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Temporary residents are accepted on Brighten Elevate where they hold income in AUD or an acceptable foreign currency and appear on the Brighten Elevate Acceptable Visa List. A separate constraint appears in the SMSF section: a temporary visa must not expire within 12 months."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Brighten Evergreen and Brighten Platinum are dedicated non-resident products, up to $15,000,000, Category 1 and 2 postcodes, 100% redraw offset included, subject to the Brighten Acceptable Country List. Servicing is assessed at the greater of 2.50% above the ongoing borrowing rate or the 5.50% floor, and the new loan is aggregated with any existing loans under the non-resident program. Non-resident CONSTRUCTION is capped at 70% LVR, Category 1 postcodes only, requires clean credit history, and the term is 'up to 29 years and 11 months'. Non-resident unit securities have their own tighter floor-area LVR steps. Each applicant and guarantor must provide a personal credit report from their country of residence, less than 90 days old at formal approval."
+        }
+      ],
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — product summaries pp2-8, income requirements p18, serviceability p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Brighten is one of the few lenders on this panel that lends to genuine non-residents as a core product line. The maxLvrPct values are the product ceilings; the specific acceptable visa subclasses and countries are in the separate 'Brighten Elevate Acceptable Visa List' and 'Brighten Acceptable Country List', which were not retrieved. Applicants located in countries identified by FATF as having AML/CTF deficiencies, and politically exposed persons, are unacceptable borrowers."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.9,
+      "asAt": "2026-05-15",
+      "sourceUrl": "https://brighten.com.au/docs/Brighten-Product-Guide-EN.pdf",
+      "sourceTitle": "Brighten Product Guide 15 May 2026 — 'Foreign / Offshore income' p18",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'A maximum of 90% of overseas income converted to Australian Dollars may be used for serviceability purposes.' All offshore income must be fully verified, and employment tenure must be as per the Australian equivalent."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-05-15",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No DTI cap and no minimum surplus/net-disposable-income ratio is published.",
+    "No HEM or living-expense benchmark basis is stated anywhere in the product guide.",
+    "No BNPL or HECS/HELP treatment is published.",
+    "No genuine-savings percentage is published — the guide says only 'In all cases, the source of the applicant's equity in the proposed transaction must be established.' No gifted-deposit policy and no government first-home-scheme participation is stated.",
+    "The specific alt-doc income documents (the 'one form of income documentation') are on p18 of the guide and were not extracted — only the ABN/GST gates.",
+    "The '% of income used for servicing' column on pp15-18 is rendered separately from its income-type rows in the PDF text layer, so the percentages for commercial rental income, car allowance and child maintenance could not be attributed and were left null.",
+    "The 'Unacceptable security types' list continues onto p13 and was not extracted — the recorded list is incomplete.",
+    "The Brighten Acceptable Security Location Postcodes List (Categories 1/2/3 and the High Density postcode classification), the Brighten Elevate Acceptable Visa List and the Brighten Acceptable Country List all drive eligibility but were not retrieved as public documents.",
+    "No published maximum applicant age at maturity or exit-strategy trigger age.",
+    "No published guarantor policy (guarantors are referenced in the commitment and consent rules but no acceptance criteria are given).",
+    "No published minimum credit score, maximum credit enquiries, payday-lending policy or gambling policy.",
+    "No maximum employment gap is published.",
+    "Bridging: the guide states both 'Loan Size Up to $15,000,000, max 80% LVR' in the summary and 'Peak Debt: 5,000,000 Max. 80% LVR' in the product table — the two figures were not reconciled."
+  ]
+}

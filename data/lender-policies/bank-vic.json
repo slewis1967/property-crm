@@ -1,0 +1,335 @@
+{
+  "id": "bank-vic",
+  "name": "BankVic",
+  "legalName": "Police Financial Services Limited, trading as BankVic",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240293",
+  "abn": "33 087 651 661",
+  "brokerSiteUrl": "https://www.bankvic.com.au/broker/",
+  "policyDocUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3 (published on the public BankVic Broker Hub)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Read directly from the calculator's repayment formula: IF(rate + 3% < 7.25%, 7.25%, rate + 3%). The as-at date is the latest change-control entry in the workbook (\"HEM update Q4 - Effective 7/4/2026\"); the workbook also records \"HEM Tables - Q3 FY2026 (HEM Edition Q1 2026)\"."
+    },
+    "assessmentFloorRatePct": {
+      "value": 7.25,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same formula: the assessment rate is the greater of 7.25% and (product rate + 3%). Applied to both the new loan and to existing BankVic loan repayments in the calculator."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Calculator formula: rental type \"Permanent Term\" x 0.8; \"Short Term\" x 0.7; \"Serviced Apartment/AirBnB\" x 0.7. The field is labelled \"Allowable Rental Income - the acceptable annual rental income based on BankVic policy\". So 80% for a standard permanent tenancy, 70% for short-stay/serviced/Airbnb."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.0382,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Calculator applies limit x 0.0382 per month to the \"Total Existing Credit Card or Overdraft Limit\" and the \"Total New Credit Card or Overdraft Limit\" - i.e. 3.82% of the LIMIT monthly, not the balance."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The workbook carries a HEM table keyed by household type (Single/Couple + dependants) and income band, headed \"HEM Tables - Q3 FY2026 (HEM Edition Q1 2026)\", with change-control entries \"HEM update Q2 - Effective 20/11/2025\", \"Q3 - Effective 17/2/2026\" and \"Q4 - Effective 7/4/2026\". Total assessed living expense is the greater of declared expenses and calculated HEM."
+    },
+    "dtiCap": {
+      "value": 7.0,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Calculator help text: \"Result is calculated by dividing a total of existing/new liabilities to a total of income. The DTI should be less than 7 to be passed.\" The result formula returns \"PASS\" at DTI <= 7 and \"REFER - Outside Serviceability Guidelines\" above 7 - so 7 is a REFER trigger, not necessarily an automatic decline. Change control records: \"Updated DTI validation formulas from 6 to 7 in line with DTI change in NextGen.\""
+    },
+    "dtiReferThreshold": {
+      "value": 7.0,
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Above DTI 7 the calculator returns \"REFER - Outside Serviceability Guidelines\"."
+    },
+    "hecsTreatment": {
+      "value": "HECS/HELP is assessed from the balance: \"Based on HECS / HELP Tables, balance multiplies by % in line with Income Threshold.\" The calculator has a dedicated HELP/HECS input and an embedded HECS/HELP repayment-rate table.",
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3",
+      "confidence": "medium",
+      "status": "verified"
+    },
+    "notes": {
+      "value": "Existing external home-loan commitments are assessed at the greater of 5.05% and (actual rate + 3%) per the calculator formula IF(rate < 5.05%, 5.05%, rate + 3%) - a lower floor than the 7.25% applied to the new loan. Rent/board commitments carry \"a minimum value required per adult when living with family rent free\". BankVic also publishes a reduced living-expense verification path: if declared expenses exceed BankVic HEM AND the credit report score is >= 750 AND net monthly surplus is >= $500 AND LVR <= 80%, no further living-expense verification is required; otherwise three months of personal bank statements for all external accounts are required.",
+      "asAt": "2026-04-07",
+      "sourceUrl": "https://www.datocms-assets.com/28619/1763510875-bankvic-home-loan-serviceability-calculator-v1-3.xlsx",
+      "sourceTitle": "BankVic Home Loan Serviceability Calculator v1.3 + Supporting documents checklist (TB-1020, 05.2024)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (\"For broker use only\", current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Max LVR with LMI: up to 95% LVR with LMI\" across all five owner-occupied products (Variable, Offset Variable, Fixed, Special Police Variable, Special Offset Police Variable). Document is dated 14 August 2024 - check bankvic.com.au/broker for a newer matrix."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Investment Property Loans section: \"Max LVR with LMI: up to 90% LVR with LMI\" on all five investor products. Corroborated by the current BankVic Broker Hub rate footnotes: \"Borrow up to 80% of the property value with no Lenders Mortgage Insurance (LMI) or up to 90% of the property value with LMI.\""
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% on the standard owner-occupied and all investor products. EXCEPTIONS on owner-occupied: the two Special Police products go to \"up to 90% LVR no LMI\", and \"Max LVR with no LMI (for bond employees)\" is \"up to 90% LVR no LMI\" on every owner-occupied product. Matrix footnote: \"*LMI waivers available for up to 90% LVR. Please refer to the current BankVic Broker Underwriting Guidelines or your BankVic broker BDM for more information.\""
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 90,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"*LMI waivers available for up to 90% LVR.\" Owner-occupied only - the investor table shows 80% no-LMI for bond employees as well."
+    },
+    "lmiProvider": {
+      "value": ["QBE"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankvic.com.au/broker/",
+      "sourceTitle": "BankVic Broker Hub",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Broker Hub's calculator panel links a \"QBE LMI calculator\", and the Supporting documents checklist says cash-out at \"LVR > 80% (Subject to QBE LMI guidelines)\"."
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "evidence": "PAYG member: most recent pay slip showing applicant name, employer name, employer ABN and YTD income. PAYG non-member: last two consecutive pay slips showing applicant name, YTD income, employer name and ABN."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "minHistoryMonths": 24,
+          "evidence": "Individual tax returns for the last two years (summary returns are NOT accepted) plus ATO Notices of Assessment for the last two years."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "minHistoryMonths": 24,
+          "evidence": "Last two years' company tax returns and most recent company financial reports (profit/loss)."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "minHistoryMonths": 24,
+          "evidence": "Two years' most recent trust tax returns and most recent trust financial reports (profit/loss)."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "evidence": "Current signed tenancy agreement; or latest rental income statement from managing agent; or last two years' personal tax returns. If MORE THAN THREE investment properties, last two years' personal tax returns must be provided.",
+          "conditions": "Serviceability calculator shades permanent-term rent to 80%, and short-term or serviced-apartment/Airbnb rent to 70%."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "evidence": "Last six months' statements showing continuity of income type; or latest investment/dividend statements; or last two years' personal tax returns."
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "evidence": "Last three months' statements showing continuity of income type; or latest pension statements; or last two years' personal tax returns."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "evidence": "Latest government benefit statements or last two years' personal tax returns. If credits are unavailable or inconsistent, the most recent Services Australia/Centrelink income statement confirming the regular/ongoing entitlement."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "minHistoryMonths": 3,
+          "evidence": "Services Australia statement confirming child support maintenance plus evidence of payment into a bank account for a minimum of three months.",
+          "conditions": "Accepted where payment is permanent for the next five years."
+        }
+      ],
+      "asAt": "2024-05-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/4Bd1D/zYyar/original/Supporting+documents+checklist",
+      "sourceTitle": "BankVic Supporting documents checklist, TB-1020 BD008 (05.2024) - \"Submit this checklist with your BankVic home loan application\"",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This is an EVIDENCE checklist, not a full credit policy - it states what documents BankVic needs, so 'accepted: true' means the income type has a documented evidence standard, not that it is accepted on any terms. Shading percentages come from the serviceability calculator, not this document. The checklist is dated 05.2024 and itself refers brokers to \"underwriting guidelines at bankvic.com.au/broker\", which were not publicly retrievable. Casual, probation, contract, overtime, bonus and commission income are NOT addressed in the checklist and are deliberately absent from this table."
+    }
+  },
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$20,000 on the Variable, Offset Variable and both Special Police products (owner-occupied and investor). FIXED RATE products have a $50,000 minimum."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"P&I - 30 years\" on the variable products. Fixed-rate terms are 1 to 5 years, then revert to variable P&I."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 2,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "MAJOR RESTRICTION: on owner-occupied loans interest-only is \"IO - 2 years*\" and the asterisk reads \"*Yes, for construction only\" - i.e. owner-occupied interest-only is available ONLY for construction, and only on the Variable and Special Police Variable products (not on Offset Variable or Fixed). IO reverts to the variable P&I rate."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"IO - 5 years\" on the investor Variable, Fixed and Special Police Variable products. Interest-only is NOT available on the Offset Variable investor products."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Dedicated Offset Variable products for both owner-occupied and investor, and Offset Police Variable products. An eligible offset account must be linked to the loan. Offset is NOT available on the standard (non-offset) variable, the fixed products, or the non-offset Police Variable rate."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Redraw available (Min of $50)\" - yes on the variable and offset variable products (P&I only on the standard variable); NOT available on fixed-rate loans."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Established from the matrix note that owner-occupied interest-only is available \"for construction only\"."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"BankVic\" is named on Housing Australia's participating-lender list (page carries no publication date; captured 2026-07-29). The BankVic Broker Hub also carries a \"First home buyers and single parents\" panel."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted and BankVic publishes an unusually detailed public broker hub. Application channels for every product are \"Website, contact centre, branch, broker\". Accreditation is initiated through the broker's aggregator, followed by a compulsory BankVic Broker Training Session and issue of a unique Broker ID; accreditation queries go to brokeraccreditation@bankvic.com.au. Lodgement is via NextGen ApplyOnline. Fees per the products matrix: establishment $0 on owner-occupied variable/offset products, up to $600 on fixed and on ALL investor products; ongoing fees $0; discharge fee $295; loan switching fee $200; fixed-rate loans allow $10,000 p.a. in additional repayments before break costs.",
+      "asAt": "2024-08-14",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/VVlb/yE86Z/original/Home+Loan+Products+Matrix",
+      "sourceTitle": "BankVic Home Loan Products Matrix, TB-1147 (current as of 14 August 2024)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "conditions": "Must also satisfy BankVic membership eligibility - see notes. Membership is applied for as part of the home loan application."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "conditions": "Must also satisfy BankVic membership eligibility - see notes."
+        }
+      ],
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/lrGaR/PqZXg/original/Broker+member+eligibility+criteria+TB-1128",
+      "sourceTitle": "BankVic Membership eligibility guide - \"For use by BankVic accredited brokers\" (TB-1646, BD012 01.2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim: \"They can become a member if they're an Australian citizen or resident and belongs to any of the following sectors...\" Temporary-visa holders and non-residents are not addressed and are therefore left unrecorded rather than recorded as declined."
+    },
+    "notes": {
+      "value": "MEMBERSHIP ELIGIBILITY IS A HARD KNOCK-OUT AND IS PUBLISHED FOR BROKERS. \"To be eligible for a BankVic home loan via our broker channel, your client needs to be a member of BankVic. They apply to become a member of BankVic as part of their home loan application. They can become a member if they're an Australian citizen or resident and belongs to any of the following sectors: POLICE - any employee of an Australian State, Australian Territory or Federal Police Force and any member or employee of The Police Association of Victoria (TPAV), Northern Territory Police Association (NTPA) or Australian Federal Police Association (AFPA); EMERGENCY SERVICES - any employee of an Australian State, Territory or Federal Emergency Services provider; HEALTH - any registered health practitioner with AHPRA, as well as any employee or contractor of an Australian public or private hospital; GOVERNMENT - any employee of the Australian Government Sector defined as an employee of a Federal government primary body within the Australian Government Organisations Register (AGOR) and the corresponding equivalent bodies for State and Territory governments.\" Note the police-only discounted rates are narrower again: those are limited to CURRENT employees of an Australian police force (including the AFP) and members of TPAV, AFPA or NTPA.",
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NZw2/lrGaR/PqZXg/original/Broker+member+eligibility+criteria+TB-1128",
+      "sourceTitle": "BankVic Membership eligibility guide (TB-1646, BD012 01.2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-04-07",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "MEMBERSHIP RESTRICTION: BankVic lends via brokers only to clients eligible for BankVic membership - police, emergency services, health (AHPRA-registered practitioners and hospital employees/contractors) and government-sector employees. This is a hard knock-out and is recorded in residency.notes.",
+    "The BankVic Broker Underwriting Guidelines are referenced by name in both the products matrix and the supporting-documents checklist but are not publicly downloadable from bankvic.com.au/broker - they are the source that would fill the credit, employment and security sections.",
+    "The Home Loan Products Matrix is dated 14 August 2024 and the Supporting documents checklist 05.2024; both may have been superseded. The serviceability calculator is current (change control to 7 April 2026).",
+    "No employment tenure minimums published (probation, casual, contract, minimum months in current job).",
+    "No credit-history policy published: defaults, judgments, bankruptcy, arrears, enquiries, payday lending or gambling. The only credit-score figure found is a 750 threshold used to waive extra living-expense verification, which is NOT a minimum score for approval.",
+    "No security policy at all: acceptable/unacceptable property types, minimum unit size, postcode category list, high-density, rural or company title.",
+    "Casual, probationary, fixed-term contract, overtime, bonus and commission income are not addressed in any public BankVic document, so no rules were recorded for them.",
+    "Genuine savings, gifted deposit and guarantor policies are not published.",
+    "The 5.05% floor applied to EXISTING loan commitments in the serviceability calculator is materially lower than the 7.25% new-loan floor and looks anomalous; it is recorded in servicing.notes rather than as a refinance buffer, and should be confirmed with a BDM before being relied on.",
+    "No aggregator panel is published; accreditation is routed through the broker's own aggregator."
+  ]
+}

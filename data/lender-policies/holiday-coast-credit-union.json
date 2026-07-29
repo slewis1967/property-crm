@@ -1,0 +1,47 @@
+{
+  "id": "holiday-coast-credit-union",
+  "name": "Holiday Coast Credit Union",
+  "legalName": "Holiday Coast Credit Union Ltd",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": "Regional Australia Bank",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "MERGED AWAY - DO NOT PLACE BUSINESS. Holiday Coast Credit Union Ltd no longer exists as an independent ADI. It merged into REGIONAL AUSTRALIA BANK, which lists Holiday Coast Credit Union in its own published merger history alongside Peel Valley Credit Union, Orana Credit Union, Hunter Mutual, Macquarie Credit Union and (from 1 July 2026) Summerland Bank. Contemporaneous reporting put the member votes at over 90% in favour at special general meetings in May 2019, with the merger taking effect 1 July 2019. Before the merger HCCU was a community-owned mutual established in 1967 as Hastings Rural Credit Union, headquartered at Wauchope NSW, with about 25,000 members, 98 staff and branches at Wauchope, Port Macquarie, Laurieton, Kempsey, Taree, Gloucester, Tea Gardens, Wingham, Greenhills, Tuncurry and Coffs Harbour. Any client scenario that would previously have gone to HCCU should be assessed against Regional Australia Bank's current policy instead.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/about-us/who-we-are/merger-updates",
+      "sourceTitle": "Regional Australia Bank - Merger Hub / merger history",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Regional Australia Bank's merger hub lists Holiday Coast Credit Union among its completed mergers but the year shown on that page did not match the widely reported 1 July 2019 effective date, so no single merger date is recorded as a value here. The fact of the merger is not in doubt; the exact date should be confirmed if it matters.",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Lender no longer exists - merged into Regional Australia Bank. No current credit policy exists to research, and none should be recorded against this id.",
+    "Regional Australia Bank's own merger hub and contemporaneous news reporting disagree on the merger year; the reported effective date is 1 July 2019. Not recorded as a fact because the two public sources conflict.",
+    "This record is kept as a withdrawn marker so that a stale HCCU reference in a broker's panel or in older CRM data resolves to 'merged away' rather than to nothing.",
+    "Historic HCCU ABN and Australian Credit Licence number were not captured."
+  ]
+}

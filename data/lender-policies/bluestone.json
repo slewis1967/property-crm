@@ -1,0 +1,551 @@
+{
+  "id": "bluestone",
+  "name": "Bluestone Home Loans",
+  "legalName": "Bluestone Servicing Pty Ltd",
+  "tier": "specialist_near_prime",
+  "status": "active",
+  "acl": "390183",
+  "brokerSiteUrl": "https://brokers.bluestone.com.au/products/",
+  "policyDocUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+  "funder": "Permanent Custodians Ltd (ACN 001 426 384) — Bluestone home loans are serviced by Bluestone Servicing Pty Ltd (ACL 390183) for Permanent Custodians Ltd",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy (public broker page), last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Stress repayments calculated on a rate of the higher of floor rate and actual rate + buffer.' Residential standard buffer 2.0%, REDUCED to 1.5% where LVR is 70% or less on Prime and Near Prime products. Commercial buffer is 2.0%."
+    },
+    "assessmentFloorRatePct": {
+      "value": 5.25,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential and commercial floor rate both 5.25%. The assessment rate is the higher of the floor and (actual rate + buffer)."
+    },
+    "refinanceBufferPct": {
+      "value": 1.5,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "CAUTION — this is NOT a refinance-specific buffer. Bluestone's reduced 1.5% buffer is triggered by LVR (70% or less) on Prime and Near Prime products, not by loan purpose. Recorded here because it is the lender's only published reduced buffer; do not apply it to a >70% LVR refinance."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'All rental income is shaded to 80%.'"
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Credit Cards and Overdrafts monthly repayments are calculated at 3.8% of the relevant limit.'"
+    },
+    "bnplTreatment": {
+      "value": "Buy-now-pay-later facilities (Afterpay, ZipPay named) are listed as ongoing liabilities where applicable, rather than assessed on a limit percentage like credit cards and overdrafts.",
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The policy names Afterpay and ZipPay but does not publish a percentage or minimum monthly assessment."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: living expenses are the 'Higher of Income and Family Structure Based HEM or borrower's declared figure'. A notional rent of $650/month is applied where the borrower lives rent-free with family or friends."
+    },
+    "notes": {
+      "value": "No DTI cap and no minimum net-surplus ratio is published in the Online Credit Policy.",
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide for Brokers, Version 2, effective for applications received from 1 June 2026 — 'Base variable interest rates', Residential Home Loans p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: the rate table runs 60/70/80/85/90% LVR, so 90% is the ceiling (a 2.00% risk fee applies at the 90% band). NEAR PRIME also reaches 90% (2.00% risk fee). SPECIALIST tops out at 85% (2.00% risk fee). SPECIALIST+ tops out at 80% (2.00% risk fee). Bluestone's Online Credit Policy (10 Nov 2025) states Specialist AND Specialist+ both at 85% — where the two disagree, prefer the newer 1 June 2026 product guide and confirm with the BDM."
+    },
+    "maxLvrConstructionPct": {
+      "value": 80,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Residential Construction Loans p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to 80% LVR'. Construction is PRIME AND NEAR PRIME BORROWERS ONLY and METRO LOCATIONS ONLY (Category 1 and 2)."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Fees, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bluestone does not use third-party LMI on these products — it charges its own RISK FEE. 'Fees (including Risk Fees) can be capitalised for all loans, subject to the total loan amount inclusive of fees, not exceeding the maximum lend amount and the LVR for the product.' The risk fee is 'calculated as a percentage of the total amount borrowed (excluding any capitalised fees) and added to the loan balance prior to settlement'."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Fees, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Capitalised fees must not push the loan past the product's maximum LVR or maximum lend amount."
+    },
+    "notes": {
+      "value": "Risk fees (Prime, Full Doc P&I): nil to 80% LVR, 1.00% at 85%, 2.00% at 90%. Near Prime: 0.50% at 70%, 1.00% at 80%, 1.50% at 85%, 2.00% at 90% (Alt Doc: 0.50% / 1.25% / 2.00% / 2.50%). Specialist Full Doc: 0.75% / 1.50% / 1.50% / 2.00% across 70/75/80/85%; Alt Doc 1.00% / 1.50% / 2.00% / 3.00%. Specialist+ Full Doc: 1.00% / 1.50% / 2.00% across 70/75/80%; Alt Doc 1.50% / 2.50% / 2.50%. Metro vs non-metro is determined by Bluestone's 'Acceptable Security Locations' list; maximum loan amounts step down materially in non-metro.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — pp4, 9",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — 'Your Quick Guide to Borrower Types' p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alt Doc is priced on every residential tier (Prime, Near Prime, Specialist, Specialist+) as well as construction and commercial."
+    },
+    "altDocEvidence": {
+      "value": "6 months BAS (assessed with Bluestone's BAS calculator) OR 6 months business bank statements OR an accountant's letter.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Self-Employed row, p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "One of the three is sufficient. Full Doc by comparison requires 2 years' tax returns and NOAs on Prime, or 1 year's tax returns and NOA on Near Prime / Specialist / Specialist+."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Self-Employed / Company Profile row, p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: ABN registration > 24 months and GST registration > 12 months. NEAR PRIME: ABN > 12 months, GST > 1 day. SPECIALIST and SPECIALIST+: ABN > 6 months, GST > 1 day. So the effective self-employed history requirement drops from 2 years to 6 months as you move down the tiers."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Full Doc on Near Prime, Specialist and Specialist+ requires only '1 years' tax returns & NOA' (Prime requires 2 years). Confidence medium because the row/column alignment in the extracted PDF text had to be reconstructed."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "2 recent payslips not exceeding 2 months in age from the date of application, OR the most recent payslip plus an income statement or employer letter/contract.",
+          "conditions": "PRIME (Full Time/Contract): '>12 months continuous; 2 employers'. NEAR PRIME, SPECIALIST and SPECIALIST+: '>3 months with current employer OR >12 months continuous employment'. No shading percentage is published in the product guide."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "Contract is grouped with Full Time in the same row of the borrower-types table, so the same tenure test applies."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "PRIME: '>6 months with current employer'. NEAR PRIME / SPECIALIST / SPECIALIST+: '>3 months with current employer'."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'>6 months with current employer + 12 months continuous employment overall' — both tests. The product guide states this once, apparently across all tiers."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Full Doc: 2 years' tax returns and NOAs (Prime) or 1 year's tax returns and NOA (Near Prime / Specialist / Specialist+). Alt Doc: 6 months BAS (with BAS calculator) OR 6 months business bank statements OR an accountant's letter.",
+          "conditions": "Company profile requirement: PRIME ABN > 24 months and GST > 12 months; NEAR PRIME ABN > 12 months and GST > 1 day; SPECIALIST and SPECIALIST+ ABN > 6 months and GST > 1 day."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "'Individuals, Companies and Trust borrowers' are all accepted on the residential home loans."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "Trust borrowers are expressly named as acceptable."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'All rental income is shaded to 80%' (Bluestone Online Credit Policy, 10 Nov 2025)."
+        }
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide for Brokers, 1 June 2026 — 'Your Quick Guide to Borrower Types' p3 (rental shading from the Online Credit Policy)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "IMPORTANT SCOPE LIMIT, in Bluestone's own words: 'For other income such as Rental Income, Family Tax Benefit, Child Support, Parenting Payments, Superannuation, Social Security, AusStudy/Scholarship, Seasonal Income, Trust Distributions and Income Protections/Workers Comp - refer to your BDM and Bluestone's Online Credit Policy for further information.' Those income types are therefore contemplated but their shading percentages are NOT published in the product guide, so no rule is recorded for them. The product guide also publishes no shading percentages at all for PAYG income — only tenure tests. Confidence medium because the tenure table is a four-column layout reconstructed from the PDF text layer."
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 12,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "PRIME full time/contract: '>12 months continuous; 2 employers'. This drops sharply on the lower tiers: Near Prime, Specialist and Specialist+ accept '>3 months with current employer OR >12 months continuous employment' — which is one of Bluestone's strongest points of difference for a client who has just changed jobs."
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Expressed as '12 months continuous employment', not specifically same-industry. Recorded here as the continuity alternative to the current-employer tenure test on the non-prime tiers."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "On Near Prime and below, 12 months continuous employment is an explicit alternative to 3 months with the current employer."
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'>6 months with current employer + 12 months continuous employment overall'."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME 'ABN registration >24 months'. NEAR PRIME >12 months. SPECIALIST and SPECIALIST+ >6 months."
+    },
+    "minMonthsGstRegistered": {
+      "value": 12,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME 'GST registration >12 months'. On NEAR PRIME, SPECIALIST and SPECIALIST+ it is 'GST registration >1 day' — effectively no GST history requirement."
+    }
+  },
+  "credit": {
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — 'Acceptable credit impairments' p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 'Paid defaults up to $500 considered'. NEAR PRIME: 'Paid defaults up to $2000 or defaults >24 months considered'. SPECIALIST: 'Paid defaults up to $2000 or defaults >12 months considered'. SPECIALIST+: 'Defaults considered subject to a reasonable explanation' — no dollar or age limit."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 500,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME threshold, and the default must be PAID. The equivalent threshold is $2,000 on Near Prime and Specialist. On Specialist+ there is no published threshold."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only via the age limb of the Near Prime / Specialist tests: 'defaults >24 months considered' (Near Prime) and 'defaults >12 months considered' (Specialist) are stated WITHOUT the word 'paid', in contrast to the paid-up-to-$2,000 limb. Confidence medium — the table does not say 'paid or unpaid' explicitly. PRIME clearly requires the default to be paid."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — 'Discharged Bankruptcy or Part 9/10 agreements' row, p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "PRIME: 'Not accepted'. The table then gives two values across the three remaining columns — 'Discharged > 2 years' and 'Discharged > 1 day' — with Near Prime clearly the former and Specialist+ clearly the latter. Which of the two applies to SPECIALIST could not be determined from the extracted layout. 2 years is recorded as the conservative Near Prime figure; confirm the Specialist column with the BDM."
+    },
+    "partIxDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — p3",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Part 9 and Part 10 agreements sit in the SAME row as discharged bankruptcy, so they are treated identically: not accepted on Prime, discharged > 2 years on Near Prime, discharged > 1 day on Specialist+."
+    },
+    "maxArrears6Months": {
+      "value": 0,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — 'Mortgage Arrears' row, p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME requires zero mortgage arrears (nothing beyond 14 days). NEAR PRIME: '<1 month in arrears in last six months'. SPECIALIST: '<2 months in arrears in last 6 months'. SPECIALIST+: '<3 months in arrears in last 6 months'."
+    },
+    "notes": {
+      "value": "Personal loans and credit cards: PRIME requires 'Zero arrears, default fees or exceeding credit limits' and '0 arrears >14 days'. On Near Prime and below, 'Arrears exceptions accepted subject to a reasonable explanation'. Bluestone's tier descriptions: Prime = 'Clear credit and strong employment history'; Near Prime = 'Reasonable credit, low employment continuity'; Specialist = 'Debt consolidation, some credit discrepancies'; Specialist+ = 'Poor credit history or recent judgements'.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Units over 40 sqm (total living area)' are acceptable; studios are unacceptable. The same 40sqm test is restated in the 1 June 2026 product guide's SMSF securities section: 'Defense Housing Association and units over 40sqm are acceptable'."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — 'Guide to Maximum Loan Amounts' p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'To determine whether a security is located in Metro or Non-Metro you can use Bluestone's Acceptable Security Locations.' Metro/non-metro drives the maximum loan amount at every LVR band, and construction lending is restricted to Category 1 and 2 (metro) locations. The list itself was not retrieved as a public no-login document."
+    },
+    "notes": {
+      "value": "Standalone vacant land is accepted on the residential home loans (named in the Prime key features). SMSF securities: the full acceptable-security list is on the Bluestone website; Defence Housing Australia properties and units over 40sqm are acceptable. Studios are unacceptable.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — pp4-5; Online Credit Policy 10 Nov 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Residential Home Loans key features p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Min loan size $100,000' on residential; SMSF, expat, construction and commercial all also start at $100,000."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Residential Home Loans key features p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to $5m for 65% LVR in metro (cat 1)' — the $5m ceiling exists only at low LVR in metro on Prime and Near Prime. Ceilings by product (metro): Specialist $2.5m, Specialist+ $2m, SMSF $1.5m, Expat $3m, construction $3m, commercial $3m. Non-metro ceilings are materially lower (Prime $3m). Bluestone adds: 'If the LVR is over 80% or loan amount over $3 million, reach out to your local BDM.'"
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2025-11-10",
+      "sourceUrl": "https://bluestone.com.au/brokers/online-credit-policy/",
+      "sourceTitle": "Bluestone Online Credit Policy, last updated 10 Nov 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Residential term '10-40 years'. Note the different maxima on other products in the 1 June 2026 product guide: SMSF 10 to 30 years, construction up to 30 years including the construction period, commercial up to 30 years. Confidence medium because the 40-year figure comes from the older (Nov 2025) credit-policy page."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — key features pp4-6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to 5 years Interest Only' on residential, SMSF and expat. Construction offers interest only for 2, 3 or 5 years. Commercial is a maximum 5 years IO. An interest-only loading of 0.30% p.a. applies to the rate."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — key features p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same 5-year maximum; an investment loading of 0.30% p.a. applies in addition to any interest-only loading."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — key features p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Redraw and Offset sub account' on residential and expat home loans."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — key features p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Residential Construction Loans p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$100k-$3m, up to 80% LVR, up to a 30-year term including the construction period, interest only for 2, 3 or 5 years. PRIME AND NEAR PRIME BORROWERS ONLY, METRO ONLY (Category 1 and 2). Single dwelling or duplex only. Licensed builder only — no owner builder and no related builder — with a full builder background check. A quantity surveyor is required for builds over $1.5m. After the construction period, standard Prime or Near Prime home loan rates and loadings apply."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — SMSF Residential Loans p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Investment only, 10 to 30 year terms, up to 6 members, loans from $100,000, up to 5 years interest only, maximum 80% LVR (rate table runs 70% and 80%). The borrower must be the SMSF CORPORATE trustee (a non-trading entity) holding the beneficial interest in the security. Minimum net assets of $200,000 prior to purchase or refinance. Single acquirable asset. Contributions: PAYG — either super guarantee contributions, or SGC plus at least 12 months of regular additional concessional contributions; self-employed — 2 years history of super contributions."
+    },
+    "notes": {
+      "value": "Borrower types: individuals, companies and trusts, owner-occupier and investment. Fees (residential): settlement fee $120, legal from $400, establishment $590 (Prime) / $990 (other), title protection $350 (excluding prime), monthly account keeping $15, loan variation from $250, loan discharge $500, valuation by quote (covered up to $400). Commercial loans carry an early repayment fee of 2% of the original loan amount if discharged within 3 years; residential is advertised as 'No clawback' on the commercial product page.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — pp4, 8",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Fee amounts are read from a two-column fee box whose label/value alignment in the extracted text was imperfect; treat the individual dollar figures as indicative and confirm on the current rate card."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Named directly: 'Australian or New Zealand citizens or permanent residents'."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Named directly."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens are named alongside Australians."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "'Other visas or in-flight PR applications acceptable provided at least one borrower/guarantor is a citizen or Permanent Resident.' A temporary-visa applicant CANNOT proceed alone — a citizen or PR must be on the loan as a borrower or guarantor."
+        },
+        {
+          "status": "temporary_visa_partner_309_820",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Covered by the same 'other visas' concession, and requires a citizen or PR co-borrower or guarantor."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "Bluestone runs a dedicated Expat Home Loan: INVESTMENT LOANS ONLY, loans from $100,000, up to $3m, up to 5 years interest only, redraw and offset available, maximum 80% LVR (rate table runs 70% and 80%, with a 0.50% risk fee at both). Requirements: certified identification; a Third Party Authority form for a nominated Australian representative to receive legal notices; an Australian-domiciled bank account with all repayments by direct debit. Income: two most recent payslips, 3 months bank statements and an employment contract; for self-employed, the company must have been registered more than two years, with one year's tax return and 3 months business bank statements. Foreign-language documents must be NAATI-certified translated."
+        }
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.intelligencebank.com/au/share/NJgag2/Go7W/oG9y/original/Bluestone+Product+Guide",
+      "sourceTitle": "Bluestone Product Guide 1 Jun 2026 — Expat Home Loans p6; residency wording from the Bluestone Online Credit Policy (10 Nov 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Genuinely foreign (non-Australian/NZ) non-resident buyers with no Australian connection are NOT addressed — the Expat product is for Australians living and working overseas. No rule is recorded for foreign_non_resident. Confidence medium because the citizen/PR/visa wording comes from the older Online Credit Policy page rather than the June 2026 guide."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-06-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "TWO SOURCES OF DIFFERENT AGES. The product guide is current (1 June 2026) but publishes no servicing parameters; the Online Credit Policy page carries the buffer, floor, shading, card assessment and HEM treatment but was last updated 10 Nov 2025. Where they overlap they disagree on Specialist+ max LVR (product guide 80%, credit policy 85%). Re-confirm the servicing figures.",
+    "No DTI cap and no minimum surplus ratio is published.",
+    "PAYG income shading percentages are not published anywhere public — the product guide gives tenure tests only, with no 'allowance %' column.",
+    "Shading and rules for Family Tax Benefit, child support, parenting payments, superannuation, social security, AusStudy/scholarship, seasonal income, trust distributions and income protection/workers comp are expressly deferred to the BDM and the Online Credit Policy and are not published in the product guide.",
+    "No genuine-savings requirement is published.",
+    "No published maximum applicant age at maturity, exit-strategy age, guarantor policy or gifted-deposit policy for the standard residential products.",
+    "No published minimum credit score, maximum enquiries, payday-lending policy or gambling policy.",
+    "The 'Guide to Maximum Loan Amounts' matrix on p9 (metro and non-metro, by product and LVR band) could NOT be transcribed reliably — the LVR labels and the dollar values are offset by a row in the PDF text layer, and the Prime key features ($5m at 65% LVR) does not reconcile with the naive reading of the table. lvrBands was therefore left empty rather than risk a wrong max-loan-per-band.",
+    "Bluestone's Acceptable Security Locations list (metro vs non-metro, Category 1/2) was not retrieved as a public document.",
+    "No published rule on employment gaps, probation, or minimum remaining term on a fixed-term contract.",
+    "The credit-impairment table's Specialist column for discharged bankruptcy / Part 9-10 could not be resolved between '>2 years' and '>1 day'."
+  ]
+}

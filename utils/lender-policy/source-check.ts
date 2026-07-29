@@ -16,10 +16,54 @@ import { log } from "../logger";
 
 export type UrlCheck = {
   url: string;
+  /** The source resolved and is usable evidence. */
   ok: boolean;
+  /**
+   * The host refused an automated client (WAF / bot filter), so the check
+   * produced NO evidence either way.
+   *
+   * This matters because such a host returns 403 for *every* path — including
+   * one a model invented — so a 403 is not a pass and not a fail. It is the
+   * absence of a result, and the caller must treat it as "unverifiable" rather
+   * than quietly rounding it to either. Several real lender sites
+   * (reduceloans.com.au, mezybroker.com.au) sit behind exactly this.
+   */
+  blocked: boolean;
   status: number | null;
   reason: string | null;
 };
+
+/** Statuses that mean "a bot filter said no", not "this page is gone". */
+const BLOCKED_STATUSES = new Set([401, 403, 405, 406, 429, 451]);
+
+/**
+ * Does this connection failure prove the page isn't there, or only that we
+ * couldn't complete the request?
+ *
+ * TLS chain errors are the second kind: the host completed a handshake, so it
+ * exists — Node just won't fetch the missing intermediate certificate that
+ * browsers and curl do. (unity.bank is a live example.) Treating that as
+ * "invented URL" would reject real sources.
+ */
+function isInconclusiveNetworkError(err: unknown): boolean {
+  if (err instanceof Error && err.name === "AbortError") return true;
+  const cause = (err as { cause?: { code?: unknown }; code?: unknown } | null)?.cause;
+  const code = String(
+    (cause && typeof cause === "object" ? cause.code : undefined) ??
+      (err as { code?: unknown })?.code ??
+      "",
+  );
+  return (
+    code.startsWith("UNABLE_TO_") ||
+    code.startsWith("CERT_") ||
+    code.startsWith("SELF_SIGNED") ||
+    code.startsWith("DEPTH_ZERO") ||
+    code.startsWith("ERR_TLS") ||
+    code === "ETIMEDOUT" ||
+    code === "ECONNRESET" ||
+    code === "EPROTO"
+  );
+}
 
 const TIMEOUT_MS = 8000;
 const MAX_CONCURRENCY = 6;
@@ -54,10 +98,10 @@ async function checkOne(url: string): Promise<UrlCheck> {
   try {
     parsed = new URL(url);
   } catch {
-    return { url, ok: false, status: null, reason: "Not a valid URL" };
+    return { url, ok: false, blocked: false, status: null, reason: "Not a valid URL" };
   }
   if (!isPubliclyRoutable(parsed)) {
-    return { url, ok: false, status: null, reason: "Not a public web address" };
+    return { url, ok: false, blocked: false, status: null, reason: "Not a public web address" };
   }
 
   const controller = new AbortController();
@@ -84,19 +128,33 @@ async function checkOne(url: string): Promise<UrlCheck> {
       });
     }
     const ok = res.status >= 200 && res.status < 400;
+    const blocked = !ok && BLOCKED_STATUSES.has(res.status);
     return {
       url,
       ok,
+      blocked,
       status: res.status,
-      reason: ok ? null : `Source returned HTTP ${res.status}`,
+      reason: ok
+        ? null
+        : blocked
+          ? `Host refused an automated request (HTTP ${res.status}) — the source could not be machine-verified either way`
+          : `Source returned HTTP ${res.status}`,
     };
   } catch (err) {
     const aborted = err instanceof Error && err.name === "AbortError";
+    // A timeout or a TLS-chain failure is inconclusive for the same reason a
+    // 403 is: it says nothing about whether the page exists.
+    const inconclusive = isInconclusiveNetworkError(err);
     return {
       url,
       ok: false,
+      blocked: inconclusive,
       status: null,
-      reason: aborted ? "Source did not respond within 8s" : "Source could not be reached",
+      reason: aborted
+        ? "Source did not respond within 8s"
+        : inconclusive
+          ? "Source could not be checked from the server (TLS or connection error) — verify it by hand"
+          : "Source could not be reached",
     };
   } finally {
     clearTimeout(timer);
@@ -122,7 +180,11 @@ export async function checkSourceUrls(urls: string[]): Promise<Map<string, UrlCh
     Array.from({ length: Math.min(MAX_CONCURRENCY, unique.length) }, () => worker()),
   );
 
-  const dead = [...results.values()].filter((r) => !r.ok).length;
-  if (dead > 0) log.info("lender_policy.dead_sources", { checked: unique.length, dead });
+  const all = [...results.values()];
+  const dead = all.filter((r) => !r.ok && !r.blocked).length;
+  const blocked = all.filter((r) => r.blocked).length;
+  if (dead > 0 || blocked > 0) {
+    log.info("lender_policy.source_check", { checked: unique.length, dead, blocked });
+  }
   return results;
 }

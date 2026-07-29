@@ -1,0 +1,68 @@
+{
+  "id": "qudos-bank",
+  "name": "Qudos Bank",
+  "legalName": "Bank Australia Limited, trading as Qudos Bank (formerly Qudos Mutual Limited / Qantas Credit Union)",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": null,
+  "abn": "21 087 651 607",
+  "brokerSiteUrl": "https://www.qudosbank.com.au/broker-portal/home-loans",
+  "policyDocUrl": null,
+  "funder": "Bank Australia Limited",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.qudosbank.com.au/broker-portal/home-loans",
+      "sourceTitle": "Qudos Bank broker portal — Home Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Lenders mortgage insurance is required for home loans over 80% LVR and is subject to approval.\" Page carries no publication date; as-at is the date it was read. Note that these products are closed to new applications from 1 June 2026."
+    },
+    "notes": {
+      "value": "Product maximums stated on the broker portal home loans page: No Frills Home Loan \"Max LVR is 80%\"; Low Cost Home Loan (Value Package), fixed rate home loans and the Construction Home Loan \"Max LVR is 90% PLUS LMI\". Advertised-rate conditions require a minimum deposit or equity of 30% for No Frills and Low Cost (Value Package) and 20% for other home loans; individual product footnotes reference minimum deposit or equity of 10% (Low Cost / fixed / construction) and 5% (Standard Variable Home Loan), with investment loans, interest-only and smaller deposits available for some loans subject to approval. Because the products are closed to new lending from 1 June 2026 these are recorded as notes only, not as matchable maximums.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.qudosbank.com.au/broker-portal/home-loans",
+      "sourceTitle": "Qudos Bank broker portal — Home Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "CLOSED TO NEW LENDING. The Qudos Bank broker portal states: \"From 1 June, Qudos Bank will no longer be accepting new lending customers. Please refer to Bank Australia lending products. Existing Qudos Bank customers may still apply for Qudos Bank products and will continue to be serviced by Qudos Bank for loan variations and other loan changes. If you are not accredited with Bank Australia, please apply here.\" The 'Products no longer for sale' page confirms: \"From 1 June 2026, Qudos Bank is no longer accepting new applications for the following lending products\" — Low Cost Home Loan, Standard Variable Rate Home Loan, Qantas Points Home Loan, Home Access Loan, Qantas Points Car Loan and Unsecured Personal Overdraft. Bank Australia and Qudos Bank merged in 2025 and Qudos now trades as a brand of Bank Australia Limited. Brokers should be redirected to the Bank Australia broker channel (bankaust.com.au/broker-partners).",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://www.qudosbank.com.au/support/legal/no-longer-for-sale",
+      "sourceTitle": "Qudos Bank — Products no longer for sale",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-06-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STATUS SET TO 'withdrawn': Qudos Bank stopped accepting new lending customers on 1 June 2026 and directs brokers to Bank Australia. It should not be matched for new business. Bank Australia (a separate lender, not in this tranche) is the live entity.",
+    "No credit policy guide is published; the broker portal's Tool Kit, Rates, Calculators and Support pages were not read.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate.",
+    "No published minimum or maximum loan amount ($150,000 on the rate table is a headline-rate eligibility threshold, not a product minimum).",
+    "No published income, employment tenure, credit history, security or residency policy.",
+    "Australian Credit Licence number for Bank Australia Limited was not read from a public source and is left null."
+  ]
+}

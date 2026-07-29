@@ -1,0 +1,654 @@
+{
+  "id": "australian-military-bank",
+  "name": "Australian Military Bank",
+  "legalName": "Australian Military Bank Ltd",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "237988",
+  "abn": "48 087 649 741",
+  "brokerSiteUrl": "https://go.australianmilitarybank.com.au/brokerportal",
+  "policyDocUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Australian Military Bank Broker Guide — Home Loans, effective 15 June 2026 (Expenses, p13-15)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Guide states for variable-rate mortgage commitments: 'Calculate repayments based on a 3% increase over the current variable rate', and under 'Expenses are to include': 'A buffer on the interest rate applying to existing &/or new mortgage loans.' For fixed loans reverting to variable within the loan term a 3% buffer over the reverting variable rate applies."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No assessment-rate floor is published in the Broker Guide (effective 15 June 2026); the guide only describes the +3% buffer and refers to 'the Bank's approved loan Servicing Calculator'."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Income table, 'Investment Properties rentals', p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Income table scales 'Investment Properties rentals' at 80%. Where multiple rental sources are held the lowest is used for servicing. NRAS rental income is discounted to 65% for LMI submissions."
+    },
+    "existingCommitmentTreatment": {
+      "value": "actual_repayment",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Expenses (Fixed expenses table), p13-14",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Personal loans and other loans/advances: 'Use current contracted repayment amount'. Mortgages are the exception — buffered at +3%. Credit cards and BNPL are benchmarked (see bnplTreatment)."
+    },
+    "bnplTreatment": {
+      "value": "Buy now, pay later (e.g. Zip Pay, Zip Money, Afterpay) is treated the same as a credit card facility: a monthly repayment calculated on the total credit limits over a 36-month term at the agreed card rate.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Expenses (Fixed expenses table), p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "hecsTreatment": {
+      "value": "Calculated within the current HELP repayment threshold and rates, as declared by the member or evidenced from payslips; balance per the HELP statement obtained via myGov.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Expenses (Fixed expenses table), p14",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Expenses, p15",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'the Bank will apply the higher of: The members declared living expenses ... or The applicable figure from the Household Expenditure Measure (HEM), and Lender or system assessed actual expenses.'"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Broker Guide (15 June 2026) describes DTI as 'incorporated into the Bank's auto decisioning methodology and delegated underwriting approval limits' and 'calculated using the Servicing Calculator', but publishes no numeric cap."
+    },
+    "interestOnlyAssessment": {
+      "value": "Interest-only facilities have repayments calculated over the total loan term less the initial interest-only period (e.g. 30-year term with a 5-year IO term is assessed P&I over 25 years).",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, Interest Only loans, p18-19",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Unsecured overdrafts assessed at 3% of the limit per month; secured overdrafts at 1% of the limit per month. Joint applicants: 100% of jointly-and-severally-liable fixed commitments. Shared/apportioned expenses are a policy exception, consumer loans only. Pre-tax deductions are deducted from gross income; post-tax deductions are recorded as an ongoing expense.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Expenses, p13-15, 25",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 98,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p17-20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Max LVR for Owner Occupied is 98% inclusive of LMI'. LVR is inclusive of any capitalised LMI premium and/or stamp duty. For loans above 90% LVR the repayment type can only be P&I."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p17-20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Max LVR for Investment is 95% inclusive of LMI'."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Equity Release (cash out) / Additional Security Information, p18, 24-25",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Max LVR for debt consolidation and equity release is 90% LVR plus LMI'. Sub-limits: up to 70% LVR — max cash out 20% of security value; 70.01-80% — 20% of value and referred to an AMB assessor; 80.01-90% — subject to LMI requirements; above 90% LVR — no cash-out component allowed. Any cash out over $100,000 must be approved by AMB."
+    },
+    "maxLvrConstructionPct": {
+      "value": 98,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Home Improvement / renovations / construction, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner occupied 98% inclusive of LMI; investment 95% inclusive of LMI. Construction must be by a licensed builder under a fixed price contract, maximum 2 dwellings. Interest only during the construction period is capped at 24 months."
+    },
+    "maxLvrRefinancePct": {
+      "value": 98,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Refinance, p18",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner occupied 98% inclusive of LMI; investment 95% inclusive of LMI; where combined with equity release, controlled funds or debt consolidation, 90% inclusive of LMI. Satisfactory repayment history over the previous six months must be verified."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'LVR includes capitalised LMI premium and/or stamp duty costs.'"
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum LVRs are quoted 'inclusive of LMI'."
+    },
+    "lmiProvider": {
+      "value": ["Helia"],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Single Industry Postcodes, p20",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The guide refers to 'Helia's single postcode list' and says the Bank adopts the same restricted postcode listings as its LMI provider; it does not otherwise name the insurer explicitly."
+    },
+    "notes": {
+      "value": "The LVR is the loan amount as a percentage of the purchase price or the security valuation, whichever is the lesser. The Bank may further limit LVR based on loan purpose, product, security offered or postcode. Minimum new mortgage amount is $50,000.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        { "type": "payg_permanent_full_time", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Most recent payslip — ADF payslip valid within 30 days of approval, non-ADF payslips within 23 days.", "conditions": "Minimum 6 months with current employer." },
+        { "type": "payg_permanent_part_time", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Most recent payslip.", "conditions": "Minimum 6 months with current employer." },
+        { "type": "payg_probation", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Most recent payslip.", "conditions": "Where the borrower is within a 6-month probation period the application may be considered on merit and the strength of the borrower's overall position — a policy exception at the assessor's discretion." },
+        { "type": "payg_casual", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Payslips; YTD calculation used for annualised income.", "conditions": "Minimum 6 months with current employer; does not apply to temporary employment." },
+        { "type": "second_job", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Payslips.", "conditions": "Minimum 6 months with current employer." },
+        { "type": "payg_fixed_term_contract", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Payslips.", "conditions": "Where the loan term is outside the contract period, mitigating notes must be recorded on the suitability assessment by the broker. ADF trainees on short-term employment are treated as standard PAYG (consumer loans only)." },
+        { "type": "overtime_other", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Written confirmation from the employer that overtime is ongoing and a condition of employment; if unavailable, evidence of overtime over the last 6 months.", "conditions": "Listed in the income table as 'Regular Overtime' at 100%." },
+        { "type": "shift_allowance", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Most recent payslip plus written confirmation from the employer that the allowance is ongoing.", "conditions": "Permanent allowances (including ADF service/uniform allowances) at 100% where in place for the term of the loan. Named ADF allowances are individually scheduled at 100%." },
+        { "type": "car_allowance", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Allowance on payslip or employment contract.", "conditions": null },
+        { "type": "bonus", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": null, "evidence": "Payslips, income tax returns, group certificates.", "conditions": "Income table: '80% bonus / commission received'." },
+        { "type": "commission", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": null, "evidence": "Payslips, income tax returns, group certificates.", "conditions": "Income table: '80% bonus / commission received'." },
+        { "type": "rental_residential", "accepted": true, "shadingPct": 0.8, "minHistoryMonths": null, "evidence": "Rental statements or tax return for existing property; valuation report, executed tenancy agreement or agent rental appraisal for a new purchase.", "conditions": "Where multiple sources are held the lowest is used. NRAS rental income discounted to 65% for LMI submissions." },
+        { "type": "self_employed_sole_trader", "accepted": true, "shadingPct": null, "minHistoryMonths": 24, "evidence": "Most recent two years individual and company tax returns, or independently produced financial statements (balance sheet and P&L). Interim financial statements are not to be relied upon.", "conditions": "Only considered where the company is affiliated with the ADF/DOD, or the borrower is the spouse of an ADF/DOD employee who is also party to the loan, or the borrower is ex-Defence. At least 2 financial years trading in the current business. 12 months trading plus 2 years prior similar employment may be considered as an exception. All self-employed borrowers are referred to an AMB assessor. Scaling shown as 'Varies'. Add-backs: depreciation (20%), interest where refinancing an existing facility, director super above the SG requirement." },
+        { "type": "self_employed_company", "accepted": true, "shadingPct": null, "minHistoryMonths": 24, "evidence": "Most recent two years individual and company tax returns or independently produced financial statements.", "conditions": "Same Defence-affiliation restriction and 2-year trading requirement as sole traders." },
+        { "type": "trust_distributions", "accepted": true, "shadingPct": 1, "minHistoryMonths": 24, "evidence": "Trust deed (evidence of beneficiaries), most recent 2 years individual tax returns, most recent 2 years trust tax returns.", "conditions": "100% for distributions from a fixed trust or SMSF, entered as self-employed income in the servicing calculator. Where a distribution cannot be established as ongoing the income is unacceptable. Income from a discretionary trust is unacceptable." },
+        { "type": "self_employed_trust", "accepted": true, "shadingPct": 1, "minHistoryMonths": 24, "evidence": "Trust deed, 2 years trust and individual tax returns.", "conditions": "Fixed trust or SMSF only; discretionary trust income is listed as unacceptable." },
+        { "type": "superannuation_pension", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Letter of entitlement or whole of net pay.", "conditions": "DFRDB / COMSUPER / DVA pensions at 100%." },
+        { "type": "government_family_tax_benefit", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Current Centrelink/DVA benefit statement no older than 30 days.", "conditions": "100% where it can reasonably be confirmed the applicant will receive the benefit for a minimum of the next 5 years. Family Tax Benefit A & B." },
+        { "type": "government_age_pension", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Centrelink/DVA benefit statement.", "conditions": "Maximum loan approved is $5,000 where the applicant is solely reliant on this income and serviceability is evident." },
+        { "type": "government_disability_support", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Centrelink/DVA benefit statement.", "conditions": "Maximum loan approved is $5,000 where the applicant is solely reliant on this income and serviceability is evident." },
+        { "type": "government_carer_payment", "accepted": true, "shadingPct": 1, "minHistoryMonths": null, "evidence": "Current Centrelink/DVA benefit statement no older than 30 days.", "conditions": "100% where receipt for a minimum of the next 5 years can reasonably be confirmed." },
+        { "type": "child_support_maintenance", "accepted": true, "shadingPct": 1, "minHistoryMonths": 6, "evidence": "Registered agreement with the Child Support Agency plus 6 months bank statements evidencing consistent payments, or court orders with 6 months of consistent payments.", "conditions": "Must be expected to continue for at least the next 5 years." },
+        { "type": "government_jobseeker", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Unemployment benefits and other primary income welfare benefits' are listed as unacceptable income." },
+        { "type": "government_parenting_payment", "accepted": null, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "Not individually listed. 'Any other government payment in receipt, assessed as unacceptable income' appears on the unacceptable list — treat as refer." },
+        { "type": "boarder_income", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Income from boarders' is listed as unacceptable income." },
+        { "type": "foreign_income", "accepted": false, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "'Foreign income (including any matching expenses; if there is a residual risk will be referred to relevant AMB Loan Delegate)' is listed as unacceptable income." },
+        { "type": "rental_commercial", "accepted": null, "shadingPct": null, "minHistoryMonths": null, "evidence": null, "conditions": "Not addressed in the Broker Guide; commercial properties are unacceptable security." }
+      ],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment (p6), Income (p7-12), Unacceptable Income (p13)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Scaling percentages read directly from the guide's 'Acceptable Income / Scaling' table. Additional unacceptable income: housekeeping, workers compensation / WorkCover, any allowance not in the income table and not received for at least 12 months, and any stated-acceptable income that is not verified."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, Self-employed, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'We require at least 2 years financial years trading in the current business.'"
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, Self-employed, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Exception only: 12 months trading in the current business plus 2 years in previous employment in a similar occupation/field may be considered, based on the overall strength of the proposal."
+    },
+    "notes": {
+      "value": "Self-employed borrowers are only considered where the business is affiliated with the ADF/DOD, the borrower is the spouse of an ADF/DOD employee who is also a party to the loan, or the borrower is ex-Defence. This is a hard filter, not a preference.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, Self-employed, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Permanent salary/wage (full time or part time) and contract employment: 'Minimum 6 months with current employer.'"
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Exception basis only — 'at the discretion of the assessor'."
+    },
+    "probationConditions": {
+      "value": "Where the borrower is within a 6-month probation period the application may be considered based on merits and the strength of the borrower's overall position; such cases are a policy exception at the discretion of the assessor. The relevant AMB assessor may approve shorter periods including probation.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment / Income, p6-7",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Casual and/or second job — Minimum 6 months with current employer. This does not apply to temporary employment.'"
+    },
+    "minMonthsContract": {
+      "value": 6,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Contract employment sits in the same row as permanent salary/wage — minimum 6 months with the current employer. Where the loan term is outside the contract period, mitigating notes are required on the suitability assessment."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, Self-employed, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "At least 2 financial years trading in the current business; 12 months plus 2 years prior similar employment may be accepted as an exception."
+    },
+    "notes": {
+      "value": "ADF employees who are trainees on short-term employment (including under a 6-month employment period) are acceptable and treated as standard PAYG — for consumer loans only.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Employment, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "credit": {
+    "notes": {
+      "value": "The Broker Guide does not publish default, judgment, bankruptcy, arrears or credit-score thresholds. It does state the Bank will not lend for payment of bad debts (any overdue loan), for debt consolidation where the member applied for consolidation within the preceding 12 months, or for paying court orders, actions or judgements (except to meet Family Court separation or divorce rulings).",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Unacceptable Loan Purpose, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Freehold residential property (owner occupied or investment), residential or rural/residential zoned, less than 50 ha",
+        "Strata title units",
+        "High density apartments/units in developments of more than 10 apartments",
+        "Vacant land — residential zoned, or rural/residential under 2.2 ha",
+        "Construction of a single or duplex residential dwelling (licensed builder, fixed price contract)",
+        "Defence Housing (including leasehold of 10 years or more)"
+      ],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Security, p21-22",
+      "confidence": "high",
+      "status": "verified",
+      "note": "All utility services must be connected. Any property offered as security must be readily marketable."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Rural/residential land greater than 2.2 ha, or generating income",
+        "Stratum or company title",
+        "Any premises where a licence is required to operate the business conducted within (nursing homes, child care centres, hotels, restaurants, bars)",
+        "Leaseholds over Crown land (except ACT); leaseholds with commercial minerals or natural resources",
+        "Registered mortgage debentures over company assets",
+        "Commercial properties (shops/offices or commercially zoned)",
+        "Income producing properties other than residential investment or rural properties",
+        "Partially completed properties (other than AMB-funded construction)",
+        "Owner-builder constructed (unless an applicant has prior building experience and is a licensed builder — max 80% LVR with a 15% buffer applied to the loan balance)",
+        "Properties where the known flood height level is higher than the floor level",
+        "Crop liens"
+      ],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Unacceptable Security, p22-23",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 30,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs / Acceptable Security, p17, 21-22",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum unit size 30sqm of living area, excluding balconies and car space.'"
+    },
+    "maxLandSizeHa": {
+      "value": 50,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Security / Rural Residential, p17, 21",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential property: less than 123 acres (50 ha) and not income producing; town services must be connected. Vacant land is limited to 2.2 ha (5.4 acres) fully serviced."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p20",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'The Bank will adopt the same restricted postcode listings as our Lenders Mortgage Insurance (LMI).' The guide references Helia's single postcode list but the list itself is not reproduced in the broker guide."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 90,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, 'Single Industry Postcodes', p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Single industry postcodes: 90% inclusive of LMI."
+    },
+    "highDensityPolicy": {
+      "value": "A high-density apartment/unit/townhouse is one in a development comprising more than 10 apartments/units. Valuations must include comparable sales outside the development and details of any resales within it. LVR and concentration restrictions may apply to individual developments. Minimum floor size 30 sqm of living area excluding balconies and car space.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — High Density apartment/unit/townhouse, p20-21",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "highDensityMaxLvrPct": {
+      "value": 98,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — High Density apartment/unit/townhouse, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "98% inclusive of LMI, subject to per-development LVR and concentration restrictions."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Rural Residential Dwelling, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner occupied 98% inclusive of LMI, investment 95% inclusive of LMI. Up to 50 hectares acceptable, not income producing, town services must be connected. Value must be assessed excluding non-residential improvements (barns, orchards, stables)."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Unacceptable Security, p22",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Stratum or company titles' are listed as unacceptable security."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable / Unacceptable Security, p21-23",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Leaseholds over Crown land are unacceptable except in the ACT. Defence Housing leasehold of 10 years or more is expressly acceptable."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Security, p21-22",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Strata title is listed as acceptable mortgageable property; minimum unit size 30 sqm applies."
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Off the Plan Purchase, p19",
+      "confidence": "high",
+      "status": "verified",
+      "note": "90% LVR of the 'as if complete' valuation where the contract was signed more than 12 months ago; 95% LVR of the lower of purchase price or valuation where signed within 12 months. The loan must not exceed 100% of the purchase/contract price."
+    },
+    "notes": {
+      "value": "Maximum 2 residential dwellings on one block of land where the borrower is not a commercial developer, under a fixed price contract. Electricity must be connected or available for connection. Where a renovation exceeds $100,000 the Bank controls disbursements.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, p17-18",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Loan Purposes & LVRs, footnote, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum new mortgage amount is $50,000.'"
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Interest Only loans, p19-20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum interest only period of 5 years.' Interest-only loans are restricted to land, construction and investment loans only, at up to 95% LVR, and must convert to P&I within 10 years."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 0,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Interest Only loans, p19-20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Purpose of loan excludes owner occupied' and 'Interest only loans restricted to Land, Construction and Investment Loans only.' Interest-only during a construction period is separately allowed for a maximum of 24 months."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Fixed Interest Rates, p28",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Offset accounts cannot be linked to fixed rate home loans' — offset is a variable-rate feature."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Fixed Interest Rates, p28",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Redraw is not available on fixed rate home loan' — additional repayments made during a fixed term can only be redrawn at the end of the fixed term; additional repayments on fixed are capped at $10,000 per year."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Home Improvement / renovations / construction, p17",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Construction by a licensed builder only, under a fixed price building contract. Fixed rates are not available on construction loans until construction is complete."
+    },
+    "genuineSavingsMinMonths": {
+      "value": 3,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Genuine savings and gifted funds, p24",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'When genuine savings are required, it needs to be held in the borrower's name for 3 months or more' — acceptable forms are savings account, term deposit, shares, First Home Super Saver Scheme, and a rental ledger (with mitigating broker notes)."
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Genuine savings and gifted funds, p24",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Rental Ledger (with mitigating notes by broker within suitability assessment is required)'."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Genuine savings and gifted funds, p23-24",
+      "confidence": "high",
+      "status": "verified",
+      "note": "From an immediate family member only."
+    },
+    "giftedDepositConditions": {
+      "value": "Gifts must be non-repayable, from an immediate family member, held in an account in the name of at least one borrower at the time of formal approval, and accompanied by a statutory declaration from the giver clearly stating the gift does not have to be repaid. Gifts received from a non-immediate family member are not acceptable. Inheritance gifts are acceptable.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Genuine savings and gifted funds, p24",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Family Pledge, p25-26",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Security guarantee ('family pledge') only, not a financial guarantee."
+    },
+    "guarantorConditions": {
+      "value": "Guarantor must be immediate family (spouse, de facto, child, parent, grandparent, aunt, uncle, cousin, grandchild or sibling of the applicant or their partner, including step and adoptive relations). Owner occupied or investment purpose only. Repayments must be P&I (IO permitted during construction for a maximum of 2 years). The amount guaranteed must be no more than needed to reduce the new purchase LVR to 80%, and no more than 50% of the guarantor's security value. One family guarantee per loan. Guarantors must obtain independent legal advice. Not available for vacant land purchase (non-construction), home improvements, debt consolidation, refinance, equity release or owner-builder.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Family Pledge, p25-26",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Defence Home Ownership Assistance Scheme (DHOAS)",
+        "Housing Australia — Australian Government 5% Deposit Scheme",
+        "HPAS (Home Purchase Assistance Scheme)",
+        "HPSEA (Home Purchase and Sale Expenses Allowance)",
+        "First Home Owner Grant (varies by State)"
+      ],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Other Home Buyers Assistance Programs Available, p4; Scheme Backed Loans, p20",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Scheme-backed loans (DHOAS and Housing Australia) to 98% inclusive of LMI; purpose excludes investment per scheme rules. AMB is the only one of the three approved DHOAS providers to offer DHOAS home loans via intermediaries, and pays commission on DHOAS home loans."
+    },
+    "notes": {
+      "value": "MEMBERSHIP AND DEFENCE AFFILIATION ARE THE HEADLINE FILTER. The Broker Guide's 'Acceptable Borrowers' section states the Bank lends to individuals who are 'Members of the Bank', 'Australian citizens or permanent residents', 'Employed', and 'Self-employed — Must be Defence bonded'. Applicants must be at least 18 (or 17 if a serving ADF member, capped at a $10,000 loan for education or tools of trade). The Bank describes itself as serving those 'currently serving, ... a Veteran, or a valued part of the Australian Defence Force (ADF) community'.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — About us (p3), Acceptable Borrowers (p5), Employment (p6)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The precise constitutional membership eligibility test is not reproduced in the Broker Guide — see gaps."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        { "status": "australian_citizen", "accepted": true, "maxLvrPct": null, "conditions": "Listed as an acceptable borrower." },
+        { "status": "permanent_resident", "accepted": true, "maxLvrPct": null, "conditions": "Applicants holding a permanent visa, living and working in Australia, are subject to normal lending criteria." },
+        { "status": "nz_citizen_444", "accepted": true, "maxLvrPct": null, "conditions": "New Zealand citizens who permanently live and work in Australia — secured lending only." },
+        { "status": "temporary_visa_work", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed in the Broker Guide. Acceptable borrowers are described as Australian citizens or permanent residents, but temporary visas are not expressly excluded — refer to the Bank." },
+        { "status": "temporary_visa_student", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed in the Broker Guide." },
+        { "status": "temporary_visa_partner_309_820", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed in the Broker Guide." },
+        { "status": "expat_citizen_overseas", "accepted": null, "maxLvrPct": null, "conditions": "Not directly addressed; foreign income is unacceptable income, which would in practice prevent an overseas-earning expat from servicing." },
+        { "status": "foreign_non_resident", "accepted": null, "maxLvrPct": null, "conditions": "Not addressed in the Broker Guide." }
+      ],
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Acceptable Borrowers, p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only the citizen / permanent resident / NZ-citizen positions are expressly stated; the remaining statuses are recorded as unknown rather than inferred."
+    },
+    "notes": {
+      "value": "Foreign income (including any matching expenses) is listed as unacceptable income; where residual risk exists the file is referred to the relevant AMB Loan Delegate.",
+      "asAt": "2026-06-15",
+      "sourceUrl": "https://www.australianmilitarybank.com.au/sites/default/files/Broker_Guide_A4_2024_FA.pdf",
+      "sourceTitle": "Broker Guide — Unacceptable Income, p13",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-06-15",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "MEMBERSHIP: the Broker Guide requires borrowers to be 'Members of the Bank' but does not reproduce the constitutional eligibility test for membership. AMB positions itself as serving serving/ex-serving ADF members, veterans and the wider Defence community — treat Defence affiliation as the practical filter and confirm with the Bank for non-Defence applicants.",
+    "SELF-EMPLOYED HARD FILTER: self-employed borrowers are only considered where the business is ADF/DOD-affiliated, the borrower is the spouse of an ADF/DOD employee who is also a party to the loan, or the borrower is ex-Defence.",
+    "No assessment-rate floor is published — only the +3% buffer.",
+    "No numeric DTI cap is published; DTI is described as built into auto-decisioning and delegated approval limits.",
+    "No credit-history thresholds published (defaults, judgments, bankruptcy, arrears, credit score, enquiries).",
+    "Maximum loan amount, maximum loan term and maximum applicant age at maturity are not stated in the Broker Guide.",
+    "The restricted/single-industry postcode list itself is not published in the guide (it follows the LMI provider's list).",
+    "Temporary-visa and non-resident policy is not addressed.",
+    "SMSF and bridging lending are not addressed in the Broker Guide.",
+    "Broker submissions are made via aggregator software; the Broker Portal itself is behind a login and was not used."
+  ]
+}

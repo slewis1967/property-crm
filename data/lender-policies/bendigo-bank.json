@@ -1,0 +1,705 @@
+{
+  "id": "bendigo-bank",
+  "name": "Bendigo Bank",
+  "legalName": "Bendigo and Adelaide Bank Limited",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "237879",
+  "abn": "11 068 049 178",
+  "brokerSiteUrl": "https://www.brokers.bendigobank.com.au/",
+  "policyDocUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93 (13/07/2026), 'Variables Worksheet' named range InterestRateBuffer",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Read from the named variable InterestRateBuffer = 0.03 in the publicly downloadable broker serviceability calculator. The workbook's own version-control log records the buffer moving 2.25% -> 2.50% -> 3.00%."
+    },
+    "assessmentFloorRatePct": {
+      "value": 5.3,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93, named range InterestFloorRate",
+      "confidence": "high",
+      "status": "verified",
+      "note": "InterestFloorRate = 0.053. A separate 'Safety Net' applies to new commitments: SafetyNetThresholdRate = 5.30% and SafetyNetFloorRate = 7.75% - where the contractual rate exceeds the threshold, the higher 7.75% safety-net floor is used instead of the ordinary 5.30% floor."
+    },
+    "rentShadingPct": {
+      "value": 0.9,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93, 'Tax Scales' Rental Categories table",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The calculator's Rental Categories table reads: 'Cat 1,2,3 and Any Other Residential' = 0.9; 'Cat 4 Residential' = 0.6; 'Cat 1, 2, 3 and Any Other Commercial' = 0.7; 'Cat 4 Commercial' = 0.6. Cat 4 = higher-risk postcodes. Recorded at medium confidence because this is a spreadsheet parameter rather than a sentence in a policy document, and because 90% is unusually generous versus the market - it may be net of separately-declared property holding costs."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93, named range CCRate",
+      "confidence": "high",
+      "status": "verified",
+      "note": "CCRate = 0.038, applied monthly to the combined sum of all existing credit card limits. The workbook also carries PLUnsecureRate = 12.79% and PLSecureRate = 7.79% for personal loans, with PLIntRateBuffer = 0."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The calculator holds an explicit 'HEM Living Expenses' modelled figure alongside 'Applicant Declared Expenses', with HEM tiers updated quarterly per the version-control log (most recent HEM update Q4 2025). Where declared living expenses fall at or below HEM, the workbook escalates the file for internal approval."
+    },
+    "dtiCap": {
+      "value": 8.0,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93, 'Net Surplus Calculator' DTI alert",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The calculator raises the message \"DTI >= 8 is outside policy. Refer to your BDM.\" when DTI_Display >= 8. HECS-HELP is excluded from the DTI calculation (workbook change LEAS-3954)."
+    },
+    "negativeGearingAddBack": {
+      "value": true,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The calculator has a mandatory dropdown per commitment: 'Y (NG Eligible)', 'Y (NG Not Eligible)', 'N', described as establishing \"if the loan is for Owner Occupied or Investment purposes and if the loan is eligible for tax deductions and/or if negative gearing tax offsets are applicable\". Version 5.0.93 (13/07/2026) was released specifically for 'Negative Gearing Changes (PCLO-598)'. So negative gearing IS applied, but only to eligible commitments - the eligibility test itself is not published in the broker material."
+    },
+    "notes": {
+      "value": "Existing residential mortgage commitments (P&I, IO and LOC) are assessed at an 'ECAssessmentRate' of 5.76%, and negative gearing is calculated using the standard variable investment rate rather than the lender-loaded repayment. The workbook also carries a BenchMarkRate of 7.35%, a minimum service ratio of 1.00 rising to 1.35 where LVR exceeds 90%, and a ProxyInterestRate of 5.91%. A notional rent applies: the existing monthly board/rental commitment payment must be $650 per month ($150 per week) or greater, and the file is otherwise escalated.",
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93, 'Variables Worksheet'",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "These are internal calculator parameters read from the published workbook, not sentences from a policy document."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Flex Home Loan: 95% owner-occupied principal & interest. The no-frills Easy Home Loan is capped at 80% for every purpose. Owner-occupied interest only is capped at 90% (Flex Home Loan Fact Sheet). \"The LVR is inclusive of capitalised LMI. LVR is subject to LMI acceptability, location and loan purpose.\""
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Flex: 90% residential investment with principal & interest, and 90% interest only. Easy: 80%."
+    },
+    "maxLvrNoLmiPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Bendigo's broker material states LVRs are 'inclusive of capitalised LMI' but does not publish the LVR at which LMI starts."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Cash out: Flex maximum LVR 90%, Easy 80%. Debt consolidation is likewise 90% (Flex) / 80% (Easy)."
+    },
+    "maxLvrRefinancePct": {
+      "value": 90,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Refinance loans: Flex 90%, Easy 80%."
+    },
+    "maxLvrConstructionPct": {
+      "value": null,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Other criteria",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "Not applicable through this channel - the broker guide states plainly \"No construction\" (and \"No land purchases\")."
+    },
+    "maxLvrCompanyTrustPct": {
+      "value": null,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Applicant type",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "Not applicable - \"Our home loans are not available for companies or trusts\". Loans are for individuals and joint borrowers only."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide footnote 1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The LVR is inclusive of capitalised LMI.\""
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The capitalised premium must fit inside the stated maximum LVR."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No LMI provider is named in the broker guide or fact sheets."
+    },
+    "lmiWaiverProfessions": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No professional LMI waiver is published in Bendigo's broker material."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Flex Home Loan - Owner Occupied with principal & interest repayments" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Flex Home Loan - Owner Occupied interest only; Residential Investment (P&I and interest only); Refinance; Debt consolidation; Cash out" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Easy Home Loan - every purpose (owner occupied, residential investment, interest only, refinance, debt consolidation, cash out)" }
+      ],
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Lending guide + Compare our home loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The published matrix caps LVR by product and purpose; it does not cap loan amount by LVR band, so maxLoanAmount is null throughout."
+    },
+    "notes": {
+      "value": "Bendigo's broker channel offers exactly two home loans - Flex (fully featured, up to 95% LVR, 100% offset, $15/month service fee, establishment fee $299 currently waived) and Easy (no frills, up to 80% LVR, no monthly fee, no establishment fee). Both charge a $199 security processing fee per security property. LVR is subject to LMI acceptability, location and loan purpose.",
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Calculator weighting classification 'Overtime' = 80%. The input field is described as \"any 'permanent' overtime as defined in Credit Policy\". No separate essential-services overtime rate is published."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": null,
+          "conditions": "Calculator field is labelled \"Bonus (lower of the last 2 yrs)\" and the weighting classification 'Bonus' = 80% - so the lower of the last two years' bonus is taken and then shaded to 80%."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": null,
+          "conditions": "Calculator field is labelled \"Commission (lower of the last 2 yrs)\" and the weighting classification 'Commission' = 80%."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Weighting classification 'Car Allowance' = 100%. The calculator input note states it \"Must be permanent\"."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Weighting classification 'Dividends' = 80%."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Rental Categories table: 'Cat 1,2,3 and Any Other Residential' = 90%; 'Cat 4 Residential' (higher-risk postcodes) = 60%. There are separate calculator inputs for short-term/holiday letting rental."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.7,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Rental Categories table: 'Cat 1, 2, 3 and Any Other Commercial' = 70%; 'Cat 4 Commercial' (higher-risk postcodes) = 60%."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "Corporate / Self-Employed income sheet in the broker serviceability calculator captures sole trader / partner / director salary, net profit, company profit, abnormal income and expenses, and add-backs (motor vehicle expenses, depreciation, interest on loans being refinanced, other add-backs).",
+          "conditions": "Bendigo home loans are \"not available for ... self-employed less than one year\", so a minimum of 12 months' self-employment is required."
+        }
+      ],
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93 ('Tax Scales' weighting classifications and Rental Categories) + Your Guide to Bendigo Bank V6",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Shading percentages are read from the named weighting tables inside the published broker serviceability calculator, not from a prose credit policy - Bendigo does not publish a broker credit policy document. No published rule was found for PAYG casual, probation, contract, second job, Centrelink or foreign income, so those types are deliberately absent rather than guessed."
+    },
+    "selfEmployedMinYears": {
+      "value": 1,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Applicant type",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Our home loans are not available for ... self-employed less than one year\" - so one full year of self-employment is the minimum."
+    },
+    "notes": {
+      "value": "Bendigo does not publish a broker credit policy guide. The only public sources of income treatment are the broker serviceability calculator's weighting tables and the Supporting Document Checklist (v1.6, 02/26), which points brokers back to \"our Lending Guidelines\" for income documentation without reproducing them.",
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "employment": {
+    "minMonthsSelfEmployedAbn": {
+      "value": 12,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Applicant type",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Derived from the exclusion \"not available for ... self-employed less than one year\"."
+    },
+    "minMonthsCurrentJob": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No PAYG employment tenure minimum is published in Bendigo's broker guide, fact sheets, supporting document checklist or serviceability calculator."
+    },
+    "probationAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Probation is not addressed in any public Bendigo broker document."
+    },
+    "minMonthsCasual": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No casual employment tenure minimum is published."
+    },
+    "notes": {
+      "value": "Bendigo's public broker material sets eligibility by APPLICANT TYPE rather than by employment tenure: \"Our home loans are not available for companies or trusts, self-employed less than one year, family pledge, overseas, or non-permanent Australian resident applicants.\"",
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "credit": {
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Other criteria",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Consideration can be given to other proposals which have defaults provided the circumstances have been investigated and the default(s) rectified.\" Rectified = paid, so paid defaults are considered case by case."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Other criteria",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Consideration is conditional on the default(s) being \"rectified\", so an outstanding default does not meet the published condition."
+    },
+    "maxDefaults": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No numeric limit on the number of defaults is published."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No dollar threshold below which a default is disregarded is published."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Bankruptcy and Part IX are not mentioned in any public Bendigo broker document."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum credit score is published."
+    },
+    "notes": {
+      "value": "Bendigo participates in Comprehensive Credit Reporting: for non-refinanced and refinanced debts held with a CCR-participating institution, statements are not required; for non-CCR institutions the last 3 months' statements are required for anything being refinanced, and at least one month's statement for other debts.",
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Land purchases (vacant land)",
+        "Construction",
+        "Second mortgages"
+      ],
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Other criteria",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim: \"No second mortgages / No land purchases / No construction\". These are the only security exclusions published in the broker channel material."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/calculators/serviceability-calculator.xlsm",
+      "sourceTitle": "Bendigo Bank broker Serviceability Calculator v5.0.93",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The calculator classifies security locations into rental Categories 1-4 and describes Category 4 as \"Higher Risk Postcodes\", applying a heavier rental income deduction (60% instead of 90% residential). The postcode-to-category list itself is not published."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No LVR cap for Category 4 / higher-risk postcodes is published - the published Category 4 consequence is a rental income haircut, not an LVR restriction."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum unit floor area is published in Bendigo's broker material."
+    },
+    "highDensityPolicy": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No high-density apartment policy is published."
+    },
+    "notes": {
+      "value": "A Certificate of Currency on home building insurance naming Bendigo and Adelaide Bank Limited (or Bendigo Bank Limited) as interested party is required for all properties prior to settlement, and a fully executed Contract of Sale is required prior to settlement on purchases.",
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 5000,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Compare our home loans; and Flex Home Loan Fact Sheet",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The source really does say this, and it is below the usual plausible range for a home loan minimum. Verbatim from both documents: \"Loan amount - Minimum: $5,000\" (Flex and Easy alike); maximum \"Varies according to application\"."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025)",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "Published as \"Maximum: Varies according to application\" - no figure is stated."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Compare our home loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan term 1 to 30 years\" for both Flex and Easy."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/fact-sheets/flex-home-loan-fact-sheet.pdf",
+      "sourceTitle": "Bendigo Flex Home Loan Fact Sheet, Product specifics",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Interest Only is available for up to 5 years.\" Owner-occupied interest only is capped at 90% LVR."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/fact-sheets/flex-home-loan-fact-sheet.pdf",
+      "sourceTitle": "Bendigo Flex Home Loan Fact Sheet, Product specifics",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same 5-year interest-only maximum; residential investment interest only is capped at 90% LVR (Flex) / 80% (Easy)."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/fact-sheets/flex-home-loan-fact-sheet.pdf",
+      "sourceTitle": "Bendigo Flex Home Loan Fact Sheet",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Flex Home Loan only. 100% offset on BOTH variable and fixed rate loans, with no maximum deposit; up to six Bendigo Everyday Accounts can be linked per loan, and the offset account must be in the same customer name/number. The Easy Home Loan has no offset."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Redraw",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Redraw is available on all Bendigo Bank home loans, including fixed rate home loans.\" Redraw is limited to additional repayments less one scheduled repayment, and requires another Bendigo transaction or savings account with online access."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Other criteria",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"No construction\" and \"No land purchases\" are listed as other criteria for the broker channel."
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26), Purchase application",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Evidence of funds to complete. For greater than >90% LVR: 3 months savings/deposit/equity history.\""
+    },
+    "genuineSavingsMinMonths": {
+      "value": 3,
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "3 months of savings/deposit/equity history, required only above 90% LVR."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The requirement above 90% LVR is expressed as 3 months' history, not as a percentage of the purchase price."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Above 90% LVR the checklist requires a \"Gift Letter or Statutory Declaration for gifted funds/equity (if applicable)\"."
+    },
+    "giftedDepositConditions": {
+      "value": "A Gift Letter or Statutory Declaration is required for gifted funds/equity as part of evidence of funds to complete on purchase applications above 90% LVR.",
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorAccepted": {
+      "value": false,
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Applicant type",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Our home loans are not available for ... family pledge ...\" - i.e. no family/security guarantee structure through the broker channel. The Flex fact sheet repeats \"Not available for companies, trusts, family pledge, self-employed less than one year, overseas or non-permanent Australian resident applicants\"."
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": "2026-02-13",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/supporting-document-checklist.pdf",
+      "sourceTitle": "Bendigo Bank Supporting Document Checklist v1.6 (02/26)",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No scheme list is published. The checklist does require the FHOG (First Home Owner Grant) document \"if applicable\" on purchase applications, which implies FHOG-supported purchases are accepted, but no Home Guarantee Scheme participation is stated."
+    },
+    "maxAgeAtMaturity": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No maximum applicant age or exit-strategy trigger age is published."
+    },
+    "notes": {
+      "value": "Two products only through the broker channel. Flex: $199 security processing fee per security property, $15/month service fee, establishment fee $299 currently waived (since 27 November 2023). Easy: $199 security processing fee, no monthly service fee, no establishment fee. Both allow up to two splits per application, monthly repayment frequency, unlimited additional repayments on variable and up to $20,000 per fixed term year without a Break Cost Fee. Cash out / equity release above $500k requires supporting documentation (quotes, invoices, contract of sale, statement of financial advice or share trading statement) in addition to submission commentary.",
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025) + Supporting Document Checklist v1.6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Home loans are available \"for individuals and joint borrowers\". Applicants must be permanent Australian residents residing in Australia."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent Australian residents are eligible; the exclusion is specifically of \"non-permanent Australian resident applicants\"."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Our home loans are not available for ... non-permanent Australian resident applicants.\""
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Covered by the same exclusion of non-permanent Australian resident applicants."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Our home loans are not available for ... overseas ... applicants.\""
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Our home loans are not available for ... overseas, or non-permanent Australian resident applicants.\""
+        }
+      ],
+      "asAt": "2025-11-27",
+      "sourceUrl": "https://www.brokers.bendigobank.com.au/siteassets/_documents/guides/your-guide-to-bendigo-bank.pdf",
+      "sourceTitle": "Your Guide to Bendigo Bank (V6 27/11/2025), Applicant type; repeated in the Flex Home Loan Fact Sheet",
+      "confidence": "high",
+      "status": "verified",
+      "note": "New Zealand citizens on a subclass 444 visa are not separately addressed, so no rule is recorded for nz_citizen_444."
+    },
+    "acceptedVisaSubclasses": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No visa subclasses are named - non-permanent residents are excluded outright."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The serviceability calculator's version-control log records \"Remove foreign income references\" in a 2023 release, and no foreign income weighting exists in the current v5.0.93 tables - consistent with overseas applicants being ineligible."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-13",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Bendigo does not publish a broker credit policy guide. The broker site carries only 'Your Guide to Bendigo Bank', three product fact sheets, a supporting document checklist and the serviceability calculator - the Supporting Document Checklist points to 'our Lending Guidelines' for income documentation, and that document is not public.",
+    "No PAYG employment tenure rules at all (permanent, probation, casual, contract, second job) could be sourced.",
+    "No income rules for PAYG casual, Centrelink/government benefits, child support, superannuation pension or foreign income.",
+    "No credit-history detail beyond the single sentence that rectified defaults can be considered - no bankruptcy, judgment, writ, arrears or credit-score rules.",
+    "No security/property policy beyond 'no second mortgages, no land purchases, no construction' - nothing on minimum unit size, high density, rural land size, company title or serviced apartments.",
+    "The postcode-to-Category (1-4) mapping that drives the rental income haircut is not published.",
+    "The LVR at which LMI first applies, and the LMI provider, are not published.",
+    "Rental shading of 90% for Category 1-3 residential is a calculator parameter rather than a policy statement and is unusually generous - it should be confirmed with a BDM before it is relied on.",
+    "Adelaide Bank is a separate brand of the same ADI (Bendigo and Adelaide Bank Limited) with its own broker channel and its own product set - none of these figures should be assumed to carry across to it.",
+    "Maximum loan amount and maximum applicant age are not published."
+  ]
+}

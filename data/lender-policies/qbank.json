@@ -1,0 +1,115 @@
+{
+  "id": "qbank",
+  "name": "QBANK",
+  "legalName": null,
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.qbank.com.au/tools-services/home-lending-services/broker-service/",
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": ["AFG"],
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/loans-credit-cards/home-loans/owner-occupier/",
+      "sourceTitle": "QBANK Owner Occupier Home Loans (rates current as at 22 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The published owner-occupier rate cards (Classic Home Loan, Classic Plus Home Loan and Fixed Rate Loan) are tiered by LVR and the top tier on each is 95%: <60%, <70%, <80%, <90%, <95%. LMI applies above 80%.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/loans-credit-cards/home-loans/investor/",
+      "sourceTitle": "QBANK Investor Home Loans (rates current as at 22 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Classic Variable Investor, Classic Plus Investor and Fixed Investor rate cards are all tiered to a top LVR band of 95%.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "First home buyer 'First Responders Exclusive Offer': loans of less than 95% LVR plus LMI, with \"total Loan to Value Ratio (LVR) including LMI not to exceed 100%\", a minimum 5% deposit, and a salary credit of at least $1,500 per month into a QBANK transaction account. Available to Queensland Police Service (QPS), Queensland Fire Department (QFD), Queensland Ambulance Service (QAS), Queensland Corrective Services (QCS) and Queensland Health employees only. QBANK states the special offer may be withdrawn at any time.",
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/loans-credit-cards/home-loans/fhb-first-responders-exclusive-offer/",
+      "sourceTitle": "QBANK - First Home Buyer First Responders Exclusive Offer",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "QBANK publishes no credit-history policy. Its broker page carries no downloadable credit guide, policy PDF or serviceability calculator - only a relationship-manager contact and a membership eligibility form."
+    }
+  },
+
+  "security": {},
+
+  "product": {
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/loans-credit-cards/home-loans/owner-occupier/",
+      "sourceTitle": "QBANK Owner Occupier Home Loans - Classic Plus Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"100% mortgage offset account\" is a feature of the Classic Plus Home Loan (owner occupier) and Classic Plus Investor Home Loan. The base Classic Home Loan has no offset.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/loans-credit-cards/home-loans/owner-occupier/",
+      "sourceTitle": "QBANK Owner Occupier Home Loans - Classic Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Free online redraw for P&I loans\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "QBANK is a Queensland customer-owned bank, founded in 1964 by the Queensland Police Union of Employees and a member-owned bank since 2016. MEMBERSHIP IS RESTRICTED. The published eligible groups are: Queensland Police Service employees; Queensland Health employees; Queensland Police Youth Club employees or volunteers; Queensland Ambulance Service employees; QLD local, state or federal government employees residing in Queensland; Queensland Corrective Services employees; Australian Federal Police employees; Queensland Fire Department employees; Queensland Police Union employees; QBANK employees; \"any person engaged in the administration of justice, protection of life or property\"; and members of mutual banks for Australian police, armed services or customs/border protection. Relatives qualify if they are \"a spouse, parent, child, or sibling\" of a current or former member, and \"any person formerly falling within any of the above groups can join\". BROKER CHANNEL IS NARROW: QBANK describes \"a fully supported service for AFG Brokers accredited with QBANK\" - a dedicated relationship manager, broker support team, credit-assessed pre-approval and broker training. No other aggregator is named. All advertised owner-occupier and investor home loans require a minimum salary credit of $1,500 per month into a QBANK transaction account and, on the Classic products, principal-and-interest repayments only.",
+      "asAt": "2026-05-22",
+      "sourceUrl": "https://www.qbank.com.au/membership/who-can-join/",
+      "sourceTitle": "QBANK - Become a Member (who can join); QBANK Broker Service page; QBANK Owner Occupier and Investor home loan pages",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-22",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "QBANK publishes no broker credit policy guide, lending reference guide or serviceability calculator on its public site - the broker page is a contact/relationship page only. Everything below LVR level is unavailable without contacting the bank.",
+    "No assessment buffer, floor rate, DTI cap, rent shading, credit card assessment or HEM basis is published.",
+    "No minimum or maximum loan amount, and no maximum loan term, is published on any product page.",
+    "No income-type policy (casual, self-employed, overtime, bonus, commission, Centrelink, rental) is published.",
+    "No employment tenure minimums are published.",
+    "No credit-history, security/property or residency policy is published.",
+    "Broker distribution appears to be AFG-only ('a fully supported service for AFG Brokers accredited with QBANK'); no other aggregator panel is named, but QBANK does not state that AFG is exclusive - worth confirming.",
+    "QBANK's legal entity name, ABN and Australian Credit Licence number were not captured from a public page in this pass.",
+    "QBANK's home loan menu includes a 'Government Support' category and the 5% Deposit Scheme is referenced in general marketing, but no scheme-participation list with terms was found on a QBANK page."
+  ]
+}

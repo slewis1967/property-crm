@@ -1,0 +1,512 @@
+{
+  "id": "afg-home-loans",
+  "name": "AFG Home Loans",
+  "legalName": "AFG Home Loans Pty Ltd",
+  "tier": "white_label",
+  "status": "active",
+  "acl": "411913",
+  "abn": "26 153 255 559",
+  "brokerSiteUrl": "https://www.afghomeloans.com.au/",
+  "policyDocUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+  "funder": "Multiple. AFG Home Loans is a white-label brand over several funders, and the policy differs per product: Retro and Link are originated and serviced by AFG Securities Pty Ltd ACN 119 343 118 (ACL 389658) — AFG's own securitised funding, and the only products with published policy. Alpha is Bendigo and Adelaide Bank Limited ABN 11 068 049 178 (ACL 237879). Align is Think Tank Group Pty Ltd ABN 75 117 819 084 (ACL 364258). Options is Pepper Money Limited ACN 094 317 665 (AFSL/ACL 286655), with loans made by Pepper Finance Corporation Ltd ACN 094 317 647. Bright is Brighten Home Loans Pty Ltd ACN 620 839 983, managed and serviced by Brighten Financial Pty Ltd ACN 628 356 669 (ACL 512386). Edge was funded by Advantedge (NAB), which stopped accepting new applications on 30 September 2025. EVERY FACT IN THIS RECORD IS A RETRO OR LINK FACT — do not apply it to Alpha, Align, Options or Bright.",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, last updated 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The sheet's exact wording is '2% universal buffering' under Retro's key features, with no further explanation. Read as the serviceability buffer because the Retro Switch product is separately described as having a 'Reduced serviceability buffer of 1%', which only makes sense against a standard buffer. It could alternatively mean a 2% buffer applied to existing external commitments. Confirm with a BDM before relying on it. Applies to Retro (AFG Securities) only."
+    },
+    "refinanceBufferPct": {
+      "value": 1.0,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025 (Retro Switch)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro Switch: 'Dollar for dollar refinance (with small buffer)', 'Reduced serviceability buffer of 1%', 'Max LVR 80% and max loan $1.5m', 'Clean credit history and been with current lender for min 12 months', 'Will lend for OO P&I, Inv P&I or IO'."
+    },
+    "rentShadingPct": {
+      "value": 0.9,
+      "asAt": "2025-08-01",
+      "sourceUrl": "https://www.afghomeloans.com.au/retro-link-policy-expansion-aug25/",
+      "sourceTitle": "AFG Home Loans — Retro & Link policy expansion (August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Rental income shading reduction from 20% to 10%' — applied across Retro Full Doc, Retro Lite and Link. The page carries no printed publication date; the URL slug and the matching 22 August 2025 niche sheet date it to August 2025."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the stated niche 'No statements required if living expenses declared above HEM' — HEM is used as the reference floor. The sheet does not describe the full living-expense methodology."
+    },
+    "notes": {
+      "value": "Retro niches affecting servicing: 'No Notional Rent'; 'Can exclude company debts for servicing'; 'Common Debt Reducer - acceptable for Spousal & Non-Spousal'; 'No statements required for OFI debt not being refinanced' (evidence of balance and limit still required where there is external mortgage debt); 'No statements required if living expenses declared above HEM'; 'Payment of tax debt' permitted; 'Company & Trust Borrowers Acceptable'.",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro: 'Maximum LVR: 95% inc of LMI O/O & INV'. The August 2025 policy expansion describes this as an 'Increase to a maximum LVR of 95% inclusive of LMI for purchases (also available to 2nd time buyers)' for first home buyers and investors. Retro only — Link Premium tops out at 90% inc LMI, Link Complete/Lite at 80% plus risk fees, Link Lite Plus at 70% plus risk fees."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum LVR: 95% inc of LMI O/O & INV' — the same ceiling covers owner occupied and investment on Retro."
+    },
+    "maxLvrCashOutPct": {
+      "value": 80,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro: 'Cash out up to 500k acceptable up to 80% LVR with reasonable commentary provided.' Link separately allows 'Unlimited Debt Consolidation' and 'Business purpose cash out'."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Retro Full Doc — owner occupied and investment, inclusive of LMI. Purchases (also available to 2nd time buyers)." },
+        { "maxLvrPct": 90, "maxLoanAmount": 2000000, "qualifier": "Retro Lite (Prime Low Doc) — 90% LVR inc LMI, max loan $2.0m. Also $3m at 70% LVR and $4m group exposure. Separate Retro Lite rates and fees; 'No risk fee or LMI applicable'." },
+        { "maxLvrPct": 90, "maxLoanAmount": 1000000, "qualifier": "Retro SMSF — 90% LVR inc LMI, max loan $1m at 90% ($1.5m at 80%). Residential security only; min SMSF net assets $200,000; min liquidity 5% of loan amount." },
+        { "maxLvrPct": 80, "maxLoanAmount": 1500000, "qualifier": "Retro Switch — dollar-for-dollar refinance, max LVR 80%, max loan $1.5m, reduced 1% serviceability buffer, clean credit and 12 months with current lender." },
+        { "maxLvrPct": 65, "maxLoanAmount": 2000000, "qualifier": "Retro Thrive — investment refinance only for borrowers 50 and over, max LVR 65%, max loan $2m, up to 40-year term, interest only for the entire term, clean credit history, dollar-for-dollar refinancing." },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Link Premium (near prime) — 'Maximum: LVR 90% inc LMI no risk fees', unlimited debt consolidation, no credit scoring." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Link Complete (Full Doc) — max LVR 80% plus risk fees; unlimited impairments over 24 months." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Link Complete Plus (Full Doc) — max LVR 80% plus risk fees; unlimited impairments over 12 months; 30 days or less mortgage arrears in the last 6 months." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Link Lite (Low Doc) — max LVR 80% plus risk fees; ABN registered minimum 12 months; 1 form of income verification; unlimited impairments over 24 months." },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Link Lite Plus (Low Doc) — max LVR 70% plus risk fees; ABN registered minimum 12 months; 1 form of income verification; unlimited impairments over 12 months; 30 days or less mortgage arrears in the last 6 months." }
+      ],
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, last updated 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "This is a product matrix, not a single LVR ladder — each row is a distinct Retro or Link product with its own ceiling and loan cap."
+    },
+    "notes": {
+      "value": "The August 2025 policy expansion also raised Retro SMSF from 80% to 90% inclusive of LMI and near-prime Link to 90% inclusive of LMI. Link Premium customers can convert to a Retro new-business rate after 12 months at no charge where the loan settled 12 months prior, there were no defaults in the original assessment, and no repayments were later than ten days.",
+      "asAt": "2025-08-01",
+      "sourceUrl": "https://www.afghomeloans.com.au/retro-link-policy-expansion-aug25/",
+      "sourceTitle": "AFG Home Loans — Retro & Link policy expansion (August 2025)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "Retro: 'One day employment acceptable - permanent F/T & P/T (restrictions apply for probation)'. Footnote: 'No minimum employment term for Salary PAYG F/T & P/T. Applicant must not be in probation period.'"
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "As for full time — one day employment acceptable, applicant must not be in a probation period."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Retro footnote: 'Applicant must not be in probation period.'"
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "Retro: 'Casual Income - Min 6 months (2yr same industry)'; 'Min 3 months (Essential Services)'."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Retro: '100% overtime, commission, bonus'."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Retro: '100% overtime, commission, bonus'."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Retro: '100% overtime, commission, bonus'."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "August 2025: 'Rental income shading reduction from 20% to 10%' across Retro Full Doc, Retro Lite and Link."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Retro: '100% of family assistance payment Part A & B with no age restrictions'. Footnote 3: for the purpose of calculating debt service capacity, 'rental, sickness and pharmaceutical allowances are not acceptable'."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "Retro Full Doc: 'One Year's Financials for self employed'. Retro Lite (Prime Low Doc): 'Self Employed Income Confirmation - Customer financial declaration plus one form of income verification'. Link Lite: '1 form of income verification'.",
+          "conditions": "Retro Lite requires 'ABN registration required for a minimum of 24 months (GST registration also required in line with ATO obligations)'. Link requires 'Min 12 month ABN' and accepts 'Short term self-employed with extensive industry history and previous PAYG role in same industry'. The August 2025 expansion raised self-employed to 'a maximum LVR of 90% inclusive of LMI' on Retro Lite Doc."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "One year's financials (Retro Full Doc); customer financial declaration plus one form of income verification (Retro Lite).",
+          "conditions": "'Company & Trust Borrowers Acceptable'; 'Can exclude company debts for servicing'."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": "As for company borrowers.",
+          "conditions": "'Company & Trust Borrowers Acceptable'."
+        }
+      ],
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, last updated 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rental shading is from the August 2025 policy-expansion page. This table covers Retro and Link only; nothing is published for Alpha, Align, Options or Bright."
+    },
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro Lite is the 'Prime Low Doc' product; Link Lite and Link Lite Plus are the near-prime low-doc products."
+    },
+    "altDocEvidence": {
+      "value": "Retro Lite: 'Self Employed Income Confirmation - Customer financial declaration plus one form of income verification'. Link Lite / Link Lite Plus: '1 form of income verification'.",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "altDocMaxLvrPct": {
+      "value": 90,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro Lite (Prime Low Doc): 'Maximum LVR: 90% inc LMI'. Near-prime low doc is lower — Link Lite 80% plus risk fees, Link Lite Plus 70% plus risk fees."
+    },
+    "selfEmployedMinYears": {
+      "value": 1,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'One Year's Financials for self employed' is listed as a niche for both Retro and Link."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 0,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro: 'One day employment acceptable - permanent F/T & P/T (restrictions apply for probation)'; footnote: 'No minimum employment term for Salary PAYG F/T & P/T. Applicant must not be in probation period. For full employment period information see AFG Home Loans Retro Credit Guidelines Booklet in Lenders.'"
+    },
+    "probationAccepted": {
+      "value": false,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Applicant must not be in probation period.'"
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Casual Income - Min 6 months (2yr same industry)'; reduced to 'Min 3 months (Essential Services)'."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 12,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Link: 'Min 12 month ABN', and Link Lite / Lite Plus: 'ABN registration required for a minimum of 12 months'. Retro Lite is stricter: 'ABN registration required for a minimum of 24 months (GST registration also required in line with ATO obligations)'."
+    },
+    "minMonthsGstRegistered": {
+      "value": 24,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Retro Lite: 'ABN registration required for a minimum of 24 months (GST registration also required in line with ATO obligations)'. The 24 months is stated for the ABN; GST registration is required 'in line with ATO obligations' without its own separate period, so 24 is an interpretation of the combined requirement."
+    }
+  },
+
+  "credit": {
+    "defaultIgnoredUnderAmount": {
+      "value": 1000,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Link: 'Unlimited defaults < $1,000 acceptable (excludes Link Premium)'. This is a Link (near prime) niche — it is not stated for Retro."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": 0,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Link: 'Discharged bankrupt > 1 day'. A Link (near prime) niche, not a Retro one."
+    },
+    "maxArrears6Months": {
+      "value": null,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published as a count of missed repayments. Link Complete Plus and Link Lite Plus are described as accepting '30 days or less mortgage arrears in the last 6 months' — a days-in-arrears test, not a repayment count, so it cannot be mapped to this field."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum score is published, and the products advertise the opposite: Retro 'No credit scoring up to 80% LVR' and Link Premium 'No credit scoring'."
+    },
+    "notes": {
+      "value": "Credit impairment tiers on Link: Link Complete and Link Lite accept 'Unlimited impairments > 24 months'; Link Complete Plus and Link Lite Plus accept 'Unlimited impairments > 12 months' plus '30 days or less mortgage arrears in the last 6 months'. Retro Switch and Retro Thrive both require a 'Clean credit history'.",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "security": {
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro: 'Established and construction loans within acceptable security locations - refer Retro Post Code & Security Guide.' Link: 'Link loans security acceptance is restricted Genworth Cat 1 Locations with exceptions being - Geraldton WA / Mackay Qld / Rockhampton Qld, Inner City Locations, High Density Securities - Greater than 15 units and where land size of established dwelling security is >2500sqm.' Neither guide has a public URL — both sit in the AFG 'Lenders' portal."
+    },
+    "highDensityPolicy": {
+      "value": "Link: security acceptance is restricted to Genworth Cat 1 locations, with exceptions (i.e. exclusions) including 'High Density Securities - Greater than 15 units' and inner-city locations.",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The footnote's phrasing ('restricted ... with exceptions being') is ambiguous about whether the named categories are carve-ins or carve-outs; read as exclusions from an otherwise Cat 1-only appetite. Applies to Link only — no equivalent statement for Retro."
+    },
+    "notes": {
+      "value": "Link land size limit: the security restriction footnote names 'where land size of established dwelling security is >2500sqm'. Retro SMSF is 'Residential Security only'.",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the public site or in the niche snapshot."
+    },
+    "maxLoanAmount": {
+      "value": 4000000,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The largest figure published is Retro Lite: 'Max Loan Sizes: $2.0m (90% LVR), $3m (70% LVR), $4m (Group Exposure)' — $4m is a group exposure limit, not a single-loan maximum. Per-product caps: Retro Switch $1.5m, Retro Thrive $2m, Retro SMSF $1.5m at 80% / $1m at 90%. No overall Retro Full Doc maximum is published."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Retro Thrive only: 'Up to 40-year loan term, IO for entire term', for investment refinance by borrowers 50 and over at max 65% LVR / $2m. No standard maximum term is published for Retro Full Doc or Link."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2025-08-01",
+      "sourceUrl": "https://www.afghomeloans.com.au/retro-link-policy-expansion-aug25/",
+      "sourceTitle": "AFG Home Loans — Retro & Link policy expansion (August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Increase in the maximum interest only period from 5 years to 10 years for investment lending purposes' — applied across Retro Full Doc, Retro Lite and Link. 'Up to 10 years Interest Only' is repeated for both Retro and Link in the 22 August 2025 niche snapshot."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to four 100% offset facilities with no ongoing fees' on Retro and 'Up to four 100% offset facilities' on Link. The offset facility is NOT available for Retro SMSF loans. It is an Offset Sub Account with ATM/EFTPOS/VISA/internet banking access; in some circumstances redraw is not permitted."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Footnote 1 (Retro): 'Established and construction loans within acceptable security locations'."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro SMSF: max LVR 90% inclusive of LMI (raised from 80% in August 2025), max loan $1.5m at 80% LVR / $1m at 90% LVR, residential security only, minimum SMSF net assets $200,000, minimum liquidity 5% of loan amount. No offset facility."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0,
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Retro: 'No genuine savings required for deposit (90% LVR)'. The August 2025 expansion adds, for first home buyers, 'Removal of genuine savings requirement' with 'Verification of funds to complete either being held in the applicants account or being gifted by a family member'. The niche sheet qualifies the waiver at 90% LVR; whether it extends to the new 95% band is not stated."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2025-08-01",
+      "sourceUrl": "https://www.afghomeloans.com.au/retro-link-policy-expansion-aug25/",
+      "sourceTitle": "AFG Home Loans — Retro & Link policy expansion (August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "First home buyers: 'Verification of funds to complete either being held in the applicants account or being gifted by a family member'."
+    },
+    "notes": {
+      "value": "Retro Thrive is a long-term interest-only product for borrowers aged 50 and over: investment refinance only, up to a 40-year term with interest only for the entire term, max LVR 65%, max loan $2m, clean credit history, dollar-for-dollar refinancing. Link Premium customers automatically convert to a Retro new-business rate after 12 months at no charge subject to criteria. Applications and supporting documents go through the AFGS Broker Portal (SMSF documents by email).",
+      "asAt": "2025-08-22",
+      "sourceUrl": "https://www.afghomeloans.com.au/wp-content/uploads/2025/08/AFGHL-5946-Retro_Link-niche-sheet_22AUG25-v2.pdf",
+      "sourceTitle": "AFG Home Loans Niche Snapshot — Retro & Link, 22 August 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No residency or visa policy is published for Retro or Link. AFG's expat and non-resident lending sits under the Bright product, which is funded by Brighten Home Loans Pty Ltd ACN 620 839 983 (managed and serviced by Brighten Financial Pty Ltd ACN 628 356 669, ACL 512386) — the Bright page states 'Loans up to $2mil and 80% lending' and names expatriates and non-residents as the target, but publishes no residency criteria and its policy is Brighten's, not AFG's."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-08-22",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "AFG HOME LOANS IS NOT ONE LENDER'S POLICY. Every fact in this record is a Retro or Link fact — those two are funded by AFG's own AFG Securities Pty Ltd (ACN 119 343 118, ACL 389658) and are the only AFG Home Loans products with published policy. Alpha (Bendigo and Adelaide Bank), Align (Thinktank), Options (Pepper Money) and Bright (Brighten) each run their funder's credit policy, and NONE of it has been copied into this record because no public source ties funder numbers to the AFG-badged product.",
+    "The full 'AFG Home Loans Retro Credit Guidelines Booklet', the 'Retro Post Code & Security Guide' and the Link lending guidelines are all held in AFG's 'Lenders' broker portal and have no public URL. The published 22 August 2025 niche snapshot is a summary sheet, explicitly 'a high level reference document for internal use by AFG brokers and their intermediaries only' — it is publicly hosted on afghomeloans.com.au with no login, but it is not the full policy.",
+    "The '2% universal buffering' figure recorded as the assessment buffer is the single most uncertain number here — the sheet gives no explanation, and it could mean a buffer applied to existing commitments rather than the assessment rate. It is recorded at medium confidence. Confirm before matching on it.",
+    "No assessment floor rate, DTI cap, credit-card assessment percentage, HEM loading, negative-gearing add-back or HECS treatment is published.",
+    "No minimum loan amount, and no standard maximum loan amount or maximum term for Retro Full Doc or Link — only per-product caps.",
+    "No residency or visa policy for Retro/Link. Expat and non-resident business runs through Bright (Brighten), whose policy is not AFG's.",
+    "Legal identifier conflict: the niche snapshot footer reads 'AFG Home Loans Pty Ltd ABN 26 153 255 559 Australian Credit Licence 389658' while every product page reads 'AFG Home Loans Pty Ltd | ACN 153 255 559 | Australian Credit Licence 411913'. ACL 389658 is AFG Securities' licence. 411913 is recorded here as AFG Home Loans' own.",
+    "An older 'AFG Home Loans Retro Residential Lending Guidelines' PDF is publicly reachable on the AFG marketing CDN but its PDF creation date is March 2022 — four years stale and superseded by the August 2025 changes. It was deliberately NOT used."
+  ]
+}

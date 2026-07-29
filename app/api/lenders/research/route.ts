@@ -139,7 +139,7 @@ type Proposal = {
   path: string;
   fact: Fact<unknown>;
   accepted: boolean;
-  issues: (VerificationIssue | "dead_source" | "disallowed_source")[];
+  issues: (VerificationIssue | "dead_source" | "unverifiable_source" | "disallowed_source")[];
 };
 
 export async function POST(req: Request) {
@@ -220,10 +220,14 @@ export async function POST(req: Request) {
         continue;
       }
       const result = checked.get(p.fact.sourceUrl);
-      if (!result?.ok) {
-        p.accepted = false;
-        p.issues.push("dead_source");
-      }
+      if (result?.ok) continue;
+      p.accepted = false;
+      // A WAF that refuses automated clients returns the same 403 for a real
+      // page and for a path a model invented, so it is evidence of nothing.
+      // Distinguished from a 404 because the operator's next action differs:
+      // an unverifiable source needs a human to open the link, a dead one
+      // means the fact was probably fabricated.
+      p.issues.push(result?.blocked ? "unverifiable_source" : "dead_source");
     }
 
     // Build the accepted-only policy. Rejected facts are NOT written — a

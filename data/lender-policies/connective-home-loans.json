@@ -1,0 +1,286 @@
+{
+  "id": "connective-home-loans",
+  "name": "Connective Home Loans (Connective Lending)",
+  "legalName": "Connective Credit Services Pty Ltd trading as Connective Lending",
+  "tier": "white_label",
+  "status": "active",
+  "acl": "389328",
+  "abn": null,
+  "brokerSiteUrl": "https://www.connectivelending.com.au/",
+  "policyDocUrl": "https://www.connectivelending.com.au/advance",
+  "funder": "Multiple, and only some are named publicly. Connective Home Loans has rebranded to Connective Lending (connectivehomeloans.com.au 301-redirects to connectivelending.com.au); the licensee on every page is Connective Credit Services Pty Ltd ACN 143 651 496, ACL 389328, which is the aggregator's own credit licence, not the funder. Where a funder IS named on the product page: Bridge and Reverse are provided by Bridgit Financial Services Pty Ltd ABN 16 644 588 161, ACL 532542; Horizon is managed by Brighten Home Loans Pty Ltd ACN 620 839 983 and serviced by Brighten Financial Pty Ltd ACN 628 356 669, ACL 512386. Complete, Skip, Select, Elevate, Solutions, Advance and Affinity name NO funder publicly. Do not assume a funder's own credit policy applies to the Connective-badged product without a source that ties the two together.",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The public Connective Lending site carries product marketing only; policy and servicing calculators sit inside the Connective broker platform, which is out of bounds for this research."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No residential owner-occupied maximum LVR is published for the core products (Complete, Select, Skip, Elevate, Solutions). The Skip product page states only 'Minimum deposit: 2%' with 'No LMI' — which implies a very high LVR but is not stated as an LVR, so no number has been recorded."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 80, "maxLoanAmount": 8000000, "qualifier": "Advance Full Doc — 'Up to 80% LVR', '$8 million maximum borrowing amount'. Requires last two years financial statements and personal income tax returns." },
+        { "maxLvrPct": 80, "maxLoanAmount": 4000000, "qualifier": "Advance Mid Doc — 'Up to 80% LVR', '$4 million maximum borrowing amount'. Self-certification plus ONE of: accountant's declaration, 2x BAS statements, 6 months bank statements, 1 year tax return & NOA, or financial statements." },
+        { "maxLvrPct": 65, "maxLoanAmount": 2000000, "qualifier": "Advance Quick Doc — 'Up to 65% LVR', '$2 million maximum borrowing amount'. Self-certification of personal and business income." },
+        { "maxLvrPct": 80, "maxLoanAmount": 8000000, "qualifier": "Advance SMSF commercial — 'Up to 80% LVR', $8M, term up to 30 years. Last two years fund financial statements, income tax returns and annual member contribution confirmation; recently established funds eligible." },
+        { "maxLvrPct": 80, "maxLoanAmount": 1500000, "qualifier": "Advance SMSF residential — 'Up to 80% LVR', $1.5M, term up to 30 years." },
+        { "maxLvrPct": 85, "maxLoanAmount": 10000000, "qualifier": "Bridge residential (Bridgit Financial Services Pty Ltd ABN 16 644 588 161, ACL 532542) — 'LVR up to 85%, LVR limits vary by property type and location'; minimum $300k, maximum $10m; no minimum term, maximum 24 months; no monthly repayments." },
+        { "maxLvrPct": 75, "maxLoanAmount": 5000000, "qualifier": "Bridge commercial (Bridgit) — 'LVR up to 75% (product dependant)'; minimum $300k, maximum $5m; no minimum term, maximum 24 months." },
+        { "maxLvrPct": 80, "maxLoanAmount": 8000000, "qualifier": "Reverse (Bridgit) — borrowers aged 60+ who own their home; maximum LVR 80% (varies by property type and location); minimum $300,000, maximum $8 million; no minimum term, maximum 12 months; no monthly repayments." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Horizon (Brighten Home Loans Pty Ltd ACN 620 839 983 / Brighten Financial Pty Ltd ACN 628 356 669, ACL 512386) — 'Unlimited cash out up to 80% LVR'. Covers Full Doc, Alt Doc, Expat, Non-Resident, Bridging, Construction, Vacant Land and Commercial." }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — product pages: /advance, /bridge, /reverse, /horizon",
+      "confidence": "high",
+      "status": "verified",
+      "note": "A per-product matrix across different funders, not one lender's LVR ladder. Each row's source is that product's own page on connectivelending.com.au. Live pages with a '(c) 2025 Connective Lending' footer and no publication date — as-at is the date accessed."
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Advance offers Mid Doc and Quick Doc tiers; Horizon (Brighten) lists an Alt Doc product; Complete advertises 'Flexible income verification'."
+    },
+    "altDocEvidence": {
+      "value": "Advance Mid Doc: self-certification plus ONE of an accountant's declaration, 2x BAS statements, 6 months bank statements, 1 year tax return & NOA, or financial statements. Advance Quick Doc: self-certification of personal and business income only.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Advance Mid Doc: 'Up to 80% LVR', $4 million maximum. Quick Doc (self-certification only) drops to 65% LVR / $2 million."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Advance Full Doc requires 'Last two years financial statements and personal income tax returns'. Stated as a document requirement rather than a trading-history minimum, and the Mid Doc tier accepts a single year's tax return and NOA."
+    },
+    "notes": {
+      "value": "The Solutions (near prime / specialist) product page describes qualitative borrower categories only — 'Newly employed', 'Past defaults (paid or unpaid)', 'Discharged bankrupt (one day)' — with no LVR, loan amount, risk fee or income-verification detail. The Complete product advertises 'Assessor-led decisions without rigid credit scoring - your situation is judged on merit', flexible income verification, debt consolidation, and acceptance of non-standard credit histories.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/solutions",
+      "sourceTitle": "Connective Lending — Solutions and Complete",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": "Solutions accepts 'Newly employed', 'Past defaults (paid or unpaid)' and 'Discharged bankrupt (one day)'. Complete states 'Assessor-led decisions without rigid credit scoring - your situation is judged on merit' and accepts non-standard credit histories. No numeric criteria — no default counts or dollar thresholds, arrears limits, discharge periods, credit scores or enquiry limits — are published anywhere on the public site.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/solutions",
+      "sourceTitle": "Connective Lending — Solutions and Complete",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "security": {
+    "notes": {
+      "value": "Complete is described as covering 'residential, commercial, SMSF, construction, bridging, land'. Bridge and Reverse both state that 'LVR limits vary by property type and location' without publishing the variations. No acceptable/unacceptable security list, minimum unit size, postcode matrix, high-density or rural policy is published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/bridge",
+      "sourceTitle": "Connective Lending — Bridge and Complete",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum is published for the residential products. Bridge and Reverse (both Bridgit) each state a 'Minimum $300k'."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Deliberately not set: there is no house-wide maximum, only per-product caps that belong to different funders (Bridge residential $10m, Bridge commercial $5m, Reverse $8m, Advance Full Doc $8m, Advance SMSF commercial $8M / residential $1.5M, Advance Mid Doc $4m, Advance Quick Doc $2m). They are recorded in lvr.lvrBands with their qualifiers."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance (SMSF)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Stated only for Advance SMSF loans: 'up to 30 years'. No maximum term is published for the residential products."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/select",
+      "sourceTitle": "Connective Lending — Select",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Select 100% Offset Home Loan: '100% offset available on fixed rate and variable loans, link up to six accounts per loan'; free online redraw to the offset account. The Select Basic Home Loan instead allows 'Unlimited additional repayments ... on a variable rate loan at any time'."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/select",
+      "sourceTitle": "Connective Lending — Select",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/bridge",
+      "sourceTitle": "Connective Lending — Bridge (Bridgit Financial Services Pty Ltd, ACL 532542)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential: no minimum term, maximum 24 months; $300k to $10m; LVR up to 85%; 'No monthly repayments, simply repay when you are ready'. Commercial: $300k to $5m; LVR up to 75% (product dependent)."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/advance",
+      "sourceTitle": "Connective Lending — Advance (SMSF)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Up to 80% LVR; $8M commercial / $1.5M residential; term up to 30 years; last two years fund financial statements, income tax returns and annual member contribution confirmation; recently established funds eligible. Elevate also lists 'SMSF Loans (Residential & Commercial)'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/elevate",
+      "sourceTitle": "Connective Lending — Elevate",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Elevate lists a 'Construction Home Loan'; Horizon lists Construction and Vacant Land; Complete covers construction."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published as a percentage. The Skip product is advertised with a 'Minimum deposit: 2%' and 'No LMI', 'designed for eligible buyers who have strong income but may not have a traditional deposit' — but the eligibility criteria behind it are not published."
+    },
+    "notes": {
+      "value": "Current product set: Complete, Skip, Select, Elevate, Solutions, Horizon, Advance, Bridge, Reverse and Affinity. Reverse is an equity-release product for borrowers aged 60+ who own their home: $300,000 to $8 million, maximum LVR 80%, maximum 12 months, no monthly repayments. Elevate spans Residential Home Loan, SMSF (residential and commercial), Commercial Property Loan, Construction Home Loan and Expat Home Loan.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/reverse",
+      "sourceTitle": "Connective Lending — product pages",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Horizon (Brighten-funded) names as suitable 'Australians living overseas'; the product set includes an Expat option. Elevate separately lists an 'Expat Home Loan'. No LVR, currency or shading terms are published."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Horizon names as suitable 'foreign nationals with foreign-currency income' and includes a Non-Resident product. No LVR, accepted-country, accepted-currency or shading terms are published."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.connectivelending.com.au/horizon",
+      "sourceTitle": "Connective Lending — Horizon",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only the existence of expat and non-resident products is public. Note that Horizon's policy is Brighten's, not Connective's."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "CONNECTIVE HOME LOANS IS NOT ONE POLICY. It is a white-label brand over several wholesale funders, and each product runs its funder's credit policy. Only two funders are named on the public site (Bridgit for Bridge and Reverse; Brighten for Horizon). Complete, Skip, Select, Elevate, Solutions, Advance and Affinity name no funder at all — every page shows only the aggregator's own licensee, 'Connective Credit Services Pty Ltd trading as Connective Lending ACN 143 651 496, Australian Credit Licence 389 328'. No funder's numbers have been copied across.",
+    "Note that Advantedge — historically the funder of Connective Essentials — stopped accepting new applications and migrates to NAB in October 2026, and 'Essentials' no longer appears in the current product set. The product line-up has clearly been rebuilt; treat any older funder mapping as out of date.",
+    "The brand has moved: connectivehomeloans.com.au 301-redirects to connectivelending.com.au.",
+    "No servicing policy at all is published: no assessment buffer, floor rate, DTI cap, HEM basis, rental shading or credit-card assessment rate.",
+    "No residential owner-occupied or investment maximum LVR is published for the core products. Skip's '2% minimum deposit, no LMI' implies a near-98% LVR but is not stated as one, so no number was recorded.",
+    "No income-type table, no employment tenure rules, and no numeric credit-history criteria — Solutions gives only qualitative categories ('Past defaults (paid or unpaid)', 'Discharged bankrupt (one day)').",
+    "No security or postcode policy; Bridge and Reverse both say 'LVR limits vary by property type and location' without publishing the variations.",
+    "The Affinity product could not be researched — connectivelending.com.au/affinity 301-redirects off-site to chlaffinity.com.au, which was not followed in this pass.",
+    "Aggregator-portal sources (the Connective broker platform and the Connective support wiki, which does map products to funders) were deliberately NOT used: the brief bars aggregator portals, and connectivelending.com.au is the only Connective property treated here as a public lender site."
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "id": "warwick-credit-union",
+  "name": "Darling Downs Bank (formerly Warwick Credit Union)",
+  "legalName": "Warwick Credit Union Ltd T/A Darling Downs Bank",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240556",
+  "abn": "98 087 651 116",
+  "brokerSiteUrl": "https://www.ddbank.com.au/",
+  "policyDocUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"loans not exceeding 80% Loan to Value Ratio (LVR) without Lenders Mortgage Insurance or Approved Government Guarantee (95% LVR with Lenders Mortgage Insurance or Approved Government First Home Buyers Guarantee or 98% with Approved Government Single Parent Guarantee)\". 98% is reachable, but only under the Single Parent (Family Home) Guarantee."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% LVR without LMI or an Approved Government Guarantee."
+    },
+    "notes": {
+      "value": "80% LVR without LMI or an Approved Government Guarantee; 95% LVR with LMI or with the Approved Government First Home Buyers Guarantee; 98% LVR with the Approved Government Single Parent Guarantee.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {
+    "notes": {
+      "value": "Must provide a registered first mortgage over real property or other acceptable security, used predominantly for owner-occupier purposes on this product. Progressive drawdowns are available (construction). No property-type, unit-size, postcode, high-density, rural or land-size policy published.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 5000,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim: \"loan amounts of between $5,000 and $3,000,000\". This is below the usual plausibility floor for a home loan minimum, but it is what the TMD says — the Home Owners Package is a mortgage-secured facility that also covers equity access and personal/domestic asset purchases."
+    },
+    "maxLoanAmount": {
+      "value": 3000000,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"loan amounts of between $5,000 and $3,000,000\"."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"loan terms of up to 30 years\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Redraw of advance payments is available on variable rates but expressly NOT during a fixed-rate period (\"unable to redraw advance payments during a fixed rate period\")."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Progressive drawdowns available, and the interest-only option exists to \"complete the construction of a home before commencing principal and interest reductions\"."
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Approved Government First Home Buyers Guarantee (to 95% LVR)",
+        "Approved Government Single Parent Guarantee (to 98% LVR)"
+      ],
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Both named in the LVR clause as alternatives to LMI."
+    },
+    "notes": {
+      "value": "REBRAND: Warwick Credit Union Ltd has traded as Darling Downs Bank since 1 September 2025 — the legal entity, ABN 98 087 651 116 and ACL 240556 are unchanged, only the brand. Founded in Warwick in 1970, serving Allora, Dalby, Gympie, Killarney, Inglewood, Warwick and Toowoomba in southern Queensland. Broker-distributed: the TMD names branches, call centre, online and brokers as the distribution channels and states \"There are no other distributors for this product.\" The Home Owners Package is the flagship owner-occupier product: variable, fixed or combination, interest-only or P&I, weekly/fortnightly/monthly repayments, progressive drawdowns, additional repayments capped at $20,000 on fixed-rate loans, plus a 0.10% bonus on carded term deposit rates. Establishment fee, annual package fee and external fees apply.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.ddbank.com.au/app/uploads/2026/05/Home_Owners_Package_Owner_Occupier_May26.pdf",
+      "sourceTitle": "Darling Downs Bank Target Market Determination — Home Owners Package Owner Occupier, 1 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rebrand date sourced separately from Warwick Today (29 July 2025) and Australian Rural & Regional News (8 August 2025); the TMD itself carries the dual name 'Warwick Credit Union Ltd T/A Darling Downs Bank'."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The 'warwick-credit-union' id is retained as the join key, but the brand is now Darling Downs Bank (ddbank.com.au) — a search for 'Warwick Credit Union' will not find current policy documents.",
+    "No servicing buffer, assessment floor rate, DTI cap, rent shading, HEM basis or commitment treatment published.",
+    "No income-type policy published at all.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published.",
+    "No security policy beyond 'registered first mortgage over real property' — no unit size, postcode, high-density, rural or land-size rules.",
+    "No residency/visa policy published.",
+    "Only the Owner Occupier Home Owners Package TMD was read; an investment equivalent and other loan products exist and were not researched — investor LVR and loan sizes are unknown.",
+    "No LMI provider named and no LMI waiver professions published.",
+    "Offset availability not established (the TMD names redraw and progressive drawdowns but not an offset account)."
+  ]
+}

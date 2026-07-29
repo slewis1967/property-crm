@@ -1,0 +1,185 @@
+{
+  "id": "homestar-finance",
+  "name": "Homestar Finance",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "research_only",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+  "funder": "Columbus Capital Pty Ltd (ACL 337303) trading as Origin Mortgage Management Services; issued by Perpetual Corporate Trust Limited (ACL 392673)",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the Homestar TMD set (Variable, Fixed, Lender Paid LMI, SMSF Variable/Fixed) and the public product pages — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR 95% (the maximum LVR is met in accordance with the requirements notified by the Issuer from time to time).\""
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Prime TMD states a single 95% LVR attribute across owner occupied and investment loans; it does not split the cap by purpose."
+    },
+    "notes": {
+      "value": "A separate \"Lender Paid LMI\" owner-occupied product is published with a maximum LVR of 90% and a maximum loan size of $1.5m. SMSF residential lending is capped at 90% LVR and SMSF commercial at 80% LVR.",
+      "asAt": "2025-12-12",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/12/HSF_SMSF-Variable-TMD_2025.2.pdf",
+      "sourceTitle": "Homestar Finance SMSF Variable Investment Products Target Market Determination, effective 12 December 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "maxLoanAmount": {
+      "value": 2500000,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Max Loan size $2.5m\". The Lender Paid LMI product caps at $1.5m; SMSF at $3.5m."
+    },
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The TMDs refer to \"the stated minimum and maximum loan amount requirements notified by the Issuer from time to time\" without publishing the minimum."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan Term — Up to 360 months (principal and interest repayments).\""
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 60 months (interest-only repayments)\" on the Prime product. Construction loans are interest-only for 12 months (extension allowed)."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Offset Facility — A transactional sub-account is available and linked to the home loan\", with an optional Visa Debit Card for Australian residents."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw is available; on construction loans only after construction is complete."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), effective 30 September 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Prime Construction — Owner Occupied or Investment Loans\"; also covers house-and-land packages and off-the-plan purchases."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2025-12-12",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/12/HSF_SMSF-Variable-TMD_2025.2.pdf",
+      "sourceTitle": "Homestar Finance SMSF Variable Investment Products Target Market Determination, effective 12 December 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential and commercial SMSF investment loans; SMSF members and directors must be Australian citizens or permanent residents."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), Eligibility Criteria",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Eligibility contemplates \"a guarantor who supports the loan\", and the Financial Situation section says borrowers above the deposit threshold \"will pay Lenders Mortgage Insurance or have an acceptable guarantor\". Guarantor conditions themselves are not published."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": null
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent Resident of Australia."
+        }
+      ],
+      "asAt": "2025-09-30",
+      "sourceUrl": "https://homestarfinance.com.au/wp-content/uploads/2025/09/HSF-Variable-TMD_2025.1_0925.pdf",
+      "sourceTitle": "Homestar Finance Target Market Determination for Variable Products (Prime), Eligibility Criteria",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"is either an Australian Citizen or a Permanent Resident of Australia\". Borrowers must be individuals (single or joint) and at least 18 years old. Temporary-visa and non-resident cases are not addressed, so no rule has been recorded for them."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-09-30",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Homestar Finance publishes no broker accreditation page or broker portal and markets direct to consumers; status recorded as research_only. Note that the underlying Columbus/Origin product TMD does list \"Third party – Mortgage Managers and Accredited Mortgage Brokers\" as a distribution channel, so the product is broker-distributable through Columbus even though Homestar itself is the direct-to-consumer mortgage manager.",
+    "No servicing parameters published at all.",
+    "No income-type table, shading percentages, alt-doc or self-employed policy published.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published.",
+    "No security policy published — property types, minimum unit size, high density, rural, postcode categories.",
+    "Minimum loan amount is explicitly deferred to \"requirements notified by the Issuer from time to time\" and is not published.",
+    "An NDIS/SDA investment guide is published on the site but was not read, so no SDA/NDIS security fact has been recorded.",
+    "Homestar's own ABN and ACL were not established from the pages read."
+  ]
+}

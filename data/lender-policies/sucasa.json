@@ -1,0 +1,258 @@
+{
+  "id": "sucasa",
+  "name": "Skip (formerly Sucasa)",
+  "legalName": "Skip Loans Pty Ltd",
+  "tier": "neobank_digital",
+  "status": "active",
+  "acl": "443249",
+  "abn": null,
+  "brokerSiteUrl": "https://brokers.skiploans.com.au/",
+  "policyDocUrl": "https://www.sucasa.com.au/target-market-determination",
+  "funder": "Columbus Capital Pty Ltd (ACN 119 531 252, ACL 337303) trading as Origin Mortgage Management Services, as Product Manager for the Skip Primary Loan; the Skip Secondary Loan is issued by Skip Loans Pty Ltd",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the Skip Primary and Secondary Loan TMDs, the eligibility page, rates page and FAQs — no buffer, floor rate, DTI cap or rent shading is stated. The broker portal at brokers.skiploans.com.au requires a login and was not accessed."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 98,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, Owner Occupier",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan to value ratio — Up to 98% LVR\". Achieved by pairing a Skip Primary Loan (max 80% LVR) with a Skip Secondary Loan (up to a further 20% LVR). Page is undated; asAt is the date read."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 98,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, Investor",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Investor eligibility panel states the same 98% LVR ceiling, but only where the applicant \"is buying or refinancing your only investment property\"."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 98,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/rates",
+      "sourceTitle": "Skip (Sucasa) — Rates & Fees",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The rates table shows \"LMI $0\" at 90%, 95% and 98% LVR; Skip replaces LMI with a capitalised Rate Reduction Fee and a two-loan structure rather than an insurance premium."
+    },
+    "lmiProvider": {
+      "value": ["None — no LMI is charged; the primary/secondary loan structure replaces it"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/rates",
+      "sourceTitle": "Skip (Sucasa) — Rates & Fees",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "notes": {
+      "value": "Two-loan structure: Skip Primary Loan covers up to 80% of value (min $300,000, max $4,000,000); Skip Secondary Loan covers up to a further 20% (min $20,000, max $1,500,000), taking overall property LVR to between 80% and 100%. Both are principal and interest, variable rate, and are subject to Skip's Accepted Postcode List.",
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, TMD v2.1, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "notes": {
+      "value": "Target market must be able to \"provide sufficient evidence of income or are self-employed and can provide sufficient recent financial information\" and hold a satisfactory credit rating. No income-type table, shading percentages or self-employed document standard is published.",
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"Property Size\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Properties must be at least 50m2 excluding balconies and car spaces.\""
+    },
+    "highDensityPolicy": {
+      "value": "Owner occupier: cannot lend on apartments in buildings of 7 storeys or more completed after 2014, or on any apartment complex with more than 30 units located in a listed High Density Postcode. Investor: cannot lend on apartments in buildings of 7 storeys or more, or on any apartment within a listed High Density Postcode.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"High Density Restrictions\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The high-density postcode list is published separately at https://www.sucasa.com.au/high-density-postcodes."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"Property Location\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Lending is limited to all state capitals plus Newcastle, Wollongong, Central Coast, Gold Coast, Sunshine Coast, Canberra & Queanbeyan and Geelong, with a searchable eligible-postcode list."
+    },
+    "postcodeListUrl": {
+      "value": "https://www.sucasa.com.au/eligible-postcodes",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"Full Eligible Postcode List\"",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "unacceptablePropertyTypes": {
+      "value": ["Vacant land", "Construction / properties under construction"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"Property Type\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"New or Established Properties. No vacant land or construction loans.\" The Primary Loan TMD repeats this exclusion."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 300000,
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum Loan Size $300,000\" on the Primary Loan. The Secondary Loan has its own $20,000 minimum but can only be written alongside a Primary Loan."
+    },
+    "maxLoanAmount": {
+      "value": 4000000,
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan Size (Subject to LVR and postcode policy) $4,000,000\" on the Primary Loan; the Secondary Loan caps at $1,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Minimum loan term is 20 years and maximum 30 years on both the Primary and Secondary loans."
+    },
+    "offsetAvailable": {
+      "value": false,
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Ineligible consumers include those who \"require an offset account\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw is available on the Primary Loan only; the Secondary Loan has no redraw."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility, \"Property Type\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"No vacant land or construction loans.\""
+    },
+    "notes": {
+      "value": "Both first home buyers and non-first-home buyers are eligible; no guarantor or equity-sharing arrangement is required. Borrowers must be individuals (single or joint) aged 18 or over. Principal and interest, variable rate only — no fixed rate option. Loan purposes include purchase, refinance, debt consolidation and equity release for a personal purpose. Conditional pre-approval typically takes 24–48 hours.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sucasa.com.au/eligibility",
+      "sourceTitle": "Skip (Sucasa) — Home loan eligibility and FAQs",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": null
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "TMD names \"NZ citizen\" as an eligible borrower class; the visa subclass is not specified."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent Australian resident."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "TMD allows borrowers \"on an acceptable visa\" / holding \"an acceptable visa type\"; the list of acceptable subclasses is not published."
+        }
+      ],
+      "asAt": "2025-11-14",
+      "sourceUrl": "https://cdn.prod.website-files.com/6964686d692a6d02a4ad70e0/6980efbb908fd84d4e96d8d4_Skip%20-%20TMD%20-%20Primary%20Loan%20-%20Variable%20-%20v3.pdf",
+      "sourceTitle": "Target Market Determination for Skip Primary Loan – Variable, effective 14 November 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Quoted: \"be an Australian citizen, NZ citizen, permanent Australian resident or on an acceptable visa\". The temporary-visa entry is recorded as accepted-with-conditions because the acceptable-visa list is not published; treat it as refer, not pass."
+    },
+    "acceptedVisaSubclasses": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The TMD refers to \"an acceptable visa type\" but no subclass list is published."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-11-14",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Sucasa rebranded to Skip in February 2026 — the sucasa.com.au domain still serves the site but all product, portal and broker URLs are now skiploans.com.au. The id 'sucasa' has been kept as the stable join key.",
+    "Accepts broker-originated loans: the Primary Loan TMD explicitly lists \"Third party – Accredited mortgage brokers subject to Best Interests Duty (BID)\" as a distribution channel, and a broker portal exists at brokers.skiploans.com.au (login required, not accessed).",
+    "No servicing parameters published at all — this matters more than usual for a 98% LVR lender, since Skip states it is \"more conservative than most lenders in terms of who they will lend to\" without publishing the criteria.",
+    "No income-type table, shading percentages or self-employed document standard.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published beyond \"a satisfactory credit rating\".",
+    "The Rate Reduction Fee (the LMI substitute) is described as \"capitalised\" and sized relative to LMI but no fee schedule or formula is published.",
+    "The eligible-postcode and high-density-postcode lists are published as interactive lookups; the underlying postcode data was not extracted.",
+    "Skip's ABN was not established from the pages read (ACN 106 968 370, ACL 443249 are published)."
+  ]
+}

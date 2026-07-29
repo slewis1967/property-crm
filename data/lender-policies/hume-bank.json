@@ -1,0 +1,139 @@
+{
+  "id": "hume-bank",
+  "name": "Hume Bank",
+  "legalName": "Hume Bank Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "244248",
+  "abn": "85 051 868 556",
+  "brokerSiteUrl": "https://www.humebank.com.au/broker-portal/",
+  "policyDocUrl": "https://www.humebank.com.au/media/2024/12/Hume-Bank-TMD_MYBLUE-VARIABLE-RATE-HOME-LOAN-ACCOUNT.pdf",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/homes/myblue-variable-rate/",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate home loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Stated on the product page as \"95% maximum loan-to-value ratio (incl. LMI)\", and corroborated by the published rate tier \"myBlue Variable Rate 90.01% <=95% LVR\". Page carries no publication date; as-at is the date it was read."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/homes/myblue-variable-rate/",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate home loan",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Not stated as a policy maximum. Inferred from the published investor rate tiers, which stop at \"myBlue Investor Variable Rate 80.01% <=90% LVR\" while the owner-occupier tiers continue to 95%."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/homes/myblue-variable-rate/",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate home loan",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the rate-tier structure (60%, 60.01-80%, 80.01-90%, 90.01-95%) and the product page's statement that the 95% ceiling is \"incl. LMI\". Hume does not publish an explicit no-LMI ceiling."
+    },
+    "notes": {
+      "value": "Published owner-occupier LVR rate tiers: <=60%, 60.01-80%, 80.01-90%, 90.01-95%. Investor tiers: <=60%, 60.01-80%, 80.01-90%. The nextBlue bridging loan variable rate is available across all LVRs up to 80%.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/homes/myblue-variable-rate/",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate home loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/homes/myblue-variable-rate/",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate home loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"30 year maximum loan term\", repeated for the liteBlue variable, myBlue fixed and myBlue variable owner-occupied products."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2024-12-02",
+      "sourceUrl": "https://www.humebank.com.au/media/2024/12/Hume-Bank-TMD_MYBLUE-VARIABLE-RATE-HOME-LOAN-ACCOUNT.pdf",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate Home Loan Account Target Market Determination, effective 2 December 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Access to up to eight 100% offset accounts\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-12-02",
+      "sourceUrl": "https://www.humebank.com.au/media/2024/12/Hume-Bank-TMD_MYBLUE-VARIABLE-RATE-HOME-LOAN-ACCOUNT.pdf",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate Home Loan Account TMD, effective 2 December 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Access to free, unlimited online redraw for extra repayments\"."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2024-12-02",
+      "sourceUrl": "https://www.humebank.com.au/media/2024/12/Hume-Bank-TMD_MYBLUE-VARIABLE-RATE-HOME-LOAN-ACCOUNT.pdf",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate Home Loan Account TMD, effective 2 December 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD describes the product as \"a variable rate credit facility that can be used to purchase, refinance or build a residential property for owner occupied or investment purposes\"."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/target-market-determinations/",
+      "sourceTitle": "Hume Bank — Target Market Determinations index (nextBlue Bridging Loan TMD, October 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "nextBlue Bridging Loan is a listed product with its own TMD dated October 2025."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.humebank.com.au/target-market-determinations/",
+      "sourceTitle": "Hume Bank — Target Market Determinations index (Self-managed super fund loan account TMD)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "A 'Self-managed super fund loan account' TMD is published; the TMD itself was not read in this pass, so terms are unknown."
+    },
+    "notes": {
+      "value": "Broker distribution is confirmed by the product TMD: a distributor may engage in retail product distribution conduct through \"In person communications (including in branch, through mobile lenders and through broker and referrer networks)\", the issuer's and other approved third-party digital platforms, and other approved channels. Brokers seeking accreditation are directed to email accreditation@humebank.com.au; the broker portal itself (humebank.com.au/broker-portal-login) is behind a login.",
+      "asAt": "2024-12-02",
+      "sourceUrl": "https://www.humebank.com.au/media/2024/12/Hume-Bank-TMD_MYBLUE-VARIABLE-RATE-HOME-LOAN-ACCOUNT.pdf",
+      "sourceTitle": "Hume Bank — myBlue Variable Rate Home Loan Account TMD, effective 2 December 2024, s3 Distribution of the product",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2024-12-02",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Hume Bank's broker portal is entirely behind a login; no public credit policy guide or broker lending guide exists.",
+    "The TMDs state only 'Standard lending criteria applies' for eligibility — no servicing buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate is published.",
+    "No published minimum or maximum loan amount.",
+    "No published income, employment tenure, credit history, security or residency policy.",
+    "Maximum LVR without LMI and maximum investment LVR are inferred from the published rate tiers rather than stated.",
+    "SMSF and bridging loan TMDs exist but were not read; their LVR and loan-size terms are unknown."
+  ]
+}

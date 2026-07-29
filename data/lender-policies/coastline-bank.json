@@ -1,0 +1,131 @@
+{
+  "id": "coastline-bank",
+  "name": "Coastline Bank",
+  "legalName": "Coastline Credit Union Ltd trading as Coastline Bank",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "239175",
+  "abn": "88 087 649 910",
+  "brokerSiteUrl": "https://www.coastline.com.au/personal/home-loans",
+  "policyDocUrl": "https://cdn.sanity.io/files/djf521sf/production/473a9128ffa7aad83ff448042aa0e2214e8bd5fd.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-05-25",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/2aa0c615dc1562734a122ef4da9fb25bc4c0c9d3.pdf",
+      "sourceTitle": "Coastline Bank Mortgage Loan Interest Rates, effective 25 May 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The rate sheet publishes three owner-occupied LVR bands: <=60%, >60% to <=80%, and >80% — so lending above 80% is offered. The First Home Buyer Loan page footnote reads \"Rate applicable to all First Home Buyer Loans under 95%\", and the same page states Coastline is \"Proudly supporting the Australian Government 5% Deposit Scheme\" (a 95% LVR scheme). 95% is therefore the highest LVR evidenced on public sources; Coastline does not publish an explicit 'maximum LVR' figure."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-05-25",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/2aa0c615dc1562734a122ef4da9fb25bc4c0c9d3.pdf",
+      "sourceTitle": "Coastline Bank Mortgage Loan Interest Rates, effective 25 May 2026",
+      "confidence": "low",
+      "status": "verified",
+      "note": "Inferred from the rate-sheet band structure breaking at 80% LVR, which is the conventional LMI threshold. Coastline does not publish an LMI policy or an LMI threshold in words — treat as unconfirmed."
+    },
+    "notes": {
+      "value": "Rate sheet LVR bands (owner-occupied and investment): <=60%, >60% to <=80%, >80%. The First Home Buyer Loan is priced at a single rate across all three bands.",
+      "asAt": "2026-05-25",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/2aa0c615dc1562734a122ef4da9fb25bc4c0c9d3.pdf",
+      "sourceTitle": "Coastline Bank Mortgage Loan Interest Rates, effective 25 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {
+    "notes": {
+      "value": "Must provide a registered first mortgage over real property (or other acceptable security). No property-type, unit-size, postcode, high-density, rural or land-size policy is published.",
+      "asAt": "2026-02-16",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/473a9128ffa7aad83ff448042aa0e2214e8bd5fd.pdf",
+      "sourceTitle": "Coastline Bank Target Market Determination — First Home Buyer Loan, 16 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2021-10-05",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/477fa9310d4da0e206e8060ccb9a5fabdd33f230.pdf",
+      "sourceTitle": "Coastline Bank Target Market Determination — Standard Variable with Offset (Minimiser), 5 October 2021 (last reviewed 16 September 2024)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"loan terms of up to 30 years\". The TMD is dated 2021 with a last review of 16 September 2024 — the newer First Home Buyer Loan TMD (16 February 2026) does not restate a maximum term."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-02-16",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/473a9128ffa7aad83ff448042aa0e2214e8bd5fd.pdf",
+      "sourceTitle": "Coastline Bank Target Market Determination — First Home Buyer Loan, 16 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"mortgage offset account\" is a listed key attribute; the product pages advertise access to MULTIPLE offset accounts. A separate Mortgage Offset TMD is published."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-02-16",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/473a9128ffa7aad83ff448042aa0e2214e8bd5fd.pdf",
+      "sourceTitle": "Coastline Bank Target Market Determination — First Home Buyer Loan, 16 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"a redraw facility\". Product pages state a $500 minimum redraw."
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme — First Home Buyers",
+        "Australian Government 5% Deposit Scheme — Single Parents"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.coastline.com.au/personal/home-loans/first-home-buyer-loan",
+      "sourceTitle": "Coastline Bank — First Home Buyer Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Proudly supporting the Australian Government 5% Deposit Scheme for First Home Buyers and Single Parents.\" A dedicated 'Target market determination - Aust. Government 5% Deposit Scheme' is also published. asAt is the retrieval date — the page carries no publication date."
+    },
+    "notes": {
+      "value": "Coastline Bank is a customer-owned bank headquartered in Kempsey on the NSW Mid North Coast. Home loan range: Variable Rate Home Loan, Fixed Rate Home Loan (1/2/3 year), First Home Buyer Loan, Variable and Fixed Investment Home Loans, and a Home Equity Access Loan. Owner-occupied and investment are priced identically on the current rate sheet. Standard variable/fixed carry a $300 establishment fee and an $8 monthly fee; the First Home Buyer Loan has no establishment or monthly fee. Minimum applicant age 18.",
+      "asAt": "2026-05-25",
+      "sourceUrl": "https://cdn.sanity.io/files/djf521sf/production/2aa0c615dc1562734a122ef4da9fb25bc4c0c9d3.pdf",
+      "sourceTitle": "Coastline Bank Mortgage Loan Interest Rates, effective 25 May 2026 + product pages",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-02-16",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Coastline publishes almost no credit policy. Confirmed as broker-distributed (both home loan TMDs list 'mortgage brokers' as a distribution channel with an accreditation condition), but there is no public broker site, product guide, policy-at-a-glance or serviceability calculator.",
+    "No servicing buffer, assessment floor rate, DTI cap, rent shading, HEM basis, credit-card assessment rate or commitment treatment published.",
+    "No maximum LVR is stated in words anywhere — the 95% figure is assembled from the >80% rate band, the 'First Home Buyer Loans under 95%' footnote and 5% Deposit Scheme participation. Verify with the lender before relying on it.",
+    "No minimum or maximum loan amount published.",
+    "No LMI policy, provider or waiver-profession list published.",
+    "No income-type, employment-tenure, credit-history or residency/visa policy published.",
+    "No security policy beyond 'registered first mortgage over real property' — no minimum unit size, postcode list, high-density or rural rules.",
+    "Lending area is not stated; as a NSW Mid North Coast mutual there may be a geographic restriction that is simply not published.",
+    "The Standard Variable TMD used for the 30-year term is dated 5 October 2021 (last reviewed September 2024) and may be stale."
+  ]
+}
