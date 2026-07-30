@@ -1,5 +1,9 @@
 "use client";
 
+/** Newline + the separators accepted when pasting a list of emails. */
+const NL = String.fromCharCode(10);
+const SPLIT_RE = /[\n,]/;
+
 /**
  * AML/CTF program & enrolment — the governance record: AUSTRAC enrolment,
  * compliance officer, program approval, the enterprise risk assessment
@@ -214,6 +218,31 @@ export default function ProgramClient() {
         </div>
         <Field label="Next review due">
           <input type="date" className={inputCls} value={p.reviewDue} onChange={(e) => edit((d) => { d.reviewDue = e.target.value; })} />
+        </Field>
+      </Section>
+
+      {/* Who may see an SMR — the tipping-off control */}
+      <Section title="Suspicious Matter Report access">
+        <p className="text-xs text-gray-500 mb-3">
+          Telling anyone that an SMR exists is the tipping-off offence. SMRs are hidden from
+          everyone except the compliance officer above, the person who lodged the report, and
+          anyone listed here. This is enforced on the server, not just in this screen — if
+          nobody is listed and no officer is appointed, only the lodger can see their own report.
+        </p>
+        <Field label="Additional people who may view SMRs (one email per line)">
+          <textarea
+            className={`${inputCls} h-24 font-mono text-xs`}
+            placeholder="auditor@example.com"
+            value={p.smrAccess.join(NL)}
+            onChange={(e) =>
+              edit((d) => {
+                d.smrAccess = e.target.value
+                  .split(SPLIT_RE)
+                  .map((x) => x.trim().toLowerCase())
+                  .filter(Boolean);
+              })
+            }
+          />
         </Field>
       </Section>
 

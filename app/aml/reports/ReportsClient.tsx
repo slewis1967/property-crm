@@ -41,6 +41,7 @@ export default function ReportsClient() {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [withheld, setWithheld] = useState(0);
 
   const [rType, setRType] = useState<ReportType>("SMR");
   const [subject, setSubject] = useState("");
@@ -53,6 +54,7 @@ export default function ReportsClient() {
       const res = await fetch("/api/aml/reports").then((r) => r.json());
       if (!res.ok) throw new Error(res.error || "Load failed");
       setRows(res.reports ?? []);
+      setWithheld(Number(res.withheld) || 0);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     } finally {
@@ -135,8 +137,17 @@ export default function ReportsClient() {
 
       <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
         <strong>Tipping-off:</strong> never tell a client — or anyone outside the reporting line — that an SMR has been or
-        may be lodged. Doing so is a criminal offence. SMRs below are marked confidential.
+        may be lodged. Doing so is a criminal offence. Suspicious Matter Reports are restricted:
+        they are visible only to the compliance officer, the person who lodged them, and anyone
+        added to the SMR access list on the Program page.
       </div>
+
+      {withheld > 0 && (
+        <div className="mt-3 p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-700">
+          {withheld} confidential report{withheld === 1 ? " is" : "s are"} hidden from this list
+          because you are not on the SMR access list. Ask the compliance officer if you need access.
+        </div>
+      )}
 
       {error && <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>}
 

@@ -2,6 +2,8 @@ import {
   hydrateAmlCase,
   partySummary,
   deriveRiskRating,
+  nextReviewDate,
+  amlToday,
   amlErrMessage,
   amlTableMissing,
   AML_CASE_STATUSES,
@@ -68,6 +70,10 @@ export const PATCH = makePatchHandler({
       patch.party_type = data.partyType;
       patch.party_role = data.partyRole;
       patch.risk_rating = data.riskRating;
+      // Re-derive the ongoing-CDD due date from the (possibly changed) risk
+      // rating. Escalating a case to high risk must pull its next review
+      // forward, not leave it on the old low-risk cadence.
+      patch.next_review_at = nextReviewDate(data.riskRating, amlToday());
       patch.screening_status = data.screening.status;
     }
     if (incomingStatus !== currentStatus) patch.status = incomingStatus;

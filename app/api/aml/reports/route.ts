@@ -14,6 +14,9 @@ import {
   reportTypeMeta,
   amlErrMessage,
   amlTableMissing,
+  canViewConfidentialReport,
+  hydrateProgram,
+  emptyProgram,
   REPORT_TYPES,
   type ReportType,
 } from "../../../../utils/aml";
@@ -27,6 +30,26 @@ const LIST_COLUMNS =
   "id,report_type,status,case_id,deal_id,subject_name,trigger_date,due_date,terrorism_related,confidential,austrac_reference,lodged_at,created_by,created_at,updated_at";
 
 const REPORT_CODES = REPORT_TYPES.map((r) => r.code);
+
+/**
+ * Load the AML/CTF program so we know who is entitled to see an SMR. A failure
+ * here must NOT open the gate: an unreadable program yields the empty program,
+ * whose allow-list is empty, so only the lodger sees their own SMR. Failing
+ * closed is the only safe direction for a tipping-off control.
+ */
+async function loadProgramForAccess() {
+  try {
+    const { data, error } = await supabase
+      .from("aml_program")
+      .select("data")
+      .eq("org", "nextkey")
+      .maybeSingle();
+    if (error) return emptyProgram();
+    return hydrateProgram((data as { data?: unknown } | null)?.data);
+  } catch {
+    return emptyProgram();
+  }
+}
 
 /** GET — all reports, newest first (no `data` narrative blob). */
 export async function GET(req: Request): Promise<NextResponse> {
@@ -42,7 +65,16 @@ export async function GET(req: Request): Promise<NextResponse> {
       if (amlTableMissing(error)) return NextResponse.json({ ok: true, reports: [] });
       throw error;
     }
-    return NextResponse.json({ ok: true, reports: data ?? [] });
+    // Tipping off is a criminal offence, so confidential reports (SMRs) are
+    // filtered SERVER-side. Marking them in the UI is not a control — anyone
+    // could read them straight off the API.
+    const program = await loadProgramForAccess();
+    const rows = (data ?? []) as { confidential?: boolean; created_by?: string | null }[];
+    const visible = rows.filter(
+      (r) => !r.confidential || canViewConfidentialReport(auth, program, r.created_by),
+    );
+    const withheld = rows.length - visible.length;
+    return NextResponse.json({ ok: true, reports: visible, withheld });
   } catch (e) {
     log.error("aml_reports.list_failed", { detail: amlErrMessage(e, ""), ...errInfo(e) });
     return NextResponse.json({ ok: false, error: amlErrMessage(e, "List failed") }, { status: 500 });
