@@ -455,6 +455,34 @@ export default function CaseForm({ id }: { id: string }) {
         </Field>
       </Section>
 
+      {/* Source of wealth — the ECDD question, distinct from source of funds */}
+      <Section title="Source of wealth">
+        <p className="text-xs text-gray-500 mb-2">
+          How the customer&rsquo;s overall wealth was built &mdash; distinct from where the money for
+          this transaction came from. Required when enhanced due diligence applies (PEP, high-risk
+          geography, or a screening match); optional otherwise.
+        </p>
+        <Field label="Source of wealth">
+          <textarea
+            className={inputCls}
+            rows={2}
+            disabled={locked}
+            placeholder="e.g. Sale of a family business in 2019; 20 years salaried income"
+            value={data.sourceOfWealth.description}
+            onChange={(ev) => edit((d) => { d.sourceOfWealth.description = ev.target.value; })}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm mt-2">
+          <input
+            type="checkbox"
+            disabled={locked}
+            checked={data.sourceOfWealth.verified}
+            onChange={(ev) => edit((d) => { d.sourceOfWealth.verified = ev.target.checked; })}
+          />
+          Source of wealth evidenced
+        </label>
+      </Section>
+
       {/* Risk factors */}
       <Section title="Risk assessment">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

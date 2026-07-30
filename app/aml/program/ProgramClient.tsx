@@ -2,6 +2,12 @@
 
 /** Newline + the separators accepted when pasting a list of emails. */
 const NL = String.fromCharCode(10);
+
+/** Today in Australia/Brisbane — due dates are plain dates with no time, so a
+ *  UTC comparison marks obligations overdue a day early for most of the AU day. */
+function programToday(): string {
+  return new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 const SPLIT_RE = /[\n,]/;
 
 /**
@@ -16,6 +22,7 @@ import {
   emptyProgram,
   hydrateProgram,
   officerNotifyDue,
+  programObligationsOutstanding,
   daysUntil,
   RISK_RATINGS,
   type AmlProgramData,
@@ -44,6 +51,7 @@ const KEY_DATES: { date: string; what: string }[] = [
 export default function ProgramClient() {
   const [p, setP] = useState<AmlProgramData>(() => emptyProgram());
   const [training, setTraining] = useState<TrainingRow[]>([]);
+  const outstanding = programObligationsOutstanding(p, programToday());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -160,6 +168,17 @@ export default function ProgramClient() {
       {error && <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">{error}</div>}
       {notice && <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">{notice}</div>}
 
+      {outstanding.length > 0 && (
+        <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          <strong>Outstanding program obligations</strong>
+          <ul className="mt-1 list-disc pl-5 text-xs">
+            {outstanding.map((o) => (
+              <li key={o}>{o}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Enrolment */}
       <Section title="AUSTRAC enrolment">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -219,6 +238,57 @@ export default function ProgramClient() {
         <Field label="Next review due">
           <input type="date" className={inputCls} value={p.reviewDue} onChange={(e) => edit((d) => { d.reviewDue = e.target.value; })} />
         </Field>
+      </Section>
+
+      {/* Independent evaluation of the program */}
+      <Section title="Independent evaluation">
+        <p className="text-xs text-gray-500 mb-3">
+          The program must be independently evaluated by someone not responsible for designing or
+          running it. Recording only a &ldquo;next due&rdquo; date proves nothing &mdash; capture who
+          did it, what they covered, what they found, and when the findings were closed out.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Last completed">
+            <input type="date" className={inputCls} value={p.independentEvaluation.lastCompletedAt} onChange={(e) => edit((d) => { d.independentEvaluation.lastCompletedAt = e.target.value; })} />
+          </Field>
+          <Field label="Evaluator">
+            <input className={inputCls} placeholder="Name / firm" value={p.independentEvaluation.evaluator} onChange={(e) => edit((d) => { d.independentEvaluation.evaluator = e.target.value; })} />
+          </Field>
+          <Field label="Next due">
+            <input type="date" className={inputCls} value={p.independentEvaluation.nextDueAt} onChange={(e) => edit((d) => { d.independentEvaluation.nextDueAt = e.target.value; })} />
+          </Field>
+          <Field label="Remediation completed">
+            <input type="date" className={inputCls} value={p.independentEvaluation.remediationCompletedAt} onChange={(e) => edit((d) => { d.independentEvaluation.remediationCompletedAt = e.target.value; })} />
+          </Field>
+        </div>
+        <Field label="Scope">
+          <textarea className={inputCls} rows={2} value={p.independentEvaluation.scope} onChange={(e) => edit((d) => { d.independentEvaluation.scope = e.target.value; })} />
+        </Field>
+        <Field label="Findings">
+          <textarea className={inputCls} rows={3} value={p.independentEvaluation.findings} onChange={(e) => edit((d) => { d.independentEvaluation.findings = e.target.value; })} />
+        </Field>
+      </Section>
+
+      {/* Periodic AUSTRAC compliance report */}
+      <Section title="AUSTRAC compliance report">
+        <p className="text-xs text-gray-500 mb-3">
+          The periodic return about the business itself. Not an SMR/TTR/IFTI &mdash; those are
+          transaction reports with business-day deadlines and live on the Reports page.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Reporting period end">
+            <input type="date" className={inputCls} value={p.complianceReport.periodEnd} onChange={(e) => edit((d) => { d.complianceReport.periodEnd = e.target.value; })} />
+          </Field>
+          <Field label="Due">
+            <input type="date" className={inputCls} value={p.complianceReport.dueAt} onChange={(e) => edit((d) => { d.complianceReport.dueAt = e.target.value; })} />
+          </Field>
+          <Field label="Lodged">
+            <input type="date" className={inputCls} value={p.complianceReport.lodgedAt} onChange={(e) => edit((d) => { d.complianceReport.lodgedAt = e.target.value; })} />
+          </Field>
+          <Field label="AUSTRAC reference">
+            <input className={inputCls} value={p.complianceReport.austracReference} onChange={(e) => edit((d) => { d.complianceReport.austracReference = e.target.value; })} />
+          </Field>
+        </div>
       </Section>
 
       {/* Who may see an SMR — the tipping-off control */}
