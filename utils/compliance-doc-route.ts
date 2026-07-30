@@ -112,6 +112,18 @@ export type CreateConfig = BaseConfig & {
    * Written in the route so the per-doc specifics stay visible and typed.
    */
   buildCreateRow: (body: Record<string, unknown>, auth: string) => Promise<CreateRow> | CreateRow;
+  /**
+   * Columns added by a migration that may not have been applied yet. If the
+   * insert fails because one is missing, it is retried ONCE without them.
+   *
+   * This decouples a deploy from its SQL: the feature degrades (that column is
+   * simply not populated) instead of 500ing. Opt-in per route on purpose — a
+   * blanket retry would silently swallow genuine schema bugs for every other
+   * document type using this factory.
+   */
+  optionalColumns?: readonly string[];
+  /** True when the error is specifically a missing column. Required with optionalColumns. */
+  columnMissing?: (error: unknown) => boolean;
 };
 
 /** POST — create a document, then record a `create` audit. */
@@ -123,7 +135,13 @@ export function makeCreateHandler(cfg: CreateConfig) {
       const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       const { row, status, snapshot } = await cfg.buildCreateRow(body, auth);
 
-      const { data: inserted, error } = await supabase.from(cfg.table).insert(row).select("id").single();
+      let { data: inserted, error } = await supabase.from(cfg.table).insert(row).select("id").single();
+      if (error && cfg.optionalColumns?.length && cfg.columnMissing?.(error)) {
+        const trimmed = { ...row };
+        for (const c of cfg.optionalColumns) delete trimmed[c];
+        log.warn(`${cfg.logPrefix}.optional_columns_absent`, { columns: cfg.optionalColumns.join(",") });
+        ({ data: inserted, error } = await supabase.from(cfg.table).insert(trimmed).select("id").single());
+      }
       if (error) {
         if (cfg.tableMissing(error)) return NextResponse.json({ ok: false, error: cfg.migrationHint }, { status: 501 });
         throw error;
@@ -205,6 +223,10 @@ export type PatchConfig = BaseConfig & {
    * only writes when the decision isn't `reject`.
    */
   buildPatch: (body: Record<string, unknown>, currentStatus: string, auth: string) => PatchBuild;
+  /** See CreateConfig.optionalColumns — same deploy-vs-migration decoupling on update. */
+  optionalColumns?: readonly string[];
+  /** See CreateConfig.columnMissing. */
+  columnMissing?: (error: unknown) => boolean;
   /**
    * Optional completion guard. Given the would-be-saved snapshot, return the
    * human-readable list of things still missing before this document may reach
@@ -278,7 +300,13 @@ export function makePatchHandler(cfg: PatchConfig) {
         }
       }
 
-      const { error } = await supabase.from(cfg.table).update(patch).eq("id", id);
+      let { error } = await supabase.from(cfg.table).update(patch).eq("id", id);
+      if (error && cfg.optionalColumns?.length && cfg.columnMissing?.(error)) {
+        const trimmed = { ...patch };
+        for (const c of cfg.optionalColumns) delete trimmed[c];
+        log.warn(`${cfg.logPrefix}.optional_columns_absent`, { columns: cfg.optionalColumns.join(",") });
+        ({ error } = await supabase.from(cfg.table).update(trimmed).eq("id", id));
+      }
       if (error) {
         if (cfg.tableMissing(error)) return NextResponse.json({ ok: false, error: cfg.migrationHint }, { status: 501 });
         throw error;

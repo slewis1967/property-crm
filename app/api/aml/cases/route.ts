@@ -8,6 +8,8 @@ import {
   amlToday,
   amlErrMessage,
   amlTableMissing,
+  amlColumnMissing,
+  ONGOING_CDD_COLUMNS,
   AML_CASE_STATUSES,
   PARTY_TYPES,
   type AmlCaseData,
@@ -72,6 +74,8 @@ async function prefillFromContact(contactId: string, data: AmlCaseData): Promise
  * that contact. The risk rating is always re-derived so the column can't drift.
  */
 export const POST = makeCreateHandler({
+  optionalColumns: ONGOING_CDD_COLUMNS,
+  columnMissing: amlColumnMissing,
   table: "aml_cases",
   docType: "aml_case",
   logPrefix: "aml_cases",

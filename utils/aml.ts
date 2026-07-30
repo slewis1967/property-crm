@@ -774,6 +774,34 @@ export function amlErrMessage(e: unknown, fallback: string): string {
  * Deliberately narrow — a missing COLUMN (PGRST204 / 42703) is a schema
  * mismatch, not an unmigrated table, and must not be swallowed here.
  */
+/**
+ * True when the failure is specifically a MISSING COLUMN — the mirror image of
+ * amlTableMissing.
+ *
+ * Used to make the ongoing-CDD columns (next_review_at / last_reviewed_at)
+ * optional at runtime: the code and the migration deploy independently, and a
+ * write must not 500 just because the SQL hasn't been run yet. The caller
+ * retries without those fields, so CDD keeps working and only the review date
+ * is missing until the migration lands.
+ */
+export function amlColumnMissing(error: unknown): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  if (e.code === "PGRST204" || e.code === "42703") return true;
+  const msg = (e.message ?? "").toLowerCase();
+  return msg.includes("could not find the") && msg.includes("column");
+}
+
+/** The ongoing-CDD columns, stripped when the migration hasn't been applied. */
+export const ONGOING_CDD_COLUMNS = ["next_review_at", "last_reviewed_at"] as const;
+
+/** A copy of `row` without the ongoing-CDD columns. */
+export function withoutOngoingCddColumns<T extends Record<string, unknown>>(row: T): Partial<T> {
+  const out: Record<string, unknown> = { ...row };
+  for (const c of ONGOING_CDD_COLUMNS) delete out[c];
+  return out as Partial<T>;
+}
+
 export function amlTableMissing(error: unknown): boolean {
   const e = error as { code?: string; message?: string } | null;
   if (!e) return false;

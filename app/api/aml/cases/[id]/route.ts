@@ -6,6 +6,8 @@ import {
   amlToday,
   amlErrMessage,
   amlTableMissing,
+  amlColumnMissing,
+  ONGOING_CDD_COLUMNS,
   AML_CASE_STATUSES,
 } from "../../../../../utils/aml";
 import {
@@ -46,6 +48,8 @@ export const GET = makeGetOneHandler({
  * recorded in the audit trail.
  */
 export const PATCH = makePatchHandler({
+  optionalColumns: ONGOING_CDD_COLUMNS,
+  columnMissing: amlColumnMissing,
   ...BASE,
   buildPatch: (body, currentStatus, auth): PatchBuild => {
     const b = body as {
