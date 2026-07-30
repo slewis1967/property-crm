@@ -192,6 +192,18 @@ export type BeneficialOwner = {
   verified: boolean;
 };
 
+/**
+ * Source of WEALTH — how the customer's overall wealth was accumulated. Distinct
+ * from source of FUNDS (where this particular transaction's money came from):
+ * funds can be a clean bank transfer while the wealth behind it is not. It is
+ * what enhanced due diligence on a PEP or high-risk customer actually turns on,
+ * which is why it is only required when ECDD applies (see cddCompleteness).
+ */
+export type SourceOfWealth = {
+  description: string;
+  verified: boolean;
+};
+
 export type SourceOfFunds = {
   category: SourceOfFundsCategory | "";
   description: string;
@@ -244,6 +256,7 @@ export type AmlCaseData = {
   entity: EntityDetails;
   beneficialOwners: BeneficialOwner[];
   sourceOfFunds: SourceOfFunds;
+  sourceOfWealth: SourceOfWealth;
   verification: Verification;
   screening: ScreeningSummary;
   riskRating: RiskRating;
@@ -273,6 +286,7 @@ export function emptyAmlCase(partyType: PartyType = "individual"): AmlCaseData {
     },
     beneficialOwners: [],
     sourceOfFunds: { category: "", description: "", verified: false },
+    sourceOfWealth: { description: "", verified: false },
     verification: { provider: "manual", status: "not_started", reference: "", verifiedAt: "" },
     screening: { status: "pending", lastScreenedAt: "", lists: [] },
     riskRating: "low",
@@ -324,6 +338,7 @@ export function hydrateAmlCase(raw: unknown): AmlCaseData {
   const e = (o.entity ?? {}) as Record<string, unknown>;
   const idDoc = (e.idDocument ?? {}) as Record<string, unknown>;
   const sof = (o.sourceOfFunds ?? {}) as Record<string, unknown>;
+  const sow = (o.sourceOfWealth ?? {}) as Record<string, unknown>;
   const ver = (o.verification ?? {}) as Record<string, unknown>;
   const scr = (o.screening ?? {}) as Record<string, unknown>;
   const rf = (o.riskFactors ?? {}) as Record<string, unknown>;
@@ -369,6 +384,10 @@ export function hydrateAmlCase(raw: unknown): AmlCaseData {
       category: oneOf(sof.category, [...SOURCE_OF_FUNDS_CATEGORIES, ""] as const, ""),
       description: asString(sof.description),
       verified: asBool(sof.verified),
+    },
+    sourceOfWealth: {
+      description: asString(sow.description),
+      verified: asBool(sow.verified),
     },
     verification: {
       provider: asString(ver.provider, "manual"),
@@ -454,6 +473,13 @@ export function cddCompleteness(data: AmlCaseData): { complete: boolean; missing
   }
 
   if (!data.sourceOfFunds.category) missing.push("Source of funds");
+
+  // Source of wealth is an ECDD requirement, not a universal one. Demanding it
+  // on every low-risk buyer would train people to type anything into the box,
+  // which is worse than not asking.
+  if (needsEnhancedDd(data) && !data.sourceOfWealth.description) {
+    missing.push("Source of wealth (enhanced due diligence)");
+  }
 
   return { complete: missing.length === 0, missing };
 }
@@ -601,6 +627,32 @@ export type AmlProgramData = {
   /** ISO date the program is next due for review (annual report from 2027). */
   reviewDue: string;
   /**
+   * Independent evaluation of the AML/CTF program. Required to be performed by
+   * someone independent of the program's design and operation — recording only
+   * a "next due" date proves nothing, so this captures who did it, what they
+   * looked at, what they found and whether the findings were closed out.
+   */
+  independentEvaluation: {
+    lastCompletedAt: string;
+    evaluator: string;
+    scope: string;
+    findings: string;
+    remediationCompletedAt: string;
+    nextDueAt: string;
+  };
+  /**
+   * The periodic AUSTRAC compliance report. Not an SMR/TTR/IFTI — those are
+   * transaction reports with business-day deadlines, this is a periodic return
+   * about the entity itself, so it lives on the program rather than in
+   * REPORT_TYPES where the business-day maths would be meaningless.
+   */
+  complianceReport: {
+    periodEnd: string;
+    dueAt: string;
+    lodgedAt: string;
+    austracReference: string;
+  };
+  /**
    * Who may view confidential reports (SMRs) besides the compliance officer and
    * the person who lodged them. Tipping off is a criminal offence, so this is an
    * allow-list, never a deny-list — see canViewConfidentialReport.
@@ -617,6 +669,15 @@ export function emptyProgram(): AmlProgramData {
     programApproved: { approvedBy: "", approvedAt: "", version: "1.0" },
     riskAssessment: { customer: dim(), transaction: dim(), channel: dim(), geographic: dim() },
     reviewDue: "",
+    independentEvaluation: {
+      lastCompletedAt: "",
+      evaluator: "",
+      scope: "",
+      findings: "",
+      remediationCompletedAt: "",
+      nextDueAt: "",
+    },
+    complianceReport: { periodEnd: "", dueAt: "", lodgedAt: "", austracReference: "" },
     smrAccess: [],
     notes: "",
   };
@@ -630,6 +691,8 @@ export function hydrateProgram(raw: unknown): AmlProgramData {
   const co = (o.complianceOfficer ?? {}) as Record<string, unknown>;
   const pa = (o.programApproved ?? {}) as Record<string, unknown>;
   const ra = (o.riskAssessment ?? {}) as Record<string, unknown>;
+  const ie = (o.independentEvaluation ?? {}) as Record<string, unknown>;
+  const cr = (o.complianceReport ?? {}) as Record<string, unknown>;
   const dim = (v: unknown): RiskAssessmentDimension => {
     const d = (v ?? {}) as Record<string, unknown>;
     return { rating: oneOf(d.rating, RISK_RATINGS, "low"), notes: asString(d.notes) };
@@ -658,6 +721,20 @@ export function hydrateProgram(raw: unknown): AmlProgramData {
       geographic: dim(ra.geographic),
     },
     reviewDue: asString(o.reviewDue),
+    independentEvaluation: {
+      lastCompletedAt: asString(ie.lastCompletedAt),
+      evaluator: asString(ie.evaluator),
+      scope: asString(ie.scope),
+      findings: asString(ie.findings),
+      remediationCompletedAt: asString(ie.remediationCompletedAt),
+      nextDueAt: asString(ie.nextDueAt),
+    },
+    complianceReport: {
+      periodEnd: asString(cr.periodEnd),
+      dueAt: asString(cr.dueAt),
+      lodgedAt: asString(cr.lodgedAt),
+      austracReference: asString(cr.austracReference),
+    },
     smrAccess: Array.isArray(o.smrAccess)
       ? o.smrAccess.map((e) => asString(e).trim().toLowerCase()).filter(Boolean)
       : [],
@@ -672,6 +749,45 @@ export function hydrateProgram(raw: unknown): AmlProgramData {
 export function officerNotifyDue(program: AmlProgramData): string {
   if (!program.enrolment.enrolledAt) return "";
   return addCalendarDays(program.enrolment.enrolledAt, 14);
+}
+
+/**
+ * Program-level obligations that have fallen due. Returned as plain sentences so
+ * the program page can list them without re-deriving the rules — the same reason
+ * the paid-services module keeps "needs attention" in one place.
+ *
+ * Never-recorded counts as outstanding. An obligation with no evidence is not
+ * satisfied just because nobody wrote a date down.
+ */
+export function programObligationsOutstanding(
+  program: AmlProgramData,
+  today: string,
+): string[] {
+  const out: string[] = [];
+
+  if (program.enrolment.status !== "enrolled") out.push("AUSTRAC enrolment not recorded as complete");
+  if (!program.complianceOfficer.name) out.push("No AML/CTF compliance officer appointed");
+  if (!program.programApproved.approvedAt) out.push("AML/CTF program has not been formally approved");
+
+  const ie = program.independentEvaluation;
+  if (!ie.lastCompletedAt) {
+    out.push("No independent evaluation of the program has been recorded");
+  } else if (ie.nextDueAt && ie.nextDueAt <= today) {
+    out.push(`Independent evaluation was due ${ie.nextDueAt}`);
+  }
+  if (ie.findings && !ie.remediationCompletedAt) {
+    out.push("Independent evaluation findings have no remediation completion date");
+  }
+
+  const cr = program.complianceReport;
+  if (cr.dueAt && !cr.lodgedAt && cr.dueAt <= today) {
+    out.push(`AUSTRAC compliance report was due ${cr.dueAt}`);
+  }
+  if (cr.lodgedAt && !cr.austracReference) {
+    out.push("Compliance report is marked lodged but has no AUSTRAC reference");
+  }
+
+  return out;
 }
 
 /* ── Tipping off: who may see an SMR ─────────────────────────────────────── */

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  programObligationsOutstanding,
   withoutOngoingCddColumns,
   amlColumnMissing,
   canViewConfidentialReport,
@@ -291,5 +292,104 @@ describe("amlColumnMissing", () => {
   it("strips only the ongoing-CDD columns, leaving the rest intact", () => {
     const row = { party_name: "A", next_review_at: "2026-01-01", last_reviewed_at: "2025-01-01", data: {} };
     expect(withoutOngoingCddColumns(row)).toEqual({ party_name: "A", data: {} });
+  });
+});
+
+/* ── Source of wealth (ECDD only) ────────────────────────────────────────── */
+
+describe("source of wealth", () => {
+  const complete = () => {
+    const c = emptyAmlCase("individual");
+    c.entity.fullLegalName = "Jane Citizen";
+    c.entity.dob = "1980-01-01";
+    c.entity.residentialAddress = { line1: "1 St", suburb: "Bne", state: "QLD", postcode: "4000", country: "Australia" };
+    c.entity.idDocument.number = "123456";
+    c.sourceOfFunds.category = "savings";
+    return c;
+  };
+
+  it("is NOT required for an ordinary low-risk case", () => {
+    // Demanding it universally trains people to type anything in the box.
+    const c = complete();
+    expect(cddCompleteness(c).complete).toBe(true);
+  });
+
+  it("IS required once enhanced due diligence applies", () => {
+    const c = complete();
+    c.riskFactors.pep = true;
+    const r = cddCompleteness(c);
+    expect(r.complete).toBe(false);
+    expect(r.missing.join(" ")).toMatch(/source of wealth/i);
+  });
+
+  it("is satisfied by a description on a PEP case", () => {
+    const c = complete();
+    c.riskFactors.pep = true;
+    c.sourceOfWealth.description = "Sale of a family business in 2019";
+    expect(cddCompleteness(c).complete).toBe(true);
+  });
+
+  it("survives a stored blob that predates the field", () => {
+    const old = { partyType: "individual", sourceOfFunds: { category: "savings" } };
+    expect(hydrateAmlCase(old).sourceOfWealth).toEqual({ description: "", verified: false });
+  });
+});
+
+/* ── Program-level obligations ───────────────────────────────────────────── */
+
+describe("programObligationsOutstanding", () => {
+  const ready = () => {
+    const p = emptyProgram();
+    p.enrolment.status = "enrolled";
+    p.complianceOfficer.name = "A Person";
+    p.programApproved.approvedAt = "2026-07-01";
+    p.independentEvaluation.lastCompletedAt = "2026-07-01";
+    p.independentEvaluation.nextDueAt = "2027-07-01";
+    return p;
+  };
+
+  it("is silent when everything is recorded and nothing is due", () => {
+    expect(programObligationsOutstanding(ready(), "2026-07-30")).toEqual([]);
+  });
+
+  it("treats a never-performed independent evaluation as outstanding", () => {
+    // No evidence is not the same as satisfied.
+    const p = ready();
+    p.independentEvaluation.lastCompletedAt = "";
+    expect(programObligationsOutstanding(p, "2026-07-30").join(" ")).toMatch(/independent evaluation/i);
+  });
+
+  it("flags an overdue independent evaluation", () => {
+    const p = ready();
+    p.independentEvaluation.nextDueAt = "2026-07-01";
+    expect(programObligationsOutstanding(p, "2026-07-30").join(" ")).toMatch(/was due 2026-07-01/);
+  });
+
+  it("flags findings with no remediation date", () => {
+    const p = ready();
+    p.independentEvaluation.findings = "Screening not evidenced for 3 cases";
+    expect(programObligationsOutstanding(p, "2026-07-30").join(" ")).toMatch(/remediation/i);
+  });
+
+  it("flags an overdue compliance report, but not one that is lodged", () => {
+    const p = ready();
+    p.complianceReport.dueAt = "2026-07-01";
+    expect(programObligationsOutstanding(p, "2026-07-30").join(" ")).toMatch(/compliance report was due/i);
+    p.complianceReport.lodgedAt = "2026-06-30";
+    p.complianceReport.austracReference = "REF-1";
+    expect(programObligationsOutstanding(p, "2026-07-30")).toEqual([]);
+  });
+
+  it("flags a report marked lodged with no AUSTRAC reference", () => {
+    const p = ready();
+    p.complianceReport.lodgedAt = "2026-06-30";
+    expect(programObligationsOutstanding(p, "2026-07-30").join(" ")).toMatch(/no AUSTRAC reference/i);
+  });
+
+  it("flags the governance basics when the program is empty", () => {
+    const out = programObligationsOutstanding(emptyProgram(), "2026-07-30");
+    expect(out.join(" ")).toMatch(/enrolment/i);
+    expect(out.join(" ")).toMatch(/compliance officer/i);
+    expect(out.join(" ")).toMatch(/formally approved/i);
   });
 });
