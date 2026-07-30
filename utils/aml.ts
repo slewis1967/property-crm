@@ -600,6 +600,12 @@ export type AmlProgramData = {
   };
   /** ISO date the program is next due for review (annual report from 2027). */
   reviewDue: string;
+  /**
+   * Who may view confidential reports (SMRs) besides the compliance officer and
+   * the person who lodged them. Tipping off is a criminal offence, so this is an
+   * allow-list, never a deny-list — see canViewConfidentialReport.
+   */
+  smrAccess: string[];
   notes: string;
 };
 
@@ -611,6 +617,7 @@ export function emptyProgram(): AmlProgramData {
     programApproved: { approvedBy: "", approvedAt: "", version: "1.0" },
     riskAssessment: { customer: dim(), transaction: dim(), channel: dim(), geographic: dim() },
     reviewDue: "",
+    smrAccess: [],
     notes: "",
   };
 }
@@ -651,6 +658,9 @@ export function hydrateProgram(raw: unknown): AmlProgramData {
       geographic: dim(ra.geographic),
     },
     reviewDue: asString(o.reviewDue),
+    smrAccess: Array.isArray(o.smrAccess)
+      ? o.smrAccess.map((e) => asString(e).trim().toLowerCase()).filter(Boolean)
+      : [],
     notes: asString(o.notes),
   };
 }
@@ -662,6 +672,93 @@ export function hydrateProgram(raw: unknown): AmlProgramData {
 export function officerNotifyDue(program: AmlProgramData): string {
   if (!program.enrolment.enrolledAt) return "";
   return addCalendarDays(program.enrolment.enrolledAt, 14);
+}
+
+/* ── Tipping off: who may see an SMR ─────────────────────────────────────── */
+
+/**
+ * Disclosing that an SMR exists (or is being considered) is the tipping-off
+ * offence — a criminal offence, not a policy preference. Marking a report
+ * "confidential" in the UI is therefore not enough: the server must refuse to
+ * hand the record to anyone outside the circle of people entitled to see it.
+ *
+ * The circle is deliberately narrow and is an ALLOW-list:
+ *   - the appointed compliance officer,
+ *   - anyone explicitly added to program.smrAccess,
+ *   - the person who lodged the report (they formed the suspicion; hiding it
+ *     from them would be perverse and would break their own audit trail).
+ *
+ * If no officer is appointed and no allow-list is configured, only the lodger
+ * can see it. That fails CLOSED — an unconfigured program must not silently
+ * expose SMRs to every CRM user.
+ */
+export function canViewConfidentialReport(
+  viewerEmail: string,
+  program: AmlProgramData,
+  createdBy: string | null | undefined,
+): boolean {
+  const viewer = (viewerEmail || "").trim().toLowerCase();
+  if (!viewer) return false;
+  if ((createdBy || "").trim().toLowerCase() === viewer) return true;
+  if ((program.complianceOfficer.email || "").trim().toLowerCase() === viewer) return true;
+  return program.smrAccess.includes(viewer);
+}
+
+/* ── Ongoing customer due diligence ──────────────────────────────────────── */
+
+/**
+ * CDD is not a one-off gate at onboarding. AUSTRAC expects customer information
+ * to be kept current and parties to be re-screened on an ongoing basis —
+ * sanctions and PEP lists change after you onboard someone.
+ *
+ * Cadence is risk-based, which is the whole point of a risk-based program: the
+ * higher the assessed risk, the sooner you look again.
+ */
+/**
+ * Today in Australia/Brisbane as 'YYYY-MM-DD'. Review dates are plain `date`
+ * columns with no time, so comparing them against a UTC "now" turns "due today"
+ * into "overdue yesterday" for most of the Australian working day.
+ *
+ * NOTE: this duplicates brisbaneToday() in utils/paid-services.ts and
+ * utils/lender-policy/index.ts. Deliberately not consolidated here — this is a
+ * compliance fix, and hoisting a shared date module touches three features.
+ * Worth doing as its own change.
+ */
+export function amlToday(now: Date = new Date()): string {
+  return new Date(now.getTime() + 10 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+export const REVIEW_CADENCE_MONTHS: Record<RiskRating, number> = {
+  high: 6,
+  medium: 12,
+  low: 24,
+};
+
+/** ISO date a case rated `risk` should next be reviewed, measured from `iso`. */
+export function nextReviewDate(risk: RiskRating, iso: string): string {
+  const d = utcMidnight(iso);
+  d.setUTCMonth(d.getUTCMonth() + REVIEW_CADENCE_MONTHS[risk]);
+  return d.toISOString().slice(0, 10);
+}
+
+/** True when the review date has passed (or is today). Empty date = not due. */
+export function isReviewDue(nextReviewAt: string | null | undefined, today: string): boolean {
+  if (!nextReviewAt) return false;
+  return nextReviewAt <= today;
+}
+
+/**
+ * True when the party has not been re-screened within their risk cadence.
+ * Never screened at all counts as stale — that is the state most likely to
+ * matter, and treating it as fresh would defeat the check.
+ */
+export function isScreeningStale(
+  lastScreenedAt: string | null | undefined,
+  risk: RiskRating,
+  today: string,
+): boolean {
+  if (!lastScreenedAt) return true;
+  return nextReviewDate(risk, lastScreenedAt) <= today;
 }
 
 /* ── Error / migration helpers (mirrors utils/factfind.ts) ───────────────── */
@@ -677,6 +774,34 @@ export function amlErrMessage(e: unknown, fallback: string): string {
  * Deliberately narrow — a missing COLUMN (PGRST204 / 42703) is a schema
  * mismatch, not an unmigrated table, and must not be swallowed here.
  */
+/**
+ * True when the failure is specifically a MISSING COLUMN — the mirror image of
+ * amlTableMissing.
+ *
+ * Used to make the ongoing-CDD columns (next_review_at / last_reviewed_at)
+ * optional at runtime: the code and the migration deploy independently, and a
+ * write must not 500 just because the SQL hasn't been run yet. The caller
+ * retries without those fields, so CDD keeps working and only the review date
+ * is missing until the migration lands.
+ */
+export function amlColumnMissing(error: unknown): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  if (e.code === "PGRST204" || e.code === "42703") return true;
+  const msg = (e.message ?? "").toLowerCase();
+  return msg.includes("could not find the") && msg.includes("column");
+}
+
+/** The ongoing-CDD columns, stripped when the migration hasn't been applied. */
+export const ONGOING_CDD_COLUMNS = ["next_review_at", "last_reviewed_at"] as const;
+
+/** A copy of `row` without the ongoing-CDD columns. */
+export function withoutOngoingCddColumns<T extends Record<string, unknown>>(row: T): Partial<T> {
+  const out: Record<string, unknown> = { ...row };
+  for (const c of ONGOING_CDD_COLUMNS) delete out[c];
+  return out as Partial<T>;
+}
+
 export function amlTableMissing(error: unknown): boolean {
   const e = error as { code?: string; message?: string } | null;
   if (!e) return false;

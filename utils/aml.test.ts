@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  withoutOngoingCddColumns,
+  amlColumnMissing,
+  canViewConfidentialReport,
+  REVIEW_CADENCE_MONTHS,
+  nextReviewDate,
+  isReviewDue,
+  isScreeningStale,
   emptyAmlCase,
   hydrateAmlCase,
   partySummary,
@@ -182,5 +189,107 @@ describe("error / migration helpers", () => {
   it("exposes report metadata", () => {
     expect(reportTypeMeta("TTR").deadlineBusinessDays).toBe(10);
     expect(() => reportTypeMeta("XXX" as never)).toThrow();
+  });
+});
+
+/* ── Tipping off: confidential-report access ─────────────────────────────── */
+
+describe("canViewConfidentialReport", () => {
+  const base = emptyProgram();
+
+  it("lets the lodger see their own SMR", () => {
+    expect(canViewConfidentialReport("a@x.com", base, "a@x.com")).toBe(true);
+  });
+
+  it("lets the appointed compliance officer see it", () => {
+    const p = { ...base, complianceOfficer: { ...base.complianceOfficer, email: "co@x.com" } };
+    expect(canViewConfidentialReport("co@x.com", p, "someone@x.com")).toBe(true);
+  });
+
+  it("lets an explicitly allow-listed person see it", () => {
+    const p = { ...base, smrAccess: ["auditor@x.com"] };
+    expect(canViewConfidentialReport("auditor@x.com", p, "someone@x.com")).toBe(true);
+  });
+
+  it("refuses an ordinary CRM user", () => {
+    expect(canViewConfidentialReport("nosy@x.com", base, "someone@x.com")).toBe(false);
+  });
+
+  it("fails CLOSED when no officer and no allow-list are configured", () => {
+    // The unconfigured program is the dangerous default — it must not open up.
+    expect(canViewConfidentialReport("anyone@x.com", emptyProgram(), "lodger@x.com")).toBe(false);
+  });
+
+  it("is case- and whitespace-insensitive on the viewer", () => {
+    const p = { ...base, complianceOfficer: { ...base.complianceOfficer, email: "co@x.com" } };
+    expect(canViewConfidentialReport("  CO@X.com ", p, null)).toBe(true);
+  });
+
+  it("refuses an empty viewer even if created_by is also empty", () => {
+    expect(canViewConfidentialReport("", base, "")).toBe(false);
+  });
+
+  it("survives an allow-list stored with mixed case (hydrate lowercases it)", () => {
+    const p = hydrateProgram({ smrAccess: ["Auditor@X.com"] });
+    expect(canViewConfidentialReport("auditor@x.com", p, null)).toBe(true);
+  });
+});
+
+/* ── Ongoing CDD ─────────────────────────────────────────────────────────── */
+
+describe("ongoing CDD review cadence", () => {
+  it("is risk-based: higher risk comes back sooner", () => {
+    expect(REVIEW_CADENCE_MONTHS.high).toBeLessThan(REVIEW_CADENCE_MONTHS.medium);
+    expect(REVIEW_CADENCE_MONTHS.medium).toBeLessThan(REVIEW_CADENCE_MONTHS.low);
+  });
+
+  it("computes the next review from the risk rating", () => {
+    expect(nextReviewDate("high", "2026-01-15")).toBe("2026-07-15");
+    expect(nextReviewDate("medium", "2026-01-15")).toBe("2027-01-15");
+    expect(nextReviewDate("low", "2026-01-15")).toBe("2028-01-15");
+  });
+
+  it("treats a review as due on the day itself, not the day after", () => {
+    expect(isReviewDue("2026-07-30", "2026-07-30")).toBe(true);
+    expect(isReviewDue("2026-07-31", "2026-07-30")).toBe(false);
+  });
+
+  it("does not report a case with no review date as due", () => {
+    expect(isReviewDue("", "2026-07-30")).toBe(false);
+    expect(isReviewDue(null, "2026-07-30")).toBe(false);
+  });
+
+  it("treats a never-screened party as stale", () => {
+    // The state most likely to matter — calling it fresh would defeat the check.
+    expect(isScreeningStale("", "low", "2026-07-30")).toBe(true);
+    expect(isScreeningStale(null, "low", "2026-07-30")).toBe(true);
+  });
+
+  it("goes stale on the risk cadence, not a fixed period", () => {
+    // Screened Jan 2026: high-risk is stale by Aug, low-risk is not.
+    expect(isScreeningStale("2026-01-15", "high", "2026-08-01")).toBe(true);
+    expect(isScreeningStale("2026-01-15", "low", "2026-08-01")).toBe(false);
+  });
+});
+
+describe("amlColumnMissing", () => {
+  it("is the mirror of amlTableMissing: true for a missing COLUMN", () => {
+    expect(amlColumnMissing({ code: "PGRST204" })).toBe(true);
+    expect(amlColumnMissing({ code: "42703" })).toBe(true);
+  });
+
+  it("is false for a missing TABLE, which is a different problem", () => {
+    expect(amlColumnMissing({ code: "42P01" })).toBe(false);
+    expect(amlColumnMissing({ code: "PGRST205" })).toBe(false);
+  });
+
+  it("is false for null / unrelated errors", () => {
+    expect(amlColumnMissing(null)).toBe(false);
+    expect(amlColumnMissing({ code: "23505" })).toBe(false);
+  });
+
+  it("strips only the ongoing-CDD columns, leaving the rest intact", () => {
+    const row = { party_name: "A", next_review_at: "2026-01-01", last_reviewed_at: "2025-01-01", data: {} };
+    expect(withoutOngoingCddColumns(row)).toEqual({ party_name: "A", data: {} });
   });
 });

@@ -13,6 +13,9 @@ import {
   reportDueDate,
   amlErrMessage,
   amlTableMissing,
+  canViewConfidentialReport,
+  hydrateProgram,
+  emptyProgram,
   REPORT_STATUSES,
   type ReportType,
 } from "../../../../../utils/aml";
@@ -23,6 +26,35 @@ const MIGRATION_HINT =
   "AML storage isn't set up yet — run migrations/20260715_aml.sql in the Supabase SQL editor.";
 
 type ParamsCtx = { params: Promise<{ id: string }> };
+
+/**
+ * Tipping-off gate. A filtered list is worthless if the row is still fetchable
+ * by id, so every verb on a confidential report goes through here. Fails CLOSED:
+ * if the program can't be read, the allow-list is empty and only the lodger gets
+ * through.
+ *
+ * Returns 404 rather than 403 on purpose — "you may not see this SMR" and "this
+ * SMR exists" are the same disclosure, and the second one is the offence.
+ */
+async function guardConfidential(
+  viewer: string,
+  row: { confidential?: boolean; created_by?: string | null } | null,
+): Promise<NextResponse | null> {
+  if (!row?.confidential) return null;
+  let program = emptyProgram();
+  try {
+    const { data, error } = await supabase
+      .from("aml_program")
+      .select("data")
+      .eq("org", "nextkey")
+      .maybeSingle();
+    if (!error) program = hydrateProgram((data as { data?: unknown } | null)?.data);
+  } catch {
+    /* keep the empty program — fail closed */
+  }
+  if (canViewConfidentialReport(viewer, program, row.created_by)) return null;
+  return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+}
 
 /** GET — one report, including its `data` narrative. */
 export async function GET(req: Request, { params }: ParamsCtx): Promise<NextResponse> {
@@ -36,6 +68,8 @@ export async function GET(req: Request, { params }: ParamsCtx): Promise<NextResp
       throw error;
     }
     if (!data) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    const denied = await guardConfidential(auth, data as { confidential?: boolean; created_by?: string | null });
+    if (denied) return denied;
     return NextResponse.json({ ok: true, report: data });
   } catch (e) {
     log.error("aml_reports.get_failed", { detail: amlErrMessage(e, ""), ...errInfo(e) });
@@ -60,7 +94,7 @@ export async function PATCH(req: Request, { params }: ParamsCtx): Promise<NextRe
 
     const { data: current, error: fetchErr } = await supabase
       .from("aml_reports")
-      .select("status,report_type,trigger_date,terrorism_related")
+      .select("status,report_type,trigger_date,terrorism_related,confidential,created_by")
       .eq("id", id)
       .maybeSingle();
     if (fetchErr) {
@@ -68,6 +102,10 @@ export async function PATCH(req: Request, { params }: ParamsCtx): Promise<NextRe
       throw fetchErr;
     }
     if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    {
+      const denied = await guardConfidential(auth, current as { confidential?: boolean; created_by?: string | null });
+      if (denied) return denied;
+    }
     const cur = current as { status: string; report_type: ReportType; trigger_date: string; terrorism_related: boolean };
     if (cur.status === "lodged") {
       return NextResponse.json({ ok: false, error: "A lodged report can't be edited (record-keeping)." }, { status: 409 });
@@ -127,7 +165,7 @@ export async function DELETE(req: Request, { params }: ParamsCtx): Promise<NextR
   try {
     const { data: current, error: fetchErr } = await supabase
       .from("aml_reports")
-      .select("status")
+      .select("status,confidential,created_by")
       .eq("id", id)
       .maybeSingle();
     if (fetchErr) {
@@ -135,6 +173,10 @@ export async function DELETE(req: Request, { params }: ParamsCtx): Promise<NextR
       throw fetchErr;
     }
     if (!current) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    {
+      const denied = await guardConfidential(auth, current as { confidential?: boolean; created_by?: string | null });
+      if (denied) return denied;
+    }
     if ((current as { status: string }).status === "lodged") {
       return NextResponse.json({ ok: false, error: "A lodged report can't be deleted (record-keeping)." }, { status: 409 });
     }

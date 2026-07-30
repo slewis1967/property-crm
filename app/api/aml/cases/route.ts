@@ -4,8 +4,12 @@ import {
   hydrateAmlCase,
   partySummary,
   deriveRiskRating,
+  nextReviewDate,
+  amlToday,
   amlErrMessage,
   amlTableMissing,
+  amlColumnMissing,
+  ONGOING_CDD_COLUMNS,
   AML_CASE_STATUSES,
   PARTY_TYPES,
   type AmlCaseData,
@@ -20,7 +24,7 @@ export const MIGRATION_HINT =
 
 /** List columns. Never `select("*")` — `data` holds CDD PII. */
 const LIST_COLUMNS =
-  "id,party_name,party_type,party_role,status,risk_rating,screening_status,contact_id,deal_id,created_by,created_at,updated_at";
+  "id,party_name,party_type,party_role,status,risk_rating,screening_status,contact_id,deal_id,next_review_at,last_reviewed_at,created_by,created_at,updated_at";
 
 /** GET — list CDD cases (newest first), omitting the `data` blob. */
 export const GET = makeListHandler({
@@ -70,6 +74,8 @@ async function prefillFromContact(contactId: string, data: AmlCaseData): Promise
  * that contact. The risk rating is always re-derived so the column can't drift.
  */
 export const POST = makeCreateHandler({
+  optionalColumns: ONGOING_CDD_COLUMNS,
+  columnMissing: amlColumnMissing,
   table: "aml_cases",
   docType: "aml_case",
   logPrefix: "aml_cases",
@@ -99,6 +105,9 @@ export const POST = makeCreateHandler({
       party_role: data.partyRole,
       status,
       risk_rating: data.riskRating,
+      // Ongoing CDD starts the moment the case is created — a case with no
+      // review date would silently never come back round.
+      next_review_at: nextReviewDate(data.riskRating, amlToday()),
       screening_status: data.screening.status,
       contact_id: contactId,
       deal_id: str(b.dealId),

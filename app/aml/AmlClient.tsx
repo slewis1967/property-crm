@@ -22,6 +22,12 @@ import {
 
 const TEAL = "#0F4C5C";
 
+/** Today in Australia/Brisbane. A `date` column has no time, so comparing it
+ *  against a UTC now marks cases overdue a day early for most of the AU day. */
+function todayIso(): string {
+  return new Date(Date.now() + 10 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 type CaseRow = {
   id: string;
   party_name: string | null;
@@ -30,6 +36,7 @@ type CaseRow = {
   status: string;
   risk_rating: string;
   screening_status: string;
+  next_review_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -270,7 +277,17 @@ export default function AmlClient() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{when(r.updated_at)}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {when(r.updated_at)}
+                    {r.next_review_at && r.next_review_at <= todayIso() && (
+                      <span
+                        className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-800"
+                        title={`Ongoing CDD review was due ${r.next_review_at}`}
+                      >
+                        review due
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => onDelete(r.id, r.party_name ?? "")}
