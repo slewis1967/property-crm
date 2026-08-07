@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { errMessage } from "../../../../utils/errors";
-import { findHostBySlug } from "../../../../utils/scheduling-hosts";
+import { findHostBySlug, bookingNotifyRecipients } from "../../../../utils/scheduling-hosts";
 import {
   computeAvailability,
   isSlotAvailable,
@@ -249,7 +249,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
     timeZone: "Australia/Brisbane",
   }).format(new Date(startMs));
   await sendBrevoEmail({
-    to: [{ email: host.email, name: host.displayName }],
+    to: bookingNotifyRecipients(host).map((email) => ({
+      email,
+      name: email === host.email ? host.displayName : email,
+    })),
     subject: `New booking: ${name} — ${whenLabel}`,
     html: `<p>${name} booked a meeting via your self-book page.</p>
       <p><strong>When:</strong> ${whenLabel} (AEST)<br>
