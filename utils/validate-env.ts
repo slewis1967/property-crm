@@ -51,6 +51,13 @@ const CRITICAL_VARS: EnvVar[] = [
 
   // Broadcast
   { name: "BROADCAST_REVIEW_SECRET", required: false, feature: "broadcast HMAC signing (falls back to SUPABASE_SERVICE_KEY if unset)" },
+
+  // Introducer portal. Both optional with safe defaults: SUPER_ADMIN_EMAILS
+  // falls back to Sean alone (utils/super-admin.ts), and the new-referral notice
+  // falls back to whoever that resolves to. A missing value therefore narrows
+  // authority rather than widening it, which is the correct direction to fail.
+  { name: "SUPER_ADMIN_EMAILS", required: false, feature: "who may accept/decline an introducer referral and authorise changes to a submitted one — defaults to sean.l@nextkey.com.au" },
+  { name: "INTRODUCER_NOTIFY_EMAILS", required: false, feature: "who gets the 'new introducer referral' notice — defaults to the super admins" },
 ];
 
 export function validateEnv(): void {
