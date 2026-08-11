@@ -2,12 +2,15 @@
 
 /**
  * Month / week calendar grid over /api/appointments (GET ?from&to). All times
- * render in the operator's local timezone. The CRM `appointments` table is the
- * source of truth — there is no external calendar to sync with.
+ * render in the business timezone (see utils/datetime.ts), NOT the browser's —
+ * /appointments renders the same rows on the server, and the two must agree.
+ * The CRM `appointments` table is the source of truth — there is no external
+ * calendar to sync with.
  */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { roomForContact } from "../../utils/livekit-rooms";
+import { businessDayKey, formatLongDateTime, formatTime } from "../../utils/datetime";
 
 type Appt = {
   id: string;
@@ -50,8 +53,10 @@ function mondayOf(d: Date): Date {
 function sameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
+/** Key for a grid cell. `d` is already a calendar day, so its own Y/M/D are it. */
 function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 function apptTitle(a: Appt): string {
@@ -122,11 +127,13 @@ export default function CalendarClient() {
     return () => { cancelled = true; };
   }, [fromISO, toISO]);
 
-  // Bucket appointments by local day for O(1) cell lookup.
+  // Bucket appointments by business day for O(1) cell lookup — matching the
+  // zone the times render in, so a meeting can't sit in the wrong cell.
   const byDay = useMemo(() => {
     const map = new Map<string, Appt[]>();
     for (const a of appts) {
-      const key = dayKey(new Date(a.start_time));
+      const key = businessDayKey(a.start_time);
+      if (!key) continue;
       const arr = map.get(key);
       if (arr) arr.push(a);
       else map.set(key, [a]);
@@ -255,7 +262,7 @@ function MonthGrid({
                       className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] leading-tight truncate ${chipClasses(apptStatus(a), isPast)}`}
                     >
                       <span className="tabular-nums">
-                        {new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit" }).format(new Date(a.start_time))}
+                        {formatTime(a.start_time)}
                       </span>{" "}
                       {isVideo(a) ? "📹 " : ""}{apptTitle(a)}
                     </button>
@@ -307,7 +314,7 @@ function WeekAgenda({
                       className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-start gap-3"
                     >
                       <span className="text-xs tabular-nums text-gray-500 w-20 shrink-0 pt-0.5">
-                        {new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit" }).format(new Date(a.start_time))}
+                        {formatTime(a.start_time)}
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="flex items-center gap-2">
@@ -334,8 +341,8 @@ function ApptDetail({ appt, now, onClose }: { appt: Appt; now: Date; onClose: ()
   const start = new Date(appt.start_time);
   const end = appt.end_time ? new Date(appt.end_time) : null;
   const isPast = +start < +now;
-  const when = new Intl.DateTimeFormat("en-AU", { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" }).format(start);
-  const endStr = end ? new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit" }).format(end) : null;
+  const when = formatLongDateTime(start);
+  const endStr = end ? formatTime(end) : null;
   const video = isVideo(appt);
 
   return (

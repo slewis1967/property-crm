@@ -8,6 +8,7 @@
  * and can't be imported into a "use client" bundle.
  */
 import { useEffect, useState } from "react";
+import { formatDateTime } from "../../../utils/datetime";
 
 type Appointment = {
   id: string;
@@ -27,8 +28,7 @@ const statusBadge = (s: string, isPast: boolean) => {
   return "bg-green-100 text-green-700";
 };
 
-const fmtDt = (s: string | null) =>
-  s ? new Date(s).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—";
+const fmtDt = (s: string | null) => formatDateTime(s);
 
 export default function OpportunityAppointments({
   opportunityId,
