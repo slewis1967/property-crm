@@ -6,6 +6,7 @@ import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { errMessage } from "../../../../utils/errors";
+import { BUSINESS_TIME_ZONE, formatLongDateTime } from "../../../../utils/datetime";
 export const dynamic = "force-dynamic";
 
 interface ContactRow {
@@ -136,7 +137,7 @@ export async function POST(req: Request) {
     const userPrompt = [
       "APPOINTMENT:",
       `event: ${appt.event_title || "(untitled)"}`,
-      `when: ${appt.start_time || "?"}`,
+      `when: ${appt.start_time ? `${formatLongDateTime(appt.start_time)} (${BUSINESS_TIME_ZONE})` : "?"}`,
       `host: ${appt.host_name || appt.host_email || "?"}`,
       `location: ${appt.location || "—"}`,
       appt.additional_notes ? `notes from booking form: ${truncate(appt.additional_notes, 400)}` : "",

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "../../opportunities/NewOpportunityModal";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
+import { formatDateTime } from "../../../utils/datetime";
 import AIBrief from "../../components/AIBrief";
 import AISuggestedAction from "../../components/AISuggestedAction";
 import AISmartReply from "../../components/AISmartReply";
@@ -802,7 +803,7 @@ export default function ContactDetail({
                                 </span>
                               </div>
                               <p className="text-gray-500 mt-0.5">
-                                {start ? start.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—"}
+                                {formatDateTime(start)}
                                 {a.host_name ? ` · with ${a.host_name}` : a.host_email ? ` · with ${a.host_email}` : ""}
                               </p>
                               {a.location && (a.location.startsWith("http") ? (

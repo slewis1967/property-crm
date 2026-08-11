@@ -5,6 +5,7 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { errMessage } from "../../../../utils/errors";
+import { BUSINESS_TIME_ZONE, formatDateTime } from "../../../../utils/datetime";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are the morning briefing for Sean — a property advisor who runs NextKey Property Strategists. He opens his War Room dashboard and needs to know in 15 seconds: what should I do today?
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
         : "",
       ...((upcomingAppointments ?? []).map(
         (a: { event_title?: string | null; contact_name?: string | null; contact_email?: string | null; start_time?: string | null }) =>
-          `- ${a.event_title || "(untitled)"} · with ${a.contact_name || a.contact_email} · ${fmtDateTime(a.start_time)}`,
+          `- ${a.event_title || "(untitled)"} · with ${a.contact_name || a.contact_email} · ${formatDateTime(a.start_time)}`,
       )),
     ]
       .filter(Boolean)
@@ -157,15 +158,17 @@ export async function POST(req: Request) {
   }
 }
 
+// Pinned to the business timezone: this route runs on the server (UTC) and the
+// brief quotes these dates straight back to the operator, so an unpinned
+// formatter reports yesterday for anything touched after 2pm Brisbane.
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
   const d = new Date(s);
   if (isNaN(d.valueOf())) return "—";
-  return d.toLocaleDateString("en-AU", { year: "2-digit", month: "short", day: "numeric" });
-}
-function fmtDateTime(s: string | null | undefined) {
-  if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.valueOf())) return "—";
-  return d.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
+  return d.toLocaleDateString("en-AU", {
+    year: "2-digit",
+    month: "short",
+    day: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
+  });
 }

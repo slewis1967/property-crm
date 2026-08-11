@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { roomForContact } from "../../utils/livekit-rooms";
+import { formatAgendaDateTime, formatDateTime } from "../../utils/datetime";
 import AIPreMeetingBrief from "../components/AIPreMeetingBrief";
 
 export const dynamic = "force-dynamic";
@@ -59,8 +60,7 @@ const archiveStatusBadge = (s: string | null) => {
   return "bg-gray-100 text-gray-600";
 };
 
-const fmtDateTime = (s: string | null | undefined) =>
-  s ? new Date(s).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—";
+const fmtDateTime = (s: string | null | undefined) => formatDateTime(s);
 
 export default async function AppointmentsPage() {
   // Stamp "now" once and thread it down, rather than each row calling Date.now()
@@ -282,7 +282,7 @@ function Section({ title, rows, emptyText, nowMs, pastView = false, showBrief = 
                     <span className="text-gray-700">{a.host_name || a.host_email}</span>
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {start.toLocaleString("en-AU", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                    {formatAgendaDateTime(start)}
                   </p>
                   {a.location && (a.location.startsWith("http") ? (
                     // Staff join at the authed room page. `location` holds the
