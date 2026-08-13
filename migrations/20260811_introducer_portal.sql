@@ -1,4 +1,4 @@
--- Introducer portal — third-party introducers register clients for the Your Loan
+-- Introducer portal - third-party introducers register clients for the Your Loan
 -- Assist (YLA) product, then track that client's progress, without ever seeing
 -- another introducer's clients or any internal CRM surface.
 --
@@ -6,7 +6,7 @@
 --
 --   1. SEGREGATION. An introducer sees their own clients and nothing else. Every
 --      introducer-facing row carries `introducer_id`, and every introducer-facing
---      query filters on the id resolved from the session cookie — never from
+--      query filters on the id resolved from the session cookie - never from
 --      anything the caller sent. There is no introducer-facing query that can
 --      return a row without that filter.
 --
@@ -18,13 +18,13 @@
 --
 --   3. ONE AUTHORITY. Only a super admin (SUPER_ADMIN_EMAILS, default Sean) can
 --      issue an unlock grant, and every grant is single-use and time-boxed by
---      default. Staff can ask an introducer for more information — that opens a
+--      default. Staff can ask an introducer for more information - that opens a
 --      scoped, ADDITIVE window (fill blanks, upload documents) which closes the
 --      moment it's answered. It never permits altering what was already
 --      submitted.
 --
 -- SENSITIVITY: these tables hold third-party client PII supplied before any
--- engagement exists — name, contact details, income, and uploaded documents.
+-- engagement exists - name, contact details, income, and uploaded documents.
 -- Collect the minimum needed to assess a referral. Access is service-role only:
 -- the anon key must never reach these tables, and the storage bucket is private
 -- with signed-URL reads, matching the client-documents posture.
@@ -34,9 +34,9 @@
 -- That assertion is stored on the row (`consent_confirmed_at`) because it is the
 -- lawful basis for us holding the record at all.
 
--- ── Introducer firms ─────────────────────────────────────────────────────────
+-- -- Introducer firms ---------------------------------------------------------
 -- The organisation we have an introducer agreement with. Commission/agreement
--- terms are referenced, not calculated, here — the referral fee arrangement
+-- terms are referenced, not calculated, here - the referral fee arrangement
 -- lives in the signed agreement, and this only records which one applies.
 CREATE TABLE IF NOT EXISTS introducers (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS introducers (
 
 CREATE INDEX IF NOT EXISTS introducers_status_idx ON introducers (status);
 
--- ── Introducer logins ────────────────────────────────────────────────────────
+-- -- Introducer logins --------------------------------------------------------
 -- A person at an introducer firm. Email is the identity: sign-in is a one-time
 -- code, so there is no password to store, leak, or reset. Suspending a user (or
 -- the firm) takes effect on the next request because every session lookup joins
@@ -91,13 +91,13 @@ CREATE TABLE IF NOT EXISTS introducer_users (
 -- One login per email address, globally. Case-insensitive: the app lower-cases
 -- on write, and this index makes "Sam@firm.com" and "sam@firm.com" the same row
 -- even if a script forgets to. A person who moves firms gets their old row
--- suspended and a new one created — we never repoint an existing login, so the
+-- suspended and a new one created - we never repoint an existing login, so the
 -- audit trail of who submitted what stays honest.
 CREATE UNIQUE INDEX IF NOT EXISTS introducer_users_email_key
   ON introducer_users (lower(email));
 CREATE INDEX IF NOT EXISTS introducer_users_firm_idx ON introducer_users (introducer_id);
 
--- ── One-time sign-in codes ───────────────────────────────────────────────────
+-- -- One-time sign-in codes ---------------------------------------------------
 -- Two credentials are issued per attempt and either can be redeemed: a click-
 -- through link (256-bit token) and a 6-digit code for people who read mail on a
 -- different device. Only hashes are stored, so a database leak yields nothing
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS introducer_login_codes (
   code_hash         text NOT NULL,
 
   -- Wrong-code attempts against THIS row. At the cap the row is dead and the
-  -- user must request a new code — this is what stops a 6-digit code being
+  -- user must request a new code - this is what stops a 6-digit code being
   -- brute-forced (10^6 space, but only a handful of guesses are ever allowed).
   attempts          int NOT NULL DEFAULT 0,
 
@@ -124,10 +124,10 @@ CREATE TABLE IF NOT EXISTS introducer_login_codes (
 CREATE INDEX IF NOT EXISTS introducer_login_codes_link_idx ON introducer_login_codes (link_token_hash);
 CREATE INDEX IF NOT EXISTS introducer_login_codes_user_idx ON introducer_login_codes (introducer_user_id, created_at DESC);
 
--- ── Sessions ─────────────────────────────────────────────────────────────────
+-- -- Sessions -----------------------------------------------------------------
 -- The cookie carries a raw 256-bit token; we store its hash. `introducer_id` is
 -- denormalised onto the session so the segregation filter is available from the
--- session lookup alone — one query, no join to get wrong.
+-- session lookup alone - one query, no join to get wrong.
 CREATE TABLE IF NOT EXISTS introducer_sessions (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   token_hash        text NOT NULL UNIQUE,
@@ -148,12 +148,12 @@ CREATE TABLE IF NOT EXISTS introducer_sessions (
 CREATE INDEX IF NOT EXISTS introducer_sessions_token_idx ON introducer_sessions (token_hash);
 CREATE INDEX IF NOT EXISTS introducer_sessions_user_idx  ON introducer_sessions (introducer_user_id);
 
--- ── Client submissions ───────────────────────────────────────────────────────
+-- -- Client submissions -------------------------------------------------------
 -- The referral itself. Lives here, NOT in the CRM pipeline, until a super admin
 -- accepts it: unvetted third-party data must not create contacts, fire
 -- automations, or pollute lead reporting on the strength of a form post.
 --
--- STATUS MACHINE (see utils/introducer.ts — keep the two in step):
+-- STATUS MACHINE (see utils/introducer.ts - keep the two in step):
 --   draft          introducer is filling it in; freely editable
 --   submitted      locked; awaiting review
 --   info_requested locked, except additive answers to open info requests
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS introducer_clients (
   applicant2_email      text,
   applicant2_phone      text,
 
-  -- Referral substance. Deliberately coarse — enough to triage, not a fact find.
+  -- Referral substance. Deliberately coarse - enough to triage, not a fact find.
   -- Do NOT extend this with credit-file, medical, or government-identifier
   -- fields: those are collected later, in the client's own portal, under an
   -- engagement, where the AML/Privacy basis exists.
@@ -243,7 +243,7 @@ CREATE INDEX IF NOT EXISTS introducer_clients_firm_idx   ON introducer_clients (
 CREATE INDEX IF NOT EXISTS introducer_clients_status_idx ON introducer_clients (status, submitted_at DESC);
 CREATE INDEX IF NOT EXISTS introducer_clients_email_idx  ON introducer_clients (lower(email));
 
--- ── Unlock grants ────────────────────────────────────────────────────────────
+-- -- Unlock grants ------------------------------------------------------------
 -- The ONLY thing that lets an introducer edit a submitted record. Issued by a
 -- super admin. Single-use and time-boxed by default, so an unlock cannot quietly
 -- become a standing permission.
@@ -270,10 +270,10 @@ CREATE TABLE IF NOT EXISTS introducer_unlock_grants (
 
 CREATE INDEX IF NOT EXISTS introducer_unlock_grants_client_idx ON introducer_unlock_grants (client_id, created_at DESC);
 
--- ── Information requests ─────────────────────────────────────────────────────
+-- -- Information requests -----------------------------------------------------
 -- "We need more from you." Opens an ADDITIVE window: the introducer may fill
 -- named fields that are currently blank and upload the named documents. It does
--- not authorise changing anything already submitted — that still needs a grant.
+-- not authorise changing anything already submitted - that still needs a grant.
 -- Answering closes the window and the record re-locks.
 CREATE TABLE IF NOT EXISTS introducer_info_requests (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -295,7 +295,7 @@ CREATE TABLE IF NOT EXISTS introducer_info_requests (
 
 CREATE INDEX IF NOT EXISTS introducer_info_requests_client_idx ON introducer_info_requests (client_id, status);
 
--- ── Documents supplied by an introducer ──────────────────────────────────────
+-- -- Documents supplied by an introducer --------------------------------------
 -- Always tied to the info request that asked for them, so an introducer cannot
 -- push unsolicited files at a locked record.
 CREATE TABLE IF NOT EXISTS introducer_documents (
@@ -319,9 +319,9 @@ CREATE TABLE IF NOT EXISTS introducer_documents (
 
 CREATE INDEX IF NOT EXISTS introducer_documents_client_idx ON introducer_documents (client_id, status);
 
--- ── Audit trail ──────────────────────────────────────────────────────────────
+-- -- Audit trail --------------------------------------------------------------
 -- Append-only. Who did what to a referral, from both sides. This is the record
--- that answers "was this change authorised, and by whom" — so it must not be
+-- that answers "was this change authorised, and by whom" - so it must not be
 -- editable by the code that writes it. The trigger below enforces that at the
 -- database, not by convention.
 CREATE TABLE IF NOT EXISTS introducer_events (
@@ -332,7 +332,7 @@ CREATE TABLE IF NOT EXISTS introducer_events (
   actor_type        text NOT NULL
                       CHECK (actor_type IN ('introducer','staff','super_admin','system')),
   actor             text NOT NULL,      -- email, or 'system'
-  action            text NOT NULL,      -- 'submitted', 'unlock_granted', 'accepted', …
+  action            text NOT NULL,      -- 'submitted', 'unlock_granted', 'accepted', ...
   detail            jsonb NOT NULL DEFAULT '{}'::jsonb,
 
   created_at        timestamptz NOT NULL DEFAULT now()
@@ -352,7 +352,7 @@ CREATE TRIGGER introducer_events_no_update
   BEFORE UPDATE OR DELETE ON introducer_events
   FOR EACH ROW EXECUTE FUNCTION introducer_events_append_only();
 
--- ── The lock, enforced in the database ───────────────────────────────────────
+-- -- The lock, enforced in the database ---------------------------------------
 -- Rule 2 above. A submitted referral is immutable to the introducer-editable
 -- fields unless an unlock grant is currently active, or an open info request
 -- names the field AND the field is being filled from blank (additive only).
@@ -360,7 +360,7 @@ CREATE TRIGGER introducer_events_no_update
 -- Why a trigger and not just route code: the whole promise to Sean is "they
 -- cannot change anything unless I authorise it". A promise that depends on
 -- every future route handler remembering a check is not a promise. This makes
--- the unauthorised edit impossible rather than merely unimplemented — including
+-- the unauthorised edit impossible rather than merely unimplemented - including
 -- from a psql session, a script, or a route written next year.
 --
 -- STAFF-CONTROLLED COLUMNS ARE NOT COVERED. status, stage, decision fields,
@@ -382,26 +382,34 @@ BEGIN
   END IF;
 
   -- Which introducer-editable columns actually changed?
+  --
+  -- array_append, NOT `changed || 'first_name'`. Postgres resolves
+  -- `text[] || <unknown literal>` by trying to parse the literal as an ARRAY,
+  -- so the concise form dies at runtime with `malformed array literal:
+  -- "first_name"`. Because it throws inside a BEFORE UPDATE trigger, the write
+  -- is rejected -- so the lock LOOKS like it is working while in fact blocking
+  -- every update, including the ones a super admin has authorised. Caught by
+  -- the verification script, not by review. Do not "simplify" this back.
   changed := ARRAY[]::text[];
-  IF NEW.first_name IS DISTINCT FROM OLD.first_name THEN changed := changed || 'first_name'; END IF;
-  IF NEW.last_name  IS DISTINCT FROM OLD.last_name  THEN changed := changed || 'last_name';  END IF;
-  IF NEW.email      IS DISTINCT FROM OLD.email      THEN changed := changed || 'email';      END IF;
-  IF NEW.phone      IS DISTINCT FROM OLD.phone      THEN changed := changed || 'phone';      END IF;
-  IF NEW.dob        IS DISTINCT FROM OLD.dob        THEN changed := changed || 'dob';        END IF;
-  IF NEW.state      IS DISTINCT FROM OLD.state      THEN changed := changed || 'state';      END IF;
-  IF NEW.suburb     IS DISTINCT FROM OLD.suburb     THEN changed := changed || 'suburb';     END IF;
-  IF NEW.postcode   IS DISTINCT FROM OLD.postcode   THEN changed := changed || 'postcode';   END IF;
-  IF NEW.applicant2_first_name IS DISTINCT FROM OLD.applicant2_first_name THEN changed := changed || 'applicant2_first_name'; END IF;
-  IF NEW.applicant2_last_name  IS DISTINCT FROM OLD.applicant2_last_name  THEN changed := changed || 'applicant2_last_name';  END IF;
-  IF NEW.applicant2_email      IS DISTINCT FROM OLD.applicant2_email      THEN changed := changed || 'applicant2_email';      END IF;
-  IF NEW.applicant2_phone      IS DISTINCT FROM OLD.applicant2_phone      THEN changed := changed || 'applicant2_phone';      END IF;
-  IF NEW.employment_status IS DISTINCT FROM OLD.employment_status THEN changed := changed || 'employment_status'; END IF;
-  IF NEW.income_band       IS DISTINCT FROM OLD.income_band       THEN changed := changed || 'income_band';       END IF;
-  IF NEW.deposit_band      IS DISTINCT FROM OLD.deposit_band      THEN changed := changed || 'deposit_band';      END IF;
-  IF NEW.purchase_intent   IS DISTINCT FROM OLD.purchase_intent   THEN changed := changed || 'purchase_intent';   END IF;
-  IF NEW.timeframe         IS DISTINCT FROM OLD.timeframe         THEN changed := changed || 'timeframe';         END IF;
-  IF NEW.buying_in         IS DISTINCT FROM OLD.buying_in         THEN changed := changed || 'buying_in';         END IF;
-  IF NEW.notes             IS DISTINCT FROM OLD.notes             THEN changed := changed || 'notes';             END IF;
+  IF NEW.first_name IS DISTINCT FROM OLD.first_name THEN changed := array_append(changed, 'first_name'); END IF;
+  IF NEW.last_name  IS DISTINCT FROM OLD.last_name  THEN changed := array_append(changed, 'last_name');  END IF;
+  IF NEW.email      IS DISTINCT FROM OLD.email      THEN changed := array_append(changed, 'email');      END IF;
+  IF NEW.phone      IS DISTINCT FROM OLD.phone      THEN changed := array_append(changed, 'phone');      END IF;
+  IF NEW.dob        IS DISTINCT FROM OLD.dob        THEN changed := array_append(changed, 'dob');        END IF;
+  IF NEW.state      IS DISTINCT FROM OLD.state      THEN changed := array_append(changed, 'state');      END IF;
+  IF NEW.suburb     IS DISTINCT FROM OLD.suburb     THEN changed := array_append(changed, 'suburb');     END IF;
+  IF NEW.postcode   IS DISTINCT FROM OLD.postcode   THEN changed := array_append(changed, 'postcode');   END IF;
+  IF NEW.applicant2_first_name IS DISTINCT FROM OLD.applicant2_first_name THEN changed := array_append(changed, 'applicant2_first_name'); END IF;
+  IF NEW.applicant2_last_name  IS DISTINCT FROM OLD.applicant2_last_name  THEN changed := array_append(changed, 'applicant2_last_name');  END IF;
+  IF NEW.applicant2_email      IS DISTINCT FROM OLD.applicant2_email      THEN changed := array_append(changed, 'applicant2_email');      END IF;
+  IF NEW.applicant2_phone      IS DISTINCT FROM OLD.applicant2_phone      THEN changed := array_append(changed, 'applicant2_phone');      END IF;
+  IF NEW.employment_status IS DISTINCT FROM OLD.employment_status THEN changed := array_append(changed, 'employment_status'); END IF;
+  IF NEW.income_band       IS DISTINCT FROM OLD.income_band       THEN changed := array_append(changed, 'income_band');       END IF;
+  IF NEW.deposit_band      IS DISTINCT FROM OLD.deposit_band      THEN changed := array_append(changed, 'deposit_band');      END IF;
+  IF NEW.purchase_intent   IS DISTINCT FROM OLD.purchase_intent   THEN changed := array_append(changed, 'purchase_intent');   END IF;
+  IF NEW.timeframe         IS DISTINCT FROM OLD.timeframe         THEN changed := array_append(changed, 'timeframe');         END IF;
+  IF NEW.buying_in         IS DISTINCT FROM OLD.buying_in         THEN changed := array_append(changed, 'buying_in');         END IF;
+  IF NEW.notes             IS DISTINCT FROM OLD.notes             THEN changed := array_append(changed, 'notes');             END IF;
 
   editable_changed := array_length(changed, 1) IS NOT NULL;
   IF NOT editable_changed THEN
@@ -464,7 +472,30 @@ CREATE TRIGGER introducer_clients_lock
   BEFORE UPDATE ON introducer_clients
   FOR EACH ROW EXECUTE FUNCTION introducer_clients_locked_guard();
 
--- ── Storage bucket ───────────────────────────────────────────────────────────
+-- -- Row Level Security --------------------------------------------------------
+-- RLS ON, with NO policies, on every table here. That combination is
+-- default-DENY for the anon and authenticated roles, while the service-role key
+-- bypasses RLS entirely - which is exactly the access model this feature wants:
+-- every read and write goes through a Next.js route holding the service key,
+-- which has already resolved the introducer's session and applied the tenant
+-- filter.
+--
+-- Without this, Supabase exposes these tables through PostgREST and the ANON KEY
+-- can read them. That would put third-party client PII - names, contact details,
+-- income bands - behind a key that ships to every browser. Same posture as the
+-- aml_* tables (20260715_aml.sql). Supabase's SQL editor prompts for this on any
+-- CREATE TABLE; it is written here so the file alone reproduces the right state.
+ALTER TABLE introducers              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_users         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_login_codes   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_sessions      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_clients       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_unlock_grants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_info_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_documents     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE introducer_events        ENABLE ROW LEVEL SECURITY;
+
+-- -- Storage bucket -----------------------------------------------------------
 -- Private, service-role only, signed-URL reads. Same posture and rationale as
 -- the client-documents bucket: the anon key must never touch it.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -480,7 +511,7 @@ ON CONFLICT (id) DO NOTHING;
 COMMENT ON TABLE introducers IS
   'Third-party introducer firms referring clients to the YLA product.';
 COMMENT ON TABLE introducer_users IS
-  'People who can sign in to the introducer portal. One-time-code auth — no passwords stored.';
+  'People who can sign in to the introducer portal. One-time-code auth - no passwords stored.';
 COMMENT ON TABLE introducer_clients IS
   'Client referrals from introducers. Locked on submit; edits require a super-admin unlock grant (enforced by the introducer_clients_lock trigger).';
 COMMENT ON TABLE introducer_unlock_grants IS
