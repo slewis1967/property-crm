@@ -189,13 +189,15 @@ export function isForwardTransition(from: OnboardingState, to: OnboardingState):
  * cannot mint one without the secret. The verifier is `verifyInvite` in the
  * accreditation repo's netlify/functions/exam.mjs — the two must stay in step.
  */
+export type IntroducerTier = "t1" | "t2";
+
 export type ExamInvite = {
   id: string;
   name: string;
   entity?: string;
   abn?: string;
   email: string;
-  tier?: "t1";
+  tier?: IntroducerTier;
   /** Days until the link stops working. */
   days?: number;
 };
@@ -216,7 +218,9 @@ export function mintExamInvite(invite: ExamInvite, secret: string, now = Date.no
     entity: invite.entity?.trim() || "",
     abn: invite.abn?.trim() || "",
     email: invite.email.trim(),
-    tier: "t1" as const,
+    // Normalised rather than trusted: an unrecognised tier becomes t1, so a
+    // typo cannot issue an invitation to a paper we do not offer.
+    tier: invite.tier === "t2" ? ("t2" as const) : ("t1" as const),
     exp: Math.floor(now / 1000) + (invite.days ?? 30) * 86400,
   };
 

@@ -178,12 +178,25 @@ describe("exam invites — identity is issued, not typed", () => {
     expect(() => mintExamInvite(base, "")).toThrow(/INVITE_SECRET/);
   });
 
-  it("cannot be talked into a tier we do not offer", () => {
-    // Tier 2 carries the unresolved licensing exposure, so it is not issuable
-    // even if a caller asks for it.
-    const t = mintExamInvite({ ...base, tier: "t2" as unknown as "t1" }, SECRET);
-    const v = verifyExamInvite(t, SECRET);
-    if (v.ok) expect(v.payload.tier).toBe("t1");
+  it("issues a Tier 2 invitation when one is asked for", () => {
+    // Tier 2 became offerable on 13 August 2026, when the credit-licensing
+    // advice cleared it. Before that it was refused outright.
+    const v = verifyExamInvite(mintExamInvite({ ...base, tier: "t2" }, SECRET), SECRET);
+    expect(v.ok).toBe(true);
+    if (v.ok) expect(v.payload.tier).toBe("t2");
+  });
+
+  it("falls back to Tier 1 on anything it does not recognise", () => {
+    // A typo must never widen someone's authority, so an unknown tier resolves
+    // downwards rather than erroring or passing through.
+    for (const junk of ["t3", "T2", "", "tier2", null, 2]) {
+      const v = verifyExamInvite(
+        mintExamInvite({ ...base, tier: junk as unknown as "t1" }, SECRET),
+        SECRET,
+      );
+      expect(v.ok, String(junk)).toBe(true);
+      if (v.ok) expect(v.payload.tier, String(junk)).toBe("t1");
+    }
   });
 
   it("builds a link the accreditation site will accept", () => {

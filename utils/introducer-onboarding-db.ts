@@ -24,7 +24,7 @@ export type Application = {
   firm_name: string | null;
   abn: string | null;
   phone: string | null;
-  tier: "t1";
+  tier: "t1" | "t2";
   state: OnboardingState;
   token_expires_at: string;
   id_check_provider: string | null;
@@ -100,6 +100,7 @@ export type NewApplication = {
   phone?: string | null;
   notes?: string | null;
   createdBy: string;
+  tier?: "t1" | "t2";
   /** How long the onboarding link stays good for. */
   days?: number;
 };
@@ -125,7 +126,7 @@ export async function createApplication(
       abn: input.abn?.trim() || null,
       phone: input.phone?.trim() || null,
       notes: input.notes?.trim() || null,
-      tier: "t1",
+      tier: input.tier === "t2" ? "t2" : "t1",
       state: "invited",
       token_hash: token.hash,
       token_expires_at: expires,

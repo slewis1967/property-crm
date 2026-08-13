@@ -299,6 +299,7 @@ function Firms({
     email: "",
     firm_name: "",
     phone: "",
+    tier: "t1",
     notes: "",
   });
 
@@ -322,7 +323,7 @@ function Firms({
           ? `Accreditation started — ${startForm.legal_name} has been emailed their first step.`
           : `Accreditation started, but the email did not send (${json.invite_error ?? "unknown error"}). Reissue their link from the application.`,
       );
-      setStartForm({ legal_name: "", email: "", firm_name: "", phone: "", notes: "" });
+      setStartForm({ legal_name: "", email: "", firm_name: "", phone: "", tier: "t1", notes: "" });
       setStarting(false);
       await onChanged();
     } catch {
@@ -433,6 +434,21 @@ function Firms({
                     />
                   </label>
                 ))}
+                <label className="block text-sm">
+                  <span className="font-medium text-gray-700">Tier</span>
+                  <select
+                    value={startForm.tier}
+                    onChange={(e) => setStartForm({ ...startForm, tier: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                  >
+                    <option value="t1">Tier 1 — introduces clients</option>
+                    <option value="t2">Tier 2 — also completes the fact find and needs analysis</option>
+                  </select>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    Tier 2 collects a fact find and an NCCP needs analysis, so it sits closer to the
+                    licence. Use Tier 1 unless there is a reason not to.
+                  </span>
+                </label>
                 <label className="block text-sm sm:col-span-2">
                   <span className="font-medium text-gray-700">Internal notes</span>
                   <textarea

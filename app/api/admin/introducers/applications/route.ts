@@ -85,6 +85,11 @@ export async function POST(req: Request) {
       abn: typeof body.abn === "string" ? body.abn : null,
       phone: typeof body.phone === "string" ? body.phone : null,
       notes: typeof body.notes === "string" ? body.notes : null,
+      // Tier 2 collects a fact find and an NCCP needs analysis. It is offerable
+      // as of 13 August 2026, when the credit-licensing advice cleared it;
+      // anything unrecognised falls back to Tier 1 rather than erroring, so a
+      // bad value can never accidentally widen someone's authority.
+      tier: body.tier === "t2" ? "t2" : "t1",
       createdBy: auth,
     });
   } catch (err) {

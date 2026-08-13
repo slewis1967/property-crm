@@ -80,6 +80,7 @@ export async function POST(
       entity: application.firm_name ?? "",
       abn: application.abn ?? "",
       email: application.email,
+      tier: application.tier,
     },
     secret,
   );

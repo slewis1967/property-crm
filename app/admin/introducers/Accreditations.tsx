@@ -14,6 +14,7 @@
  * as clearing someone's identity or opening portal access.
  */
 import { useCallback, useEffect, useState } from "react";
+import AuditFile from "./AuditFile";
 
 type Application = {
   id: string;
@@ -21,6 +22,7 @@ type Application = {
   legal_name: string;
   email: string;
   firm_name: string | null;
+  tier: string;
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -207,6 +209,7 @@ function Card({
 }) {
   const [busy, setBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [showFile, setShowFile] = useState(false);
 
   async function act(url: string, body: Record<string, unknown> | null, success: string) {
     setBusy(true);
@@ -253,6 +256,11 @@ function Card({
           <span className="rounded-full bg-gray-900 px-2.5 py-0.5 text-xs font-semibold text-white">
             {STATE_LABEL[app.state] ?? app.state}
           </span>
+          {app.tier === "t2" && (
+            <span className="ml-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-800">
+              Tier 2
+            </span>
+          )}
           {app.accreditation_no && (
             <p className="mt-1 font-mono text-xs tabular-nums text-gray-500">{app.accreditation_no}</p>
           )}
@@ -263,6 +271,18 @@ function Card({
           )}
         </div>
       </div>
+
+      {/* Readable by any staff member: seeing the file is not the same authority
+          as acting on it, and an audit request should not need the owner. */}
+      <div className="mt-3">
+        <button
+          onClick={() => setShowFile((v) => !v)}
+          className="text-sm text-gray-600 underline underline-offset-2 hover:text-gray-900"
+        >
+          {showFile ? "Hide audit file" : "Audit file"}
+        </button>
+      </div>
+      {showFile && <AuditFile applicationId={app.id} onClose={() => setShowFile(false)} />}
 
       {viewerIsSuperAdmin && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
