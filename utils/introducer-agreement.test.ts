@@ -63,17 +63,36 @@ describe("hydration is tolerant", () => {
   });
 });
 
-describe("refusing to issue something that would be signed with blanks", () => {
-  it("refuses a commission schedule with no fee", () => {
-    const d = { ...complete(), doc_type: "introducer_schedule" as const, fee_per_settlement: "" };
-    const r = readyToIssue(d);
+describe("the fee rule follows the commercial variant", () => {
+  const schedule = (variant: "standard" | "paid", fee: string) => ({
+    ...complete(),
+    doc_type: "introducer_schedule" as const,
+    variant,
+    fee_per_settlement: fee,
+  });
+
+  it("refuses a PAID schedule with no fee", () => {
+    const r = readyToIssue(schedule("paid", ""));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/contract about nothing/);
   });
 
-  it("allows a schedule once the fee is set", () => {
-    const d = { ...complete(), doc_type: "introducer_schedule" as const, fee_per_settlement: "$2,500" };
-    expect(readyToIssue(d).ok).toBe(true);
+  it("allows a PAID schedule once the fee is set", () => {
+    expect(readyToIssue(schedule("paid", "$5,000 inc GST")).ok).toBe(true);
+  });
+
+  it("allows a STANDARD schedule with no fee — there isn't one", () => {
+    // The bug this pins: requiring a fee on every schedule made the standard
+    // arrangement impossible to issue at all.
+    expect(readyToIssue(schedule("standard", "")).ok).toBe(true);
+  });
+
+  it("refuses a STANDARD schedule that carries a fee", () => {
+    // Worse than a blank: it would promise money the standard agreement
+    // explicitly says is not payable.
+    const r = readyToIssue(schedule("standard", "$5,000"));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/not payable/);
   });
 
   it("refuses an agreement with no accreditation number, since it cites one", () => {
@@ -142,5 +161,49 @@ describe("rendering", () => {
   it("states that the document was executed electronically", async () => {
     const html = await renderIntroducerAgreementHtml(complete());
     expect(html).toMatch(/executed\s+electronically/);
+  });
+});
+
+describe("the two variants say opposite things about money", () => {
+  const sched = (variant: "standard" | "paid", fee = "") => ({
+    ...complete(),
+    doc_type: "introducer_schedule" as const,
+    variant,
+    fee_per_settlement: fee,
+  });
+
+  it("a standard schedule says no fee is payable, and shows no amount", async () => {
+    const html = await renderIntroducerAgreementHtml(sched("standard"));
+    expect(html).toMatch(/No referral fee is payable/);
+    expect(html).not.toMatch(/Referral fee, per settled matter/);
+  });
+
+  it("a paid schedule states the amount", async () => {
+    const html = await renderIntroducerAgreementHtml(sched("paid", "$5,000 inc GST"));
+    expect(html).toContain("$5,000 inc GST");
+    expect(html).toMatch(/Referral fee, per settled matter/);
+    expect(html).not.toMatch(/No referral fee is payable/);
+  });
+
+  it("clause 6 of the agreement matches the variant", async () => {
+    const standard = await renderIntroducerAgreementHtml({ ...complete(), variant: "standard" });
+    expect(standard).toMatch(/pays you no fee, commission or other consideration/);
+
+    const paid = await renderIntroducerAgreementHtml({ ...complete(), variant: "paid" });
+    expect(paid).toMatch(/will pay you a Referral Fee/);
+  });
+
+  it("marks a paid document on its face, so the two cannot be confused", async () => {
+    const paid = await renderIntroducerAgreementHtml({ ...complete(), variant: "paid" });
+    expect(paid).toContain("Paid arrangement");
+    const standard = await renderIntroducerAgreementHtml({ ...complete(), variant: "standard" });
+    expect(standard).not.toContain("Paid arrangement");
+  });
+
+  it("hydrates an unknown variant to standard — never invents a fee obligation", () => {
+    for (const junk of ["PAID", "commission", "", null, 1]) {
+      expect(hydrateIntroducerAgreement({ variant: junk }).variant, String(junk)).toBe("standard");
+    }
+    expect(hydrateIntroducerAgreement({ variant: "paid" }).variant).toBe("paid");
   });
 });

@@ -55,9 +55,26 @@ function clauses(d: IntroducerAgreementData): string {
   }
 
   if (d.doc_type === "introducer_schedule") {
-    return `
+    const head = `
       <p>This schedule forms part of the Introducer Referral Agreement between ${field(d.licensor_name)}
-        and ${field(d.firm_name || d.legal_name)}, accreditation ${field(d.accreditation_no)}.</p>
+        and ${field(d.firm_name || d.legal_name)}, accreditation ${field(d.accreditation_no)}.</p>`;
+
+    // The standard arrangement pays nothing. Saying so plainly is the whole
+    // content of this schedule — an empty fee table would read as an oversight.
+    if (d.variant === "standard") {
+      return `${head}
+      <p><strong>No referral fee is payable.</strong> Springboard does not pay you a fee, commission or
+        other consideration for introducing a client, and you must not represent to any person that it
+        does.</p>
+      ${d.fee_notes.trim() ? `<p>${esc(d.fee_notes)}</p>` : ""}
+      <p><strong>What you may charge.</strong> Nothing under this agreement. Any fee you charge your own
+        client for your own services is a matter between you and them, is not a Springboard fee, and must
+        not be described as one.</p>
+      <p><strong>If this changes.</strong> A paid arrangement is offered by invitation and is documented
+        separately. Until you have signed that document, this clause governs.</p>`;
+    }
+
+    return `${head}
       <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;">
         <tr>
           <td style="padding:10px 12px;border:1px solid #e1e4ec;background:#f7f8fb;width:55%;">
@@ -101,8 +118,13 @@ function clauses(d: IntroducerAgreementData): string {
     <p><strong>5. Accreditation.</strong> Your accreditation is personal to you, is not transferable, and
       may be suspended or withdrawn by us at any time. You must tell us promptly if you become bankrupt,
       are banned or disqualified by ASIC, or are convicted of an offence involving dishonesty.</p>
-    <p><strong>6. Fees.</strong> As set out in the Commission Schedule, which forms part of this
-      agreement. No fee is payable except as that schedule provides.</p>
+    <p><strong>6. Fees.</strong> ${
+      d.variant === "paid"
+        ? `Springboard will pay you a Referral Fee for each settled referral, as set out in the ` +
+          `Commission Schedule, which forms part of this agreement. No other fee is payable.`
+        : `Springboard pays you no fee, commission or other consideration for an introduction. ` +
+          `See the Commission Schedule, which forms part of this agreement.`
+    }</p>
     <p><strong>7. Relationship.</strong> You are an independent contractor. Nothing here makes you our
       employee, partner, agent or authorised representative, and you must not hold yourself out as any of
       those.</p>
@@ -154,6 +176,11 @@ export async function renderIntroducerAgreementHtml(
     <div style="color:#6b7280;font-size:12px;">
       ${data.subtitle.trim() ? esc(data.subtitle) + " &middot; " : ""}Issued ${field(data.issued_at)}
       ${data.accreditation_no.trim() ? " &middot; Accreditation " + esc(data.accreditation_no) : ""}
+      ${
+        data.variant === "paid" && data.doc_type !== "introducer_nda"
+          ? ` &middot; <strong style="color:${AMBER};">Paid arrangement</strong>`
+          : ""
+      }
     </div>
   </div>
   ${clauses(data)}

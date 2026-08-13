@@ -90,6 +90,10 @@ export async function POST(req: Request) {
       // anything unrecognised falls back to Tier 1 rather than erroring, so a
       // bad value can never accidentally widen someone's authority.
       tier: body.tier === "t2" ? "t2" : "t1",
+      // The paid arrangement is invitation-only and pays a referral fee, so it
+      // has to be chosen deliberately. Anything unrecognised falls back to the
+      // standard terms — a bad value must never create a fee obligation.
+      variant: body.agreement_variant === "paid" ? "paid" : "standard",
       createdBy: auth,
     });
   } catch (err) {

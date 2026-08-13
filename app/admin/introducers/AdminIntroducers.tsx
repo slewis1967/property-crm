@@ -300,6 +300,7 @@ function Firms({
     firm_name: "",
     phone: "",
     tier: "t1",
+    agreement_variant: "standard",
     notes: "",
   });
 
@@ -323,7 +324,7 @@ function Firms({
           ? `Accreditation started — ${startForm.legal_name} has been emailed their first step.`
           : `Accreditation started, but the email did not send (${json.invite_error ?? "unknown error"}). Reissue their link from the application.`,
       );
-      setStartForm({ legal_name: "", email: "", firm_name: "", phone: "", tier: "t1", notes: "" });
+      setStartForm({ legal_name: "", email: "", firm_name: "", phone: "", tier: "t1", agreement_variant: "standard", notes: "" });
       setStarting(false);
       await onChanged();
     } catch {
@@ -447,6 +448,22 @@ function Firms({
                   <span className="mt-1 block text-xs text-gray-500">
                     Tier 2 collects a fact find and an NCCP needs analysis, so it sits closer to the
                     licence. Use Tier 1 unless there is a reason not to.
+                  </span>
+                </label>
+                <label className="block text-sm">
+                  <span className="font-medium text-gray-700">Commercial terms</span>
+                  <select
+                    value={startForm.agreement_variant}
+                    onChange={(e) => setStartForm({ ...startForm, agreement_variant: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                  >
+                    <option value="standard">Standard — Springboard pays no referral fee</option>
+                    <option value="paid">Paid — referral fee per settled referral</option>
+                  </select>
+                  <span className="mt-1 block text-xs text-gray-500">
+                    The paid arrangement is invitation only, and the agreement they sign says the
+                    opposite of the standard one about whether money changes hands. Get this right up
+                    front — it decides which documents are issued.
                   </span>
                 </label>
                 <label className="block text-sm sm:col-span-2">

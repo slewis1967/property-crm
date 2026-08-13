@@ -23,6 +23,7 @@ type Application = {
   email: string;
   firm_name: string | null;
   tier: string;
+  agreement_variant: string;
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -259,6 +260,11 @@ function Card({
           {app.tier === "t2" && (
             <span className="ml-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-800">
               Tier 2
+            </span>
+          )}
+          {app.agreement_variant === "paid" && (
+            <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+              Paid
             </span>
           )}
           {app.accreditation_no && (

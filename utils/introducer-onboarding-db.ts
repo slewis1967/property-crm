@@ -25,6 +25,7 @@ export type Application = {
   abn: string | null;
   phone: string | null;
   tier: "t1" | "t2";
+  agreement_variant: "standard" | "paid";
   state: OnboardingState;
   token_expires_at: string;
   id_check_provider: string | null;
@@ -43,8 +44,8 @@ export type Application = {
 };
 
 const COLUMNS =
-  "id, introducer_id, legal_name, email, firm_name, abn, phone, tier, state, " +
-  "token_expires_at, id_check_provider, id_check_reference, id_check_result, " +
+  "id, introducer_id, legal_name, email, firm_name, abn, phone, state, " +
+  "tier, agreement_variant, token_expires_at, id_check_provider, id_check_reference, id_check_result, " +
   "id_checked_at, id_checked_by, exam_score, exam_total, " +
   "exam_passed_at, accreditation_no, certificate_path, created_at, updated_at, withdrawn_reason";
 
@@ -101,6 +102,7 @@ export type NewApplication = {
   notes?: string | null;
   createdBy: string;
   tier?: "t1" | "t2";
+  variant?: "standard" | "paid";
   /** How long the onboarding link stays good for. */
   days?: number;
 };
@@ -127,6 +129,7 @@ export async function createApplication(
       phone: input.phone?.trim() || null,
       notes: input.notes?.trim() || null,
       tier: input.tier === "t2" ? "t2" : "t1",
+      agreement_variant: input.variant === "paid" ? "paid" : "standard",
       state: "invited",
       token_hash: token.hash,
       token_expires_at: expires,
