@@ -177,6 +177,15 @@ User-filed bugs / ideas that a triage AI + an autonomous cloud agent act on. Sid
 - **`agent_stage` state machine**: `pending → triaged → working → (shipped | built | awaiting_signoff | skipped | error)`. Defs + UI badges in `AGENT_STAGES` (`utils/feedback.ts`).
 - **The autonomous agent is a Claude Code cloud routine** (every ~15 min) that reads the table and acts. **Hard rules the routine MUST follow:** (1) genuine low-risk **bug** → fix on a branch, run CI, and **auto-merge only if CI is green** → `shipped`. (2) **`ai_risk_class` items are NEVER auto-shipped** — anything touching auth/access/delete/payments/outbound sending is built into a PR and left `awaiting_signoff`. (3) **feature** → research + write a `plan`, set `awaiting_signoff`; on `signoff='approved'` build it into a PR (`built`), don't auto-merge. (4) not-genuine → `skipped` with the reason in `ai_analysis`. Sign-off is driven from the feedback page (Approve/Reject → `PATCH /api/feedback/[id]` `{signoff}`).
 
+### Shared Folder (`app/shared-folder/` + `app/api/shared-folder/` + `utils/shared-folder.ts`)
+An org-wide shared drive living inside the CRM — folders, files, upload, rename, move, trash. Sidebar link **📂 Shared Folder** (CRM group).
+- **Why it's here rather than in Google Drive/SharePoint:** access control comes free. Everything on `crm.nextkey.com.au` is behind Cloudflare Access, so "everyone in the organisation" is exactly the existing Access policy — no share links, no second set of accounts. The page is deliberately **NOT** on any `proxy.ts` bypass list.
+- **Table `shared_folder_items`** (`migrations/20260813_shared_folder.sql`) — one self-referencing table holds both kinds: `kind='folder'` (no `storage_path`) and `kind='file'` (one object in the private **`shared-folder`** bucket at `{id}/{safe-filename}`). Because the id is in the path, **rename is a pure DB update** — the object never moves, and the download route passes the display name to `createSignedUrl(..., { download })`.
+- **Uploads are browser → Supabase Storage direct** via `createSignedUploadUrl`, the same pattern as `mail-attachments`: Netlify's serverless body-size limit 500s on multipart long before a 100MB file gets through. Rows are inserted `status='pending'` and only flip to `'ready'` on `PATCH { confirm: true }`, so an abandoned upload leaves an invisible row rather than a broken download. **Listings show `'ready'` only.**
+- **Deletes are soft.** There is no per-user role model — any Access identity is a full member — so `DELETE` stamps `deleted_at` and the row lands in a Trash view anyone can restore from. `DELETE ?permanent=1` purges, and is the only path that removes storage objects (it walks the subtree via `collectSubtreeIds` first, because `ON DELETE CASCADE` cleans up rows but Storage knows nothing about foreign keys). Deleting a folder stamps **only** the folder row; children ride along, which is why search and the trash list filter through `hasTrashedAncestor`.
+- `utils/shared-folder.ts` is **pure** (no Supabase import) so the `"use client"` component and the routes share it. Guard is `sharedFolderTableMissing` — narrow, like `amlTableMissing`. GET degrades to an empty list + `migration_hint`; writes return 503.
+- **100MB per file** is set on the bucket, but Supabase also enforces a *project-wide* upload limit (Dashboard → Storage → Settings). If that's still at the 50MB default, larger uploads 413 at the PUT regardless.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
@@ -194,6 +203,7 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 - `opportunities/`, `pipelines/` — proxy to the **NEXUS API** (`utils/nexus-api.ts` → Flask app on `localhost:8765` / `api.nextkey.com.au`, DuckDB-backed) at `/api/leads` + `/api/pipelines`. "GHL" here is legacy naming only — GoHighLevel was decommissioned; this is NextKey's own nexus-api. (There is no separate `app/api/duckdb/` route; the DuckDB backend is reached through these proxies and the suburbs/appointments pages.)
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
 - `broadcast` — two-phase bulk-email send: Phase 1 compliance review (Haiku), Phase 2 sequence + enrolment writes (see *Broadcast* above)
+- `shared-folder/` — the org shared drive. `GET` lists one folder (`?parent=`), searches every folder (`?q=`) or the trash (`?view=trash`); `POST` creates a folder. `shared-folder/upload-url` mints a signed Storage upload URL and reserves a `pending` row. `shared-folder/[id]`: `GET` = signed download URL, `PATCH` = confirm/rename/move/restore, `DELETE` = soft delete (`?permanent=1` to purge). All use `requireAuth` — these rows are **not** owner-scoped, so the sentinel would not protect them (see *Shared Folder* above)
 
 ### Pages
 Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit under their parent.
@@ -222,6 +232,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/eoi/[id]` | EOI form — matches the paper EOI; send for e-signing (licence attached at signing) + "Start CDD from this EOI" |
 | `/fact-find` | Borrower Fact Find — list of fact finds |
 | `/fact-find/[id]` | Borrower Fact Find — the form (print to PDF for signing) |
+| `/shared-folder` | **Shared Folder** — the org-wide shared drive (folders, upload, rename, move, trash). Everyone behind Cloudflare Access can view *and* edit; there is no per-user permission model. `?parent=<id>` opens a folder and is safe to bookmark. See *Shared Folder* in ARCHITECTURE |
 | `/contacts` | Contacts — Supabase `contacts` (live) merged with the `ghl_archive_contacts` snapshot (client-side tag filter dropdown on `ContactsClient.tsx`) |
 | `/contacts/[id]` | Contact detail |
 | `/calendar` | Calendar — month/week grid over the CRM's own `appointments` table (no Google). Meetings carry a LiveKit link + emailed .ics invite. See *Calendar & meetings* |
