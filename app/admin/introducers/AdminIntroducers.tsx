@@ -13,6 +13,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Accreditations from "./Accreditations";
 
 type Submission = {
   id: string;
@@ -79,7 +80,7 @@ async function fetchAll(scope: "queue" | "all"): Promise<{
 }
 
 export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuperAdmin: boolean }) {
-  const [tab, setTab] = useState<"queue" | "firms">("queue");
+  const [tab, setTab] = useState<"queue" | "accreditations" | "firms">("queue");
   const [scope, setScope] = useState<"queue" | "all">("queue");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [firms, setFirms] = useState<Firm[]>([]);
@@ -122,7 +123,7 @@ export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuper
         </p>
 
         <div className="mt-5 flex gap-1 border-b border-gray-200">
-          {(["queue", "firms"] as const).map((t) => (
+          {(["queue", "accreditations", "firms"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -132,7 +133,11 @@ export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuper
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {t === "queue" ? `Review queue${submissions.length ? ` (${submissions.length})` : ""}` : "Introducer firms"}
+              {t === "queue"
+                ? `Review queue${submissions.length ? ` (${submissions.length})` : ""}`
+                : t === "accreditations"
+                  ? "Accreditations"
+                  : "Introducer firms"}
             </button>
           ))}
         </div>
@@ -150,6 +155,8 @@ export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuper
             scope={scope}
             onScope={setScope}
           />
+        ) : tab === "accreditations" ? (
+          <Accreditations viewerIsSuperAdmin={viewerIsSuperAdmin} />
         ) : (
           <Firms
             firms={firms}
