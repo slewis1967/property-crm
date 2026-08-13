@@ -117,19 +117,35 @@ COMMENT ON COLUMN shared_folder_items.status IS
 -- /api/shared-folder routes, which run behind Cloudflare Access. Nothing here
 -- is ever public.
 --
--- NOTE: 100MB is the per-file ceiling for this bucket, but Supabase also
--- enforces a PROJECT-WIDE upload limit (Dashboard → Storage → Settings →
--- "Upload file size limit"). If that is still at the 50MB default, raise it or
--- uploads over 50MB will fail at the PUT with a 413 regardless of this value.
+-- 2GB per file. Keep in step with MAX_FILE_BYTES in utils/shared-folder.ts.
+--
+-- Deliberately short of Supabase's 5GB ceiling for *standard* uploads (the
+-- single-PUT path the browser uses): that path has no resume, so a transfer
+-- dropping at 90% restarts from zero. Beyond this, use resumable/TUS uploads.
+--
+-- NOTE: Supabase ALSO enforces a project-wide cap (Dashboard → Storage →
+-- Settings → "Global file size limit") which overrides this one. It is set to
+-- 100GB on this project, so this bucket value is the binding constraint.
+--
+-- DO UPDATE, not DO NOTHING: this migration is re-runnable, and on a project
+-- where the bucket already exists it must be able to correct the limit rather
+-- than silently leave an old value in place.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'shared-folder',
   'shared-folder',
   FALSE,
-  100 * 1024 * 1024,  -- 100MB per file
-  NULL                 -- general-purpose folder: no MIME restriction
+  -- The ::bigint cast is load-bearing, not decoration: 2 * 1024^3 is
+  -- 2147483648, which overflows int4 by exactly one. Postgres evaluates the
+  -- expression before assigning it to the bigint column, so the uncast form
+  -- fails with "22003 integer out of range".
+  2::bigint * 1024 * 1024 * 1024,  -- 2GB per file
+  NULL                              -- general-purpose folder: no MIME restriction
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  public             = EXCLUDED.public,
+  file_size_limit    = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- No storage.objects RLS policies, matching 20260512_mail_attachments_bucket.
 -- The service-role key used by the Next.js routes is the sole writer, and the

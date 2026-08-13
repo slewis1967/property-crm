@@ -47,7 +47,8 @@ const BRAND = "#0F4C5C";
  *  few enough not to saturate a modest office connection. */
 const UPLOAD_CONCURRENCY = 3;
 
-const MAX_MB = MAX_FILE_BYTES / 1024 / 1024;
+/** "2.0 GB" — rendering this as "2048MB" reads like a mistake. */
+const MAX_LABEL = fmtBytes(MAX_FILE_BYTES);
 
 export default function SharedFolderClient({ initialParent }: { initialParent: string | null }) {
   const [parent, setParent] = useState<string | null>(initialParent);
@@ -150,7 +151,7 @@ export default function SharedFolderClient({ initialParent }: { initialParent: s
         setUploads((u) => u.map((x) => (x.key === key ? { ...x, status: "failed", error: msg } : x)));
 
       if (file.size > MAX_FILE_BYTES) {
-        fail(`Too large (max ${MAX_MB}MB)`);
+        fail(`Too large (max ${MAX_LABEL})`);
         return;
       }
 
@@ -705,7 +706,7 @@ export default function SharedFolderClient({ initialParent }: { initialParent: s
       {!trash && (
         <p className="mt-3 text-xs text-gray-400">
           Deleted items go to the Trash and can be restored by anyone in the organisation. Files up
-          to {MAX_MB}MB.
+          to {MAX_LABEL}.
         </p>
       )}
     </div>

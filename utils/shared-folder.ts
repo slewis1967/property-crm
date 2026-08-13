@@ -11,8 +11,17 @@
 export const SHARED_FOLDER_TABLE = "shared_folder_items";
 export const SHARED_FOLDER_BUCKET = "shared-folder";
 
-/** Per-file ceiling. Mirrors the bucket's file_size_limit in the migration. */
-export const MAX_FILE_BYTES = 100 * 1024 * 1024;
+/**
+ * Per-file ceiling. Mirrors the bucket's file_size_limit in the migration —
+ * change both together.
+ *
+ * 2GB is a deliberate stop short of Supabase's 5GB ceiling for *standard*
+ * uploads, which is the single-PUT path `uploadToSignedUrl` uses. There is no
+ * resume on that path: a transfer that drops at 90% starts again from zero,
+ * and that gets genuinely painful well before 5GB. Raising this further means
+ * switching to resumable/TUS uploads, which is a different piece of work.
+ */
+export const MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024;
 
 /** Longest display name we accept. Storage paths use a shortened, sanitised form. */
 export const MAX_NAME_LENGTH = 200;

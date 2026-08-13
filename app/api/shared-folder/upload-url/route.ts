@@ -30,6 +30,7 @@ import {
   sanitiseName,
   safeStorageName,
   uniqueName,
+  fmtBytes,
 } from "../../../../utils/shared-folder";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
   }
   if (body.size > MAX_FILE_BYTES) {
     return NextResponse.json(
-      { ok: false, error: `"${name}" is too large (max ${MAX_FILE_BYTES / 1024 / 1024}MB per file).` },
+      { ok: false, error: `"${name}" is too large (max ${fmtBytes(MAX_FILE_BYTES)} per file).` },
       { status: 400 },
     );
   }
