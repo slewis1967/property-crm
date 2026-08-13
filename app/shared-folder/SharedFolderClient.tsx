@@ -19,6 +19,7 @@ import { fmtDateTime } from "../../utils/archive-helpers";
 import {
   fmtBytes,
   iconFor,
+  isViewable,
   MAX_FILE_BYTES,
   type SharedFolderItem,
   type TreeNode,
@@ -255,6 +256,55 @@ export default function SharedFolderClient({ initialParent }: { initialParent: s
       const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
       if (json.ok && json.url) window.location.href = json.url;
       else setError(json.error ?? "Could not prepare the download");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /**
+   * Open the file in a new tab.
+   *
+   * Two things here are load-bearing and both were found by clicking the
+   * button rather than by reasoning about it:
+   *
+   * 1. The tab is opened synchronously, BEFORE the await, and parked on
+   *    about:blank while the signed URL is minted. Popup blockers only permit
+   *    window.open inside the gesture that triggered it; called after the
+   *    fetch resolves it is silently swallowed and the button looks dead.
+   *
+   * 2. No "noopener" in the feature string. Per spec, noopener makes
+   *    window.open return NULL — so the handle vanishes, the fallback fires,
+   *    the user's current tab navigates away from the CRM, and an orphan blank
+   *    tab is left behind. We sever the back-reference with `tab.opener = null`
+   *    instead, which is the same protection while keeping the handle.
+   *
+   * location.replace, not .href, so about:blank never enters that tab's
+   * history and Back doesn't strand the user on a blank page.
+   */
+  const view = async (item: SharedFolderItem) => {
+    const tab = window.open("about:blank", "_blank");
+    if (tab) {
+      try {
+        tab.opener = null;
+      } catch {
+        // Cross-origin guard; nothing to do, the tab is still ours to navigate.
+      }
+    }
+    setBusyId(item.id);
+    try {
+      const res = await fetch(`/api/shared-folder/${item.id}?disposition=inline`);
+      const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
+      if (json.ok && json.url) {
+        // Only fall back to this tab if the popup was genuinely blocked.
+        if (tab) tab.location.replace(json.url);
+        else window.location.href = json.url;
+      } else {
+        tab?.close();
+        setError(json.error ?? "Could not open that file");
+      }
+    } catch {
+      tab?.close();
+      setError("Could not open that file");
     } finally {
       setBusyId(null);
     }
@@ -629,13 +679,24 @@ export default function SharedFolderClient({ initialParent }: { initialParent: s
                           </span>
                         ) : (
                           <span className="flex items-center justify-end gap-3">
+                            {isViewable(item) && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void view(item)}
+                                title={`Open ${item.name} in a new tab`}
+                                className="text-sm font-semibold disabled:opacity-40"
+                                style={{ color: BRAND }}
+                              >
+                                View
+                              </button>
+                            )}
                             {item.kind === "file" && (
                               <button
                                 type="button"
                                 disabled={busy}
                                 onClick={() => void download(item)}
-                                className="text-sm font-semibold disabled:opacity-40"
-                                style={{ color: BRAND }}
+                                className="text-sm text-gray-600 hover:underline disabled:opacity-40"
                               >
                                 Download
                               </button>

@@ -239,6 +239,55 @@ export function fmtBytes(n: number | null | undefined): string {
   return `${value >= 10 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
 }
 
+/**
+ * Extensions the View button will open inline, in a new tab.
+ *
+ * An allowlist, not a blocklist, and the omissions are deliberate:
+ *
+ * - **`.html` / `.htm` / `.svg` are excluded.** Storage serves from
+ *   *.supabase.co, so a rendered upload runs as script on that origin. It
+ *   cannot reach a CRM session (different origin), but it would hand anyone a
+ *   live page hosted on our infrastructure — a ready-made phishing surface.
+ *   SVG counts here: it can carry script. These download instead, which is
+ *   inert.
+ * - **Office formats are excluded** because browsers download them regardless.
+ *   A View button that silently downloads is a broken promise, not a feature.
+ *
+ * Anything not listed keeps its Download button and loses nothing.
+ */
+const VIEWABLE_EXTENSIONS = new Set([
+  ".pdf",
+  // Raster images only — see the SVG note above.
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".bmp",
+  // Plain text, served as whatever content type was stored at upload.
+  ".txt",
+  ".md",
+  ".csv",
+  ".json",
+  ".log",
+  // Media the browser plays natively.
+  ".mp4",
+  ".webm",
+  ".mov",
+  ".mp3",
+  ".wav",
+  ".m4a",
+]);
+
+/**
+ * True if this row should get a View button alongside Download. Folders and
+ * unrecognised types get Download only.
+ */
+export function isViewable(item: { kind: ItemKind; name: string }): boolean {
+  if (item.kind !== "file") return false;
+  return VIEWABLE_EXTENSIONS.has(splitExtension(item.name).ext.toLowerCase());
+}
+
 /** A rough icon for the row, picked from the extension. Cosmetic only. */
 export function iconFor(item: { kind: ItemKind; name: string }): string {
   if (item.kind === "folder") return "📁";
