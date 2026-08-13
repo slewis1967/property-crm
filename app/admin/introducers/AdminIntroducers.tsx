@@ -280,6 +280,51 @@ function Firms({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  /**
+   * Starting an accreditation is now how an introducer is onboarded. Creating
+   * the firm outright — which grants portal access immediately — is the
+   * exception, kept for a firm accredited before this pipeline existed.
+   * `starting` drives the primary form, `adding` the old direct one.
+   */
+  const [starting, setStarting] = useState(false);
+  const [startForm, setStartForm] = useState({
+    legal_name: "",
+    email: "",
+    firm_name: "",
+    phone: "",
+    notes: "",
+  });
+
+  async function startOnboarding() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/introducers/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(startForm),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Could not start the accreditation.");
+        return;
+      }
+      setNotice(
+        json.invite_sent
+          ? `Accreditation started — ${startForm.legal_name} has been emailed their first step.`
+          : `Accreditation started, but the email did not send (${json.invite_error ?? "unknown error"}). Reissue their link from the application.`,
+      );
+      setStartForm({ legal_name: "", email: "", firm_name: "", phone: "", notes: "" });
+      setStarting(false);
+      await onChanged();
+    } catch {
+      setError("Could not reach the server.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function create() {
     setBusy(true);
     setError(null);
@@ -344,18 +389,100 @@ function Firms({
     <div className="mt-5">
       {viewerIsSuperAdmin && (
         <div className="mb-5">
-          {!adding ? (
-            <button
-              onClick={() => setAdding(true)}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Add an introducer
-            </button>
+          {starting ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <h2 className="font-semibold text-gray-900">Start an accreditation</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Emails them the programme and their first step. Everything after that is self-service:
+                NDA, identity check, the course and exam, certificate, then the agreement. Portal access
+                opens on its own once they have signed.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm sm:col-span-2">
+                  <span className="font-medium text-gray-700">Full legal name *</span>
+                  <input
+                    value={startForm.legal_name}
+                    onChange={(e) => setStartForm({ ...startForm, legal_name: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                  <span className="mt-1 block text-xs text-gray-500">
+                    This is what their certificate prints and what the agreement is executed in. They
+                    cannot change it — that is the point.
+                  </span>
+                </label>
+                {(
+                  [
+                    ["email", "Email *"],
+                    ["firm_name", "Trading entity"],
+                    ["phone", "Phone"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="block text-sm">
+                    <span className="font-medium text-gray-700">{label}</span>
+                    <input
+                      value={startForm[key]}
+                      onChange={(e) => setStartForm({ ...startForm, [key]: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                    />
+                  </label>
+                ))}
+                <label className="block text-sm sm:col-span-2">
+                  <span className="font-medium text-gray-700">Internal notes</span>
+                  <textarea
+                    rows={2}
+                    value={startForm.notes}
+                    onChange={(e) => setStartForm({ ...startForm, notes: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={startOnboarding}
+                  disabled={busy || !startForm.legal_name || !startForm.email}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {busy ? "Sending…" : "Send and start"}
+                </button>
+                <button
+                  onClick={() => setStarting(false)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : !adding ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setStarting(true)}
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Start an accreditation
+              </button>
+              <button
+                onClick={() => setAdding(true)}
+                className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-700"
+              >
+                Add an already-accredited firm directly
+              </button>
+            </div>
           ) : (
             <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="font-semibold text-gray-900">New introducer</h2>
+              <h2 className="font-semibold text-gray-900">Add an already-accredited firm</h2>
               <p className="mt-1 text-sm text-gray-600">
-                Creates the firm and its first portal login, and emails them an invitation.
+                Creates the firm and its first portal login immediately, skipping accreditation
+                entirely. Only for a firm accredited before this pipeline existed — for anyone new, use{" "}
+                <button
+                  onClick={() => {
+                    setAdding(false);
+                    setStarting(true);
+                  }}
+                  className="underline underline-offset-2"
+                >
+                  Start an accreditation
+                </button>
+                .
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {(

@@ -17,6 +17,7 @@ import {
   ONBOARDING_STATES,
   type OnboardingState,
 } from "./introducer-onboarding";
+import { isPublicIntroducerRoute } from "../proxy";
 
 const SECRET = "test-secret-not-the-real-one";
 
@@ -203,6 +204,24 @@ describe("onboarding links", () => {
   it("escapes the token and does not double up the slash", () => {
     expect(onboardingUrl("a/b+c", "https://crm.example/")).toBe(
       "https://crm.example/introducer/onboarding/a%2Fb%2Bc");
+  });
+});
+
+describe("route safety", () => {
+  it("puts the onboarding page inside the public bypass", () => {
+    // The applicant is a stranger holding a link — they have no CF Access
+    // identity and never will, so the page must be reachable without one.
+    expect(isPublicIntroducerRoute("/introducer/onboarding/abc123")).toBe(true);
+    expect(isPublicIntroducerRoute("/introducer/onboarding/abc/def")).toBe(true);
+  });
+
+  it("keeps the staff application routes OUT of the bypass", () => {
+    // `/introducers`.startsWith(`/introducer`) is true, which is exactly how a
+    // staff route gets accidentally exposed. The onboarding work adds a new
+    // staff endpoint under that near-identical prefix, so pin it.
+    expect(isPublicIntroducerRoute("/admin/introducers")).toBe(false);
+    expect(isPublicIntroducerRoute("/api/admin/introducers/applications")).toBe(false);
+    expect(isPublicIntroducerRoute("/introducers")).toBe(false);
   });
 });
 
