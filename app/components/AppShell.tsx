@@ -46,13 +46,19 @@ export default function AppShell({
   }, [drawerOpen]);
 
   // Public, standalone routes (the external e-signature page, the self-book
-  // page, and the client document portal) render with NO app chrome — no
-  // sidebar, no mobile bar. Hooks above run unconditionally so their order stays
-  // stable across this branch.
+  // page, the client document portal, and the introducer portal) render with NO
+  // app chrome — no sidebar, no mobile bar. Hooks above run unconditionally so
+  // their order stays stable across this branch.
+  //
+  // For the introducer portal this is a boundary, not a cosmetic choice: an
+  // introducer is an external party, and the CRM sidebar would advertise every
+  // internal surface we have. Note the trailing slash — "/introducers" must not
+  // match, for the same reason it must not match in proxy.ts.
   const isStandalone =
     pathname === "/sign" || pathname?.startsWith("/sign/") ||
     pathname === "/book" || pathname?.startsWith("/book/") ||
-    pathname === "/portal" || pathname?.startsWith("/portal/");
+    pathname === "/portal" || pathname?.startsWith("/portal/") ||
+    pathname === "/introducer" || pathname?.startsWith("/introducer/");
   if (isStandalone) {
     return (
       <div data-appshell-root className="h-screen overflow-y-auto bg-gray-50">

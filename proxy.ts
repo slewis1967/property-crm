@@ -247,6 +247,34 @@ export function isPublicPortalRoute(pathname: string): boolean {
   return false;
 }
 
+// Public introducer-portal routes. An introducer is an EXTERNAL party who must
+// never hold a Cloudflare Access identity — one over-broad CF policy would
+// otherwise put a third party inside the whole CRM — so the portal carries its
+// own session instead (utils/introducer-auth.ts: one-time code, hashed session
+// token, httpOnly cookie) and sits outside the CF gate here. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/introducer/* + /api/introducer/*)
+// EXACTLY.
+//
+// THE TRAILING SLASH IS LOAD-BEARING. `"/introducers".startsWith("/introducer")`
+// is true, so a bare prefix test would silently exempt any future staff route
+// whose name merely begins with "introducer". Matching "/introducer" exactly
+// plus "/introducer/" keeps the exemption to this one subtree — the same
+// discipline the /portal and /book carve-outs above use.
+//
+// The STAFF side deliberately lives at /admin/introducers and
+// /api/admin/introducers — a different subtree entirely — so it keeps its CF
+// Access auth header no matter how this function is edited later. Every route
+// under /api/introducer/* is session-scoped by construction: each one resolves
+// the session cookie through requireIntroducer() and filters on the introducer
+// id from that session, never from the request. The CSRF origin check above
+// still applies to the mutating portal POSTs (same-origin from the portal
+// pages).
+export function isPublicIntroducerRoute(pathname: string): boolean {
+  if (pathname === "/introducer" || pathname.startsWith("/introducer/")) return true;
+  if (pathname.startsWith("/api/introducer/")) return true;
+  return false;
+}
+
 // External-cron trigger route. Netlify's scheduled functions stopped executing,
 // so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
 // machine caller with no Cloudflare Access identity. Exempt from the CF Access
@@ -325,6 +353,7 @@ export async function proxy(req: NextRequest) {
     isLivekitWebhookRoute(pathname) ||
     isPublicBookingRoute(pathname) ||
     isPublicPortalRoute(pathname) ||
+    isPublicIntroducerRoute(pathname) ||
     isCronRoute(pathname)
   ) {
     return NextResponse.next();
