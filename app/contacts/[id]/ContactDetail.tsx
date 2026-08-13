@@ -18,6 +18,8 @@ import GuestLinkButton from "../../components/GuestLinkButton";
 import RequestDocumentsButton from "../../components/RequestDocumentsButton";
 import DocumentProgress from "../../components/DocumentProgress";
 import EditRecordModal from "../../components/EditRecordModal";
+import ScheduleMeetingModal from "../../opportunities/[id]/ScheduleMeetingModal";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
 import ContactVideoCalls from "../../components/ContactVideoCalls";
@@ -182,6 +184,7 @@ export default function ContactDetail({
   const [noteSaved, setNoteSaved] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [showOpportunityModal, setShowOpportunityModal] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -311,6 +314,13 @@ export default function ContactDetail({
             label="🎥 Video call"
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
           />
+          {/* Sits next to Call on purpose: the common case is booking the next
+              meeting while still on the phone, from the page you dialled from. */}
+          <button
+            onClick={() => setShowSchedule(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
+            📅 Schedule meeting
+          </button>
           <GuestLinkButton
             contactId={contact.id}
             guestName={contact.name || undefined}
@@ -369,6 +379,28 @@ export default function ContactDetail({
             existing_savings: contact.existing_savings,
             hecs_balance: contact.hecs_balance,
           }}
+        />
+      )}
+
+      {showSchedule && (
+        <ScheduleMeetingModal
+          // The modal is lead-shaped because it grew up on the opportunity
+          // page; a contact has no lead_id, so its own id stands in (it is only
+          // used to key the form) and the lead-only qualifiers stay null.
+          lead={{
+            lead_id: contact.id,
+            full_name: contact.full_name || contact.name || null,
+            email: contact.email || null,
+            buyer_type: contact.buyer_type || null,
+            state: null,
+            budget: null,
+            timeframe: null,
+            message: null,
+          }}
+          hosts={SCHEDULING_HOSTS}
+          contactId={contact.id}
+          onClose={() => setShowSchedule(false)}
+          onCreated={() => router.refresh()}
         />
       )}
 
