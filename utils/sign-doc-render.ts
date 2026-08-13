@@ -35,6 +35,12 @@ import { renderFactFindHtml } from "./pdf/factFindPdf";
 import { needsAnalysisHtmlWithLogo } from "./pdf/needsAnalysisPdf";
 import { renderCreditAuthorisationHtml } from "./pdf/creditAuthorisationPdf";
 import { renderEoiHtml } from "./pdf/eoiPdf";
+import {
+  hydrateIntroducerAgreement,
+  introducerAgreementSummary,
+  introducerProposedSigners,
+} from "./introducer-agreement";
+import { renderIntroducerAgreementHtml } from "./pdf/introducerAgreementPdf";
 
 /** A prospective signer prefilled from the document's applicant data. */
 export type ProposedSigner = { name: string; email: string };
@@ -49,6 +55,12 @@ const TABLE: Record<ComplianceDocType, string> = {
   // Record — see utils/signatures.ts DOC_TYPE_LABEL.
   aml_case: "aml_cases",
   eoi: "eois",
+  // All three introducer documents share ONE table. They carry the same fields,
+  // are signed by the same person in the same sitting, and three near-identical
+  // tables would be three places to forget to change something.
+  introducer_nda: "introducer_agreement_docs",
+  introducer_agreement: "introducer_agreement_docs",
+  introducer_schedule: "introducer_agreement_docs",
 };
 
 /** What a fetched-and-hydrated document exposes to the signing routes. */
@@ -115,6 +127,22 @@ export async function loadDoc(
       summary: eoiSummary(data),
       renderHtml: (sigs) => renderEoiHtml(data, sigs),
       proposedSigners: () => eoiProposedSigners(data),
+    };
+  }
+  if (
+    docType === "introducer_nda" ||
+    docType === "introducer_agreement" ||
+    docType === "introducer_schedule"
+  ) {
+    // The blob carries its own doc_type, so a row fetched from the shared table
+    // renders as the document it actually is rather than the one the caller
+    // asked for. They should agree; if they ever disagree, the stored content
+    // is the truth.
+    const data = hydrateIntroducerAgreement(blob);
+    return {
+      summary: introducerAgreementSummary(data),
+      renderHtml: (sigs) => renderIntroducerAgreementHtml(data, sigs),
+      proposedSigners: () => introducerProposedSigners(data),
     };
   }
   // credit_authorisation — one free-text names line, no per-applicant email.

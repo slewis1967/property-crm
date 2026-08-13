@@ -274,6 +274,69 @@ ON CONFLICT (id) DO UPDATE
       file_size_limit = EXCLUDED.file_size_limit,
       allowed_mime_types = EXCLUDED.allowed_mime_types;
 
+-- -- Signable introducer documents ------------------------------------------------
+-- The e-signature engine maps a doc_type onto a table with `id`, `data` (jsonb)
+-- and `status`. All THREE introducer documents share this one table rather than
+-- getting one each: they carry the same fields, are signed by the same person in
+-- the same sitting, and three near-identical tables would be three places to
+-- forget to change. The engine's TABLE record simply points all three doc_types
+-- here.
+--
+-- `data` is the rendered content, snapshotted at creation. It is deliberately a
+-- copy rather than a join: an agreement must render years later exactly as it
+-- was signed, even if the application, the fee schedule or the applicant's name
+-- has since changed. A signed document that silently re-renders from live data
+-- is not evidence of anything.
+CREATE TABLE IF NOT EXISTS introducer_agreement_docs (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  application_id  uuid NOT NULL REFERENCES introducer_applications(id) ON DELETE CASCADE,
+
+  doc_type        text NOT NULL CHECK (doc_type IN
+                    ('introducer_nda','introducer_agreement','introducer_schedule')),
+
+  -- "Draft" until every signer completes, then "Signed". Matches the vocabulary
+  -- the engine already uses for the EOI.
+  status          text NOT NULL DEFAULT 'Draft' CHECK (status IN ('Draft','Sent','Signed')),
+
+  data            jsonb NOT NULL DEFAULT '{}'::jsonb,
+
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- One live document of each kind per application. A superseded one is deleted
+-- and reissued rather than versioned: an unsigned draft has no evidentiary value
+-- worth keeping, and a SIGNED one is protected by the guard below.
+CREATE UNIQUE INDEX IF NOT EXISTS introducer_agreement_docs_kind_idx
+  ON introducer_agreement_docs (application_id, doc_type);
+
+CREATE INDEX IF NOT EXISTS introducer_agreement_docs_app_idx
+  ON introducer_agreement_docs (application_id);
+
+-- A signed document is immutable. The engine writes status='Signed' and nothing
+-- may touch the content afterwards -- not a route handler, not a later
+-- migration, not a well-meaning correction. Reissuing means a new document.
+CREATE OR REPLACE FUNCTION introducer_agreement_docs_signed_guard()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF OLD.status = 'Signed' AND NEW.data IS DISTINCT FROM OLD.data THEN
+    RAISE EXCEPTION 'introducer_agreement_docs: a signed document cannot be edited';
+  END IF;
+  IF OLD.status = 'Signed' AND NEW.status <> 'Signed' THEN
+    RAISE EXCEPTION 'introducer_agreement_docs: a signed document cannot be unsigned';
+  END IF;
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS introducer_agreement_docs_guard ON introducer_agreement_docs;
+CREATE TRIGGER introducer_agreement_docs_guard
+  BEFORE UPDATE ON introducer_agreement_docs
+  FOR EACH ROW EXECUTE FUNCTION introducer_agreement_docs_signed_guard();
+
+ALTER TABLE introducer_agreement_docs ENABLE ROW LEVEL SECURITY;
+
 -- -- Signature documents ---------------------------------------------------------
 -- The e-signature engine already renders, sends, captures and stores signed PDFs;
 -- it simply refuses documents it does not know about. Widen the CHECK so it will

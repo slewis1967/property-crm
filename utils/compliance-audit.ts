@@ -29,6 +29,7 @@ import { NEEDS_ANALYSIS_TERMINAL_STATUS } from "./needsAnalysis";
 import { CREDIT_AUTHORISATION_TERMINAL_STATUS } from "./creditAuthorisation";
 import { AML_CASE_TERMINAL_STATUS } from "./aml";
 import { EOI_TERMINAL_STATUS } from "./eoi";
+import { INTRODUCER_DOC_TERMINAL_STATUS } from "./introducer-agreement";
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -36,7 +37,18 @@ import { EOI_TERMINAL_STATUS } from "./eoi";
 // trail so a Cleared determination is read-only and every change is recorded
 // for the 7-year retention requirement. `eoi` is an Expression of Interest — a
 // signable document (in the e-signature flow), locked once fully Signed.
-export type ComplianceDocType = "fact_find" | "needs_analysis" | "credit_authorisation" | "aml_case" | "eoi";
+// The three `introducer_*` types are not borrower compliance documents, but they
+// are signed through the same engine and want the same lock and the same audit
+// trail. Giving them a parallel set of types would mean two of everything.
+export type ComplianceDocType =
+  | "fact_find"
+  | "needs_analysis"
+  | "credit_authorisation"
+  | "aml_case"
+  | "eoi"
+  | "introducer_nda"
+  | "introducer_agreement"
+  | "introducer_schedule";
 export type ComplianceAuditAction = "create" | "update" | "sign" | "reopen" | "delete";
 
 /** The status at which each document is signed/complete and becomes read-only. */
@@ -46,6 +58,9 @@ export const LOCKED_STATUS: Record<ComplianceDocType, string> = {
   credit_authorisation: CREDIT_AUTHORISATION_TERMINAL_STATUS,
   aml_case: AML_CASE_TERMINAL_STATUS,
   eoi: EOI_TERMINAL_STATUS,
+  introducer_nda: INTRODUCER_DOC_TERMINAL_STATUS,
+  introducer_agreement: INTRODUCER_DOC_TERMINAL_STATUS,
+  introducer_schedule: INTRODUCER_DOC_TERMINAL_STATUS,
 };
 
 /** User-facing refusal messages (kept here so route wording stays consistent). */
