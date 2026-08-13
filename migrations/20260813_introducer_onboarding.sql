@@ -192,6 +192,44 @@ CREATE TRIGGER introducer_applications_guard
   BEFORE UPDATE ON introducer_applications
   FOR EACH ROW EXECUTE FUNCTION introducer_applications_activation_guard();
 
+-- -- Accreditation numbering ------------------------------------------------------
+-- Allocation has to be atomic AND idempotent. The exam webhook can be delivered
+-- twice, and two deliveries racing each other must not burn two numbers or hand
+-- the same applicant a different one on the retry. Doing this in the app would
+-- need a transaction the Supabase client does not give us, so it lives here:
+-- an application that already has a number gets that number back, unchanged.
+CREATE OR REPLACE FUNCTION allocate_accreditation_number(p_application_id uuid)
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE
+  existing text;
+  allocated text;
+BEGIN
+  -- Lock the row first, so a concurrent caller waits here rather than both
+  -- reading "no number yet" and both allocating.
+  SELECT accreditation_no INTO existing
+    FROM introducer_applications
+   WHERE id = p_application_id
+     FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'no such application: %', p_application_id;
+  END IF;
+
+  IF existing IS NOT NULL THEN
+    RETURN existing;
+  END IF;
+
+  allocated := 'SBI-' || to_char(now(), 'YYYY') || '-' ||
+               lpad(nextval('introducer_accreditation_seq')::text, 4, '0');
+
+  UPDATE introducer_applications
+     SET accreditation_no = allocated
+   WHERE id = p_application_id;
+
+  RETURN allocated;
+END;
+$$;
+
 -- -- Offboarding ----------------------------------------------------------------
 -- Sean's retention decision: licence images live for the life of the
 -- accreditation and are destroyed when the introducer is terminated. Call this

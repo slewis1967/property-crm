@@ -111,6 +111,34 @@ BEGIN
     INSERT INTO onboard_test VALUES ('8. Accreditation number cannot be changed', 'PASS', '');
   END;
 
+  -- ---- accreditation numbering --------------------------------------------
+  -- Fresh application: allocation must be idempotent, because the exam webhook
+  -- can be delivered twice and two deliveries must not burn two numbers.
+  DECLARE
+    bid uuid;
+    first_no text;
+    second_no text;
+  BEGIN
+    INSERT INTO introducer_applications (legal_name, email, token_hash, token_expires_at)
+    VALUES ('Number Test', 'verify+num@example.invalid',
+            'hash-' || gen_random_uuid(), now() + interval '30 days')
+    RETURNING id INTO bid;
+
+    first_no  := allocate_accreditation_number(bid);
+    second_no := allocate_accreditation_number(bid);
+
+    INSERT INTO onboard_test VALUES (
+      '8a. Accreditation number is allocated in the expected shape',
+      CASE WHEN first_no ~ '^SBI-[0-9]{4}-[0-9]{4}$' THEN 'PASS' ELSE 'FAIL' END, first_no);
+
+    INSERT INTO onboard_test VALUES (
+      '8b. Re-allocating returns the SAME number (idempotent)',
+      CASE WHEN first_no = second_no THEN 'PASS' ELSE 'FAIL' END,
+      first_no || ' vs ' || second_no);
+
+    DELETE FROM introducer_applications WHERE id = bid;
+  END;
+
   -- ---- activation ----------------------------------------------------------
   INSERT INTO introducers (firm_name, contact_email, created_by)
   VALUES ('Verify Pty Ltd', 'verify+onboard@example.invalid', 'verify-script')

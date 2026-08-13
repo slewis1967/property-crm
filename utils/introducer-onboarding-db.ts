@@ -164,6 +164,81 @@ export async function setState(
 }
 
 /**
+ * Record one exam attempt.
+ *
+ * EVERY attempt is written, pass or fail, because the accreditation register
+ * has to be able to answer "how many goes did this take" — and because an
+ * introducer who passed on the sixth attempt having failed five red-line
+ * questions is a different risk to one who passed first time.
+ *
+ * The attempts live in `introducer_events`, which is append-only at the database
+ * level, rather than in a column that the next attempt overwrites. The
+ * application row keeps only the passing result, for querying.
+ *
+ * Idempotent on paperId: the webhook can be delivered more than once, and a
+ * duplicate delivery must not add a second attempt or re-fire the pass.
+ */
+export async function recordExamAttempt(
+  applicationId: string,
+  attempt: {
+    paperId: string;
+    tier: string;
+    score: number;
+    total: number;
+    passed: boolean;
+    missedModules?: string[];
+    redLineModules?: string[];
+    itemIds?: string[];
+    markedAt?: string;
+    integrity?: unknown;
+  },
+): Promise<{ duplicate: boolean }> {
+  // limit(1) rather than maybeSingle() alone: if a duplicate ever did slip
+  // through, maybeSingle() would throw on the second delivery and turn a
+  // harmless repeat into a 500. We only need to know whether any exists.
+  const { data: seen } = await supabase
+    .from("introducer_events")
+    .select("id")
+    .eq("action", "exam_attempt")
+    .contains("detail", { application_id: applicationId, paper_id: attempt.paperId })
+    .limit(1);
+
+  if (seen && seen.length > 0) return { duplicate: true };
+
+  await logOnboardingEvent(applicationId, "system", null, "exam_attempt", {
+    paper_id: attempt.paperId,
+    tier: attempt.tier,
+    score: attempt.score,
+    total: attempt.total,
+    passed: attempt.passed,
+    missed_modules: attempt.missedModules ?? [],
+    red_line_modules: attempt.redLineModules ?? [],
+    item_ids: attempt.itemIds ?? [],
+    marked_at: attempt.markedAt ?? new Date().toISOString(),
+    integrity: attempt.integrity ?? null,
+  });
+
+  return { duplicate: false };
+}
+
+/**
+ * Allocate (or re-read) this application's accreditation number.
+ *
+ * Delegates to a SQL function because the allocation must be atomic and
+ * idempotent together: the webhook can be delivered twice, and two deliveries
+ * racing must not burn two numbers. See allocate_accreditation_number in the
+ * migration — it locks the row, and returns the existing number unchanged if
+ * one has already been issued.
+ */
+export async function allocateAccreditationNumber(applicationId: string): Promise<string> {
+  const { data, error } = await supabase.rpc("allocate_accreditation_number", {
+    p_application_id: applicationId,
+  });
+  if (error) throw error;
+  return String(data);
+}
+
+/**
  * Append to the shared introducer audit trail. That table is append-only at the
  * database level, so onboarding events sit alongside referral events in one
  * chronology rather than in a second log nobody thinks to read.
