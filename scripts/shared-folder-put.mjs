@@ -284,7 +284,18 @@ const folderUrl = (id) =>
     ? `https://crm.nextkey.com.au/shared-folder?parent=${id}`
     : "https://crm.nextkey.com.au/shared-folder";
 
-try {
+/**
+ * Returns the exit code rather than calling process.exit().
+ *
+ * This is not style. process.exit() with undici's keep-alive sockets still
+ * open trips a libuv assertion on Windows —
+ *   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c
+ * — and the process dies with code 127 *after* the work succeeded, so any
+ * caller checking $? concludes the filing failed when it did not. Setting
+ * process.exitCode and letting the event loop drain exits cleanly, and the
+ * sockets close fast enough that it costs about a second.
+ */
+async function main() {
   if (LS_ONLY) {
     const parentId = destPath ? await ensureFolderPath(destPath) : null;
     const rows = await childrenOf(parentId);
@@ -292,7 +303,7 @@ try {
     console.log(`\n${destPath || "(root)"} — ${rows.length} item(s)`);
     for (const r of rows) console.log(`  ${r.kind === "folder" ? "[dir]" : "     "} ${r.name}`);
     console.log(`\n${folderUrl(parentId)}\n`);
-    process.exit(0);
+    return 0;
   }
 
   const parentId = await ensureFolderPath(destPath);
@@ -300,7 +311,7 @@ try {
   if (MKDIR_ONLY) {
     console.log(`\nReady: ${destPath}`);
     console.log(`${folderUrl(parentId)}\n`);
-    process.exit(0);
+    return 0;
   }
 
   let ok = 0;
@@ -316,8 +327,12 @@ try {
 
   console.log(`\nFiled ${ok}/${localFiles.length} into ${destPath || "(root)"}`);
   console.log(`${folderUrl(parentId)}\n`);
-  process.exit(ok === localFiles.length ? 0 : 1);
+  return ok === localFiles.length ? 0 : 1;
+}
+
+try {
+  process.exitCode = await main();
 } catch (e) {
   console.error(`ERROR: ${e.message ?? e}`);
-  process.exit(1);
+  process.exitCode = 1;
 }
