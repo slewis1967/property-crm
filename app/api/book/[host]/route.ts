@@ -15,6 +15,7 @@ import { sendBrevoEmail } from "../../../../utils/brevo";
 import { buildAppointmentRow } from "../../../../utils/appointments";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../sign/_shared";
+import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -147,41 +148,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   const startISO = new Date(startMs).toISOString();
   const endISO = new Date(endMs).toISOString();
   const title = `Meeting with ${name}`;
-  const nowIso = new Date().toISOString();
 
   // --- Capture the lead as a contact (find-or-create; never clobber an
-  // existing contact's fields). ---
-  let contactId: string | null = null;
-  try {
-    const { data: existing } = await supabase
-      .from("contacts")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    if (existing?.id) {
-      contactId = existing.id as string;
-    } else {
-      const { data: created } = await supabase
-        .from("contacts")
-        .insert({
-          full_name: name,
-          name,
-          first_name: name.split(" ")[0],
-          email,
-          phone: body.phone?.trim() || null,
-          source: "self_book",
-          status: "new",
-          temperature: "warm",
-          created_at: nowIso,
-          updated_at: nowIso,
-        })
-        .select("id")
-        .single();
-      contactId = (created as { id: string } | null)?.id ?? null;
-    }
-  } catch {
-    contactId = null; // proceed with an unlinked booking rather than fail
-  }
+  // existing contact's fields). A failure here must not lose the booking, so
+  // we proceed unlinked rather than erroring out. ---
+  const contactResult = await findOrCreateContactByEmail({
+    full_name: name,
+    email,
+    phone: body.phone,
+    source: "self_book",
+  });
+  const contactId: string | null = contactResult.ok ? contactResult.id : null;
 
   // --- LiveKit video link (best-effort). Needs a room key; use the contact id
   // when we have one, else a booking-scoped room. ---
