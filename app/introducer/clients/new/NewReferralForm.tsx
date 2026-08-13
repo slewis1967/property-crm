@@ -115,7 +115,7 @@ export default function NewReferralForm({
             onClick={() => save("submit")}
             disabled={busy !== null || !consent}
             className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
-            style={{ background: "#da9845" }}
+            style={{ background: "#c7894e" }}
           >
             {busy === "submit" ? "Submitting…" : "Submit referral"}
           </button>
@@ -130,7 +130,7 @@ export default function NewReferralForm({
 
         <p className="mt-4 text-xs leading-relaxed text-gray-500">
           A draft stays private to you and can be changed freely. Once you submit, the details are
-          locked and can only be changed if NextKey authorises it — so the record we assess is
+          locked and can only be changed if Springboard authorises it — so the record we assess is
           exactly what you sent.
         </p>
       </div>

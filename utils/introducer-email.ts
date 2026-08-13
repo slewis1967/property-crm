@@ -7,12 +7,25 @@
  * be able to block someone's own sign-in code. Any future marketing to
  * introducers is a different path with a different flag.
  *
- * NextKey brand: navy #1b1f44, amber #da9845.
+ * SPRINGBOARD BRANDED, NOT NEXTKEY. An introducer refers clients to the
+ * Springboard product and their client will only ever hear the name Springboard
+ * — NextKey is the internal CRM and means nothing to them. Every introducer-
+ * facing surface (this file, app/introducer/*) is therefore Springboard; the
+ * staff side at /admin/introducers stays NextKey CRM because that IS the CRM.
+ *
+ * Brand: navy #020e40, amber #c7894e, logo at /api/portal/logo.
+ *
+ * SENDER: hello@springboardhomes.com.au, already a verified Brevo sender (it
+ * powers the Springboard autoresponder and the document reminders), so no new
+ * Brevo setup is needed. Sending these from the NextKey sender would put a name
+ * the recipient doesn't recognise on their sign-in code — and mismatched
+ * from-addresses are exactly what spam filters and phishing-aware humans react
+ * to. See utils/mailIdentities.ts for the same split.
  */
 import { sendBrevoEmail } from "./brevo";
 
-const NAVY = "#1b1f44";
-const AMBER = "#da9845";
+const NAVY = "#020e40";
+const AMBER = "#c7894e";
 
 export function portalBaseUrl(): string {
   return (
@@ -22,21 +35,67 @@ export function portalBaseUrl(): string {
   ).replace(/\/+$/, "");
 }
 
+/** The Springboard from-envelope, mirroring utils/mailIdentities.ts. */
+function springboardSender() {
+  return {
+    fromEmail: process.env.SPRINGBOARD_SENDER_EMAIL ?? "hello@springboardhomes.com.au",
+    fromName: process.env.SPRINGBOARD_SENDER_NAME ?? "Springboard Homes",
+  };
+}
+
+/**
+ * The logo is served from /api/portal/logo — deliberately NOT a new endpoint
+ * under /api/introducer. That path already carries a Cloudflare Access bypass
+ * so it is publicly fetchable by Gmail's image proxy, which is the only way an
+ * emailed logo renders at all.
+ */
+function logoUrl(): string {
+  return `${portalBaseUrl()}/api/portal/logo`;
+}
+
+/**
+ * Internal-only shell. The new-referral notice goes to OUR inbox, not an
+ * introducer's, so it deliberately wears NextKey CRM chrome — dressing an
+ * internal alert as Springboard would make the one email that tells us to act
+ * look like the ones we send out.
+ */
+function internalShell(title: string, bodyHtml: string, footerNote: string): string {
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f6f8;">
+  <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background:#f5f6f8;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+        <tr><td style="background:#1b1f44;padding:20px 28px;">
+          <div style="color:#ffffff;font-size:17px;font-weight:600;letter-spacing:.2px;">NextKey CRM</div>
+          <div style="color:#da9845;font-size:13px;margin-top:2px;">Introducer referrals</div>
+        </td></tr>
+        <tr><td style="padding:28px;color:#1f2430;font-size:15px;line-height:1.6;">
+          <h1 style="margin:0 0 16px;font-size:19px;color:#1b1f44;">${title}</h1>
+          ${bodyHtml}
+        </td></tr>
+        <tr><td style="padding:18px 28px;border-top:1px solid #eceef2;color:#6b7280;font-size:12px;line-height:1.5;">
+          ${footerNote}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
 function shell(title: string, bodyHtml: string, footerNote?: string): string {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f6f8;">
   <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background:#f5f6f8;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
         <tr><td style="background:${NAVY};padding:20px 28px;">
-          <div style="color:#ffffff;font-size:17px;font-weight:600;letter-spacing:.2px;">NextKey Property Strategists</div>
-          <div style="color:${AMBER};font-size:13px;margin-top:2px;">Introducer Portal</div>
+          <img src="${logoUrl()}" alt="Springboard Homes" height="30" style="height:30px;width:auto;display:block;border:0;" />
+          <div style="color:${AMBER};font-size:13px;margin-top:8px;">Introducer Portal</div>
         </td></tr>
         <tr><td style="padding:28px;color:#1f2430;font-size:15px;line-height:1.6;">
           <h1 style="margin:0 0 16px;font-size:19px;color:${NAVY};">${title}</h1>
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:18px 28px;border-top:1px solid #eceef2;color:#6b7280;font-size:12px;line-height:1.5;">
-          ${footerNote ?? "You are receiving this because you hold an introducer login with NextKey Property Strategists."}
+          ${footerNote ?? "You are receiving this because you hold an introducer login with Springboard Homes."}
         </td></tr>
       </table>
     </td></tr>
@@ -65,7 +124,8 @@ export async function sendIntroducerLoginEmail(opts: {
 
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
-    subject: `Your NextKey introducer sign-in code: ${opts.code}`,
+    ...springboardSender(),
+    subject: `Your Springboard introducer sign-in code: ${opts.code}`,
     html: shell(
       "Sign in to the Introducer Portal",
       `<p>${greeting}</p>
@@ -91,15 +151,16 @@ export async function sendIntroducerInviteEmail(opts: {
   const greeting = opts.name ? `Hi ${opts.name.split(" ")[0]},` : "Hi,";
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
-    subject: "Your NextKey Introducer Portal access",
+    ...springboardSender(),
+    subject: "Your Springboard Introducer Portal access",
     html: shell(
       "Your introducer access is ready",
       `<p>${greeting}</p>
-       <p>You now have access to the NextKey Introducer Portal for <strong>${opts.firmName}</strong>. You can use it to register clients and follow their progress.</p>
+       <p>You now have access to the Springboard Introducer Portal for <strong>${opts.firmName}</strong>. You can use it to register clients and follow their progress.</p>
        ${button(url, "Open the portal")}
        <p>There is no password. Enter <strong>${opts.to}</strong> on the sign-in page and we'll email you a one-time code.</p>
        <p style="color:#6b7280;font-size:13px;">A quick note on how it works: once you submit a client's details they're locked, so the record we assess is exactly what you sent. If something needs correcting, ask us and we'll authorise the change. If we need anything further, you'll get an email and the portal will open just that part for you.</p>`,
-      `Access granted by ${opts.invitedBy}. Please only submit client details where you have the client's consent to pass them to NextKey.`,
+      `Access granted by ${opts.invitedBy}. Please only submit client details where you have the client's consent to pass them to Springboard Homes.`,
     ),
     tags: ["introducer", "invite"],
   });
@@ -129,6 +190,7 @@ export async function sendInfoRequestEmail(opts: {
 
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
+    ...springboardSender(),
     subject: `More information needed — ${opts.clientRef} (${opts.clientName})`,
     html: shell(
       "We need a little more information",
@@ -157,6 +219,7 @@ export async function sendReferralUpdateEmail(opts: {
   const greeting = opts.name ? `Hi ${opts.name.split(" ")[0]},` : "Hi,";
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
+    ...springboardSender(),
     subject: `${opts.headline} — ${opts.clientRef} (${opts.clientName})`,
     html: shell(
       opts.headline,
@@ -182,12 +245,12 @@ export async function sendNewReferralNotice(opts: {
   return sendBrevoEmail({
     to: opts.to.map((email) => ({ email })),
     subject: `New introducer referral: ${opts.clientRef} — ${opts.clientName}`,
-    html: shell(
+    html: internalShell(
       "New referral awaiting review",
       `<p><strong>${opts.firmName}</strong> (${opts.introducerName}) has submitted a client referral.</p>
        <p style="margin:4px 0;"><strong>${opts.clientRef}</strong> — ${opts.clientName}</p>
        <p style="color:#6b7280;font-size:13px;">Nothing has been created in the CRM yet. It stays in the review queue until it's accepted.</p>
-       ${button(url, "Review the referral")}`,
+       <p style="margin:24px 0;"><a href="${url}" style="background:#da9845;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;display:inline-block;">Review the referral</a></p>`,
       "Internal notification — NextKey CRM.",
     ),
     tags: ["introducer", "internal"],

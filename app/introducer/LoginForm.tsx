@@ -76,10 +76,11 @@ export default function LoginForm({ initialError }: { initialError: string | nul
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
         <div className="rounded-xl border border-gray-200 bg-white p-7 shadow-sm">
           <div className="mb-6">
-            <div className="text-lg font-semibold" style={{ color: "#1b1f44" }}>
-              NextKey Property Strategists
-            </div>
-            <div className="text-sm font-medium" style={{ color: "#da9845" }}>
+            {/* Served from /api/portal/* — that prefix already has the CF Access
+                bypass, so the image loads for a signed-out visitor. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/api/portal/logo" alt="Springboard Homes" className="h-9 w-auto" />
+            <div className="mt-2 text-sm font-medium" style={{ color: "#c7894e" }}>
               Introducer Portal
             </div>
           </div>
@@ -114,7 +115,7 @@ export default function LoginForm({ initialError }: { initialError: string | nul
                 type="submit"
                 disabled={busy || !email}
                 className="mt-5 w-full rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-50"
-                style={{ background: "#da9845" }}
+                style={{ background: "#c7894e" }}
               >
                 {busy ? "Sending…" : "Email me a sign-in code"}
               </button>
@@ -143,7 +144,7 @@ export default function LoginForm({ initialError }: { initialError: string | nul
                 type="submit"
                 disabled={busy || code.length !== 6}
                 className="mt-5 w-full rounded-lg px-4 py-2.5 font-semibold text-white disabled:opacity-50"
-                style={{ background: "#da9845" }}
+                style={{ background: "#c7894e" }}
               >
                 {busy ? "Checking…" : "Sign in"}
               </button>
@@ -163,8 +164,8 @@ export default function LoginForm({ initialError }: { initialError: string | nul
         </div>
 
         <p className="mt-6 px-2 text-center text-xs leading-relaxed text-gray-500">
-          Only submit a client&apos;s details where you have their consent to pass them to NextKey
-          Property Strategists. If you don&apos;t have portal access, contact your NextKey manager.
+          Only submit a client&apos;s details where you have their consent to pass them to Springboard
+          Homes. If you don&apos;t have portal access, contact your Springboard manager.
         </p>
       </div>
     </div>

@@ -172,7 +172,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       {
         ok: false,
         error: locked
-          ? "This referral is locked. Ask NextKey to authorise the change."
+          ? "This referral is locked. Ask Springboard to authorise the change."
           : "Could not save. Please try again.",
       },
       { status: locked ? 403 : 500 },
@@ -219,7 +219,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   // something that happened — deleting it would erase the audit trail with it.
   if (record.status !== "draft") {
     return NextResponse.json(
-      { ok: false, error: "Submitted referrals can't be deleted. Contact NextKey if this was sent in error." },
+      { ok: false, error: "Submitted referrals can't be deleted. Contact Springboard if this was sent in error." },
       { status: 403 },
     );
   }

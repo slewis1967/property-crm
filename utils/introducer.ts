@@ -170,9 +170,9 @@ export function fieldLabel(key: string): string {
  * referrals that were made under the old wording.
  */
 export const CONSENT_STATEMENT =
-  "I confirm I have the client's consent to pass their personal details to NextKey Property Strategists " +
+  "I confirm I have the client's consent to pass their personal details to Springboard Homes " +
   "for the purpose of assessing and progressing a home-ownership enquiry, and that I have told them who " +
-  "NextKey is and why their details are being provided.";
+  "Springboard is and why their details are being provided.";
 
 /** Keep only allow-listed keys, trimmed. Everything else is dropped. */
 export function pickEditableFields(body: unknown): Record<string, string | null> {
@@ -287,7 +287,7 @@ export function evaluateEdit(
       blockedFields: blocked,
       reason: `The change you were authorised to make doesn't cover ${blocked
         .map(fieldLabel)
-        .join(", ")}. Ask NextKey to authorise those as well.`,
+        .join(", ")}. Ask Springboard to authorise those as well.`,
     };
   }
 
@@ -312,7 +312,7 @@ export function evaluateEdit(
       blockedFields: bad,
       reason: `You can only supply the information we asked for. ${bad
         .map(fieldLabel)
-        .join(", ")} ${bad.length === 1 ? "is" : "are"} already submitted and can't be changed without authorisation from NextKey.`,
+        .join(", ")} ${bad.length === 1 ? "is" : "are"} already submitted and can't be changed without authorisation from Springboard.`,
     };
   }
 
@@ -320,7 +320,7 @@ export function evaluateEdit(
     allowed: false,
     blockedFields: changed,
     reason:
-      "This referral has been submitted and is locked. Ask NextKey to authorise a change if something needs correcting.",
+      "This referral has been submitted and is locked. Ask Springboard to authorise a change if something needs correcting.",
   };
 }
 

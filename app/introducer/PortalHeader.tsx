@@ -34,11 +34,15 @@ export default function PortalHeader({
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-        <Link href="/introducer/clients" className="block">
-          <div className="text-sm font-semibold" style={{ color: "#1b1f44" }}>
-            NextKey Introducer Portal
-          </div>
-          <div className="text-xs text-gray-500">{firmName}</div>
+        <Link href="/introducer/clients" className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/api/portal/logo" alt="Springboard Homes" className="h-7 w-auto" />
+          <span className="border-l border-gray-200 pl-3">
+            <span className="block text-sm font-semibold" style={{ color: "#020e40" }}>
+              Introducer Portal
+            </span>
+            <span className="block text-xs text-gray-500">{firmName}</span>
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           {userName && <span className="hidden text-sm text-gray-600 sm:inline">{userName}</span>}

@@ -6,7 +6,7 @@ import { CONSENT_STATEMENT, INTRODUCER_FIELD_KEYS } from "../../../../utils/intr
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "New referral — NextKey Introducer Portal",
+  title: "New referral — Springboard Introducer Portal",
   robots: { index: false, follow: false },
 };
 

@@ -7,7 +7,7 @@ import { loadOwnClient } from "../../../api/introducer/_shared";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Referral — NextKey Introducer Portal",
+  title: "Referral — Springboard Introducer Portal",
   robots: { index: false, follow: false },
 };
 
