@@ -81,14 +81,29 @@ function internalShell(title: string, bodyHtml: string, footerNote: string): str
 </body></html>`;
 }
 
-function shell(title: string, bodyHtml: string, footerNote?: string): string {
+/**
+ * Exported so utils/introducer-onboarding-email.ts can wear identical chrome.
+ * Onboarding writes to someone who is NOT yet an introducer, so it lives in its
+ * own module — but a second hand-rolled copy of this shell would drift, and an
+ * applicant seeing one brand at invitation and a slightly different one at
+ * accreditation is the same leak app/introducer/layout.tsx exists to prevent.
+ *
+ * `strapline` overrides the header caption: "Introducer Portal" is wrong for
+ * someone who does not have one yet.
+ */
+export function shell(
+  title: string,
+  bodyHtml: string,
+  footerNote?: string,
+  strapline = "Introducer Portal",
+): string {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f6f8;">
   <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background:#f5f6f8;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
         <tr><td style="background:${NAVY};padding:20px 28px;">
           <img src="${logoUrl()}" alt="Springboard Homes" height="30" style="height:30px;width:auto;display:block;border:0;" />
-          <div style="color:${AMBER};font-size:13px;margin-top:8px;">Introducer Portal</div>
+          <div style="color:${AMBER};font-size:13px;margin-top:8px;">${strapline}</div>
         </td></tr>
         <tr><td style="padding:28px;color:#1f2430;font-size:15px;line-height:1.6;">
           <h1 style="margin:0 0 16px;font-size:19px;color:${NAVY};">${title}</h1>
@@ -103,7 +118,7 @@ function shell(title: string, bodyHtml: string, footerNote?: string): string {
 </body></html>`;
 }
 
-function button(href: string, label: string): string {
+export function button(href: string, label: string): string {
   return `<p style="margin:24px 0;"><a href="${href}" style="background:${AMBER};color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;display:inline-block;">${label}</a></p>`;
 }
 

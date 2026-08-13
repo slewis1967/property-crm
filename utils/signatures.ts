@@ -18,6 +18,9 @@ export const SIGN_DOC_TYPES: ComplianceDocType[] = [
   "needs_analysis",
   "credit_authorisation",
   "eoi",
+  "introducer_nda",
+  "introducer_agreement",
+  "introducer_schedule",
 ];
 
 export function isSignDocType(v: unknown): v is ComplianceDocType {
@@ -34,6 +37,9 @@ export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
   // satisfies the exhaustive Record; it is never shown to a signer.
   aml_case: "AML/CTF Customer Due Diligence",
   eoi: "Expression of Interest",
+  introducer_nda: "Mutual Confidentiality Agreement",
+  introducer_agreement: "Introducer Referral Agreement",
+  introducer_schedule: "Commission Schedule",
 };
 
 /** The lifecycle of a single signer's request. */
