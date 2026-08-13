@@ -73,6 +73,18 @@ ALTER TABLE shared_folder_items ADD COLUMN IF NOT EXISTS updated_by   text;
 ALTER TABLE shared_folder_items ADD COLUMN IF NOT EXISTS created_at   timestamptz NOT NULL DEFAULT now();
 ALTER TABLE shared_folder_items ADD COLUMN IF NOT EXISTS updated_at   timestamptz NOT NULL DEFAULT now();
 
+-- RLS ON, with NO policies — deliberately.
+--
+-- Every read and write goes through the Next.js routes using the service-role
+-- key, which bypasses RLS entirely, so this costs the app nothing. What it
+-- buys: NEXT_PUBLIC_SUPABASE_ANON_KEY ships to the browser, and a public-schema
+-- table WITHOUT RLS is readable (and writable) by anyone holding that key
+-- straight through PostgREST — completely bypassing the Cloudflare Access gate
+-- that is the whole basis of this feature's access control. Default-deny closes
+-- that door. Only add policies here if the browser ever needs to read this
+-- table directly, which it currently does not.
+ALTER TABLE shared_folder_items ENABLE ROW LEVEL SECURITY;
+
 -- The listing query: "children of this folder, not trashed, ready".
 CREATE INDEX IF NOT EXISTS shared_folder_items_parent_idx
   ON shared_folder_items (parent_id, kind, name)
