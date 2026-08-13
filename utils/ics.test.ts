@@ -80,3 +80,49 @@ describe("buildIcs", () => {
     expect(Buffer.from(b64, "base64").toString("utf8")).toEqual(buildIcs(base));
   });
 });
+
+describe("multi-attendee meetings", () => {
+  // Regression guard: the appointments route used to email attendees[0] only,
+  // so a second applicant silently got nothing while the UI reported "sent".
+  // Every recipient's .ics must list the whole roster, and every copy must
+  // carry the SAME uid or each calendar treats it as a separate meeting.
+  const roster = [
+    { email: "a@example.com", name: "Applicant One" },
+    { email: "b@example.com", name: "Applicant Two" },
+    { email: "c@example.com" },
+  ];
+
+  // Long ATTENDEE lines are folded at 75 octets, so an address can be split
+  // across a continuation line. Unfold before asserting on content.
+  const unfold = (ics: string) => ics.replace(/\r\n /g, "");
+
+  it("emits one ATTENDEE line per invitee", () => {
+    const ics = buildIcs({ ...base, attendees: roster });
+    const lines = ics.split("\r\n").filter((l) => l.startsWith("ATTENDEE"));
+    expect(lines).toHaveLength(3);
+    const flat = unfold(ics);
+    expect(flat).toContain("mailto:a@example.com");
+    expect(flat).toContain("mailto:b@example.com");
+    expect(flat).toContain("mailto:c@example.com");
+  });
+
+  it("omits CN for an attendee with no name rather than emitting an empty one", () => {
+    const ics = buildIcs({ ...base, attendees: [{ email: "c@example.com" }] });
+    expect(ics).toContain("ATTENDEE;ROLE=REQ-PARTICIPANT");
+    expect(ics).not.toContain("CN=;");
+  });
+
+  it("keeps one uid across the copies sent to different recipients", () => {
+    const first = buildIcs({ ...base, attendees: roster });
+    const second = buildIcs({ ...base, attendees: roster });
+    const uidOf = (s: string) => s.split("\r\n").find((l) => l.startsWith("UID:"));
+    expect(uidOf(first)).toBe(uidOf(second));
+    expect(uidOf(first)).toBe("UID:appt-123@nextkey.com.au");
+  });
+
+  it("still round-trips through base64 with several attendees", () => {
+    const b64 = icsBase64({ ...base, attendees: roster });
+    const decoded = Buffer.from(b64, "base64").toString("utf8");
+    expect(decoded.split("\r\n").filter((l) => l.startsWith("ATTENDEE"))).toHaveLength(3);
+  });
+});
