@@ -8,6 +8,7 @@ import {
   normaliseAuPhone,
   introducerTablesMissing,
   INTRODUCER_FIELD_KEYS,
+  CONSENT_STATEMENT,
   type ActiveGrant,
   type OpenInfoRequest,
 } from "./introducer";
@@ -237,6 +238,39 @@ describe("normaliseAuPhone", () => {
   it("returns null for something that isn't an AU number", () => {
     expect(normaliseAuPhone("12345")).toBeNull();
     expect(normaliseAuPhone("not a phone")).toBeNull();
+  });
+});
+
+/**
+ * Introducers, and the clients they refer, deal with SPRINGBOARD. NextKey is the
+ * internal CRM and means nothing to them — putting it in front of an introducer
+ * (or worse, in the consent wording their client relies on) is a branding leak,
+ * not a typo. The staff side at /admin/introducers is deliberately exempt.
+ */
+describe("introducer-facing copy is Springboard-branded", () => {
+  it("the consent statement names Springboard, never NextKey", () => {
+    expect(CONSENT_STATEMENT).toContain("Springboard");
+    expect(CONSENT_STATEMENT).not.toContain("NextKey");
+  });
+
+  it("every refusal message the introducer can see names Springboard", () => {
+    const locked = evaluateEdit(submitted, { phone: "0411111111" });
+    const partialGrant = evaluateEdit(
+      submitted,
+      { phone: "0411", email: "new@example.com" },
+      { grant: grant() },
+    );
+    const overwrite = evaluateEdit(
+      submitted,
+      { phone: "0411111111" },
+      { infoRequests: [infoRequest({ fields: ["phone"] })] },
+    );
+
+    for (const decision of [locked, partialGrant, overwrite]) {
+      expect(decision.allowed).toBe(false);
+      if (!decision.allowed) expect(decision.reason).not.toContain("NextKey");
+    }
+    if (!locked.allowed) expect(locked.reason).toContain("Springboard");
   });
 });
 

@@ -96,7 +96,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   if (!infoReq) {
     return NextResponse.json(
-      { ok: false, error: "We haven't asked for a document on this referral. Contact NextKey if you need to send something." },
+      { ok: false, error: "We haven't asked for a document on this referral. Contact Springboard if you need to send something." },
       { status: 403 },
     );
   }

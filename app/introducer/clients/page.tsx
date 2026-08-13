@@ -10,7 +10,7 @@ import { toPortalView, STATUS_LABELS, type IntroducerClientStatus } from "../../
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Your referrals — NextKey Introducer Portal",
+  title: "Your referrals — Springboard Introducer Portal",
   robots: { index: false, follow: false },
 };
 
@@ -51,13 +51,13 @@ export default async function IntroducerClientsPage() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Your referrals</h1>
             <p className="mt-1 text-sm text-gray-600">
-              Clients you&apos;ve referred to NextKey, and where each one is up to.
+              Clients you&apos;ve referred to Springboard, and where each one is up to.
             </p>
           </div>
           <Link
             href="/introducer/clients/new"
             className="shrink-0 rounded-lg px-4 py-2.5 font-semibold text-white"
-            style={{ background: "#da9845" }}
+            style={{ background: "#c7894e" }}
           >
             New referral
           </Link>
@@ -112,7 +112,7 @@ export default async function IntroducerClientsPage() {
 
         <p className="mt-10 text-xs leading-relaxed text-gray-500">
           Once a referral is submitted its details are locked, so the record we assess is exactly what
-          you sent. If something needs correcting, ask your NextKey contact and they&apos;ll authorise
+          you sent. If something needs correcting, ask your Springboard contact and they&apos;ll authorise
           the change.
         </p>
       </main>

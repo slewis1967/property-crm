@@ -9,7 +9,7 @@ import LoginForm from "./LoginForm";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Introducer Portal — NextKey Property Strategists",
+  title: "Introducer Portal — Springboard Homes",
   robots: { index: false, follow: false },
 };
 

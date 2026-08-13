@@ -237,7 +237,7 @@ export default function ReferralDetail({ id }: { id: string }) {
         );
         return;
       }
-      setNotice("Thanks — sent back to NextKey.");
+      setNotice("Thanks — sent back to Springboard.");
       await load();
     } catch {
       setError("We couldn't reach the server.");
@@ -288,7 +288,7 @@ export default function ReferralDetail({ id }: { id: string }) {
       {client.message_to_introducer && (
         <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            From NextKey
+            From Springboard
           </h2>
           <p className="mt-2 whitespace-pre-wrap text-gray-900">{client.message_to_introducer}</p>
         </div>
@@ -325,7 +325,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           <h2 className="font-semibold text-gray-900">This referral is locked</h2>
           <p className="mt-1 text-sm text-gray-600">
             The details below are exactly as you submitted them. If something needs correcting,
-            contact your NextKey manager and they&apos;ll authorise the change.
+            contact your Springboard manager and they&apos;ll authorise the change.
           </p>
         </div>
       )}
@@ -360,7 +360,7 @@ export default function ReferralDetail({ id }: { id: string }) {
               onClick={submit}
               disabled={busy !== null || !consent}
               className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
-              style={{ background: "#da9845" }}
+              style={{ background: "#c7894e" }}
             >
               {busy === "submit" ? "Submitting…" : "Submit referral"}
             </button>
@@ -373,7 +373,7 @@ export default function ReferralDetail({ id }: { id: string }) {
             </button>
           </div>
           <p className="mt-4 text-xs leading-relaxed text-gray-500">
-            Once submitted, these details are locked and can only be changed if NextKey authorises it.
+            Once submitted, these details are locked and can only be changed if Springboard authorises it.
           </p>
         </div>
       )}
@@ -383,7 +383,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           onClick={save}
           disabled={busy !== null}
           className="mt-5 rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
-          style={{ background: "#da9845" }}
+          style={{ background: "#c7894e" }}
         >
           {busy === "save" ? "Saving…" : "Save the authorised change"}
         </button>
@@ -569,7 +569,7 @@ function InfoRequestCard({
         onClick={onAnswer}
         disabled={busy}
         className="mt-4 rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
-        style={{ background: "#da9845" }}
+        style={{ background: "#c7894e" }}
       >
         {busy ? "Sending…" : "I've supplied everything"}
       </button>
