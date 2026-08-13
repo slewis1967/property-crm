@@ -197,6 +197,7 @@ Reports, decks, proposals, briefs, analyses, exported PDFs/CSVs — anything a h
   node --env-file=.env.local scripts/shared-folder-put.mjs --as="Q3 Board Pack.pdf" "NextKey/Reports" ./out.pdf
   node --env-file=.env.local scripts/shared-folder-put.mjs --ls "NextKey"
   ```
+  It is **zero-dependency on purpose** — plain `fetch` against the PostgREST and Storage HTTP APIs, no `@supabase/supabase-js`, so it runs from any directory with bare node. That matters because `~/property-crm` is usually parked on a feature branch that predates this file: a standing filing rule is worthless if the tool only works from one working tree. A verbatim copy is installed at **`~/bin/shared-folder-put.mjs`** for exactly that reason; this repo copy is canonical, so re-copy it there if you change it.
   Paths are `/`-separated and created as needed. Folder matching is **case-insensitive**, so `nextkey/reports` reuses `NextKey/Reports` instead of starting a parallel tree — the single most common way a shared drive turns into a mess. Name collisions get ` (2)` rather than overwriting.
 - **Name files so they read well in a list**: what it is, and when — `2026-08 Lead Quality Review.pdf`, not `report_final_v3.pdf`.
 - Agent-filed documents land as `created_by = claude-code@nextkey.com.au`, so they are distinguishable from human uploads at a glance.
