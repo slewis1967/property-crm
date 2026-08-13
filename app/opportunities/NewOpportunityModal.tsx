@@ -111,8 +111,9 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
 
   // Optional appointment to schedule alongside the opportunity (POST /api/appointments).
   // Hidden by default so the existing flow stays one-screen; expanding reveals a quick
-  // scheduler that creates a Google Calendar event (+ invite) and a Supabase appointments
-  // row in one go. Falls back to CRM-only if Google Calendar isn't connected.
+  // scheduler that writes the Supabase appointments row, mints a self-hosted
+  // LiveKit video link and emails the attendee a branded invite with an .ics
+  // attachment. (Google Calendar was removed from this flow in 2026-07.)
   const [apptOpen,      setApptOpen]      = useState(false);
   const [apptTitle,     setApptTitle]     = useState("");
   const [apptStartTime, setApptStartTime] = useState(""); // <input type="datetime-local"> value
@@ -275,6 +276,21 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       // sub-step failure is a soft warning rather than a rollback.
       const warnings: string[] = [];
       const contactForExtras = primaryContact ?? prefillContact ?? null;
+
+      // A requested extra that CANNOT run has to say so. Both of these hang off
+      // a matched contact, and a brand-new person typed straight into this form
+      // has none — so the meeting the operator just filled in was being dropped
+      // silently while the modal reported success. Worse than useless on a call:
+      // you hang up believing the client has an invite.
+      const extrasBlocked = !contactForExtras?.id;
+      if (apptOpen && apptStartTime && extrasBlocked) {
+        warnings.push(
+          "The meeting was NOT booked and no invite was sent — a meeting has to attach to a contact record, and this person isn't one yet. Book it from their self-book link (that creates the contact), or add them as a contact first.",
+        );
+      }
+      if (taskOpen && taskTitle.trim() && extrasBlocked) {
+        warnings.push("The task was NOT created — it needs a contact record too.");
+      }
 
       if (apptOpen && apptStartTime && contactForExtras?.id) {
         try {
@@ -661,7 +677,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                       onChange={(e) => setApptStartTime(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Defaults to a 60-minute slot. Google Meet link auto-attached.</p>
+                    <p className="text-xs text-gray-400 mt-1">Defaults to a 60-minute slot. A video meeting link is attached automatically.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes (optional)</label>
