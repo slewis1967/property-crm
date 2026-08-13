@@ -187,6 +187,21 @@ An org-wide shared drive living inside the CRM — folders, files, upload, renam
 - `utils/shared-folder.ts` is **pure** (no Supabase import) so the `"use client"` component and the routes share it. Guard is `sharedFolderTableMissing` — narrow, like `amlTableMissing`. GET degrades to an empty list + `migration_hint`; writes return 503.
 - **2GB per file** — `MAX_FILE_BYTES` and the bucket's `file_size_limit` must move together. Deliberately under Supabase's 5GB ceiling for *standard* uploads: the single-PUT path has no resume, so a drop at 90% restarts from zero. Higher needs resumable/TUS uploads. The project-wide cap (Dashboard → Storage → Settings → "Global file size limit") overrides the bucket and is set to 100GB, so the bucket value binds.
 
+#### FILING RULE — every document produced in a session goes in the Shared Folder
+Reports, decks, proposals, briefs, analyses, exported PDFs/CSVs — anything a human would want to open again. **Not** code (that's git), scratch/intermediate files, or one-off debug output: a folder full of noise is not navigable, which defeats the point of having it.
+
+- **Top level is one folder per business** — currently `NextKey`, `Springboard Homes`, `Datum`, `RingBack`. Subfolders are created on demand rather than pre-built, so the tree reflects real work instead of empty scaffolding. Add a new top-level folder only when a genuinely new business starts.
+- **File it with `scripts/shared-folder-put.mjs`.** A session has no browser and no Cloudflare Access identity, so the web UI is unreachable from here; the script goes to Supabase with the service-role key and does exactly what the API routes do.
+  ```bash
+  node --env-file=.env.local scripts/shared-folder-put.mjs "NextKey/Reports" ./report.pdf
+  node --env-file=.env.local scripts/shared-folder-put.mjs --as="Q3 Board Pack.pdf" "NextKey/Reports" ./out.pdf
+  node --env-file=.env.local scripts/shared-folder-put.mjs --ls "NextKey"
+  ```
+  Paths are `/`-separated and created as needed. Folder matching is **case-insensitive**, so `nextkey/reports` reuses `NextKey/Reports` instead of starting a parallel tree — the single most common way a shared drive turns into a mess. Name collisions get ` (2)` rather than overwriting.
+- **Name files so they read well in a list**: what it is, and when — `2026-08 Lead Quality Review.pdf`, not `report_final_v3.pdf`.
+- Agent-filed documents land as `created_by = claude-code@nextkey.com.au`, so they are distinguishable from human uploads at a glance.
+- **Everything here is visible to everyone in the organisation** — no per-user permissions. Never file credentials, or personal/client-confidential material beyond what the whole team is already entitled to see.
+
 ### Field normalisation (in `page.tsx`)
 Supabase columns are mapped to stable aliases before passing to PropertyGrid:
 ```ts
