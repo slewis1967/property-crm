@@ -11,6 +11,7 @@ import {
   indexById,
   fmtBytes,
   iconFor,
+  isViewable,
   MAX_NAME_LENGTH,
   type TreeNode,
 } from "./shared-folder";
@@ -208,6 +209,36 @@ describe("fmtBytes", () => {
     expect(fmtBytes(undefined)).toBe("—");
     expect(fmtBytes(-1)).toBe("—");
     expect(fmtBytes(Number.NaN)).toBe("—");
+  });
+});
+
+describe("isViewable", () => {
+  it("offers View for documents and images the browser renders", () => {
+    expect(isViewable({ kind: "file", name: "report.pdf" })).toBe(true);
+    expect(isViewable({ kind: "file", name: "shot.png" })).toBe(true);
+    expect(isViewable({ kind: "file", name: "photo.JPG" })).toBe(true);
+    expect(isViewable({ kind: "file", name: "notes.txt" })).toBe(true);
+    expect(isViewable({ kind: "file", name: "data.csv" })).toBe(true);
+    expect(isViewable({ kind: "file", name: "clip.mp4" })).toBe(true);
+  });
+
+  it("refuses HTML and SVG — inline they would run as script on the storage origin", () => {
+    expect(isViewable({ kind: "file", name: "page.html" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "page.htm" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "logo.svg" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "PAGE.HTML" })).toBe(false);
+  });
+
+  it("refuses formats the browser would only download anyway", () => {
+    expect(isViewable({ kind: "file", name: "deck.pptx" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "sheet.xlsx" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "archive.zip" })).toBe(false);
+    expect(isViewable({ kind: "file", name: "noextension" })).toBe(false);
+  });
+
+  it("never offers View for a folder, whatever it is called", () => {
+    expect(isViewable({ kind: "folder", name: "Reports" })).toBe(false);
+    expect(isViewable({ kind: "folder", name: "looks-like.pdf" })).toBe(false);
   });
 });
 

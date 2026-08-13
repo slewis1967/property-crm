@@ -1,5 +1,6 @@
 /**
- * GET    /api/shared-folder/{id}   — short-lived signed download URL
+ * GET    /api/shared-folder/{id}   — short-lived signed URL for the file
+ *          ?disposition=inline     — open in the browser instead of downloading
  * PATCH  /api/shared-folder/{id}   — confirm an upload, rename, move, restore
  * DELETE /api/shared-folder/{id}   — soft delete, or ?permanent=1 to purge
  *
@@ -26,6 +27,7 @@ import {
   collectSubtreeIds,
   hasTrashedAncestor,
   indexById,
+  isViewable,
   type SharedFolderItem,
   type TreeNode,
 } from "../../../../utils/shared-folder";
@@ -60,18 +62,37 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ ok: false, error: "That's a folder, not a file." }, { status: 400 });
     }
 
-    // `download` sets the Content-Disposition filename, which is why a rename
-    // can be a pure DB update: the object keeps its original path but the
-    // browser still saves it under the name shown in the listing.
-    const { data, error } = await supabase.storage
-      .from(SHARED_FOLDER_BUCKET)
-      .createSignedUrl(item.storage_path, SIGNED_DOWNLOAD_TTL, { download: item.name });
-    if (error || !data?.signedUrl) {
-      log.error("shared_folder.sign_download_failed", { message: error?.message ?? "unknown" });
-      return NextResponse.json({ ok: false, error: "Could not prepare the download" }, { status: 500 });
+    const inline = new URL(req.url).searchParams.get("disposition") === "inline";
+
+    // Re-check the allowlist here rather than trusting the client. The button
+    // is hidden for types we won't render, but hiding a button is not a
+    // control — a hand-crafted ?disposition=inline on an .html or .svg would
+    // otherwise get a live, script-executing page hosted on our storage
+    // origin. See VIEWABLE_EXTENSIONS in utils/shared-folder.ts.
+    if (inline && !isViewable(item)) {
+      return NextResponse.json(
+        { ok: false, error: "That file type can't be previewed — download it instead." },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ ok: true, url: data.signedUrl, name: item.name });
+    // Without `download`, Storage serves the object inline and the browser
+    // renders it. With it, Content-Disposition carries the display name —
+    // which is why a rename can be a pure DB update: the object keeps its
+    // original path but still saves under the name shown in the listing.
+    const { data, error } = await supabase.storage
+      .from(SHARED_FOLDER_BUCKET)
+      .createSignedUrl(
+        item.storage_path,
+        SIGNED_DOWNLOAD_TTL,
+        inline ? undefined : { download: item.name },
+      );
+    if (error || !data?.signedUrl) {
+      log.error("shared_folder.sign_url_failed", { message: error?.message ?? "unknown", inline });
+      return NextResponse.json({ ok: false, error: "Could not prepare the file" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, url: data.signedUrl, name: item.name, inline });
   } catch (e) {
     if (sharedFolderTableMissing(e)) {
       return NextResponse.json({ ok: false, error: MIGRATION_HINT }, { status: 503 });
