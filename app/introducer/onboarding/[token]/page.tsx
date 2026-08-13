@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { findByToken } from "@/utils/introducer-onboarding-db";
-import { roadmapFor, roadmapProgress, onboardingTablesMissing } from "@/utils/introducer-onboarding";
+import {
+  roadmapFor,
+  roadmapProgress,
+  onboardingTablesMissing,
+  canUploadId,
+} from "@/utils/introducer-onboarding";
 import Roadmap from "./Roadmap";
+import IdentityUpload from "./IdentityUpload";
 
 /**
  * PUBLIC page — the applicant's view of their own onboarding.
@@ -110,6 +116,29 @@ export default async function OnboardingPage({
       )}
 
       <Roadmap steps={steps} accreditationNo={app.accreditation_no} />
+
+      {/* The current step, made actionable. The roadmap says where they are;
+          this is where they actually do the thing. Only ID capture is wired so
+          far — the other steps are driven from email links for now. */}
+      {canUploadId(app.state) && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
+            Verify your identity
+          </h2>
+          <IdentityUpload token={token} />
+        </section>
+      )}
+
+      {app.state === "id_uploaded" && app.id_check_result !== "pass" && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
+            We’re checking your identity
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Nothing for you to do. We’ll email you the moment the course opens.
+          </p>
+        </section>
+      )}
 
       <p className="mt-8 border-t border-gray-200 pt-4 text-xs text-gray-500">
         This link is personal to you. Please don’t forward it — anyone holding it can see your

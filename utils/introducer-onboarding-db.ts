@@ -27,8 +27,11 @@ export type Application = {
   tier: "t1";
   state: OnboardingState;
   token_expires_at: string;
+  id_check_provider: string | null;
+  id_check_reference: string | null;
   id_check_result: string | null;
   id_checked_at: string | null;
+  id_checked_by: string | null;
   exam_score: number | null;
   exam_total: number | null;
   exam_passed_at: string | null;
@@ -41,7 +44,8 @@ export type Application = {
 
 const COLUMNS =
   "id, introducer_id, legal_name, email, firm_name, abn, phone, tier, state, " +
-  "token_expires_at, id_check_result, id_checked_at, exam_score, exam_total, " +
+  "token_expires_at, id_check_provider, id_check_reference, id_check_result, " +
+  "id_checked_at, id_checked_by, exam_score, exam_total, " +
   "exam_passed_at, accreditation_no, certificate_path, created_at, updated_at, withdrawn_reason";
 
 /** Why a token did not resolve. The page words each of these differently — a
