@@ -222,12 +222,43 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
     setSaving(true);
     setError(null);
 
-    const linkedIds = [
-      ...(primaryContact ? [primaryContact.id] : []),
-      ...linkedContacts.map((c) => c.id),
-    ];
-
     try {
+      // Everything downstream — the opportunity's primary_contact_id, the
+      // appointment, the task — hangs off a contact row. A brand-new person
+      // typed straight into this form has none, so create one first rather
+      // than build an opportunity that can never be scheduled against.
+      // Idempotent on email, so a retry after a failure won't duplicate them.
+      let resolvedContactId = (primaryContact ?? prefillContact)?.id ?? null;
+      let contactError: string | null = null;
+      if (!resolvedContactId) {
+        try {
+          const cRes = await fetch("/api/contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              full_name: fullName.trim(),
+              email: email.trim().toLowerCase(),
+              phone: phone.trim() || null,
+              buyer_type: buyerType || null,
+              preferred_state: state || null,
+              timeframe: timeframe || null,
+              temperature,
+              source: "crm_manual",
+            }),
+          });
+          const cData = await cRes.json().catch(() => ({}));
+          if (cRes.ok && cData.contact_id) resolvedContactId = cData.contact_id as string;
+          else contactError = cData.error || `HTTP ${cRes.status}`;
+        } catch (cErr) {
+          contactError = errMessage(cErr, "request failed");
+        }
+      }
+
+      const linkedIds = [
+        ...(resolvedContactId ? [resolvedContactId] : []),
+        ...linkedContacts.map((c) => c.id),
+      ];
+
       // Personal / employment / financial come straight from the prefilled
       // contact (if any). User can override them later via edit modal.
       const carryFromContact = prefillContact ?? primaryContact ?? null;
@@ -247,7 +278,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           ghl_stage:   stage,
           temperature,
           source:      "crm_manual",
-          primary_contact_id: primaryContact?.id || null,
+          primary_contact_id: resolvedContactId,
           linked_contact_ids: linkedIds.length > 0 ? linkedIds : null,
           pipeline_id: pipelineId || null,
           tags:        tags.length > 0 ? tags : null,
@@ -275,30 +306,27 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       // Both are best-effort — the opp is already saved at this point, so a
       // sub-step failure is a soft warning rather than a rollback.
       const warnings: string[] = [];
-      const contactForExtras = primaryContact ?? prefillContact ?? null;
 
-      // A requested extra that CANNOT run has to say so. Both of these hang off
-      // a matched contact, and a brand-new person typed straight into this form
-      // has none — so the meeting the operator just filled in was being dropped
-      // silently while the modal reported success. Worse than useless on a call:
-      // you hang up believing the client has an invite.
-      const extrasBlocked = !contactForExtras?.id;
-      if (apptOpen && apptStartTime && extrasBlocked) {
+      // Both extras hang off the contact resolved above. It is only missing if
+      // creating it failed, and then the operator has to be told — a meeting
+      // silently not booked is worse than useless on a call: you hang up
+      // believing the client has an invite.
+      const extrasBlocked = !resolvedContactId;
+      if (extrasBlocked && ((apptOpen && apptStartTime) || (taskOpen && taskTitle.trim()))) {
         warnings.push(
-          "The meeting was NOT booked and no invite was sent — a meeting has to attach to a contact record, and this person isn't one yet. Book it from their self-book link (that creates the contact), or add them as a contact first.",
+          `The contact record could not be created (${contactError || "unknown error"}), so ${
+            apptOpen && apptStartTime ? "the meeting was NOT booked and no invite was sent" : "the task was NOT created"
+          }.`,
         );
       }
-      if (taskOpen && taskTitle.trim() && extrasBlocked) {
-        warnings.push("The task was NOT created — it needs a contact record too.");
-      }
 
-      if (apptOpen && apptStartTime && contactForExtras?.id) {
+      if (apptOpen && apptStartTime && resolvedContactId) {
         try {
           const apptRes = await fetch("/api/appointments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contact_id: contactForExtras.id,
+              contact_id: resolvedContactId,
               contact_email: email.trim().toLowerCase(),
               contact_name: fullName.trim(),
               title: apptTitle.trim() || `Meeting with ${fullName.trim()}`,
@@ -318,14 +346,14 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
         }
       }
 
-      if (taskOpen && taskTitle.trim() && contactForExtras?.id) {
+      if (taskOpen && taskTitle.trim() && resolvedContactId) {
         try {
           const taskRes = await fetch("/api/tasks", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               title: taskTitle.trim(),
-              contact_id: contactForExtras.id,
+              contact_id: resolvedContactId,
               due_date: taskDueDate || null,
               source: "opportunity_modal",
             }),
