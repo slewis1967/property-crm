@@ -9,6 +9,7 @@ import {
 import Roadmap from "./Roadmap";
 import IdentityUpload from "./IdentityUpload";
 import SignNda from "./SignNda";
+import BusinessDetails from "./BusinessDetails";
 
 /**
  * PUBLIC page — the applicant's view of their own onboarding.
@@ -117,6 +118,32 @@ export default async function OnboardingPage({
       )}
 
       <Roadmap steps={steps} accreditationNo={app.accreditation_no} />
+
+      {/* Not a roadmap step. The agreement needs these and is issued after the
+          exam, so there is no single moment to demand them — and someone
+          already mid-course should not wait on a new state to tell us their
+          ABN. Hidden once the agreement is out, when they are fixed. */}
+      {app.state !== "withdrawn" && app.state !== "agreement_sent" &&
+       app.state !== "agreement_signed" && app.state !== "activated" && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
+            Your business details
+          </h2>
+          <div className="mt-2">
+            <BusinessDetails
+              token={token}
+              initial={{
+                entity_type: app.entity_type ?? null,
+                firm_name: app.firm_name ?? "",
+                abn: app.abn ?? "",
+                acn: app.acn ?? "",
+                registered_address: app.registered_address ?? "",
+                confirmed: Boolean(app.business_details_at),
+              }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* The current step, made actionable. The roadmap says where they are;
           this is where they actually do the thing. Every state that asks the

@@ -63,6 +63,10 @@ export type IntroducerAgreementData = {
   email: string;
   firm_name: string;
   abn: string;
+  /** Applicant-supplied. Blank for a sole trader, which has no ACN. */
+  acn: string;
+  /** Where formal notices go. Blank on documents issued before this was captured. */
+  registered_address: string;
 
   /** Issued at accreditation. Blank on the NDA, which is signed before the exam. */
   accreditation_no: string;
@@ -96,6 +100,8 @@ export function emptyIntroducerAgreement(
     email: "",
     firm_name: "",
     abn: "",
+    acn: "",
+    registered_address: "",
     accreditation_no: "",
     licensor_name: "G.B. Mayes Holdings Pty Ltd",
     licensor_abn: "49 634 656 947",
@@ -126,6 +132,11 @@ export function hydrateIntroducerAgreement(blob: unknown): IntroducerAgreementDa
     email: str(raw.email, base.email),
     firm_name: str(raw.firm_name, base.firm_name),
     abn: str(raw.abn, base.abn),
+    // Absent from documents issued before business details were captured, and
+    // that is correct: a snapshot must keep reading as it did when it was
+    // signed, not acquire facts we learned afterwards.
+    acn: str(raw.acn, base.acn),
+    registered_address: str(raw.registered_address, base.registered_address),
     accreditation_no: str(raw.accreditation_no, base.accreditation_no),
     licensor_name: str(raw.licensor_name, base.licensor_name),
     licensor_abn: str(raw.licensor_abn, base.licensor_abn),
