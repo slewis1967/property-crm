@@ -15,6 +15,11 @@
 import { supabase } from "./supabase";
 import { newToken, hashToken } from "./sign-token";
 import type { OnboardingState } from "./introducer-onboarding";
+import {
+  introducerEntityColumnMissing,
+  type BusinessDetails,
+  type EntityType,
+} from "./introducer-entity";
 
 export type Application = {
   id: string;
@@ -38,29 +43,58 @@ export type Application = {
   exam_passed_at: string | null;
   accreditation_no: string | null;
   certificate_path: string | null;
+  /** Applicant-supplied. Absent until 20260814_introducer_entity_details.sql runs. */
+  acn?: string | null;
+  entity_type?: EntityType | null;
+  registered_address?: string | null;
+  business_details_at?: string | null;
   created_at: string;
   updated_at: string;
   withdrawn_reason: string | null;
 };
 
-const COLUMNS =
+const BASE_COLUMNS =
   "id, introducer_id, legal_name, email, firm_name, abn, phone, state, " +
   "tier, agreement_variant, token_expires_at, id_check_provider, id_check_reference, id_check_result, " +
   "id_checked_at, id_checked_by, exam_score, exam_total, " +
   "exam_passed_at, accreditation_no, certificate_path, created_at, updated_at, withdrawn_reason";
 
+/** Added by `20260814_introducer_entity_details.sql`. Kept separate so a read
+ *  can fall back while that SQL is pending. */
+const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_at";
+
+const COLUMNS = `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`;
+
 /** Why a token did not resolve. The page words each of these differently — a
  *  candidate whose link expired needs a different sentence to one who typoed. */
 export type LookupFailure = "not_found" | "expired";
 
+/**
+ * Select once with the entity columns, and again without them if that
+ * migration is still pending.
+ *
+ * The house rule is that code ships before the SQL is run, and onboarding is
+ * the worst place to break it: an applicant holding a valid link would be told
+ * "we can't open this" for a reason that has nothing to do with them.
+ */
+async function selectApplication<T>(
+  run: (columns: string) => PromiseLike<{ data: T; error: unknown }>,
+): Promise<{ data: T; error: unknown }> {
+  const first = await run(COLUMNS);
+  if (first.error && introducerEntityColumnMissing(first.error)) return run(BASE_COLUMNS);
+  return first;
+}
+
 export async function findByToken(
   rawToken: string,
 ): Promise<{ ok: true; application: Application } | { ok: false; reason: LookupFailure }> {
-  const { data, error } = await supabase
-    .from("introducer_applications")
-    .select(COLUMNS)
-    .eq("token_hash", hashToken(rawToken))
-    .maybeSingle();
+  const { data, error } = await selectApplication((columns) =>
+    supabase
+      .from("introducer_applications")
+      .select(columns)
+      .eq("token_hash", hashToken(rawToken))
+      .maybeSingle(),
+  );
 
   if (error) throw error;
   if (!data) return { ok: false, reason: "not_found" };
@@ -75,20 +109,59 @@ export async function findByToken(
 }
 
 export async function findById(id: string): Promise<Application | null> {
-  const { data, error } = await supabase
-    .from("introducer_applications")
-    .select(COLUMNS)
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await selectApplication((columns) =>
+    supabase.from("introducer_applications").select(columns).eq("id", id).maybeSingle(),
+  );
   if (error) throw error;
   return (data as unknown as Application) ?? null;
 }
 
-export async function listApplications(): Promise<Application[]> {
-  const { data, error } = await supabase
+/**
+ * Record the applicant's own business details.
+ *
+ * Applicant-writable, unlike everything else on this row — see the migration
+ * for why that does not undercut "identity is issued, never typed". Refuses
+ * once the agreement has gone out, because the agreement snapshots these and a
+ * document that quietly disagrees with the record behind it is worse than one
+ * that is merely out of date.
+ */
+export async function saveBusinessDetails(
+  id: string,
+  details: BusinessDetails,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
     .from("introducer_applications")
-    .select(COLUMNS)
-    .order("created_at", { ascending: false });
+    .update({
+      entity_type: details.entity_type,
+      firm_name: details.firm_name,
+      abn: details.abn,
+      acn: details.acn || null,
+      registered_address: details.registered_address,
+      business_details_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    if (introducerEntityColumnMissing(error)) {
+      return {
+        ok: false,
+        error:
+          "Business details are not switched on yet — run migrations/20260814_introducer_entity_details.sql.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+export async function listApplications(): Promise<Application[]> {
+  const { data, error } = await selectApplication((columns) =>
+    supabase
+      .from("introducer_applications")
+      .select(columns)
+      .order("created_at", { ascending: false }),
+  );
   if (error) throw error;
   return (data as unknown as Application[]) ?? [];
 }
@@ -119,23 +192,28 @@ export async function createApplication(
   const token = newToken();
   const expires = new Date(Date.now() + (input.days ?? 30) * 86_400_000).toISOString();
 
+  const row = {
+    legal_name: input.legalName.trim(),
+    email: input.email.trim().toLowerCase(),
+    firm_name: input.firmName?.trim() || null,
+    abn: input.abn?.trim() || null,
+    phone: input.phone?.trim() || null,
+    notes: input.notes?.trim() || null,
+    tier: input.tier === "t2" ? "t2" : "t1",
+    agreement_variant: input.variant === "paid" ? "paid" : "standard",
+    state: "invited",
+    token_hash: token.hash,
+    token_expires_at: expires,
+    created_by: input.createdBy,
+  };
+
+  // BASE_COLUMNS, not the fallback wrapper: retrying an INSERT is not the same
+  // as retrying a SELECT, and a new application is nothing to gamble on. The
+  // entity columns are null on a row this new regardless.
   const { data, error } = await supabase
     .from("introducer_applications")
-    .insert({
-      legal_name: input.legalName.trim(),
-      email: input.email.trim().toLowerCase(),
-      firm_name: input.firmName?.trim() || null,
-      abn: input.abn?.trim() || null,
-      phone: input.phone?.trim() || null,
-      notes: input.notes?.trim() || null,
-      tier: input.tier === "t2" ? "t2" : "t1",
-      agreement_variant: input.variant === "paid" ? "paid" : "standard",
-      state: "invited",
-      token_hash: token.hash,
-      token_expires_at: expires,
-      created_by: input.createdBy,
-    })
-    .select(COLUMNS)
+    .insert(row)
+    .select(BASE_COLUMNS)
     .single();
 
   if (error) throw error;

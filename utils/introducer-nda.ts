@@ -43,6 +43,8 @@ export function ndaDataFor(app: Application, issuedAt: string): IntroducerAgreem
   d.email = (app.email ?? "").trim();
   d.firm_name = (app.firm_name ?? "").trim();
   d.abn = (app.abn ?? "").trim();
+  d.acn = (app.acn ?? "").trim();
+  d.registered_address = (app.registered_address ?? "").trim();
   // Deliberately left blank: the NDA is signed before the exam, so there is no
   // accreditation number yet and readyToIssue() does not ask for one.
   d.accreditation_no = "";

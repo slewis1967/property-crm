@@ -31,6 +31,21 @@ const field = (v: string): string =>
     ? esc(v)
     : `<span style="background:#fff3cd;color:#8a6d3b;padding:0 4px;">[not supplied]</span>`;
 
+/**
+ * "(ABN 51 824 753 556, ACN 004 085 616)" — whichever the entity actually has.
+ *
+ * A company gets both: the ACN is the identifier that survives a name change,
+ * which is precisely what you want in a contract that may be read years later.
+ * A sole trader has no ACN, so demanding one would print a permanent
+ * "[not supplied]" against a fact that does not exist.
+ */
+function identifiers(d: IntroducerAgreementData): string {
+  const parts: string[] = [];
+  if (d.abn.trim()) parts.push(`ABN ${esc(d.abn)}`);
+  if (d.acn.trim()) parts.push(`ACN ${esc(d.acn)}`);
+  return parts.length ? ` (${parts.join(", ")})` : "";
+}
+
 function clauses(d: IntroducerAgreementData): string {
   if (d.doc_type === "introducer_nda") {
     return `
@@ -99,8 +114,9 @@ function clauses(d: IntroducerAgreementData): string {
   return `
     <p>This agreement is between ${field(d.licensor_name)} (ABN ${field(d.licensor_abn)}),
       operating under credit representative reference ${field(d.licence_ref)} ("Springboard"), and
-      ${field(d.firm_name || d.legal_name)} ${d.abn.trim() ? `(ABN ${esc(d.abn)})` : ""} ("you"),
-      accreditation ${field(d.accreditation_no)}.</p>
+      ${field(d.firm_name || d.legal_name)}${identifiers(d)}${
+        d.registered_address.trim() ? ` of ${esc(d.registered_address)}` : ""
+      } ("you"), accreditation ${field(d.accreditation_no)}.</p>
     <p><strong>1. What you may do.</strong> You may introduce a person who has consented to the
       introduction to Springboard, by submitting their details through the Springboard introducer portal.
       That is the whole of your role.</p>
