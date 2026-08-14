@@ -293,12 +293,35 @@ function Card({
       {viewerIsSuperAdmin && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {app.state === "invited" && (
-            <Prompt
-              label="Record NDA signed"
-              placeholder="How was it signed? e.g. emailed back, signed on paper"
-              busy={busy}
-              onSubmit={(method) => act(`${base}/nda`, { method }, "NDA recorded — they’ve been asked for their licence.")}
-            />
+            <>
+              {/* The normal path now that the document exists. Deliberately
+                  leaves the application at `invited`: it advances when they
+                  actually sign, not when we send. Marking an agreement executed
+                  on the strength of an email having left the building would be
+                  a lie in the audit file. */}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  act(
+                    `${base}/nda`,
+                    { action: "esign" },
+                    "Confidentiality agreement emailed — they sign it on screen.",
+                  )
+                }
+                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "#020e40" }}
+              >
+                Send for e-signature
+              </button>
+              {/* Kept for the ones who sign on paper or email a scan back. */}
+              <Prompt
+                label="Record NDA signed"
+                placeholder="How was it signed? e.g. emailed back, signed on paper"
+                busy={busy}
+                onSubmit={(method) => act(`${base}/nda`, { method }, "NDA recorded — they’ve been asked for their licence.")}
+              />
+            </>
           )}
 
           {app.state === "id_uploaded" && (
