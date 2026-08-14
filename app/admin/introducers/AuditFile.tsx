@@ -29,6 +29,15 @@ type FileResponse = {
   };
   certificate: { accreditation_no: string | null; url: string | null };
   agreements: { label: string; status: string; signed_at: string | null; signer_name: string | null; url: string | null }[];
+  /** Optional so an audit file produced before the library shipped still renders. */
+  resources?: {
+    title: string;
+    version: string;
+    requires_ack: boolean;
+    acknowledged_at: string | null;
+    acknowledged_by: string | null;
+    acknowledged_version: string | null;
+  }[];
   events: { at: string; action: string; actor_type: string; actor: string | null; detail: Record<string, unknown> }[];
 };
 
@@ -154,6 +163,42 @@ export default function AuditFile({ applicationId, onClose }: { applicationId: s
               />
             ))}
             {!data.agreements.length && <p className="text-gray-500">None issued.</p>}
+          </Section>
+
+          {/* Driven from the published shelf, not from what they confirmed — a
+              manual they have never opened has to be visible, since that is the
+              row an auditor is looking for. */}
+          <Section title="Manuals confirmed">
+            {(data.resources ?? []).map((r) => {
+              const current = r.acknowledged_version === r.version;
+              const stale = Boolean(r.acknowledged_at) && !current;
+              return (
+                <Row
+                  key={r.title}
+                  k={`${r.title} (v${r.version})`}
+                  v={
+                    current ? (
+                      <>
+                        confirmed {when(r.acknowledged_at)}
+                        {r.acknowledged_by ? ` by ${r.acknowledged_by}` : ""}
+                      </>
+                    ) : stale ? (
+                      <span className="text-amber-800">
+                        confirmed v{r.acknowledged_version} on {when(r.acknowledged_at)} — not the
+                        current version
+                      </span>
+                    ) : r.requires_ack ? (
+                      <span className="text-red-700">not confirmed</span>
+                    ) : (
+                      <span className="text-gray-500">no confirmation required</span>
+                    )
+                  }
+                />
+              );
+            })}
+            {!(data.resources ?? []).length && (
+              <p className="text-gray-500">No manuals published.</p>
+            )}
           </Section>
 
           <Section title={`Event trail — ${data.events.length} entries`}>
