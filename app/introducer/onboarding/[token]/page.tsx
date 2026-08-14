@@ -8,6 +8,7 @@ import {
 } from "@/utils/introducer-onboarding";
 import Roadmap from "./Roadmap";
 import IdentityUpload from "./IdentityUpload";
+import SignNda from "./SignNda";
 
 /**
  * PUBLIC page — the applicant's view of their own onboarding.
@@ -118,8 +119,21 @@ export default async function OnboardingPage({
       <Roadmap steps={steps} accreditationNo={app.accreditation_no} />
 
       {/* The current step, made actionable. The roadmap says where they are;
-          this is where they actually do the thing. Only ID capture is wired so
-          far — the other steps are driven from email links for now. */}
+          this is where they actually do the thing. Every state that asks the
+          applicant for something must render a section here — a roadmap entry
+          with nothing beneath it is a dead end, which is precisely what the
+          first two invitees hit on `invited`. */}
+      {app.state === "invited" && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
+            Sign the confidentiality agreement
+          </h2>
+          <div className="mt-2">
+            <SignNda token={token} />
+          </div>
+        </section>
+      )}
+
       {canUploadId(app.state) && (
         <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
           <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
