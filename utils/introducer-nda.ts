@@ -22,6 +22,8 @@ import {
   type IntroducerAgreementData,
 } from "./introducer-agreement";
 import { logOnboardingEvent, type Application } from "./introducer-onboarding-db";
+import { newToken } from "./sign-token";
+import { SIGNATURE_REQUESTS_TABLE } from "./signature-requests-db";
 
 export const INTRODUCER_DOCS_TABLE = "introducer_agreement_docs";
 
@@ -107,6 +109,98 @@ export async function applicationIdForDoc(docId: string): Promise<string | null>
     .maybeSingle();
   if (error) throw error;
   return (data as { application_id: string } | null)?.application_id ?? null;
+}
+
+/** How long a signing link stays live. Long enough to read a confidentiality
+ *  agreement properly, short enough that an abandoned link doesn't sit open. */
+export const SIGNING_LINK_DAYS = 14;
+
+/**
+ * Issue the NDA if needed and hand back a live signing link.
+ *
+ * ONE IMPLEMENTATION, TWO CALLERS — the applicant opening it from the portal,
+ * and staff sending it for signature from /admin/introducers. The invariant
+ * below is subtle enough that a second copy would eventually get it wrong.
+ *
+ * Returns the raw token. That is the only moment it exists in plaintext; the
+ * database stores its hash and nothing else.
+ */
+export async function openNdaSigning(
+  app: Application,
+  now: Date,
+): Promise<
+  | { ok: true; docId: string; raw: string; issued: boolean }
+  | { ok: false; reason: "not_ready" | "already_signed"; error: string }
+> {
+  const doc = await ensureNdaDoc(app, now);
+  if (!doc.ok) return { ok: false, reason: "not_ready", error: doc.error };
+
+  const { raw, hash } = newToken();
+
+  // EXACTLY ONE REQUEST ROW PER SIGNER, ROTATED IN PLACE — load-bearing.
+  //
+  // The signing-completion route decides a document is executed with
+  // allSigned(rows), which selects EVERY signature_requests row for the doc and
+  // requires all of them to be 'signed'. Inserting a fresh request each time
+  // and marking the old one 'expired' leaves a permanently-unsigned row, so
+  // allSigned is never true, markDocSigned never runs, and the document sits
+  // Draft *while telling the signer it worked*. That is exactly what the first
+  // version of this code did.
+  //
+  // Rotating the token on the single row kills the superseded link and leaves
+  // nothing behind to block completion.
+  const { data: existing, error: findErr } = await supabase
+    .from(SIGNATURE_REQUESTS_TABLE)
+    .select("id,status")
+    .eq("doc_type", "introducer_nda")
+    .eq("doc_id", doc.id)
+    .eq("signer_index", 1)
+    .maybeSingle();
+  if (findErr) throw findErr;
+
+  if (existing?.status === "signed") {
+    // Executed, but the application never advanced — the best-effort hook in
+    // the signing route must have failed. Put that right rather than hand out a
+    // link to sign something already signed.
+    await advanceApplicationOnNdaSigned(doc.id, app.email);
+    return {
+      ok: false,
+      reason: "already_signed",
+      error: "The confidentiality agreement has already been signed.",
+    };
+  }
+
+  const patch = {
+    signer_name: app.legal_name,
+    signer_email: app.email,
+    token_hash: hash,
+    status: "sent" as const,
+    sent_at: now.toISOString(),
+    expires_at: new Date(now.getTime() + SIGNING_LINK_DAYS * 86_400_000).toISOString(),
+    // Clear anything an earlier attempt left behind, so a rotated link starts
+    // clean rather than inheriting a decline.
+    viewed_at: null,
+    signed_at: null,
+    signature_image: null,
+    signer_ip: null,
+    signer_user_agent: null,
+    consent_at: null,
+    signed_pdf_path: null,
+    decline_reason: null,
+  };
+
+  const { error: writeErr } = existing?.id
+    ? await supabase.from(SIGNATURE_REQUESTS_TABLE).update(patch).eq("id", existing.id)
+    : await supabase.from(SIGNATURE_REQUESTS_TABLE).insert({
+        doc_type: "introducer_nda",
+        doc_id: doc.id,
+        signer_index: 1,
+        created_by: `applicant:${app.email}`,
+        ...patch,
+      });
+  if (writeErr) throw writeErr;
+
+  return { ok: true, docId: doc.id, raw, issued: doc.created };
 }
 
 /**

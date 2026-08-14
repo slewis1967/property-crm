@@ -99,6 +99,42 @@ export async function sendOnboardingStepEmail(opts: {
 }
 
 /**
+ * Send the confidentiality agreement out for electronic signature.
+ *
+ * Points at `/sign/<token>` — the document itself — rather than the onboarding
+ * roadmap. Staff clicking "Send for e-signature" mean "put the agreement in
+ * front of them", and one more hop through a progress page is one more place to
+ * lose someone. They can still reach it from their onboarding link either way.
+ */
+export async function sendNdaSigningEmail(opts: {
+  to: string;
+  legalName: string;
+  rawToken: string;
+  origin: string;
+}) {
+  const url = `${opts.origin.replace(/\/+$/, "")}/sign/${encodeURIComponent(opts.rawToken)}`;
+
+  return sendBrevoEmail({
+    to: [{ email: opts.to, name: opts.legalName }],
+    ...springboardSender(),
+    subject: "Please sign your confidentiality agreement",
+    html: shell(
+      "Your confidentiality agreement",
+      `<p>Hi ${firstName(opts.legalName)},</p>
+       <p>Before we share the programme details with you, we both sign a mutual
+          confidentiality agreement. It runs both ways: it covers what we tell you,
+          and what you tell us.</p>
+       <p>You'll read it in full and sign it on screen. Nothing is committed until
+          you do.</p>
+       ${button(url, "Read and sign the agreement")}`,
+      `This link is personal to ${opts.to} — please don't forward it.`,
+      "Introducer accreditation",
+    ),
+    tags: ["introducer", "onboarding", "nda"],
+  });
+}
+
+/**
  * Accreditation passed. Separate from the step email because it is the one
  * moment in the flow worth marking — and because it carries the number they
  * will quote from then on.
