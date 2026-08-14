@@ -171,22 +171,43 @@ export async function POST(req: NextRequest) {
   let inviteSent = false;
   let inviteWarning: string | null = null;
   if (wantInvite) {
-    const primary = attendees![0];
-    const result = await sendMeetingInvite({
-      to: { email: primary.email, name: primary.displayName },
-      host,
-      title,
-      description,
-      start: startISO,
-      end: endISO,
-      joinUrl: videoLink,
-      location,
-      uid: `appt-${(inserted as unknown as { id: string }).id}@nextkey.com.au`,
-      tz: body.timeZone,
-    });
-    inviteSent = result.ok;
-    if (!result.ok) {
-      inviteWarning = `Invite email could not be sent (${result.error}). The meeting is saved — follow up with the attendee manually.`;
+    // EVERY attendee gets an invite, not just the first. This used to send to
+    // attendees[0] only, so a second applicant — or anyone else added to the
+    // meeting — silently received nothing while the UI reported the invite as
+    // sent. One .ics uid across all copies, so their calendars treat it as the
+    // same meeting rather than one each.
+    const uid = `appt-${(inserted as unknown as { id: string }).id}@nextkey.com.au`;
+    const roster = attendees!.map((a) => ({ email: a.email, name: a.displayName }));
+    const results = await Promise.all(
+      attendees!.map((a) =>
+        sendMeetingInvite({
+          to: { email: a.email, name: a.displayName },
+          host,
+          title,
+          description,
+          start: startISO,
+          end: endISO,
+          joinUrl: videoLink,
+          location,
+          uid,
+          tz: body.timeZone,
+          attendees: roster,
+        }),
+      ),
+    );
+    // Partial success is the dangerous case: reporting a flat "sent" when two
+    // of three bounced is how someone turns up to a meeting alone. Name whoever
+    // missed out so the operator can follow up with that person specifically.
+    const failed = results
+      .map((r, i) => (r.ok ? null : { email: attendees![i].email, error: r.error }))
+      .filter((x): x is { email: string; error: string } => x !== null);
+    inviteSent = failed.length === 0;
+    if (failed.length > 0) {
+      const who = failed.map((f) => `${f.email} (${f.error})`).join("; ");
+      inviteWarning =
+        failed.length === results.length
+          ? `Invite email could not be sent to ${who}. The meeting is saved — follow up manually.`
+          : `The meeting is saved and ${results.length - failed.length} of ${results.length} invites went out, but these failed: ${who}. Follow up with them manually.`;
     }
   }
 

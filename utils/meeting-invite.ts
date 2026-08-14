@@ -44,6 +44,14 @@ export interface MeetingInviteOpts {
   uid: string;
   /** IANA tz used to render the human-readable time. Defaults AU/Brisbane. */
   tz?: string;
+  /**
+   * Everyone invited, for the .ics ATTENDEE lines — so each recipient's
+   * calendar shows the full participant list rather than just themselves.
+   * `to` is still the one person THIS email goes to; send once per attendee
+   * with the same `uid` so every copy is the same meeting, not three.
+   * Defaults to `[to]`.
+   */
+  attendees?: Array<{ email: string; name?: string }>;
 }
 
 const BRAND_TEAL = "#0F4C5C";
@@ -125,7 +133,10 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
     location: opts.joinUrl ?? opts.location ?? undefined,
     url: opts.joinUrl ?? undefined,
     organizer: { name: opts.host.displayName, email: opts.host.email },
-    attendees: [{ name: opts.to.name, email: opts.to.email }],
+    attendees: (opts.attendees?.length ? opts.attendees : [opts.to]).map((a) => ({
+      name: a.name,
+      email: a.email,
+    })),
     method: "REQUEST",
   });
 
