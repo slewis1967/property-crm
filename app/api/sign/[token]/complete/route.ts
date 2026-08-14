@@ -31,6 +31,7 @@ import {
   findRequestByToken,
 } from "../../../../../utils/signature-requests-db";
 import { loadDoc, markDocSigned } from "../../../../../utils/sign-doc-render";
+import { advanceApplicationOnNdaSigned } from "../../../../../utils/introducer-nda";
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { resolveIdentity } from "../../../../../utils/mailIdentities";
@@ -157,6 +158,25 @@ export async function POST(
     // When every signer has completed, lock the underlying document + audit it.
     if (allSigned(signerRows)) {
       await markDocSigned(row.doc_type, row.doc_id, `signer:${row.signer_email}`);
+
+      // A signed NDA is the gate on step one of introducer onboarding. Until the
+      // application moves off `invited`, the applicant's page keeps offering the
+      // agreement they just signed and never opens the ID upload.
+      //
+      // Best-effort on purpose: the signature is already durably recorded, so a
+      // failure here must not turn a completed signing into a 500 and invite
+      // them to sign a second time. It surfaces in the log, and staff can
+      // advance the application by hand.
+      if (row.doc_type === "introducer_nda") {
+        try {
+          await advanceApplicationOnNdaSigned(row.doc_id, row.signer_email);
+        } catch (e) {
+          log.error("sign.introducer_nda_advance_failed", {
+            docId: row.doc_id,
+            message: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
     }
 
     // Email the signed copy to the signer and the advisor (best-effort).
