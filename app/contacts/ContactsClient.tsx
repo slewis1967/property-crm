@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BulkUploadModal from "./BulkUploadModal";
+import NewContactModal from "../components/NewContactModal";
 import DeleteReasonModal from "../components/DeleteReasonModal";
 import { ALLOWED_PAGE_SIZES, type PageSize } from "../../utils/pagination";
 import { toCsv, type CsvColumn } from "../../utils/csv";
@@ -115,6 +116,7 @@ export default function ContactsClient({
   const fetchSeq = useRef(0);
   const [selected, setSelected] = useState<Contact | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showNewContact, setShowNewContact] = useState(false);
   const [search, setSearch] = useState("");
   const [filterTemp, setFilterTemp] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -461,6 +463,10 @@ export default function ContactsClient({
       />
     )}
 
+    {showNewContact && (
+      <NewContactModal onClose={() => setShowNewContact(false)} />
+    )}
+
     {/* Confirm delete dialog — requires a reason + the user's name */}
     <DeleteReasonModal
       open={confirmDelete !== null}
@@ -635,9 +641,15 @@ export default function ContactsClient({
               </button>
               <button
                 onClick={() => setShowBulkUpload(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
               >
                 ↑ Bulk Upload
+              </button>
+              <button
+                onClick={() => setShowNewContact(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                + New Contact
               </button>
             </div>
           </div>
