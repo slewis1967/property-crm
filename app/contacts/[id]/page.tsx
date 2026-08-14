@@ -110,11 +110,15 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
 
   let contact: ContactRecord;
-  const { data: liveContact } = await supabase
+  const { data: liveContact, error: liveErr } = await supabase
     .from("contacts")
     .select("*")
     .eq("id", id)
     .maybeSingle();
+  // A query *error* is not the same as "no such contact", and the fallback
+  // below would report both as not-found. Log it so a real failure is
+  // distinguishable from a genuinely missing record.
+  if (liveErr) console.error("[crm] contact detail: live contact lookup failed", liveErr);
 
   if (liveContact) {
     contact = liveContact;
@@ -146,13 +150,37 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
     } as unknown as ContactRecord;
   }
 
+  // Everything below the contact itself is decoration: opportunities, the GHL
+  // archive, past meetings. The contact has already loaded successfully at this
+  // point, so none of it is worth losing the whole page over — and it was,
+  // because Promise.all rejects as a unit and these ran unguarded. A brand-new
+  // contact is the case most exposed to it: with no ghl_contact_id yet, it is
+  // the only one that runs the archive email lookup at all.
+  //
+  // Each side fetch now fails to an empty value and says so in the log, so a
+  // contact you can see always renders.
+  const soft = async <T,>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await fn();
+    } catch (e) {
+      console.error(`[crm] contact detail: ${label} failed, rendering without it`, e);
+      return fallback;
+    }
+  };
+
   const [leads, pipelines, ghlContactId, liveAppointments] = await Promise.all([
-    getLeadsForContact(contact.id, contact.email as string | null),
-    getPipelines(),
-    resolveGhlContactId(contact),
-    getLiveAppointments(contact.id, contact.email as string | null),
+    soft("opportunities", () => getLeadsForContact(contact.id, contact.email as string | null), []),
+    soft("pipelines", () => getPipelines(), []),
+    soft("ghl archive lookup", () => resolveGhlContactId(contact), null),
+    soft("appointments", () => getLiveAppointments(contact.id, contact.email as string | null), []),
   ]);
-  const ghlArchive = await getGhlArchive(ghlContactId);
+  const ghlArchive = await soft("ghl archive", () => getGhlArchive(ghlContactId), {
+    notes: [],
+    conversations: [],
+    tasks: [],
+    appointments: [],
+    opportunities: [],
+  });
 
   return (
     <ContactDetail
