@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdmin } from "../../../_shared";
+import { canOverrideCourse } from "../../../../../../../utils/super-admin";
 import {
   findById,
   setState,
@@ -35,6 +36,11 @@ import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-o
  * re-sitting, not for candidates accrediting at a distance, and it is recorded
  * as a distinct event so the register can tell such a sitting from an ordinary
  * one.
+ *
+ * IT NEEDS MORE THAN SUPER-ADMIN. Issuing an invitation is a super-admin act;
+ * overriding what the course requires is narrower again, and gated on
+ * `canOverrideCourse` — see utils/super-admin.ts for why it does not simply
+ * ride on SUPER_ADMIN_EMAILS.
  */
 export async function POST(
   req: Request,
@@ -48,6 +54,21 @@ export async function POST(
   // Body is optional — the ordinary call sends none at all.
   const body = (await req.json().catch(() => ({}))) as { override?: unknown };
   const override = body?.override === true;
+
+  // Checked on the SERVER, not merely hidden in the UI. The button is not
+  // rendered for anyone else, but a hidden button is a decoration — this is the
+  // gate.
+  if (override && !canOverrideCourse(auth)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Reopening the course is reserved to the account owner. Send the ordinary invitation, or ask Sean to reopen it.",
+        code: "course_override_forbidden",
+      },
+      { status: 403 },
+    );
+  }
 
   const secret = process.env.INVITE_SECRET;
   if (!secret) {

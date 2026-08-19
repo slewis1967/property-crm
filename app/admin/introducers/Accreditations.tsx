@@ -75,8 +75,11 @@ const TONE: Record<string, string> = {
 
 export default function Accreditations({
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
 }: {
   viewerIsSuperAdmin: boolean;
+  /** Narrower than super-admin, and deliberately so — see utils/super-admin.ts. */
+  viewerCanOverrideCourse: boolean;
 }) {
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +172,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => {
                   setNotice(msg);
                   setError(null);
@@ -190,6 +194,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => { setNotice(msg); await load(); }}
                 onError={setError}
               />
@@ -204,11 +209,13 @@ export default function Accreditations({
 function Card({
   app,
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
   onDone,
   onError,
 }: {
   app: Application;
   viewerIsSuperAdmin: boolean;
+  viewerCanOverrideCourse: boolean;
   onDone: (msg: string) => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -363,16 +370,18 @@ function Card({
               <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
                 Send course invitation
               </Action>
-              <Override
-                busy={busy}
-                onConfirm={() =>
-                  act(
-                    `${base}/exam-invite`,
-                    { override: true },
-                    "Course invitation sent with the gates open — recorded in the audit file.",
-                  )
-                }
-              />
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Course invitation sent with the gates open — recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
             </>
           )}
 
@@ -381,16 +390,18 @@ function Card({
               <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
                 Re-send course link
               </Action>
-              <Override
-                busy={busy}
-                onConfirm={() =>
-                  act(
-                    `${base}/exam-invite`,
-                    { override: true },
-                    "Link sent with the gates open — their progress is kept. Recorded in the audit file.",
-                  )
-                }
-              />
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Link sent with the gates open — their progress is kept. Recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
             </>
           )}
 
@@ -531,6 +542,10 @@ function Action({
  * panel says so, because an operator who has learned that re-sending wipes
  * people would otherwise never reach for it on the candidate who most needs it.
  */
+/* Rendered only for whoever holds `canOverrideCourse` — narrower than
+   super-admin, because this changes what an accreditation MEANS rather than who
+   holds one. Hiding it is a courtesy to everyone else, not the control: the
+   route checks the same authority, and a hidden button is a decoration. */
 function Override({ busy, onConfirm }: { busy: boolean; onConfirm: () => void }) {
   const [asking, setAsking] = useState(false);
 

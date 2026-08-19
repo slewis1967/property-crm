@@ -79,7 +79,13 @@ async function fetchAll(scope: "queue" | "all"): Promise<{
   }
 }
 
-export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuperAdmin: boolean }) {
+export default function AdminIntroducers({
+  viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
+}: {
+  viewerIsSuperAdmin: boolean;
+  viewerCanOverrideCourse: boolean;
+}) {
   const [tab, setTab] = useState<"queue" | "accreditations" | "firms">("queue");
   const [scope, setScope] = useState<"queue" | "all">("queue");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -156,7 +162,10 @@ export default function AdminIntroducers({ viewerIsSuperAdmin }: { viewerIsSuper
             onScope={setScope}
           />
         ) : tab === "accreditations" ? (
-          <Accreditations viewerIsSuperAdmin={viewerIsSuperAdmin} />
+          <Accreditations
+            viewerIsSuperAdmin={viewerIsSuperAdmin}
+            viewerCanOverrideCourse={viewerCanOverrideCourse}
+          />
         ) : (
           <Firms
             firms={firms}
