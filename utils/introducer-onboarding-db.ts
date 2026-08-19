@@ -43,6 +43,10 @@ export type Application = {
   exam_passed_at: string | null;
   accreditation_no: string | null;
   certificate_path: string | null;
+  /** Absent until 20260819_introducer_accreditation_expiry.sql runs. */
+  certificate_issued_at?: string | null;
+  accreditation_expires_at?: string | null;
+  smsf_competency_expires_at?: string | null;
   /** Applicant-supplied. Absent until 20260814_introducer_entity_details.sql runs. */
   acn?: string | null;
   entity_type?: EntityType | null;
@@ -63,7 +67,22 @@ const BASE_COLUMNS =
  *  can fall back while that SQL is pending. */
 const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_at";
 
-const COLUMNS = `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`;
+/** Added by `20260813b_...` and `20260819_introducer_accreditation_expiry.sql`.
+ *  Only the certificate path needs them, and it degrades to deriving the
+ *  expiries from today if they are not there yet. */
+const ACCREDITATION_COLUMNS =
+  "certificate_issued_at, accreditation_expires_at, smsf_competency_expires_at";
+
+/** Widest first. Each rung drops the most recent migration's columns, so a read
+ *  keeps working against a database that is one or two migrations behind the
+ *  deploy — the house rule being that code ships before the SQL is run. */
+const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`,
+  BASE_COLUMNS,
+];
+
+const COLUMNS = COLUMN_LADDER[0];
 
 /** Why a token did not resolve. The page words each of these differently — a
  *  candidate whose link expired needs a different sentence to one who typoed. */
@@ -80,9 +99,12 @@ export type LookupFailure = "not_found" | "expired";
 async function selectApplication<T>(
   run: (columns: string) => PromiseLike<{ data: T; error: unknown }>,
 ): Promise<{ data: T; error: unknown }> {
-  const first = await run(COLUMNS);
-  if (first.error && introducerEntityColumnMissing(first.error)) return run(BASE_COLUMNS);
-  return first;
+  let last: { data: T; error: unknown } | null = null;
+  for (const columns of COLUMN_LADDER) {
+    last = await run(columns);
+    if (!last.error || !introducerEntityColumnMissing(last.error)) return last;
+  }
+  return last!;
 }
 
 export async function findByToken(
@@ -277,6 +299,8 @@ export async function recordExamAttempt(
     itemIds?: string[];
     markedAt?: string;
     integrity?: unknown;
+    /** The sitting ran with the course's waiting periods switched off. */
+    waived?: boolean;
   },
 ): Promise<{ duplicate: boolean }> {
   // limit(1) rather than maybeSingle() alone: if a duplicate ever did slip
@@ -302,6 +326,7 @@ export async function recordExamAttempt(
     item_ids: attempt.itemIds ?? [],
     marked_at: attempt.markedAt ?? new Date().toISOString(),
     integrity: attempt.integrity ?? null,
+    waiting_periods_waived: attempt.waived === true,
   });
 
   return { duplicate: false };

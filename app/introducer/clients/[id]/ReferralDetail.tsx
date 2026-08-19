@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReferralFields, { type FieldValues } from "../../ReferralFields";
 import { supabaseBrowser } from "../../../../utils/supabase-browser";
-import { INTRODUCER_STAGES } from "../../../../utils/introducer";
+import { INTRODUCER_STAGES, CONSENT_FORM_LABEL } from "../../../../utils/introducer";
 
 type Labelled = { key: string; label: string };
 
@@ -139,6 +139,16 @@ export default function ReferralDetail({ id }: { id: string }) {
   const canEditAnything = data.editable.length > 0;
 
   const requestedFields = new Set(data.info_requests.flatMap((r) => r.fields.map((f) => f.key)));
+
+  // The signed consent form, if it is already on the referral. Submit refuses
+  // without it, so the button below is disabled rather than letting someone
+  // fill the whole form and be told no at the end.
+  const consentDoc =
+    data.documents.find(
+      (d) =>
+        d.label.toLowerCase() === CONSENT_FORM_LABEL.toLowerCase() &&
+        (d.status === "uploaded" || d.status === "accepted"),
+    ) ?? null;
 
   async function save() {
     setBusy("save");
@@ -346,7 +356,13 @@ export default function ReferralDetail({ id }: { id: string }) {
               Still needed to submit: {data.missing_required.map((f) => f.label).join(", ")}.
             </p>
           )}
-          <label className="flex items-start gap-3">
+          <ConsentForm
+            clientId={id}
+            attached={consentDoc}
+            onUploaded={load}
+            onError={setError}
+          />
+          <label className="mt-5 flex items-start gap-3">
             <input
               type="checkbox"
               checked={consent}
@@ -358,7 +374,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           <div className="mt-5 flex flex-wrap gap-3">
             <button
               onClick={submit}
-              disabled={busy !== null || !consent}
+              disabled={busy !== null || !consent || !consentDoc}
               className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
               style={{ background: "#c7894e" }}
             >
@@ -452,6 +468,105 @@ function Progress({ stage }: { stage: string | null }) {
 }
 
 /** One open "we need more from you" request, with its uploads. */
+/**
+ * The signed consent form, attached before the referral is submitted.
+ *
+ * The one upload that is not a reply to an information request — see the route.
+ * It sits directly above the consent tick because they are two halves of the
+ * same thing: the tick is what the introducer asserts, this is the evidence
+ * behind the assertion, and the referral cannot be submitted without both.
+ *
+ * Only rendered on a draft. Once submitted, a replacement needs an information
+ * request like any other document.
+ */
+function ConsentForm({
+  clientId,
+  attached,
+  onUploaded,
+  onError,
+}: {
+  clientId: string;
+  attached: DocRow | null;
+  onUploaded: () => Promise<void>;
+  onError: (msg: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const input = useRef<HTMLInputElement | null>(null);
+
+  async function upload(file: File) {
+    setUploading(true);
+    try {
+      const res = await fetch(`/api/introducer/clients/${clientId}/upload-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: CONSENT_FORM_LABEL,
+          filename: file.name,
+          size: file.size,
+          mime_type: file.type,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        onError(json.error ?? "Could not upload that file.");
+        return;
+      }
+      // Straight to storage — the bytes never pass through our server.
+      const { error } = await supabaseBrowser.storage
+        .from(json.bucket)
+        .uploadToSignedUrl(json.path, json.token, file, { contentType: file.type });
+      if (error) {
+        onError("The upload didn't complete. Please try again.");
+        return;
+      }
+      await onUploaded();
+    } catch {
+      onError("The upload didn't complete. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div
+      className={`rounded-xl border p-4 ${
+        attached ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"
+      }`}
+    >
+      <p className={`text-sm font-semibold ${attached ? "text-green-900" : "text-amber-900"}`}>
+        {attached ? "Signed consent form attached" : "Signed consent form"}
+      </p>
+      <p className={`mt-1 text-sm ${attached ? "text-green-900" : "text-amber-900"}`}>
+        {attached
+          ? attached.filename
+          : "Upload the Referral Consent and Privacy Form your client signed. A referral cannot be submitted without it — the signature on that form is what lets us pass their details on."}
+      </p>
+
+      <input
+        ref={(el) => {
+          input.current = el;
+        }}
+        type="file"
+        accept={ACCEPTED}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) void upload(file);
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => input.current?.click()}
+        disabled={uploading}
+        className="mt-3 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+      >
+        {uploading ? "Uploading…" : attached ? "Replace it" : "Attach the signed form"}
+      </button>
+    </div>
+  );
+}
+
 function InfoRequestCard({
   request,
   clientId,

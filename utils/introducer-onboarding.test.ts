@@ -10,6 +10,10 @@ import {
   isFinished,
   isForwardTransition,
   mintExamInvite,
+  addMonthsClamped,
+  accreditationExpiries,
+  isExpiredOn,
+  daysUntil,
   verifyExamInvite,
   examInviteUrl,
   accreditationNumber,
@@ -199,10 +203,92 @@ describe("exam invites — identity is issued, not typed", () => {
     }
   });
 
+  it("does not mention waiting periods unless they were waived", () => {
+    // An ordinary invitation asserts nothing about the waits, so the course
+    // falls back to enforcing them. `waive: false` would be a claim; absence is
+    // not.
+    const v = verifyExamInvite(mintExamInvite(base, SECRET), SECRET);
+    expect(v.ok).toBe(true);
+    if (v.ok) expect("waive" in v.payload).toBe(false);
+
+    const off = verifyExamInvite(mintExamInvite({ ...base, waive: false }, SECRET), SECRET);
+    expect(off.ok).toBe(true);
+    if (off.ok) expect("waive" in off.payload).toBe(false);
+  });
+
+  it("carries a waiver of the waiting periods, signed", () => {
+    const v = verifyExamInvite(mintExamInvite({ ...base, waive: true }, SECRET), SECRET);
+    expect(v.ok).toBe(true);
+    if (v.ok) expect(v.payload.waive).toBe(true);
+  });
+
+  it("refuses a waiver bolted onto a token we signed without one", () => {
+    // The whole reason the waiver travels inside the payload: the waits are
+    // enforced in the candidate's own browser, so the only thing stopping them
+    // switching the waits off is that they cannot re-sign the claim.
+    const t = mintExamInvite(base, SECRET);
+    const [body, sig] = t.split(".");
+    const p = JSON.parse(Buffer.from(body, "base64url").toString());
+    p.waive = true;
+    const forged = Buffer.from(JSON.stringify(p)).toString("base64url") + "." + sig;
+    expect(verifyExamInvite(forged, SECRET).ok).toBe(false);
+  });
+
   it("builds a link the accreditation site will accept", () => {
     const t = mintExamInvite(base, SECRET);
     const url = examInviteUrl(t, "https://accred.example/");
     expect(url).toBe(`https://accred.example/?inv=${encodeURIComponent(t)}`);
+  });
+});
+
+describe("how long an accreditation lasts", () => {
+  it("runs 12 months, with the SMSF competency at 6", () => {
+    const e = accreditationExpiries("2026-08-14");
+    expect(e.accreditationExpiresAt).toBe("2027-08-14");
+    expect(e.smsfCompetencyExpiresAt).toBe("2027-02-14");
+  });
+
+  it("clamps to the end of the month rather than rolling over", () => {
+    // The case the certificate calls out by name: 31 August + 6 months prints
+    // 28 February, not 3 March.
+    expect(addMonthsClamped("2026-08-31", 6)).toBe("2027-02-28");
+    expect(addMonthsClamped("2026-08-31", 12)).toBe("2027-08-31");
+    expect(addMonthsClamped("2026-10-31", 6)).toBe("2027-04-30");
+    // And a leap February takes the 29th.
+    expect(addMonthsClamped("2027-08-31", 6)).toBe("2028-02-29");
+  });
+
+  it("crosses the year boundary", () => {
+    expect(addMonthsClamped("2026-11-30", 6)).toBe("2027-05-30");
+    expect(addMonthsClamped("2026-12-31", 12)).toBe("2027-12-31");
+    expect(addMonthsClamped("2026-09-15", 6)).toBe("2027-03-15");
+  });
+
+  it("refuses anything that is not a calendar day", () => {
+    for (const junk of ["", "2026-8-14", "14/08/2026", "2026-08-14T00:00:00Z"]) {
+      expect(() => addMonthsClamped(junk, 12)).toThrow(/YYYY-MM-DD/);
+    }
+  });
+
+  it("is good on the expiry day itself and expired the day after", () => {
+    expect(isExpiredOn("2027-08-14", "2027-08-13")).toBe(false);
+    expect(isExpiredOn("2027-08-14", "2027-08-14")).toBe(false);
+    expect(isExpiredOn("2027-08-14", "2027-08-15")).toBe(true);
+  });
+
+  it("does not treat a missing expiry as an expired one", () => {
+    // Everyone accredited before these dates were recorded has no date on their
+    // row. Reading that as expired would lock them all out on deploy day.
+    expect(isExpiredOn(null, "2027-08-15")).toBe(false);
+    expect(isExpiredOn(undefined, "2027-08-15")).toBe(false);
+    expect(isExpiredOn("", "2027-08-15")).toBe(false);
+  });
+
+  it("counts the days left", () => {
+    expect(daysUntil("2026-08-20", "2026-08-19")).toBe(1);
+    expect(daysUntil("2026-08-19", "2026-08-19")).toBe(0);
+    expect(daysUntil("2026-08-18", "2026-08-19")).toBe(-1);
+    expect(daysUntil("2027-08-14", "2026-08-14")).toBe(365);
   });
 });
 

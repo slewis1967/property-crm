@@ -253,6 +253,36 @@ describe("introducer-facing copy is Springboard-branded", () => {
     expect(CONSENT_STATEMENT).not.toContain("NextKey");
   });
 
+  it("the consent statement covers the whole disclosure chain", () => {
+    // Consent to pass details to ONE company does not cover onward disclosure
+    // to a credit licensee and a separate advice business. If a link is ever
+    // dropped from this sentence, the referrals made after it are consented to
+    // a narrower disclosure than the one that actually happens.
+    for (const party of [
+      "G.B. Mayes Holdings",
+      "CRE8 Finance",
+      "Your Loan Assist",
+      "licensed financial adviser",
+      "lenders",
+    ]) {
+      expect(CONSENT_STATEMENT, party).toContain(party);
+    }
+  });
+
+  it("the consent statement discloses independence and the fee", () => {
+    // Both are conflict disclosures the introducer must have made out loud.
+    expect(CONSENT_STATEMENT).toContain("independent introducer");
+    expect(CONSENT_STATEMENT).toContain("not an employee or agent");
+    expect(CONSENT_STATEMENT).toContain("may be paid a fee");
+  });
+
+  it("the consent statement attests to a SIGNED form, not just a conversation", () => {
+    // The tick is an assertion; the form is evidence. Submit refuses without
+    // the document, and this wording is what the introducer is signing up to.
+    expect(CONSENT_STATEMENT).toContain("Referral Consent and Privacy Form");
+    expect(CONSENT_STATEMENT).toContain("have signed it");
+  });
+
   it("every refusal message the introducer can see names Springboard", () => {
     const locked = evaluateEdit(submitted, { phone: "0411111111" });
     const partialGrant = evaluateEdit(

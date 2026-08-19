@@ -7,7 +7,11 @@ import {
   logOnboardingEvent,
   reissueToken,
 } from "../../../../../../../utils/introducer-onboarding-db";
-import { onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
+import {
+  onboardingTablesMissing,
+  accreditationExpiries,
+} from "../../../../../../../utils/introducer-onboarding";
+import { businessDayKey, BUSINESS_TIME_ZONE } from "../../../../../../../utils/datetime";
 import { sendAccreditationPassedEmail } from "../../../../../../../utils/introducer-onboarding-email";
 import { renderCertificateHtml } from "../../../../../../../utils/pdf/introducerCertificatePdf";
 import { htmlToPdf } from "../../../../../../../utils/pdf/render";
@@ -61,13 +65,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const accreditationNo = await allocateAccreditationNumber(id);
   const reissue = app.state === "certificate_issued";
 
+  /* The certificate's issue date drives both expiries, so a REISSUE derives
+   * from the first issue and never from today. A replacement certificate for a
+   * misspelt name would otherwise hand its holder another twelve months, which
+   * is the difference between correcting a document and re-accrediting someone.
+   *
+   * The business calendar day, not a UTC one: a certificate issued at 9am
+   * Brisbane is issued on the 14th, and read as UTC it was issued at 11pm on
+   * the 13th — both expiries a day early, every time. */
+  const issuedAt = (reissue && app.certificate_issued_at) || new Date().toISOString();
+  const issuedDay = businessDayKey(issuedAt) ?? businessDayKey(new Date().toISOString())!;
+  const expiries = accreditationExpiries(issuedDay);
+
   // Render and file the certificate before moving the state, so an application
   // is never marked certificated with nothing behind it.
-  const issuedOn = new Date().toLocaleDateString("en-AU", {
+  const issuedOn = new Date(issuedAt).toLocaleDateString("en-AU", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
   });
+  const asPrinted = (day: string) =>
+    new Date(`${day}T00:00:00Z`).toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
 
   let certificatePath: string | null = app.certificate_path;
   let pdfGenerated = false;
@@ -79,6 +103,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       tier: app.tier,
       issuedOn,
       reissued: reissue,
+      accreditationExpiresOn: asPrinted(expiries.accreditationExpiresAt),
+      smsfCompetencyExpiresOn: asPrinted(expiries.smsfCompetencyExpiresAt),
     });
     const pdf = await htmlToPdf(html, { landscape: true, printBackground: true });
     const key = `${id}/certificate-${accreditationNo}${reissue ? `-r${Date.now()}` : ""}.pdf`;
@@ -102,7 +128,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!reissue) {
     await setState(id, "certificate_issued", {
       certificate_path: certificatePath,
-      certificate_issued_at: new Date().toISOString(),
+      certificate_issued_at: issuedAt,
+      accreditation_expires_at: expiries.accreditationExpiresAt,
+      smsf_competency_expires_at: expiries.smsfCompetencyExpiresAt,
     });
   } else if (certificatePath) {
     await supabase
@@ -113,6 +141,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await logOnboardingEvent(id, "super_admin", auth, reissue ? "certificate_reissued" : "certificate_issued", {
     accreditation_no: accreditationNo,
+    accreditation_expires_at: expiries.accreditationExpiresAt,
+    smsf_competency_expires_at: expiries.smsfCompetencyExpiresAt,
   });
 
   let emailed = true;
@@ -136,6 +166,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ok: true,
     accreditation_no: accreditationNo,
     reissued: reissue,
+    accreditation_expires_at: expiries.accreditationExpiresAt,
+    smsf_competency_expires_at: expiries.smsfCompetencyExpiresAt,
     emailed,
     pdf_generated: pdfGenerated,
   });

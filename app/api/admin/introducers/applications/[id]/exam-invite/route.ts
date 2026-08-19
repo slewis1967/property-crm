@@ -23,6 +23,12 @@ import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-o
  * candidate typed — so this route is the only place an exam link is created,
  * and it refuses to create one for an applicant whose identity has not been
  * verified yet.
+ *
+ * `{ waive: true }` issues the same invitation with the course's waiting
+ * periods turned off — the reading timer, the cooling-off ladder and the
+ * 24-hour lock. It is for sitting the course ourselves and for supervised
+ * re-sittings, not for candidates, and it is recorded as a distinct event so
+ * the register can tell a waived sitting from an ordinary one.
  */
 export async function POST(
   req: Request,
@@ -32,6 +38,10 @@ export async function POST(
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
+
+  // Body is optional — the ordinary call sends none at all.
+  const body = (await req.json().catch(() => ({}))) as { waive?: unknown };
+  const waive = body?.waive === true;
 
   const secret = process.env.INVITE_SECRET;
   if (!secret) {
@@ -81,6 +91,7 @@ export async function POST(
       abn: application.abn ?? "",
       email: application.email,
       tier: application.tier,
+      waive,
     },
     secret,
   );
@@ -104,6 +115,10 @@ export async function POST(
       body:
         `Your identity has been verified, so the course is open. It takes a few hours and the exam is ` +
         `100% to pass, with as many attempts as you need — you can stop and come back at any point.` +
+        (waive
+          ? `<br><br>The reading timers and the waiting periods between attempts are switched off on ` +
+            `this link.`
+          : "") +
         `<br><br>Start here: <a href="${url}">${url}</a>`,
       cta: "See where you are",
     });
@@ -116,10 +131,16 @@ export async function POST(
     await setState(application.id, "course_started");
   }
 
-  await logOnboardingEvent(application.id, "super_admin", auth, reissue ? "exam_invite_reissued" : "exam_invite_issued", {
-    emailed,
-    email_error: emailError,
-  });
+  // A waived sitting gets its own action name, not a flag buried in the detail:
+  // the audit file renders the action and nothing else, so anything that has to
+  // be visible to an auditor has to be in the name.
+  await logOnboardingEvent(
+    application.id,
+    "super_admin",
+    auth,
+    waive ? "exam_invite_waiting_periods_waived" : reissue ? "exam_invite_reissued" : "exam_invite_issued",
+    { emailed, email_error: emailError, reissued: reissue, waived: waive },
+  );
 
   return NextResponse.json({
     ok: true,
@@ -130,5 +151,6 @@ export async function POST(
     emailed,
     email_error: emailError,
     reissued: reissue,
+    waived: waive,
   });
 }
