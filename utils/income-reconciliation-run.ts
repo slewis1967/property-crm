@@ -45,7 +45,12 @@ export type IncomeRunResult =
       documentsRead: number;
       /** True when we had no Needs Analysis to compare against. */
       declaredUnavailable: boolean;
+      /** False when cached evidence was re-scored instead of re-reading the PDFs. */
+      extracted: boolean;
       result: ReconciliationResult;
+      /** The extracted evidence, for the caller to cache. */
+      evidence: IncomeEvidence[];
+      siblingIds: string[];
     };
 
 const PAYSLIP_PROMPT = `You are reading ONE Australian payslip. Extract only what is printed on it.
@@ -190,7 +195,17 @@ function annualiseDeclared(amount: number | null, frequency: string): number | n
 
 export async function runIncomeReconciliation(
   id: string,
-  opts?: { asOf?: Date },
+  opts?: {
+    asOf?: Date;
+    /**
+     * Skip the PDFs and score this evidence instead. The sweep passes the
+     * cached extraction when no document has changed: whether a payslip has
+     * aged past the staleness threshold is date arithmetic, and paying ~7
+     * model calls every two hours to re-learn numbers that cannot have moved
+     * is how a background job becomes the largest line on the AI bill.
+     */
+    cachedEvidence?: IncomeEvidence[];
+  },
 ): Promise<IncomeRunResult> {
   const asOf = opts?.asOf ?? new Date();
 
@@ -236,6 +251,22 @@ export async function runIncomeReconciliation(
     );
     return hit?.applicant ?? fallback;
   };
+
+  // Re-score cached evidence and skip the expensive half entirely.
+  if (opts?.cachedEvidence) {
+    const cached = opts.cachedEvidence;
+    return {
+      ok: true,
+      applicationId: request.application_id,
+      clientRef: request.client_ref,
+      documentsRead: cached.length,
+      declaredUnavailable: declared.length === 0,
+      extracted: false,
+      result: reconcile({ declared, evidence: cached, asOf }),
+      evidence: cached,
+      siblingIds: siblings.map((s) => s.id),
+    };
+  }
 
   type Target = { applicant: string; docKey: string; filename: string; storage_path: string };
   const targets: Target[] = [];
@@ -353,6 +384,9 @@ export async function runIncomeReconciliation(
     clientRef: request.client_ref,
     documentsRead: usable.length,
     declaredUnavailable: declared.length === 0,
+    extracted: true,
     result,
+    evidence: usable,
+    siblingIds: siblings.map((s) => s.id),
   };
 }
