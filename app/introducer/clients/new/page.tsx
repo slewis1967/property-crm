@@ -1,7 +1,9 @@
 import { requireIntroducerPage } from "../../session";
 import PortalHeader from "../../PortalHeader";
+import AccreditationNotice from "../../AccreditationNotice";
 import NewReferralForm from "./NewReferralForm";
 import { CONSENT_STATEMENT, INTRODUCER_FIELD_KEYS } from "../../../../utils/introducer";
+import { businessDayKey } from "../../../../utils/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,11 @@ export default async function NewReferralPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PortalHeader firmName={identity.firmName} userName={identity.fullName ?? identity.email} />
+      <AccreditationNotice
+        accreditationExpiresAt={identity.accreditationExpiresAt}
+        smsfCompetencyExpiresAt={identity.smsfCompetencyExpiresAt}
+        today={businessDayKey(new Date().toISOString())!}
+      />
       <main className="mx-auto max-w-3xl px-4 py-7">
         <NewReferralForm
           editable={[...INTRODUCER_FIELD_KEYS]}

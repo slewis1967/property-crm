@@ -200,6 +200,24 @@ export type ExamInvite = {
   tier?: IntroducerTier;
   /** Days until the link stops working. */
   days?: number;
+  /**
+   * Waive the course's waiting periods for this invitation — the reading timer
+   * that holds each module's check, the cooling-off ladder between failed
+   * finals, and the 24-hour lock after the fifth failure.
+   *
+   * WHY IT RIDES INSIDE THE SIGNED TOKEN. Those waits are enforced by the
+   * course's own JavaScript against state on the candidate's device, so
+   * anything the browser can be told, the candidate can tell it too. Carrying
+   * the waiver in the HMAC-signed payload makes it a decision Springboard made
+   * and signed — the same reason the identity travels this way rather than
+   * being typed.
+   *
+   * It is deliberately NOT a site-wide setting. It is issued per invitation, by
+   * a super-admin, and recorded on the application: a pass sat without the
+   * dwell timer was sat under different conditions from every other one, and
+   * the register has to be able to say which.
+   */
+  waive?: boolean;
 };
 
 const b64url = (b: Buffer | string) =>
@@ -222,6 +240,10 @@ export function mintExamInvite(invite: ExamInvite, secret: string, now = Date.no
     // typo cannot issue an invitation to a paper we do not offer.
     tier: invite.tier === "t2" ? ("t2" as const) : ("t1" as const),
     exp: Math.floor(now / 1000) + (invite.days ?? 30) * 86400,
+    // Omitted rather than set to false, so a payload only ever carries claims
+    // that were actually made — and an invitation issued before this existed
+    // reads identically to an ordinary one issued after it.
+    ...(invite.waive ? { waive: true as const } : {}),
   };
 
   const body = b64url(JSON.stringify(payload));
@@ -285,6 +307,91 @@ export function verifyExamInvite(
  */
 export function accreditationNumber(seq: number, year = new Date().getFullYear()): string {
   return `SBI-${year}-${String(seq).padStart(4, "0")}`;
+}
+
+/* ── how long an accreditation lasts ─────────────────────────────────── */
+
+/**
+ * Accreditation runs 12 months; the SMSF competency inside it runs 6.
+ *
+ * They are deliberately different clocks. M4 — superannuation and SMSF — is 23%
+ * of the Tier 1 exam and the part of the training most likely to go stale, so
+ * the competency is re-tested twice as often as the accreditation around it.
+ * Two dates, never one derived from the other at the point of use.
+ */
+export const ACCREDITATION_MONTHS = 12;
+export const SMSF_COMPETENCY_MONTHS = 6;
+
+/**
+ * Add whole months to a calendar date, clamping to the end of the target month.
+ *
+ * 31 August + 6 months is 28 February, not 3 March. JavaScript's own date
+ * arithmetic rolls over — `new Date(2026, 7, 31)` with the month set forward
+ * lands in the following month — and a certificate that prints an expiry three
+ * days after the one on the register is the kind of discrepancy that gets
+ * noticed at exactly the wrong moment.
+ *
+ * Takes and returns "YYYY-MM-DD". No instants, no timezones: an expiry is a
+ * calendar date, and the day it falls on must not depend on where the server is.
+ */
+export function addMonthsClamped(day: string, months: number): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!m) throw new Error(`addMonthsClamped needs YYYY-MM-DD, got ${JSON.stringify(day)}`);
+
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+
+  const total = (y * 12 + (mo - 1)) + months;
+  const ty = Math.floor(total / 12);
+  const tm = total % 12;
+
+  // Day 0 of the NEXT month is the last day of this one.
+  const lastDay = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  const td = Math.min(d, lastDay);
+
+  return `${String(ty).padStart(4, "0")}-${String(tm + 1).padStart(2, "0")}-${String(td).padStart(2, "0")}`;
+}
+
+/**
+ * The two expiry dates that follow from a certificate's issue date.
+ *
+ * `issuedOnDay` is the BUSINESS calendar day the certificate was issued —
+ * `businessDayKey(certificate_issued_at)` — not a UTC one. A certificate issued
+ * at 9am Brisbane is issued on the 14th; taken as UTC it was issued at 11pm on
+ * the 13th, and both expiries would then be a day early.
+ */
+export function accreditationExpiries(issuedOnDay: string): {
+  accreditationExpiresAt: string;
+  smsfCompetencyExpiresAt: string;
+} {
+  return {
+    accreditationExpiresAt: addMonthsClamped(issuedOnDay, ACCREDITATION_MONTHS),
+    smsfCompetencyExpiresAt: addMonthsClamped(issuedOnDay, SMSF_COMPETENCY_MONTHS),
+  };
+}
+
+/**
+ * Expired on `today`? Inclusive of the expiry day itself — an accreditation
+ * that expires on the 14th is still good ON the 14th, which is how every
+ * expiry date a person has ever read one behaves.
+ *
+ * A missing date is NOT treated as expired. Every introducer accredited before
+ * expiries were recorded has no date on their row, and locking all of them out
+ * of the portal on the day this shipped would be a worse failure than the one
+ * it is preventing. `hasExpiry` is how a caller tells the two apart.
+ */
+export function isExpiredOn(expiry: string | null | undefined, today: string): boolean {
+  if (!expiry) return false;
+  return expiry < today;
+}
+
+/** Whole days from `today` to `expiry`. Negative once it is behind us. */
+export function daysUntil(expiry: string, today: string): number {
+  const a = Date.parse(`${today}T00:00:00Z`);
+  const b = Date.parse(`${expiry}T00:00:00Z`);
+  if (Number.isNaN(a) || Number.isNaN(b)) return 0;
+  return Math.round((b - a) / 86400000);
 }
 
 /* ── misc ────────────────────────────────────────────────────────────── */

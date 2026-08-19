@@ -84,9 +84,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       contact_phone: app.phone,
       abn: app.abn,
       // The accreditation number IS the agreement reference: it is what the
-      // register, the certificate and the signed agreement all cite.
+      // register, the certificate and the signed agreement all cite. Written
+      // twice, under both names — `agreement_ref` is what the agreement calls
+      // it, `accreditation_no` is what the register calls it, and a reader
+      // should not have to know that they are the same field.
       agreement_ref: app.accreditation_no,
+      accreditation_no: app.accreditation_no,
       agreement_signed_at: new Date().toISOString(),
+      /* Copied, not joined. Every referral submitted from the portal has to
+       * check these, and the firm row is already in hand at that point — a join
+       * back to the application would put a second query on the hot path for a
+       * value that changes twice a year. It is also the row a suspension or a
+       * manual correction is applied to, so the copy is the one that should
+       * win. */
+      accreditation_expires_at: app.accreditation_expires_at ?? null,
+      smsf_competency_expires_at: app.smsf_competency_expires_at ?? null,
+      // The tier they were actually examined at. Nothing gates on it yet — the
+      // portal has no Tier 2 affordance to gate — but the firm has to know it
+      // before anything does.
+      tier: app.tier === "t2" ? "t2" : "t1",
       created_by: auth,
     })
     .select("id,firm_name")
@@ -126,6 +142,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await logOnboardingEvent(id, "super_admin", auth, "activated", {
     introducer_id: firm.id,
     accreditation_no: app.accreditation_no,
+    accreditation_expires_at: app.accreditation_expires_at ?? null,
+    smsf_competency_expires_at: app.smsf_competency_expires_at ?? null,
   });
 
   let inviteSent = true;

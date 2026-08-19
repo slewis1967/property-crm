@@ -15,6 +15,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import AuditFile from "./AuditFile";
+import { daysUntil, isExpiredOn } from "../../../utils/introducer-onboarding";
 
 type Application = {
   id: string;
@@ -31,6 +32,9 @@ type Application = {
   id_check_result: string | null;
   created_at: string;
   withdrawn_reason: string | null;
+  /** Both absent until 20260819_introducer_accreditation_expiry.sql runs. */
+  accreditation_expires_at?: string | null;
+  smsf_competency_expires_at?: string | null;
 };
 
 const STATE_LABEL: Record<string, string> = {
@@ -275,6 +279,7 @@ function Card({
               Exam {app.exam_score}/{app.exam_total}
             </p>
           )}
+          <Validity app={app} />
         </div>
       </div>
 
@@ -354,15 +359,39 @@ function Card({
           )}
 
           {app.state === "id_verified" && (
-            <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
-              Send course invitation
-            </Action>
+            <>
+              <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
+                Send course invitation
+              </Action>
+              <WaiveWaits
+                busy={busy}
+                onConfirm={() =>
+                  act(
+                    `${base}/exam-invite`,
+                    { waive: true },
+                    "Course invitation sent with the waiting periods off — recorded in the audit file.",
+                  )
+                }
+              />
+            </>
           )}
 
           {app.state === "course_started" && (
-            <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
-              Re-send course link
-            </Action>
+            <>
+              <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
+                Re-send course link
+              </Action>
+              <WaiveWaits
+                busy={busy}
+                onConfirm={() =>
+                  act(
+                    `${base}/exam-invite`,
+                    { waive: true },
+                    "Fresh link sent with the waiting periods off — recorded in the audit file.",
+                  )
+                }
+              />
+            </>
           )}
 
           {app.state === "exam_passed" && (
@@ -399,6 +428,63 @@ function Card({
   );
 }
 
+/**
+ * How long this accreditation has left.
+ *
+ * Shown from the moment the certificate is issued, not only once it is close to
+ * running out: an expiry nobody sees until the warning fires is one that gets
+ * discovered by a refused referral.
+ *
+ * Silent when there is no date. Everyone certificated before expiries were
+ * recorded has none, and inventing "unknown — assume expired" on their card
+ * would put a red badge on every established introducer we have.
+ */
+function Validity({ app }: { app: Application }) {
+  if (!app.accreditation_expires_at) return null;
+
+  // The comparison is made against the local calendar day rather than an
+  // instant, matching the server: an expiry is a date, not a moment.
+  const today = new Date().toLocaleDateString("en-CA");
+  const expired = isExpiredOn(app.accreditation_expires_at, today);
+  const left = daysUntil(app.accreditation_expires_at, today);
+  const smsfExpired = isExpiredOn(app.smsf_competency_expires_at, today);
+
+  return (
+    <div className="mt-1">
+      <p
+        className={`text-xs tabular-nums ${
+          expired ? "font-semibold text-red-700" : left <= 60 ? "font-semibold text-amber-700" : "text-gray-500"
+        }`}
+      >
+        {expired
+          ? `Accreditation expired ${fmtDay(app.accreditation_expires_at)}`
+          : `Valid until ${fmtDay(app.accreditation_expires_at)}${left <= 60 ? ` · ${left} days` : ""}`}
+      </p>
+      {/* Reported, never enforced. A lapsed SMSF competency narrows what an
+          introducer may discuss; it does not stop a referral, and a badge that
+          implied otherwise would have staff suspending people over it. */}
+      {smsfExpired && (
+        <p className="text-xs text-amber-700">SMSF competency lapsed {fmtDay(app.smsf_competency_expires_at!)}</p>
+      )}
+      {expired && app.state === "activated" && (
+        <p className="mt-0.5 max-w-[16rem] text-xs text-red-700">
+          They cannot submit referrals. Start a new accreditation to renew.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "2027-08-14" → "14 Aug 2027". A calendar day, printed as one. */
+function fmtDay(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function Action({
   children,
   busy,
@@ -422,6 +508,50 @@ function Action({
     >
       {busy ? "Working…" : children}
     </button>
+  );
+}
+
+/**
+ * Issue the course link with the waiting periods off.
+ *
+ * Two clicks rather than one, and it says what it costs in between. The waits
+ * are the only evidence the register holds that a candidate was in front of the
+ * material — the exam itself only evidences that they can answer. Turning them
+ * off is the right call for sitting the course ourselves or supervising a
+ * re-sitting, and the wrong one for a candidate accrediting at a distance, so
+ * the button makes the operator say which they meant.
+ *
+ * Every re-issue mints a new token, and the course treats a new token as a fresh
+ * start — so this clears their progress, exactly as re-sending the link already
+ * did. Said on the button, because it is not obvious.
+ */
+function WaiveWaits({ busy, onConfirm }: { busy: boolean; onConfirm: () => void }) {
+  const [asking, setAsking] = useState(false);
+
+  if (!asking) {
+    return (
+      <Action busy={busy} ghost onClick={() => setAsking(true)}>
+        Send without the waiting periods
+      </Action>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-lg border border-amber-300 bg-amber-50 p-3">
+      <p className="text-sm text-amber-900">
+        This link turns off the reading timers, the cooling-off between attempts and the 24-hour lock
+        after five failures. It starts them again from the beginning, and it is recorded on the
+        application — a pass sat this way is marked as one in the audit file.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Action busy={busy} onClick={() => { setAsking(false); onConfirm(); }}>
+          Send it anyway
+        </Action>
+        <Action busy={false} ghost onClick={() => setAsking(false)}>
+          Cancel
+        </Action>
+      </div>
+    </div>
   );
 }
 

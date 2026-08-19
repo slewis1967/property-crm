@@ -110,6 +110,14 @@ export default function NewReferralForm({
           <span className="text-sm leading-relaxed text-gray-700">{consentStatement}</span>
         </label>
 
+        {/* Said here rather than only at the point of refusal. The upload lives
+            on the referral, which does not exist until this form is saved — so
+            the honest thing is to warn now and take them straight to it. */}
+        <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          You will be asked to attach the signed Referral Consent and Privacy Form on the next screen.
+          The referral cannot be submitted until it is attached.
+        </p>
+
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             onClick={() => save("submit")}
