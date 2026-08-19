@@ -299,8 +299,8 @@ export async function recordExamAttempt(
     itemIds?: string[];
     markedAt?: string;
     integrity?: unknown;
-    /** The sitting ran with the course's waiting periods switched off. */
-    waived?: boolean;
+    /** The sitting ran with the course's waits off and its module gates open. */
+    overridden?: boolean;
   },
 ): Promise<{ duplicate: boolean }> {
   // limit(1) rather than maybeSingle() alone: if a duplicate ever did slip
@@ -326,7 +326,7 @@ export async function recordExamAttempt(
     item_ids: attempt.itemIds ?? [],
     marked_at: attempt.markedAt ?? new Date().toISOString(),
     integrity: attempt.integrity ?? null,
-    waiting_periods_waived: attempt.waived === true,
+    waits_and_gates_overridden: attempt.overridden === true,
   });
 
   return { duplicate: false };

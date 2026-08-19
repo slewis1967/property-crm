@@ -75,8 +75,11 @@ const TONE: Record<string, string> = {
 
 export default function Accreditations({
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
 }: {
   viewerIsSuperAdmin: boolean;
+  /** Narrower than super-admin, and deliberately so — see utils/super-admin.ts. */
+  viewerCanOverrideCourse: boolean;
 }) {
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +172,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => {
                   setNotice(msg);
                   setError(null);
@@ -190,6 +194,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => { setNotice(msg); await load(); }}
                 onError={setError}
               />
@@ -204,11 +209,13 @@ export default function Accreditations({
 function Card({
   app,
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
   onDone,
   onError,
 }: {
   app: Application;
   viewerIsSuperAdmin: boolean;
+  viewerCanOverrideCourse: boolean;
   onDone: (msg: string) => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -363,16 +370,18 @@ function Card({
               <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
                 Send course invitation
               </Action>
-              <WaiveWaits
-                busy={busy}
-                onConfirm={() =>
-                  act(
-                    `${base}/exam-invite`,
-                    { waive: true },
-                    "Course invitation sent with the waiting periods off — recorded in the audit file.",
-                  )
-                }
-              />
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Course invitation sent with the gates open — recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
             </>
           )}
 
@@ -381,16 +390,18 @@ function Card({
               <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
                 Re-send course link
               </Action>
-              <WaiveWaits
-                busy={busy}
-                onConfirm={() =>
-                  act(
-                    `${base}/exam-invite`,
-                    { waive: true },
-                    "Fresh link sent with the waiting periods off — recorded in the audit file.",
-                  )
-                }
-              />
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Link sent with the gates open — their progress is kept. Recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
             </>
           )}
 
@@ -512,26 +523,36 @@ function Action({
 }
 
 /**
- * Issue the course link with the waiting periods off.
+ * Reopen the course for someone who is stuck in it.
  *
- * Two clicks rather than one, and it says what it costs in between. The waits
- * are the only evidence the register holds that a candidate was in front of the
- * material — the exam itself only evidences that they can answer. Turning them
- * off is the right call for sitting the course ourselves or supervising a
- * re-sitting, and the wrong one for a candidate accrediting at a distance, so
- * the button makes the operator say which they meant.
+ * The case this exists for: a candidate fails the exam, every topic they missed
+ * re-locks, and they are sent back through modules they have already worked
+ * through before they can try again. This lets them go straight back to those
+ * sections.
  *
- * Every re-issue mints a new token, and the course treats a new token as a fresh
- * start — so this clears their progress, exactly as re-sending the link already
- * did. Said on the button, because it is not obvious.
+ * Two clicks rather than one, and it says what it costs in between. The reading
+ * timers are the only evidence the register holds that a candidate was in front
+ * of the material — the exam itself only evidences that they can answer. Turning
+ * them off is the right call for sitting the course ourselves or supervising a
+ * re-sitting, and the wrong one for someone accrediting at a distance, so the
+ * button makes the operator say which they meant.
+ *
+ * UNLIKE AN ORDINARY RE-SEND, this one keeps their progress. Every other
+ * re-issued link is a deliberate fresh start; this is the opposite, and the
+ * panel says so, because an operator who has learned that re-sending wipes
+ * people would otherwise never reach for it on the candidate who most needs it.
  */
-function WaiveWaits({ busy, onConfirm }: { busy: boolean; onConfirm: () => void }) {
+/* Rendered only for whoever holds `canOverrideCourse` — narrower than
+   super-admin, because this changes what an accreditation MEANS rather than who
+   holds one. Hiding it is a courtesy to everyone else, not the control: the
+   route checks the same authority, and a hidden button is a decoration. */
+function Override({ busy, onConfirm }: { busy: boolean; onConfirm: () => void }) {
   const [asking, setAsking] = useState(false);
 
   if (!asking) {
     return (
       <Action busy={busy} ghost onClick={() => setAsking(true)}>
-        Send without the waiting periods
+        Reopen the course for them
       </Action>
     );
   }
@@ -540,12 +561,17 @@ function WaiveWaits({ busy, onConfirm }: { busy: boolean; onConfirm: () => void 
     <div className="w-full rounded-lg border border-amber-300 bg-amber-50 p-3">
       <p className="text-sm text-amber-900">
         This link turns off the reading timers, the cooling-off between attempts and the 24-hour lock
-        after five failures. It starts them again from the beginning, and it is recorded on the
-        application — a pass sat this way is marked as one in the audit file.
+        after five failures, and reopens every module they have already attempted — including any that
+        a failed exam sent them back through. <strong>Their progress is kept</strong>, unlike an
+        ordinary re-send.
+      </p>
+      <p className="mt-2 text-sm text-amber-900">
+        A module they have never opened stays locked, and they still have to pass at 100%. It is
+        recorded on the application, and a pass sat this way is marked as one in the audit file.
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Action busy={busy} onClick={() => { setAsking(false); onConfirm(); }}>
-          Send it anyway
+          Send it
         </Action>
         <Action busy={false} ghost onClick={() => setAsking(false)}>
           Cancel

@@ -12,7 +12,7 @@ import {
   type ActiveGrant,
   type OpenInfoRequest,
 } from "./introducer";
-import { isSuperAdmin, superAdminEmails } from "./super-admin";
+import { isSuperAdmin, superAdminEmails, canOverrideCourse, courseOverrideEmails } from "./super-admin";
 import { isPublicIntroducerRoute } from "../proxy";
 
 /**
@@ -247,6 +247,54 @@ describe("normaliseAuPhone", () => {
  * (or worse, in the consent wording their client relies on) is a branding leak,
  * not a typo. The staff side at /admin/introducers is deliberately exempt.
  */
+describe("overriding the accreditation course is narrower than super-admin", () => {
+  const KEY = "COURSE_OVERRIDE_EMAILS";
+  const SUPER = "SUPER_ADMIN_EMAILS";
+  const savedOverride = process.env[KEY];
+  const savedSuper = process.env[SUPER];
+
+  afterEach(() => {
+    if (savedOverride === undefined) delete process.env[KEY];
+    else process.env[KEY] = savedOverride;
+    if (savedSuper === undefined) delete process.env[SUPER];
+    else process.env[SUPER] = savedSuper;
+  });
+
+  it("defaults to the owner alone", () => {
+    delete process.env[KEY];
+    expect([...courseOverrideEmails()]).toEqual(["sean.l@nextkey.com.au"]);
+    expect(canOverrideCourse("sean.l@nextkey.com.au")).toBe(true);
+    expect(canOverrideCourse("glenn@nextkey.com.au")).toBe(false);
+  });
+
+  it("does NOT widen when super-admin widens", () => {
+    // The point of the separate variable. A second person who can accept
+    // referrals and authorise an unlock is a normal thing to want, and it must
+    // not silently hand them the ability to soften what accreditation requires.
+    process.env[SUPER] = "sean.l@nextkey.com.au,glenn@nextkey.com.au";
+    delete process.env[KEY];
+    expect(isSuperAdmin("glenn@nextkey.com.au")).toBe(true);
+    expect(canOverrideCourse("glenn@nextkey.com.au")).toBe(false);
+  });
+
+  it("is settable, and only in the Netlify environment", () => {
+    process.env[KEY] = "Owner@Example.com , second@example.com";
+    expect(canOverrideCourse("owner@example.com")).toBe(true);
+    expect(canOverrideCourse("SECOND@EXAMPLE.COM")).toBe(true);
+    // Set explicitly, so the default no longer applies.
+    expect(canOverrideCourse("sean.l@nextkey.com.au")).toBe(false);
+  });
+
+  it("fails closed on anything that is not an identity", () => {
+    delete process.env[KEY];
+    for (const junk of [null, undefined, "", "   ", 42 as unknown as string, {} as unknown as string]) {
+      expect(canOverrideCourse(junk)).toBe(false);
+    }
+    // The unauthenticated sentinel from utils/cf-access.ts, same as isSuperAdmin.
+    expect(canOverrideCourse("cf-access-unauthenticated")).toBe(false);
+  });
+});
+
 describe("introducer-facing copy is Springboard-branded", () => {
   it("the consent statement names Springboard, never NextKey", () => {
     expect(CONSENT_STATEMENT).toContain("Springboard");

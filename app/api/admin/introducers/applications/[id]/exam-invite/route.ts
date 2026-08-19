@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdmin } from "../../../_shared";
+import { canOverrideCourse } from "../../../../../../../utils/super-admin";
 import {
   findById,
   setState,
@@ -24,11 +25,22 @@ import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-o
  * and it refuses to create one for an applicant whose identity has not been
  * verified yet.
  *
- * `{ waive: true }` issues the same invitation with the course's waiting
- * periods turned off — the reading timer, the cooling-off ladder and the
- * 24-hour lock. It is for sitting the course ourselves and for supervised
- * re-sittings, not for candidates, and it is recorded as a distinct event so
- * the register can tell a waived sitting from an ordinary one.
+ * `{ override: true }` issues the same invitation with the course reopened:
+ * the reading timers and the waits are off, any module the candidate has
+ * already attempted is unlocked whether or not a failed exam re-locked it, and
+ * the link keeps their progress instead of clearing it the way every other
+ * re-issue does. A module they have never opened stays locked, and the pass mark
+ * is unchanged.
+ *
+ * It is for sitting the course ourselves and for unsticking a supervised
+ * re-sitting, not for candidates accrediting at a distance, and it is recorded
+ * as a distinct event so the register can tell such a sitting from an ordinary
+ * one.
+ *
+ * IT NEEDS MORE THAN SUPER-ADMIN. Issuing an invitation is a super-admin act;
+ * overriding what the course requires is narrower again, and gated on
+ * `canOverrideCourse` — see utils/super-admin.ts for why it does not simply
+ * ride on SUPER_ADMIN_EMAILS.
  */
 export async function POST(
   req: Request,
@@ -40,8 +52,23 @@ export async function POST(
   const { id } = await params;
 
   // Body is optional — the ordinary call sends none at all.
-  const body = (await req.json().catch(() => ({}))) as { waive?: unknown };
-  const waive = body?.waive === true;
+  const body = (await req.json().catch(() => ({}))) as { override?: unknown };
+  const override = body?.override === true;
+
+  // Checked on the SERVER, not merely hidden in the UI. The button is not
+  // rendered for anyone else, but a hidden button is a decoration — this is the
+  // gate.
+  if (override && !canOverrideCourse(auth)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Reopening the course is reserved to the account owner. Send the ordinary invitation, or ask Sean to reopen it.",
+        code: "course_override_forbidden",
+      },
+      { status: 403 },
+    );
+  }
 
   const secret = process.env.INVITE_SECRET;
   if (!secret) {
@@ -91,7 +118,7 @@ export async function POST(
       abn: application.abn ?? "",
       email: application.email,
       tier: application.tier,
-      waive,
+      override,
     },
     secret,
   );
@@ -115,9 +142,10 @@ export async function POST(
       body:
         `Your identity has been verified, so the course is open. It takes a few hours and the exam is ` +
         `100% to pass, with as many attempts as you need — you can stop and come back at any point.` +
-        (waive
-          ? `<br><br>The reading timers and the waiting periods between attempts are switched off on ` +
-            `this link.`
+        (override
+          ? `<br><br>This link reopens the course for you: the reading timers and the waits between ` +
+            `attempts are off, and any module you have already worked through is open again rather ` +
+            `than needing to be re-read. Your progress is kept.`
           : "") +
         `<br><br>Start here: <a href="${url}">${url}</a>`,
       cta: "See where you are",
@@ -131,15 +159,19 @@ export async function POST(
     await setState(application.id, "course_started");
   }
 
-  // A waived sitting gets its own action name, not a flag buried in the detail:
-  // the audit file renders the action and nothing else, so anything that has to
-  // be visible to an auditor has to be in the name.
+  // An overridden sitting gets its own action name, not a flag buried in the
+  // detail: the audit file renders the action and nothing else, so anything that
+  // has to be visible to an auditor has to be in the name.
   await logOnboardingEvent(
     application.id,
     "super_admin",
     auth,
-    waive ? "exam_invite_waiting_periods_waived" : reissue ? "exam_invite_reissued" : "exam_invite_issued",
-    { emailed, email_error: emailError, reissued: reissue, waived: waive },
+    override
+      ? "exam_invite_waits_and_gates_overridden"
+      : reissue
+        ? "exam_invite_reissued"
+        : "exam_invite_issued",
+    { emailed, email_error: emailError, reissued: reissue, overridden: override },
   );
 
   return NextResponse.json({
@@ -151,6 +183,6 @@ export async function POST(
     emailed,
     email_error: emailError,
     reissued: reissue,
-    waived: waive,
+    overridden: override,
   });
 }
