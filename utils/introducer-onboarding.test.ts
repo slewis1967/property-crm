@@ -203,33 +203,34 @@ describe("exam invites — identity is issued, not typed", () => {
     }
   });
 
-  it("does not mention waiting periods unless they were waived", () => {
-    // An ordinary invitation asserts nothing about the waits, so the course
-    // falls back to enforcing them. `waive: false` would be a claim; absence is
-    // not.
+  it("claims no override unless one was granted", () => {
+    // An ordinary invitation asserts nothing about the gates, so the course
+    // falls back to enforcing them. `override: false` would be a claim; absence
+    // is not.
     const v = verifyExamInvite(mintExamInvite(base, SECRET), SECRET);
     expect(v.ok).toBe(true);
-    if (v.ok) expect("waive" in v.payload).toBe(false);
+    if (v.ok) expect("override" in v.payload).toBe(false);
 
-    const off = verifyExamInvite(mintExamInvite({ ...base, waive: false }, SECRET), SECRET);
+    const off = verifyExamInvite(mintExamInvite({ ...base, override: false }, SECRET), SECRET);
     expect(off.ok).toBe(true);
-    if (off.ok) expect("waive" in off.payload).toBe(false);
+    if (off.ok) expect("override" in off.payload).toBe(false);
   });
 
-  it("carries a waiver of the waiting periods, signed", () => {
-    const v = verifyExamInvite(mintExamInvite({ ...base, waive: true }, SECRET), SECRET);
+  it("carries an override of the waits and the module gates, signed", () => {
+    const v = verifyExamInvite(mintExamInvite({ ...base, override: true }, SECRET), SECRET);
     expect(v.ok).toBe(true);
-    if (v.ok) expect(v.payload.waive).toBe(true);
+    if (v.ok) expect(v.payload.override).toBe(true);
   });
 
-  it("refuses a waiver bolted onto a token we signed without one", () => {
-    // The whole reason the waiver travels inside the payload: the waits are
-    // enforced in the candidate's own browser, so the only thing stopping them
-    // switching the waits off is that they cannot re-sign the claim.
+  it("refuses an override bolted onto a token we signed without one", () => {
+    // The whole reason the override travels inside the payload: the waits and
+    // the gates are enforced in the candidate's own browser, so the only thing
+    // stopping them opening the gates themselves is that they cannot re-sign
+    // the claim.
     const t = mintExamInvite(base, SECRET);
     const [body, sig] = t.split(".");
     const p = JSON.parse(Buffer.from(body, "base64url").toString());
-    p.waive = true;
+    p.override = true;
     const forged = Buffer.from(JSON.stringify(p)).toString("base64url") + "." + sig;
     expect(verifyExamInvite(forged, SECRET).ok).toBe(false);
   });

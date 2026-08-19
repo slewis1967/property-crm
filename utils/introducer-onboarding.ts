@@ -201,23 +201,37 @@ export type ExamInvite = {
   /** Days until the link stops working. */
   days?: number;
   /**
-   * Waive the course's waiting periods for this invitation — the reading timer
-   * that holds each module's check, the cooling-off ladder between failed
-   * finals, and the 24-hour lock after the fifth failure.
+   * Reopen the course for this invitation. FOUR things, not one:
    *
-   * WHY IT RIDES INSIDE THE SIGNED TOKEN. Those waits are enforced by the
+   *   1. the reading timer that holds each module's check;
+   *   2. the cooling-off ladder between failed finals;
+   *   3. the 24-hour lock after the fifth failure — and the progress wipe that
+   *      comes with it, which is the only part that destroys rather than delays;
+   *   4. the re-locking of modules a failed exam sends the candidate back
+   *      through, for any module they have already attempted.
+   *
+   * It also stops the link clearing their progress. Every other re-issued link
+   * is a deliberate fresh start — that is what stops a candidate wiping a
+   * failed-attempt count by reopening a bookmark — but an override exists to
+   * put someone back where they were, and wiping first would leave nothing to
+   * reopen.
+   *
+   * WHAT IT IS NOT. A module the candidate has never opened stays locked, and
+   * the pass mark is still 100%. This unsticks someone already in the material;
+   * it does not shorten the course or hand anyone a pass.
+   *
+   * WHY IT RIDES INSIDE THE SIGNED TOKEN. All of that is enforced by the
    * course's own JavaScript against state on the candidate's device, so
-   * anything the browser can be told, the candidate can tell it too. Carrying
-   * the waiver in the HMAC-signed payload makes it a decision Springboard made
-   * and signed — the same reason the identity travels this way rather than
-   * being typed.
+   * anything the browser can be told, the candidate can tell it too. Carrying it
+   * in the HMAC-signed payload makes it a decision Springboard made and signed —
+   * the same reason the identity travels this way rather than being typed.
    *
    * It is deliberately NOT a site-wide setting. It is issued per invitation, by
-   * a super-admin, and recorded on the application: a pass sat without the
-   * dwell timer was sat under different conditions from every other one, and
-   * the register has to be able to say which.
+   * a super-admin, and recorded on the application: a pass sat without the dwell
+   * timer was sat under different conditions from every other one, and the
+   * register has to be able to say which.
    */
-  waive?: boolean;
+  override?: boolean;
 };
 
 const b64url = (b: Buffer | string) =>
@@ -243,7 +257,7 @@ export function mintExamInvite(invite: ExamInvite, secret: string, now = Date.no
     // Omitted rather than set to false, so a payload only ever carries claims
     // that were actually made — and an invitation issued before this existed
     // reads identically to an ordinary one issued after it.
-    ...(invite.waive ? { waive: true as const } : {}),
+    ...(invite.override ? { override: true as const } : {}),
   };
 
   const body = b64url(JSON.stringify(payload));

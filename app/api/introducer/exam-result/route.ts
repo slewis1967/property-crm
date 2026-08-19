@@ -70,10 +70,10 @@ export async function POST(req: Request) {
   const identitySource = typeof body.identitySource === "string" ? body.identitySource : "";
   // The exam function reads this off the SIGNED invite, not off the candidate's
   // browser, so it is as trustworthy as anything else this webhook carries. It
-  // changes nothing about whether the attempt counts — a waived sitting is still
-  // a 100% pass — but a pass sat under different conditions from every other one
-  // has to be legible in the record.
-  const waived = body.waived === true;
+  // changes nothing about whether the attempt counts — an overridden sitting is
+  // still a 100% pass — but a pass sat under different conditions from every
+  // other one has to be legible in the record.
+  const overridden = body.overridden === true;
 
   if (!paperId) {
     return NextResponse.json({ ok: false, error: "paperId is required" }, { status: 400 });
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     itemIds: Array.isArray(body.itemIds) ? (body.itemIds as string[]) : [],
     markedAt: typeof body.markedAt === "string" ? body.markedAt : undefined,
     integrity: body.integrity ?? null,
-    waived,
+    overridden,
   });
 
   if (duplicate) {
@@ -161,15 +161,15 @@ export async function POST(req: Request) {
   await logOnboardingEvent(applicationId, "system", null, "exam_passed", {
     paper_id: paperId,
     accreditation_no: accreditationNo,
-    waiting_periods_waived: waived,
+    waits_and_gates_overridden: overridden,
   });
 
   // Its own entry, because the audit file renders the action name and nothing
-  // else. Someone reading the trail has to be able to see that this pass was
-  // sat without the reading timers, before they decide to issue a certificate
-  // off the back of it.
-  if (waived) {
-    await logOnboardingEvent(applicationId, "system", null, "exam_passed_with_waiting_periods_waived", {
+  // else. Someone reading the trail has to be able to see that this pass was sat
+  // with the timers off and the module gates open, before they decide to issue a
+  // certificate off the back of it.
+  if (overridden) {
+    await logOnboardingEvent(applicationId, "system", null, "exam_passed_under_override", {
       paper_id: paperId,
       accreditation_no: accreditationNo,
     });
