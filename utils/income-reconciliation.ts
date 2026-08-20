@@ -327,13 +327,18 @@ export function reconcile(args: {
     }
 
     /**
-     * Part-year warnings run over EVERY statement, not just the ones feeding
-     * the figure above. This is the single most valuable thing here — it is the
-     * misreading a lender made against us — and it must not be suppressed by a
-     * bookkeeping decision about which statements to total.
+     * Part-year warnings cover the statements FEEDING the figure above, not
+     * every statement on file.
+     *
+     * The warning means "the number in front of you understates them", so it
+     * has to describe the number in front of them. Melissa started at
+     * Woolworths in November, which makes her 2024-25 statement a genuine part
+     * year — but her figure comes from a complete 2025-26, and marking it
+     * unreliable because of last year's document tells the reader the opposite
+     * of the truth.
      */
     let atoPartYear = false;
-    for (const a of atos) {
+    for (const a of currentAtos) {
       const { annual, partYear, coverageDays } = atoAnnualisation(a);
       if (annual == null || !partYear) continue;
       atoPartYear = true;

@@ -191,6 +191,9 @@ describe("reconcile — the Halliday file", () => {
     payslip({ applicant: "Melissa", employer: "Woolworths Group Limited", periodStart: "2026-07-06", periodEnd: "2026-07-12", paidOn: "2026-07-15", grossThisPeriod: 1_271.75 }),
     payslip({ applicant: "Melissa", employer: "Woolworths Group Limited", periodStart: "2026-07-13", periodEnd: "2026-07-19", paidOn: "2026-07-22", grossThisPeriod: 1_283.06 }),
     ato({ applicant: "Melissa", employer: "Woolworths Group Limited", financialYear: "2025-26", periodStart: "2025-07-01", periodEnd: "2026-06-30", totalGross: 42_263.15 }),
+    // She started at Woolworths in November 2024, so LAST year's statement is a
+    // genuine part year. It must not make this year's complete one look shaky.
+    ato({ applicant: "Melissa", employer: "Woolworths Group Limited", financialYear: "2024-25", periodStart: "2024-11-28", periodEnd: "2025-06-30", totalGross: 27_911.18 }),
   ];
 
   const decl = [
@@ -286,7 +289,15 @@ describe("reconcile — the Halliday file", () => {
   it("gives Melissa her full-year ATO figure", () => {
     const mel = result.applicants.find((a) => a.applicant === "Melissa")!;
     expect(mel.atoAnnual).toBe(42_263);
+  });
+
+  it("doesn't call Melissa's figure part-year because LAST year's was", () => {
+    // Her 2024-25 statement is a real part year — she started that November —
+    // but her figure comes from a complete 2025-26. Marking it unreliable
+    // would tell the reader the opposite of the truth.
+    const mel = result.applicants.find((a) => a.applicant === "Melissa")!;
     expect(mel.atoIsPartYear).toBe(false);
+    expect(result.findings.some((f) => f.applicant === "Melissa" && f.code === "ato_part_year")).toBe(false);
   });
 
   it("summarises both totals", () => {
