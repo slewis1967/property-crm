@@ -120,7 +120,7 @@ export default function NewReferralForm({
       </h1>
       <p className="mt-1 text-sm text-gray-600">
         {isPack
-          ? "Start with who your client is. The Needs Analysis comes next, and you can stop and come back to it any time before you submit."
+          ? "Just enough to get started — who your client is and how to reach them. Their situation, income and finances are all captured on the Needs Analysis next, and you can stop and come back to it any time before you submit."
           : "Tell us about your client."}{" "}
         Fields marked <span className="text-red-600">*</span> are needed before you can submit.
       </p>
@@ -140,7 +140,7 @@ export default function NewReferralForm({
       )}
 
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
-        <ReferralFields values={values} editable={editable} onChange={set} />
+        <ReferralFields values={values} editable={editable} onChange={set} packType={packType} />
       </div>
 
       {isPack ? (

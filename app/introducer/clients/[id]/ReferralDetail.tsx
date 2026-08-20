@@ -421,6 +421,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           editable={data.editable}
           onChange={(k, v) => setValues((s) => ({ ...s, [k]: v }))}
           highlight={[...requestedFields]}
+          packType={isPack ? "full" : "referral"}
         />
       </div>
 
