@@ -127,6 +127,18 @@ export default async function IntroducerClientsPage() {
   );
 }
 
+/**
+ * What a draft is waiting on.
+ *
+ * "Not submitted" is true of every draft and therefore tells a Tier 2
+ * introducer with six packs on the go nothing at all. A pack's real state is
+ * whether the fact find has been started, so say that instead.
+ */
+function draftDetail(client: ReturnType<typeof toPortalView>): string {
+  if (client.pack_type !== "full") return "Not submitted";
+  return client.fact_find_started ? "Fact find in progress" : "Fact find not started";
+}
+
 function ReferralRow({
   client,
   actionNeeded,
@@ -151,12 +163,17 @@ function ReferralRow({
               )}
             </div>
             <div className="mt-0.5 truncate text-sm text-gray-600">
-              {client.status === "draft" ? "Not submitted" : client.stage_label}
+              {client.status === "draft" ? draftDetail(client) : client.stage_label}
               {client.suburb ? ` · ${client.suburb}` : ""}
               {client.state ? `, ${client.state}` : ""}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {client.pack_type === "full" && (
+              <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-medium text-white">
+                Pack
+              </span>
+            )}
             {actionNeeded && (
               <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
                 Action needed

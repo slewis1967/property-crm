@@ -11,6 +11,52 @@
  * added here but not there would be editable after submit without authorisation.
  */
 
+import {
+  factFindCompletionBlockers,
+  hydrateFactFind,
+  outstandingSections,
+  type FactFindData,
+} from "./factfind";
+
+/**
+ * Which of the two things an introducer can send us.
+ *
+ * `referral` is the Tier 1 form that has always existed: coarse details, triaged
+ * by a human, promoted to the CRM only if a super admin accepts it.
+ *
+ * `full` is the Tier 2 submission pack — the same fact find and document
+ * collection a staff member would assemble. It does NOT go through the accept
+ * gate (see the header of migrations/20260820_introducer_tier2_pack.sql for why,
+ * and for what stands in its place). Only a firm whose `introducers.tier` is
+ * 't2' may hold one; enforced in the route, and again by a database trigger.
+ */
+export const INTRODUCER_PACK_TYPES = ["referral", "full"] as const;
+export type IntroducerPackType = (typeof INTRODUCER_PACK_TYPES)[number];
+
+export const PACK_LABELS: Record<IntroducerPackType, string> = {
+  referral: "Referral",
+  full: "Full submission pack",
+};
+
+export function isPackType(v: unknown): v is IntroducerPackType {
+  return typeof v === "string" && (INTRODUCER_PACK_TYPES as readonly string[]).includes(v);
+}
+
+/** Accreditation tiers, as recorded on `introducers.tier`. */
+export type IntroducerTier = "t1" | "t2";
+
+/**
+ * May this firm send a full pack?
+ *
+ * One function rather than `tier === "t2"` scattered across routes and pages, so
+ * "who is allowed to do credit assistance for us" is written down once. Anything
+ * unrecognised — including the NULL tier every firm activated before the column
+ * existed carries — is Tier 1. Never read upwards.
+ */
+export function canSendFullPack(tier: string | null | undefined): boolean {
+  return tier === "t2";
+}
+
 /** Referral lifecycle. Mirrors the CHECK constraint on introducer_clients.status. */
 export const INTRODUCER_CLIENT_STATUSES = [
   "draft",
@@ -354,6 +400,104 @@ export function missingRequiredFields(record: ClientRecordShape): string[] {
   return INTRODUCER_FIELDS.filter((f) => f.required && isBlank(record[f.key])).map((f) => f.key);
 }
 
+/* ── Tier 2: the full submission pack ────────────────────────────────────── */
+
+/**
+ * Seed a blank fact find from the referral details already typed.
+ *
+ * The Tier 1 fields and the fact find's first page ask several of the same
+ * questions. Re-typing them is how the two end up disagreeing about the client's
+ * own name, so applicant 1 and 2 are filled from the referral and the introducer
+ * corrects rather than transcribes.
+ *
+ * Deliberately conservative — only fields that mean the same thing on both
+ * sides. `income_band` is a band and `annual_income` is a number, so income is
+ * NOT carried across: turning "$90,000 – $120,000" into a figure would invent
+ * precision the client never gave, and the capacity engine would then treat the
+ * invention as declared income.
+ */
+export function seedFactFindFromReferral(record: ClientRecordShape): FactFindData {
+  const data = hydrateFactFind({});
+  const str = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+  data.applicants[0].given_names = str(record.first_name);
+  data.applicants[0].family_name = str(record.last_name);
+  data.applicants[0].email = str(record.email);
+  data.applicants[0].phone_home = str(record.phone);
+  data.applicants[0].date_of_birth = str(record.dob);
+  data.applicants[0].address = [str(record.suburb), str(record.state)].filter(Boolean).join(", ");
+  data.applicants[0].postcode = str(record.postcode);
+
+  data.applicants[1].given_names = str(record.applicant2_first_name);
+  data.applicants[1].family_name = str(record.applicant2_last_name);
+  data.applicants[1].email = str(record.applicant2_email);
+  data.applicants[1].phone_home = str(record.applicant2_phone);
+
+  return data;
+}
+
+/**
+ * What still stops this pack being submitted?
+ *
+ * TWO LISTS, AND THE DISTINCTION MATTERS. `factFindCompletionBlockers` is the
+ * hard gate the staff side uses to stop a stub being signed off as Complete —
+ * name, DOB and address for every applicant in use. `outstandingSections` is the
+ * advisory list of everything a credit submission actually needs. On the staff
+ * side the second is advisory because a fact find is filled in over several
+ * conversations with the file open in front of you.
+ *
+ * Here it is NOT advisory. A Tier 2 submit creates the opportunity and emails
+ * the client in one irreversible move, and the introducer does not get to come
+ * back and finish it afterwards — the pack locks. So both lists are enforced,
+ * and the whole thing is one gate rather than a warning someone can click past.
+ */
+export function factFindSubmitBlockers(raw: unknown): string[] {
+  const data = hydrateFactFind(raw);
+  const hard = factFindCompletionBlockers(data);
+  const advisory = outstandingSections(data);
+  // Union, preserving the hard blockers' order — they name the applicant, so
+  // they read better first.
+  return [...hard, ...advisory.filter((s) => !hard.includes(s))];
+}
+
+/**
+ * Is there anything in this blob at all?
+ *
+ * `fact_find_data` defaults to '{}', and `hydrateFactFind` turns that into a
+ * fully-shaped empty template — so "has the introducer started the fact find"
+ * cannot be answered by looking for keys. Ask whether an applicant has a name.
+ */
+export function factFindStarted(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const data = hydrateFactFind(raw);
+  return data.applicants.some((a) => a.given_names.trim() !== "" || a.family_name.trim() !== "");
+}
+
+/**
+ * How many applicants is this pack for?
+ *
+ * Drives how many document-collection requests get created — each applicant
+ * uploads their own ID, payslips and super statement, so each needs their own
+ * link. Reads the fact find rather than the referral's applicant-2 fields,
+ * because by submit the fact find is the authoritative version.
+ */
+export function packApplicantCount(raw: unknown): 1 | 2 {
+  const data = hydrateFactFind(raw);
+  const second = data.applicants[1];
+  return second.given_names.trim() || second.family_name.trim() ? 2 : 1;
+}
+
+/** "John Smith" for applicant `i` (0-based), from the fact find. "" if unused. */
+export function packApplicantName(raw: unknown, i: 0 | 1): string {
+  const a = hydrateFactFind(raw).applicants[i];
+  return [a.given_names.trim(), a.family_name.trim()].filter(Boolean).join(" ");
+}
+
+/** The email we'd send applicant `i`'s upload link to. "" when we don't have one. */
+export function packApplicantEmail(raw: unknown, i: 0 | 1): string {
+  return hydrateFactFind(raw).applicants[i].email.trim();
+}
+
 /**
  * Has migrations/20260811_introducer_portal.sql not been applied yet?
  *
@@ -400,9 +544,19 @@ export function normaliseAuPhone(input: string): string | null {
  */
 export function toPortalView(row: Record<string, unknown>) {
   const status = String(row.status ?? "draft") as IntroducerClientStatus;
+  const packType: IntroducerPackType = isPackType(row.pack_type) ? row.pack_type : "referral";
   return {
     id: String(row.id),
     client_ref: (row.client_ref as string) ?? null,
+    pack_type: packType,
+    pack_label: PACK_LABELS[packType],
+    /* Whether the fact find has been started and whether a document request
+     * exists — NOT the fact find itself, and never the request's token. The
+     * blob is fetched separately by the pack form, which is the only surface
+     * entitled to it; a list view has no business carrying a client's
+     * liabilities in its payload. */
+    fact_find_started: factFindStarted(row.fact_find_data),
+    documents_requested: Boolean(row.document_request_id),
     first_name: (row.first_name as string) ?? "",
     last_name: (row.last_name as string) ?? "",
     email: (row.email as string) ?? null,

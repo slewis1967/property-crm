@@ -13,6 +13,13 @@
  *   locked        — read-only, with a plain explanation of how to get a change made
  *   info_request  — read-only EXCEPT the specific things we asked for
  *   authorised    — a change window is open, and it says what and for how long
+ *
+ * AND TWO SHAPES. A Tier 1 referral submits into a review queue. A Tier 2 pack
+ * carries a fact find, and submitting it creates the opportunity and emails the
+ * client on the spot — no queue, no way back. The submit button therefore has to
+ * say two different things, and the pack's version has to be unmistakable about
+ * being irreversible. Deriving that from `pack_type` on the payload, not from
+ * anything the browser knows about the firm.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -44,7 +51,16 @@ type DocRow = {
 
 type Payload = {
   ok: true;
-  client: Record<string, string | null> & { id: string; status: string; stage_label: string; status_label: string };
+  client: Record<string, string | null> & {
+    id: string;
+    status: string;
+    stage_label: string;
+    status_label: string;
+    pack_type?: string;
+    pack_label?: string;
+    fact_find_started?: boolean;
+    documents_requested?: boolean;
+  };
   missing_required: Labelled[];
   consent_statement: string;
   editable: string[];
@@ -137,6 +153,8 @@ export default function ReferralDetail({ id }: { id: string }) {
   const name = `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() || "Unnamed referral";
   const isDraft = client.status === "draft";
   const canEditAnything = data.editable.length > 0;
+  const isPack = client.pack_type === "full";
+  const factFindStarted = Boolean(client.fact_find_started);
 
   const requestedFields = new Set(data.info_requests.flatMap((r) => r.fields.map((f) => f.key)));
 
@@ -199,7 +217,25 @@ export default function ReferralDetail({ id }: { id: string }) {
         setError(json.error ?? "Could not submit.");
         return;
       }
-      setNotice("Submitted. We'll be in touch.");
+      /* Say what actually happened, not what usually happens.
+       *
+       * A pack's document email is sent best-effort AFTER the submission is
+       * committed, so "submitted" and "your client has been emailed" are two
+       * different facts and the second one can be false. Reporting the first as
+       * if it implied the second is how an introducer ends up telling a client
+       * to check an inbox nothing was sent to. */
+      if (json.documents_sent === false) {
+        setNotice(
+          "Pack submitted and with the assessor — but we couldn't email your client their " +
+            "document link. Springboard has been notified and will send it.",
+        );
+      } else {
+        setNotice(
+          isPack
+            ? "Pack submitted. Your client has been emailed a link to upload their documents."
+            : "Submitted. We'll be in touch.",
+        );
+      }
       await load();
       router.refresh();
     } catch {
@@ -267,6 +303,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           <h1 className="text-2xl font-semibold text-gray-900">{name}</h1>
           <p className="mt-1 text-sm text-gray-600">
             {client.client_ref ? `${client.client_ref} · ` : ""}
+            {isPack ? `${client.pack_label ?? "Full submission pack"} · ` : ""}
             {client.status_label}
           </p>
         </div>
@@ -279,7 +316,9 @@ export default function ReferralDetail({ id }: { id: string }) {
 
       {justSubmitted && (
         <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
-          Referral submitted. We&apos;ll review it and come back to you.
+          {isPack
+            ? "Pack submitted and with the assessor. Your client has been emailed a link to upload their documents."
+            : "Referral submitted. We'll review it and come back to you."}
         </div>
       )}
       {notice && (
@@ -340,6 +379,15 @@ export default function ReferralDetail({ id }: { id: string }) {
         </div>
       )}
 
+      {isPack && (
+        <FactFindCard
+          clientId={id}
+          started={factFindStarted}
+          editable={isDraft}
+          documentsRequested={Boolean(client.documents_requested)}
+        />
+      )}
+
       <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
         <ReferralFields
           values={values}
@@ -371,6 +419,17 @@ export default function ReferralDetail({ id }: { id: string }) {
             />
             <span className="text-sm leading-relaxed text-gray-700">{data.consent_statement}</span>
           </label>
+          {/* A pack's submit is a bigger door than a referral's, and it is
+              described as one. It creates the opportunity, files the fact find
+              and emails the client — none of which a review step can undo,
+              because there is no review step. */}
+          {isPack && (
+            <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Submitting sends this straight through to assessment. Your client will be emailed a
+              link to upload their documents, and the pack locks — there is no review step where we
+              can hand it back for a correction.
+            </p>
+          )}
           <div className="mt-5 flex flex-wrap gap-3">
             <button
               onClick={submit}
@@ -378,7 +437,11 @@ export default function ReferralDetail({ id }: { id: string }) {
               className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
               style={{ background: "#c7894e" }}
             >
-              {busy === "submit" ? "Submitting…" : "Submit referral"}
+              {busy === "submit"
+                ? "Submitting…"
+                : isPack
+                  ? "Submit pack to assessment"
+                  : "Submit referral"}
             </button>
             <button
               onClick={save}
@@ -423,6 +486,58 @@ export default function ReferralDetail({ id }: { id: string }) {
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * The fact find, as seen from the pack.
+ *
+ * Deliberately a signpost and not a summary. Rendering "total assets $412,000"
+ * here would put the client's financial position on a page the introducer leaves
+ * open on a shared screen, to save one click. The fact find lives behind its own
+ * route for the same reason its API does.
+ */
+function FactFindCard({
+  clientId,
+  started,
+  editable,
+  documentsRequested,
+}: {
+  clientId: string;
+  started: boolean;
+  editable: boolean;
+  documentsRequested: boolean;
+}) {
+  return (
+    <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Fact find</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            {editable
+              ? started
+                ? "In progress. It saves as you go — pick up where you left off."
+                : "Not started yet. Allow 30–45 minutes with your client."
+              : "Submitted, and locked exactly as you sent it."}
+          </p>
+        </div>
+        <Link
+          href={`/introducer/clients/${clientId}/fact-find`}
+          className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+          style={{ background: editable ? "#c7894e" : "#6b7280" }}
+        >
+          {editable ? (started ? "Continue" : "Start the fact find") : "View"}
+        </Link>
+      </div>
+
+      {!editable && (
+        <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600">
+          {documentsRequested
+            ? "Your client has been emailed a link to upload their documents. We'll let you know when the pack is complete."
+            : "The document request hasn't gone out yet — Springboard will send it. Get in touch if it doesn't arrive."}
+        </p>
+      )}
+    </section>
   );
 }
 

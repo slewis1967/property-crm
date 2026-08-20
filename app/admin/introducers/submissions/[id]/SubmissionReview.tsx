@@ -152,9 +152,16 @@ export default function SubmissionReview({ id }: { id: string }) {
               {` · ${when(c.submitted_at)}`}
             </p>
           </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
-            {c.status}
-          </span>
+          <div className="flex items-center gap-2">
+            {c.pack_type === "full" && (
+              <span className="rounded-full bg-gray-900 px-3 py-1 text-sm font-medium text-white">
+                Tier 2 pack
+              </span>
+            )}
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
+              {c.status}
+            </span>
+          </div>
         </div>
 
         {notice && (
@@ -167,6 +174,8 @@ export default function SubmissionReview({ id }: { id: string }) {
             {error}
           </div>
         )}
+
+        {c.pack_type === "full" && <PackBanner client={c} />}
 
         {c.consent_confirmed_at && (
           <div className="mt-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
@@ -313,6 +322,49 @@ export default function SubmissionReview({ id }: { id: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * What a Tier 2 pack is, said on the screen where someone first meets one.
+ *
+ * The whole point of the banner is that this row did NOT pass a human. Somebody
+ * opening it a year from now will otherwise read `accepted` and assume a
+ * colleague made that call — so the banner names the rule, names the introducer
+ * whose accreditation stood in for the review, and points at the two records the
+ * submission created.
+ */
+function PackBanner({ client }: { client: Record<string, string | null> }) {
+  return (
+    <section className="mt-4 rounded-lg border border-gray-900/15 bg-white px-4 py-3">
+      <h2 className="text-sm font-semibold text-gray-900">
+        Full submission pack — accepted on accreditation, not on review
+      </h2>
+      <p className="mt-1 text-sm text-gray-600">
+        A Tier 2 introducer submitted this complete, so it created its own opportunity and fact find
+        and went straight to the assessor. No one here approved it; the accreditation, the
+        unexpired-check and the signed consent form did. The audit trail below records who and when.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-4 text-sm">
+        {client.fact_find_id && (
+          <Link
+            href={`/fact-find/${client.fact_find_id}`}
+            className="font-medium text-gray-700 underline"
+          >
+            Open the fact find
+          </Link>
+        )}
+        {client.document_request_id ? (
+          <Link href="/document-requests" className="font-medium text-gray-700 underline">
+            Document collection
+          </Link>
+        ) : (
+          <span className="text-amber-800">
+            No document request on this pack — the client has not been asked for documents.
+          </span>
+        )}
+      </div>
+    </section>
   );
 }
 
