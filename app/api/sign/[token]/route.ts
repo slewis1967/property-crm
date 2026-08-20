@@ -77,7 +77,7 @@ export async function GET(
        * derived from doc_type: the same document can belong to either business,
        * and a Springboard client must not be asked to sign under NextKey's
        * letterhead. */
-      brand: signBrand((row as { brand?: string | null }).brand),
+      brand: signBrand(row.brand),
     });
   } catch (e) {
     // Never leak internals to the public page.
