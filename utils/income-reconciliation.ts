@@ -297,30 +297,55 @@ export function reconcile(args: {
     const payslips = evidence.filter((e): e is PayslipEvidence => e.kind === "payslip" && e.applicant === name);
     const atos = evidence.filter((e): e is AtoEvidence => e.kind === "ato" && e.applicant === name);
 
-    // ATO view: sum the CURRENT-employer statements. Summing every statement
-    // would double-count someone who changed jobs mid-year.
     const currentEmployerKey = employerKey(dec?.employer ?? null);
-    const relevantAtos = currentEmployerKey
-      ? atos.filter((a) => employerKey(a.employer) === currentEmployerKey)
-      : atos;
+
+    /**
+     * The ATO view: the applicant's most recent financial year, counting only
+     * employment that hasn't ended.
+     *
+     * Emphatically NOT matched on employer name. The Needs Analysis has no
+     * employer name field — reps type it into the address line — so the file
+     * says "Police Headquarters" where the income statement says "REDFLEX
+     * TRAFFIC SYSTEMS PTY LTD", and a name match silently produces no ATO
+     * figure at all. Dropping the terminated statements achieves what the name
+     * match was reaching for (don't add up two jobs the applicant no longer
+     * holds both of) using something the documents actually state.
+     */
+    const latestFy = atos
+      .map((a) => a.financialYear)
+      .filter((y): y is string => !!y)
+      .sort()
+      .at(-1);
+    const currentAtos = atos.filter(
+      (a) => !a.terminationIndicated && (!latestFy || !a.financialYear || a.financialYear === latestFy),
+    );
     let atoAnnual: number | null = null;
-    let atoPartYear = false;
-    for (const a of relevantAtos) {
-      const { annual, partYear, coverageDays } = atoAnnualisation(a);
+    for (const a of currentAtos) {
+      const { annual } = atoAnnualisation(a);
       if (annual == null) continue;
       atoAnnual = (atoAnnual ?? 0) + annual;
-      if (partYear) {
-        atoPartYear = true;
-        findings.push({
-          applicant: name,
-          severity: "warn",
-          code: "ato_part_year",
-          message:
-            `${a.employer ?? "Employer"} income statement covers only ${coverageDays} days` +
-            `${a.financialYear ? ` of ${a.financialYear}` : ""}. Annualising it gives ${money(annual)}, which understates current earnings.`,
-          action: "Use the payslip run-rate for servicing, and say so explicitly if a lender has assessed on this statement.",
-        });
-      }
+    }
+
+    /**
+     * Part-year warnings run over EVERY statement, not just the ones feeding
+     * the figure above. This is the single most valuable thing here — it is the
+     * misreading a lender made against us — and it must not be suppressed by a
+     * bookkeeping decision about which statements to total.
+     */
+    let atoPartYear = false;
+    for (const a of atos) {
+      const { annual, partYear, coverageDays } = atoAnnualisation(a);
+      if (annual == null || !partYear) continue;
+      atoPartYear = true;
+      findings.push({
+        applicant: name,
+        severity: "warn",
+        code: "ato_part_year",
+        message:
+          `${a.employer ?? "Employer"} income statement covers only ${coverageDays} days` +
+          `${a.financialYear ? ` of ${a.financialYear}` : ""}. Annualising it gives ${money(annual)}, which understates current earnings.`,
+        action: "Use the payslip run-rate for servicing, and say so explicitly if a lender has assessed on this statement.",
+      });
     }
 
     const payslipAnnual = payslipRunRate(payslips);

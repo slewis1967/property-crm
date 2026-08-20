@@ -197,13 +197,18 @@ describe("reconcile — the Halliday file", () => {
     declared({
       applicant: "David",
       annual: 120_000,
-      employer: "Redflex Traffic Systems",
+      // What the real Needs Analysis actually holds. There is no employer name
+      // field on the form, so the rep typed the WORKPLACE into the address
+      // line — it does not resemble "REDFLEX TRAFFIC SYSTEMS PTY LTD" on the
+      // income statement. Matching statements to employment by name would find
+      // nothing here, which is why we don't.
+      employer: "Police Headquarters",
       employmentType: "payg",
       basis: "casual",
       startedOn: "2026-01-24",
       otherIncomeNote: "David Casual Woolworths 1 day per $400 per week.",
     }),
-    declared({ applicant: "Melissa", annual: 66_000, employer: "Woolworths Group Limited", employmentType: "payg", basis: "full_time" }),
+    declared({ applicant: "Melissa", annual: 66_000, employer: "Woolworths Bateau Bay, 12 Bay Village Rd", employmentType: "payg", basis: "full_time" }),
   ];
 
   const result = reconcile({ declared: decl, evidence, asOf });
@@ -260,6 +265,28 @@ describe("reconcile — the Halliday file", () => {
     expect(david.atoIsPartYear).toBe(true);
     expect(david.payslipAnnual).toBe(87_994);
     expect(david.declaredAnnual).toBe(120_000);
+  });
+
+  it("still produces an ATO figure when the employer names don't match", () => {
+    // The regression: matching statements to employment by name found nothing,
+    // so the panel showed a dash where the ~$58k the lender serviced on should
+    // have been, and the part-year warning never fired.
+    const david = result.applicants.find((a) => a.applicant === "David")!;
+    expect(david.atoAnnual).toBeGreaterThan(56_000);
+    expect(david.atoAnnual).toBeLessThan(60_000);
+  });
+
+  it("leaves the ended job out of the ATO figure rather than adding both", () => {
+    // David's Woolworths statement is a full year at $61k, but that employment
+    // terminated — counting it would imply a household income nobody has.
+    const david = result.applicants.find((a) => a.applicant === "David")!;
+    expect(david.atoAnnual).toBeLessThan(61_418);
+  });
+
+  it("gives Melissa her full-year ATO figure", () => {
+    const mel = result.applicants.find((a) => a.applicant === "Melissa")!;
+    expect(mel.atoAnnual).toBe(42_263);
+    expect(mel.atoIsPartYear).toBe(false);
   });
 
   it("summarises both totals", () => {
