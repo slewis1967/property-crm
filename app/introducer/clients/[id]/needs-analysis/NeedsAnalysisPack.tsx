@@ -36,6 +36,7 @@ import {
   INTERVIEW_TYPES,
   LIABILITY_TYPES,
   MARITAL_STATUSES,
+  OTHER_INCOME_TYPES,
   OWNER_OPTIONS,
   PAY_FREQUENCIES,
   PREFERRED_CONTACT_OPTIONS,
@@ -44,6 +45,7 @@ import {
   emptyAsset,
   emptyLiability,
   emptyNeedsAnalysis,
+  emptyOtherIncome,
   formatMoney,
   toMonthly,
   type Applicant,
@@ -761,19 +763,139 @@ function Employment({ data, update }: { data: NeedsAnalysisData; update: Update 
         );
       })}
 
-      <Card
-        title="Other income"
-        subtitle="Bonus, commission, Centrelink, family assistance, a second job."
-      >
-        <Area
-          label="Anything else coming in"
-          value={data.other_income}
-          onChange={(v) => update((d) => (d.other_income = v))}
-          hint="Name who it belongs to and how much, e.g. 'David — casual, 1 day/wk, $400'. Unevidenced income gets queried, so say where it comes from."
-        />
-      </Card>
+      <OtherIncomeSection data={data} update={update} />
     </>
   );
+}
+
+/**
+ * Other income — a row per source, per applicant.
+ *
+ * WHY ROWS AND NOT THE PAPER FORM'S ONE LINE. A household sentence cannot say
+ * whose income it is, so a lender assessing one applicant's servicing cannot
+ * use it; and it is not a number, so nothing can add it up or compare it to a
+ * payslip. Both of those have cost us: the reconciliation was reduced to
+ * scanning the prose for a first name to guess an owner.
+ *
+ * Nothing is pre-printed. Most households have no other income, and a grid of
+ * blank rows reads as something that must be filled in.
+ */
+function OtherIncomeSection({ data, update }: { data: NeedsAnalysisData; update: Update }) {
+  const rows = data.other_incomes ?? [];
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Other income</h2>
+      <p className="mt-1 text-sm text-gray-500">
+        Anything coming in that isn&apos;t the salary above — bonus, commission, Centrelink, family
+        assistance, rent, a second job. Add a row each, and say whose it is.
+      </p>
+
+      {rows.length === 0 && (
+        <p className="mt-3 text-sm text-gray-500">No other income recorded.</p>
+      )}
+
+      <div className="mt-4 space-y-3">
+        {rows.map((o, i) => (
+          <div key={o.id} className="grid gap-2 sm:grid-cols-[11rem_1fr_7rem_7rem_7rem_2rem]">
+            <select
+              value={o.type}
+              onChange={(e) => update((d) => (d.other_incomes[i].type = e.target.value))}
+              className={inputCls}
+            >
+              <option value="">Type…</option>
+              {OTHER_INCOME_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <input
+              value={o.description}
+              placeholder="Who pays it, or what it is"
+              onChange={(e) => update((d) => (d.other_incomes[i].description = e.target.value))}
+              className={inputCls}
+            />
+            <input
+              type="number"
+              value={o.amount ?? ""}
+              placeholder="Amount"
+              onChange={(e) =>
+                update(
+                  (d) =>
+                    (d.other_incomes[i].amount =
+                      e.target.value === "" ? null : Number(e.target.value)),
+                )
+              }
+              className={`${inputCls} tabular-nums`}
+            />
+            <select
+              value={o.frequency}
+              onChange={(e) => update((d) => (d.other_incomes[i].frequency = e.target.value))}
+              className={inputCls}
+            >
+              {FREQUENCY_OPTIONS.map((f) => (
+                <option key={f.key} value={f.key}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={o.owner}
+              onChange={(e) => update((d) => (d.other_incomes[i].owner = e.target.value))}
+              className={inputCls}
+            >
+              <option value="">Whose?</option>
+              {OWNER_OPTIONS.map((w) => (
+                <option key={w} value={w}>
+                  {ownerLabel(w, data)}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => update((d) => d.other_incomes.splice(i, 1))}
+              aria-label="Remove this income"
+              className="mt-1 text-gray-400 hover:text-red-600"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() =>
+          update((d) => (d.other_incomes ?? (d.other_incomes = [])).push(emptyOtherIncome("", d.other_incomes.length)))
+        }
+        className="mt-3 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+      >
+        + Add other income
+      </button>
+
+      {/* A pack written before other income became rows keeps its sentence, and
+          it is shown rather than hidden — it may be the only record of that
+          client's extra income. Read-only: re-typing it into rows is a person's
+          judgement, not something to do silently on their behalf. */}
+      {data.other_income.trim() !== "" && (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
+            Previously recorded as a note
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-amber-900">{data.other_income}</p>
+          <p className="mt-1 text-xs text-amber-800">Add it as rows above so it can be assessed.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** "App 1 (David)" where we know the name, so "whose?" is answerable. */
+function ownerLabel(owner: string, data: NeedsAnalysisData): string {
+  if (owner === "both") return "Both";
+  const i = owner === "app1" ? 0 : 1;
+  const a = data.applicants[i];
+  const name = [a.given_names, a.surname].filter(Boolean).join(" ").trim();
+  const base = owner === "app1" ? "App 1" : "App 2";
+  return name ? `${base} (${name})` : base;
 }
 
 function Assets({ data, update, totals }: { data: NeedsAnalysisData; update: Update; totals: Totals }) {
@@ -783,7 +905,7 @@ function Assets({ data, update, totals }: { data: NeedsAnalysisData; update: Upd
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Assets</h2>
         <div className="mt-4 space-y-3">
           {data.assets.map((a, i) => (
-            <div key={a.id} className="grid gap-2 sm:grid-cols-[11rem_1fr_8rem_7rem_2rem]">
+            <div key={a.id} className="grid gap-2 sm:grid-cols-[11rem_1fr_8rem_8rem_7rem_2rem]">
               <select
                 value={a.type}
                 onChange={(e) => update((d) => (d.assets[i].type = e.target.value))}
@@ -815,6 +937,23 @@ function Assets({ data, update, totals }: { data: NeedsAnalysisData; update: Upd
                 }
                 className={`${inputCls} tabular-nums`}
               />
+              {/* Rental income belongs to the asset, not the income section —
+                  an investment property's rent is assessed against the property
+                  that produces it. The YLA form has this column; leaving it out
+                  meant an investment property looked like it earned nothing. */}
+              <input
+                type="number"
+                value={a.rental_income ?? ""}
+                placeholder="Rent p/w"
+                onChange={(e) =>
+                  update(
+                    (d) =>
+                      (d.assets[i].rental_income =
+                        e.target.value === "" ? null : Number(e.target.value)),
+                  )
+                }
+                className={`${inputCls} tabular-nums`}
+              />
               <select
                 value={a.owner}
                 onChange={(e) => update((d) => (d.assets[i].owner = e.target.value))}
@@ -823,7 +962,7 @@ function Assets({ data, update, totals }: { data: NeedsAnalysisData; update: Upd
                 <option value="">Owner…</option>
                 {OWNER_OPTIONS.map((o) => (
                   <option key={o} value={o}>
-                    {o === "app1" ? "App 1" : o === "app2" ? "App 2" : "Both"}
+                    {ownerLabel(o, data)}
                   </option>
                 ))}
               </select>
@@ -874,7 +1013,7 @@ function Liabilities({
         </p>
         <div className="mt-4 space-y-3">
           {data.liabilities.map((l, i) => (
-            <div key={l.id} className="grid gap-2 sm:grid-cols-[10rem_1fr_7rem_7rem_7rem_2rem]">
+            <div key={l.id} className="grid gap-2 sm:grid-cols-[10rem_1fr_7rem_7rem_7rem_7rem_2rem]">
               <select
                 value={l.type}
                 onChange={(e) => update((d) => (d.liabilities[i].type = e.target.value))}
@@ -932,6 +1071,18 @@ function Liabilities({
                 }
                 className={`${inputCls} tabular-nums`}
               />
+              <select
+                value={l.owner}
+                onChange={(e) => update((d) => (d.liabilities[i].owner = e.target.value))}
+                className={inputCls}
+              >
+                <option value="">Whose?</option>
+                {OWNER_OPTIONS.map((o) => (
+                  <option key={o} value={o}>
+                    {ownerLabel(o, data)}
+                  </option>
+                ))}
+              </select>
               <button
                 onClick={() => update((d) => d.liabilities.splice(i, 1))}
                 aria-label="Remove this liability"
@@ -939,6 +1090,34 @@ function Liabilities({
               >
                 ×
               </button>
+
+              {/* The second line of each liability. Term, dates and a fixed/IO
+                  expiry are on the YLA form and a lender asks for them — an
+                  interest-only period about to end changes the assessment. */}
+              <div className="sm:col-span-7 sm:pl-2">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input
+                    value={l.loan_term}
+                    placeholder="Term (e.g. 30 years)"
+                    onChange={(e) => update((d) => (d.liabilities[i].loan_term = e.target.value))}
+                    className={inputCls}
+                  />
+                  <input
+                    value={l.loan_start_end_date}
+                    placeholder="Start / end date"
+                    onChange={(e) =>
+                      update((d) => (d.liabilities[i].loan_start_end_date = e.target.value))
+                    }
+                    className={inputCls}
+                  />
+                  <input
+                    value={l.fixed_io_expiry}
+                    placeholder="Fixed / interest-only expiry"
+                    onChange={(e) => update((d) => (d.liabilities[i].fixed_io_expiry = e.target.value))}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -1017,12 +1196,13 @@ function Expenses({ data, update, totals }: { data: NeedsAnalysisData; update: U
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <dl className="grid gap-3 text-sm sm:grid-cols-3">
           <Total label="Living expenses per month" value={totals.monthlyLivingExpenses} />
           <Total
             label="Loan repayments per month"
             value={data.liabilities.reduce((t, l) => t + toMonthly(l.repayments, "m"), 0)}
           />
+          <Total label="Other income per month" value={totals.monthlyOtherIncome} />
         </dl>
       </section>
     </>
