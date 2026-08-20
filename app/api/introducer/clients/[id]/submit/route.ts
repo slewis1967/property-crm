@@ -192,28 +192,50 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
    * A REJECTED form does not count. A replaced one does not either — the
    * replacement is the row that counts, and it is present under the same label.
    * Anything else on the referral is irrelevant here: it must be THIS label. */
-  const { data: consentDocs, error: consentErr } = await supabase
-    .from("introducer_documents")
+  /* EITHER the client e-signed it, OR the introducer uploaded a signed paper
+   * form. Sean's call, 20 August 2026: the signature is the default and the
+   * portal leads with it, but a client with no email address must still be
+   * referrable and a form already signed on paper must not have to be redone.
+   *
+   * The e-signed one is checked FIRST and on its true condition — the document
+   * reaching its terminal status, which utils/sign-doc-render.ts writes only
+   * once every signer has completed. A "Sent" consent is a consent nobody has
+   * given yet. */
+  const { data: signedConsent } = await supabase
+    .from("introducer_consent_docs")
     .select("id,status")
     .eq("client_id", record.id)
-    .eq("label", CONSENT_FORM_LABEL)
-    .in("status", ["uploaded", "accepted"])
+    .eq("status", "Signed")
     .limit(1);
 
-  if (consentErr) {
-    return NextResponse.json(
-      { ok: false, error: "Could not check the consent form. Please try again." },
-      { status: 500 },
-    );
+  let consentVia: "signature" | "upload" | null =
+    signedConsent && signedConsent.length > 0 ? "signature" : null;
+
+  if (!consentVia) {
+    const { data: consentDocs, error: consentErr } = await supabase
+      .from("introducer_documents")
+      .select("id,status")
+      .eq("client_id", record.id)
+      .eq("label", CONSENT_FORM_LABEL)
+      .in("status", ["uploaded", "accepted"])
+      .limit(1);
+
+    if (consentErr) {
+      return NextResponse.json(
+        { ok: false, error: "Could not check the consent form. Please try again." },
+        { status: 500 },
+      );
+    }
+    if (consentDocs && consentDocs.length > 0) consentVia = "upload";
   }
 
-  if (!consentDocs || consentDocs.length === 0) {
+  if (!consentVia) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "Please attach the signed Referral Consent and Privacy Form before submitting. " +
-          "The client's signature on that form is what lets us pass their details on.",
+          "Your client hasn't signed the Referral Consent and Privacy Form yet. Send it to them to " +
+          "sign, or attach a signed paper copy — their signature is what lets us pass their details on.",
         code: "consent_form_required",
       },
       { status: 400 },
@@ -485,6 +507,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       actor: auth.email,
       action: "pack_submitted",
       detail: {
+        // Which evidence stood behind the attestation — a captured signature or
+        // an uploaded page. Worth knowing when reading the trail back.
+        consent_via: consentVia,
         client_ref: accepted.client_ref,
         opportunity_id: opportunityId,
         needs_analysis_id: na.id,
@@ -614,7 +639,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     actorType: "introducer",
     actor: auth.email,
     action: "submitted",
-    detail: { client_ref: data.client_ref, consent_confirmed_at: now },
+    detail: { client_ref: data.client_ref, consent_confirmed_at: now, consent_via: consentVia },
   });
 
   notifyOffice(auth, data, record.id);

@@ -89,10 +89,30 @@ export type CreateSignatureRequestsInput = {
   createdBy: string;
   /** Label for the email subject/body. Defaults to the doc type's own name. */
   docLabel?: string;
+  /**
+   * How the signer gets to the document.
+   *
+   *   "email"  the normal path — Brevo sends each signer their own link.
+   *   "link"   IN PERSON. Nothing is emailed; the raw links come back to the
+   *            caller so the person holding the device can open one and hand it
+   *            over. Used by the introducer portal, where the introducer is
+   *            sitting with the client: emailing a consent form means holding
+   *            someone's address before they have consented to us having it,
+   *            which is the thing the consent form exists to authorise.
+   *
+   * A returned link IS the credential. Give it only to someone already entitled
+   * to act on that document, never log it, and never persist it.
+   */
+  deliver?: "email" | "link";
 };
 
 export type CreateSignatureRequestsResult =
-  | { ok: true; requests: { id: string; signer_index: number; signer_email: string; status: string }[] }
+  | {
+      ok: true;
+      requests: { id: string; signer_index: number; signer_email: string; status: string }[];
+      /** Populated only for deliver:"link". One entry per signer, in order. */
+      links: { name: string; email: string; url: string }[];
+    }
   | { ok: false; error: string; status: number };
 
 export async function createSignatureRequests(
@@ -123,7 +143,9 @@ export async function createSignatureRequests(
   const sender = resolveIdentity("springboard");
   const message = (input.message ?? "").slice(0, 1000);
 
+  const deliver = input.deliver ?? "email";
   const created: { id: string; signer_index: number; signer_email: string; status: string }[] = [];
+  const links: { name: string; email: string; url: string }[] = [];
   const createdIds: string[] = [];
   const emailErrors: string[] = [];
 
@@ -157,11 +179,28 @@ export async function createSignatureRequests(
 
     const row = inserted as { id: string; signer_index: number; signer_email: string; status: string };
     createdIds.push(row.id);
+    const url = `${input.origin}/sign/${raw}`;
+
+    /* In-person: hand the link back instead of emailing it. Still audited as
+     * "sent for signature", because from the document's point of view it was —
+     * the difference is the delivery channel, and the route records which. */
+    if (deliver === "link") {
+      created.push(row);
+      links.push({ name: signers[i].name, email: signers[i].email, url });
+      await recordAudit({
+        docType: input.docType,
+        docId: input.docId,
+        action: "update",
+        changedBy: input.createdBy,
+        note: `Opened for in-person signature by ${signers[i].email}`,
+      });
+      continue;
+    }
 
     const sent = await sendBrevoEmail({
       to: [{ email: signers[i].email, name: signers[i].name || undefined }],
       subject: `Please sign your ${docLabel}`,
-      html: signEmailHtml(signers[i].name, docLabel, `${input.origin}/sign/${raw}`, message),
+      html: signEmailHtml(signers[i].name, docLabel, url, message),
       fromEmail: sender.fromEmail,
       fromName: sender.fromName,
       tags: ["e-signature"],
@@ -218,5 +257,5 @@ export async function createSignatureRequests(
     };
   }
 
-  return { ok: true, requests: created };
+  return { ok: true, requests: created, links };
 }

@@ -48,7 +48,10 @@ export type ComplianceDocType =
   | "eoi"
   | "introducer_nda"
   | "introducer_agreement"
-  | "introducer_schedule";
+  | "introducer_schedule"
+  // The CLIENT's Referral Consent and Privacy Form — the lawful basis for
+  // holding their record at all. See utils/introducer-consent.ts.
+  | "referral_consent";
 export type ComplianceAuditAction = "create" | "update" | "sign" | "reopen" | "delete";
 
 /** The status at which each document is signed/complete and becomes read-only. */
@@ -61,6 +64,10 @@ export const LOCKED_STATUS: Record<ComplianceDocType, string> = {
   introducer_nda: INTRODUCER_DOC_TERMINAL_STATUS,
   introducer_agreement: INTRODUCER_DOC_TERMINAL_STATUS,
   introducer_schedule: INTRODUCER_DOC_TERMINAL_STATUS,
+  // Same vocabulary as the introducer documents and the EOI — "Signed" is the
+  // point at which the consent form becomes immutable, and the database trigger
+  // in migrations/20260821 enforces it independently.
+  referral_consent: "Signed",
 };
 
 /** User-facing refusal messages (kept here so route wording stays consistent). */

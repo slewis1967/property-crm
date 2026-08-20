@@ -12,6 +12,12 @@
 import { supabase } from "./supabase";
 import { log } from "./logger";
 import {
+  hydrateConsentDoc,
+  consentDocSummary,
+  consentProposedSigners,
+} from "./introducer-consent";
+import { renderReferralConsentHtml } from "./pdf/referralConsentPdf";
+import {
   recordAudit,
   LOCKED_STATUS,
   type ComplianceDocType,
@@ -61,6 +67,9 @@ const TABLE: Record<ComplianceDocType, string> = {
   introducer_nda: "introducer_agreement_docs",
   introducer_agreement: "introducer_agreement_docs",
   introducer_schedule: "introducer_agreement_docs",
+  // The client's own consent form. One row per referral; see
+  // migrations/20260821_referral_consent_esignature.sql.
+  referral_consent: "introducer_consent_docs",
 };
 
 /** What a fetched-and-hydrated document exposes to the signing routes. */
@@ -127,6 +136,19 @@ export async function loadDoc(
       summary: eoiSummary(data),
       renderHtml: (sigs) => renderEoiHtml(data, sigs),
       proposedSigners: () => eoiProposedSigners(data),
+    };
+  }
+  if (docType === "referral_consent") {
+    /* The consent wording is read from the BLOB, not from CONSENT_STATEMENT.
+     * A client who signed the old wording consented to the old disclosure
+     * chain, and re-rendering from today's constant would silently restate
+     * what they agreed to. hydrateConsentDoc falls back to the constant only
+     * for a row that carries no statement at all. */
+    const data = hydrateConsentDoc(blob);
+    return {
+      summary: consentDocSummary(data),
+      renderHtml: (sigs) => renderReferralConsentHtml(data, sigs),
+      proposedSigners: () => consentProposedSigners(data),
     };
   }
   if (
