@@ -5,10 +5,12 @@ import {
   roadmapProgress,
   onboardingTablesMissing,
   canUploadId,
+  canSignAgreement,
 } from "@/utils/introducer-onboarding";
 import Roadmap from "./Roadmap";
 import IdentityUpload from "./IdentityUpload";
 import SignNda from "./SignNda";
+import SignAgreement from "./SignAgreement";
 import BusinessDetails from "./BusinessDetails";
 
 /**
@@ -167,6 +169,21 @@ export default async function OnboardingPage({
             Verify your identity
           </h2>
           <IdentityUpload token={token} />
+        </section>
+      )}
+
+      {/* The last step. It was the one state that asked the applicant for
+          something and rendered nothing beneath it — exactly the dead end the
+          comment above warns about, and what SBI-2026-0004 and -0005 hit after
+          being emailed "last step: your introducer agreement". */}
+      {canSignAgreement(app.state) && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
+          <h2 className="text-base font-semibold" style={{ color: "#020e40" }}>
+            Sign the introducer agreement
+          </h2>
+          <div className="mt-2">
+            <SignAgreement token={token} />
+          </div>
         </section>
       )}
 

@@ -32,6 +32,7 @@ import {
 } from "../../../../../utils/signature-requests-db";
 import { loadDoc, markDocSigned } from "../../../../../utils/sign-doc-render";
 import { advanceApplicationOnNdaSigned } from "../../../../../utils/introducer-nda";
+import { advanceApplicationOnAgreementSigned } from "../../../../../utils/introducer-agreement-signing";
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { resolveIdentity } from "../../../../../utils/mailIdentities";
@@ -174,6 +175,24 @@ export async function POST(
         } catch (e) {
           log.error("sign.introducer_nda_advance_failed", {
             docId: row.doc_id,
+            message: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
+
+      // The last step, and it takes TWO documents — the referral agreement and
+      // the commission schedule. Signing one advances nothing; the helper
+      // checks the whole set, so whichever of the two lands second is the one
+      // that opens activation. Same best-effort reasoning as the NDA above: the
+      // signature is durably recorded either way, and a failure here must not
+      // turn a completed signing into a 500 and invite them to sign twice.
+      if (row.doc_type === "introducer_agreement" || row.doc_type === "introducer_schedule") {
+        try {
+          await advanceApplicationOnAgreementSigned(row.doc_id, row.signer_email);
+        } catch (e) {
+          log.error("sign.introducer_agreement_advance_failed", {
+            docId: row.doc_id,
+            docType: row.doc_type,
             message: e instanceof Error ? e.message : String(e),
           });
         }

@@ -15,6 +15,7 @@
 import { supabase } from "./supabase";
 import { newToken, hashToken } from "./sign-token";
 import type { OnboardingState } from "./introducer-onboarding";
+import { columnMissing } from "./column-missing";
 import {
   introducerEntityColumnMissing,
   type BusinessDetails,
@@ -52,6 +53,11 @@ export type Application = {
   entity_type?: EntityType | null;
   registered_address?: string | null;
   business_details_at?: string | null;
+  /** The agreed referral fee, rendered verbatim into the commission schedule.
+   *  Only ever set on the `paid` variant. Absent until
+   *  20260821c_introducer_referral_fee.sql runs. */
+  fee_per_settlement?: string | null;
+  fee_notes?: string | null;
   created_at: string;
   updated_at: string;
   withdrawn_reason: string | null;
@@ -73,10 +79,17 @@ const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_a
 const ACCREDITATION_COLUMNS =
   "certificate_issued_at, accreditation_expires_at, smsf_competency_expires_at";
 
+/** Added by `20260821c_introducer_referral_fee.sql`. Only the commission
+ *  schedule needs them, and it refuses to issue a paid schedule without a fee
+ *  either way — so a pending migration reads as "the fee has not been set",
+ *  which is exactly what it means. */
+const FEE_COLUMNS = "fee_per_settlement, fee_notes";
+
 /** Widest first. Each rung drops the most recent migration's columns, so a read
  *  keeps working against a database that is one or two migrations behind the
  *  deploy — the house rule being that code ships before the SQL is run. */
 const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`,
   BASE_COLUMNS,
@@ -215,6 +228,52 @@ export async function saveBusinessDetails(
         ok: false,
         error:
           "Business details are not switched on yet — run migrations/20260814_introducer_entity_details.sql.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Record the agreed referral fee.
+ *
+ * Staff-writable and paid-variant only — the check constraint refuses a fee on
+ * standard terms, because Document 2 says no fee is payable and a figure stored
+ * beside it would contradict the contract it ships with. Refused once the
+ * schedule has issued: that document snapshots the amount, and a row that
+ * quietly disagrees with the signed instrument behind it is worse than one
+ * merely out of date.
+ */
+export async function setReferralFee(
+  id: string,
+  fee: string,
+  notes: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({
+      fee_per_settlement: fee.trim() || null,
+      fee_notes: notes.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["fee_per_settlement", "fee_notes"])) {
+      return {
+        ok: false,
+        error:
+          "Referral fees are not switched on yet — run migrations/20260821c_introducer_referral_fee.sql.",
+      };
+    }
+    // The constraint, surfaced as the choice it actually represents rather than
+    // as a database error nobody outside this file can read.
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "A referral fee cannot be set on the standard arrangement, which says no fee is payable. Move them onto the paid variant first.",
       };
     }
     throw error;

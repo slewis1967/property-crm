@@ -411,21 +411,60 @@ function Card({
             </Action>
           )}
 
-          {app.state === "certificate_issued" && (
-            <Action busy={busy} onClick={() => act(`${base}/agreement`, { action: "send" }, "Agreement sent for signature.")}>
-              Send the agreement
-            </Action>
-          )}
+          {(app.state === "certificate_issued" || app.state === "agreement_sent") && (
+            <>
+              {/* The normal path now that the documents exist. Two of them, sent
+                  one at a time, so this button is live at `agreement_sent` too:
+                  pressing it again after the referral agreement is signed sends
+                  the commission schedule. Deliberately does not mark anything
+                  executed — the application advances when they sign. */}
+              {app.agreement_variant === "paid" ? (
+                <Prompt
+                  label={app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                  placeholder="Referral fee, e.g. $2,500 per settled referral"
+                  busy={busy}
+                  onSubmit={(fee) =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", fee_per_settlement: fee },
+                      "Emailed — they sign it on screen.",
+                    )
+                  }
+                />
+              ) : (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(`${base}/agreement`, { action: "esign" }, "Emailed — they sign it on screen.")
+                  }
+                >
+                  {app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                </Action>
+              )}
 
-          {app.state === "agreement_sent" && (
-            <Prompt
-              label="Record agreement signed"
-              placeholder="How was it executed? e.g. e-signed, emailed back"
-              busy={busy}
-              onSubmit={(method) =>
-                act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
-              }
-            />
+              {/* Notice only: tells them the step is open and points at their
+                  roadmap, where they can start signing themselves. */}
+              {app.state === "certificate_issued" && (
+                <Action
+                  busy={busy}
+                  onClick={() => act(`${base}/agreement`, { action: "send" }, "Notice sent.")}
+                >
+                  Just tell them it&rsquo;s ready
+                </Action>
+              )}
+
+              {/* Kept for the ones who sign on paper or email a scan back. */}
+              {app.state === "agreement_sent" && (
+                <Prompt
+                  label="Record agreement signed"
+                  placeholder="How was it executed? e.g. emailed back, signed on paper"
+                  busy={busy}
+                  onSubmit={(method) =>
+                    act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
+                  }
+                />
+              )}
+            </>
           )}
 
           {app.state === "agreement_signed" && (
