@@ -27,6 +27,7 @@ import { newToken } from "./sign-token";
 import { sendBrevoEmail } from "./brevo";
 import { recordAudit } from "./compliance-audit";
 import { resolveIdentity } from "./mailIdentities";
+import { signBrandStyle, type SignBrand } from "./sign-brand";
 import { log, errInfo } from "./logger";
 import { DOC_TYPE_LABEL } from "./signatures";
 import type { ComplianceDocType } from "./compliance-audit";
@@ -52,12 +53,16 @@ export function signEmailHtml(
   docLabel: string,
   link: string,
   message: string,
+  brand: SignBrand = "nextkey",
 ): string {
   const greeting = signerName ? `Hi ${escapeHtml(signerName)},` : "Hello,";
   const note = message ? `<p style="margin:0 0 16px">${escapeHtml(message)}</p>` : "";
+  // A Springboard client has never heard of NextKey. The letterhead has to match
+  // the business named in the document they are being asked to sign.
+  const style = signBrandStyle(brand);
   return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:0 auto">
-    <div style="background:${TEAL};color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
-      <div style="font-size:18px;font-weight:bold">NextKey Property Strategists</div>
+    <div style="background:${style.colour};color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
+      <div style="font-size:18px;font-weight:bold">${escapeHtml(style.name)}</div>
     </div>
     <div style="border:1px solid #e5e7eb;border-top:none;padding:22px;border-radius:0 0 8px 8px">
       <p style="margin:0 0 16px">${greeting}</p>
@@ -87,6 +92,11 @@ export type CreateSignatureRequestsInput = {
   expiresInDays?: number;
   /** CF-Access email, or the introducer's email. Whoever asked for the signature. */
   createdBy: string;
+  /**
+   * Which business the signer sees. Defaults to NextKey, which is what every
+   * pre-existing caller meant. The introducer portal passes "springboard".
+   */
+  brand?: SignBrand;
   /** Label for the email subject/body. Defaults to the doc type's own name. */
   docLabel?: string;
   /**
@@ -140,7 +150,9 @@ export async function createSignatureRequests(
    * hello@springboardhomes.com.au is an already-validated Brevo sender, so the
    * mail actually delivers. Resolved through the composer's identity so it
    * stays in step with env config. */
-  const sender = resolveIdentity("springboard");
+  const brand = input.brand ?? "nextkey";
+  const style = signBrandStyle(brand);
+  const sender = resolveIdentity(style.identity);
   const message = (input.message ?? "").slice(0, 1000);
 
   const deliver = input.deliver ?? "email";
@@ -161,6 +173,7 @@ export async function createSignatureRequests(
         signer_email: signers[i].email,
         token_hash: hash,
         status: "sent",
+        brand,
         created_by: input.createdBy,
         sent_at: now.toISOString(),
         expires_at: expiresAt,
@@ -200,7 +213,7 @@ export async function createSignatureRequests(
     const sent = await sendBrevoEmail({
       to: [{ email: signers[i].email, name: signers[i].name || undefined }],
       subject: `Please sign your ${docLabel}`,
-      html: signEmailHtml(signers[i].name, docLabel, url, message),
+      html: signEmailHtml(signers[i].name, docLabel, url, message, brand),
       fromEmail: sender.fromEmail,
       fromName: sender.fromName,
       tags: ["e-signature"],

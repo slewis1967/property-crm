@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { signBrand, signBrandStyle, type SignBrand } from "../../../utils/sign-brand";
 
 const TEAL = "#0F4C5C";
 
@@ -71,6 +72,7 @@ function downscaleImage(file: File): Promise<string> {
 export default function SignClient({ token }: { token: string }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [signerName, setSignerName] = useState("");
+  const [brand, setBrand] = useState<SignBrand>("nextkey");
   const [docLabel, setDocLabel] = useState("document");
   const [docType, setDocType] = useState("");
 
@@ -107,6 +109,10 @@ export default function SignClient({ token }: { token: string }) {
         if (state === "ready") {
           setSignerName(typeof json.signer_name === "string" ? json.signer_name : "");
           setDocLabel(typeof json.doc_label === "string" ? json.doc_label : "document");
+          // Which business this signer is dealing with. A Springboard client has
+          // never heard of NextKey, and the document they are signing names
+          // Springboard as the party collecting their information.
+          setBrand(signBrand(json.brand));
           setDocType(typeof json.doc_type === "string" ? json.doc_type : "");
         }
       } catch {
@@ -330,14 +336,15 @@ export default function SignClient({ token }: { token: string }) {
     );
   }
 
+  const brandStyle = signBrandStyle(brand);
   const licenceRequired = docType === "eoi";
   const canSign = hasSignature && consent && !submitting && (!licenceRequired || hasLicence);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="rounded-t-xl px-6 py-4 text-white" style={{ backgroundColor: TEAL }}>
-          <div className="text-lg font-bold">NextKey Property Strategists</div>
+        <div className="rounded-t-xl px-6 py-4 text-white" style={{ backgroundColor: brandStyle.colour }}>
+          <div className="text-lg font-bold">{brandStyle.name}</div>
         </div>
         <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 space-y-6">
           <div>
@@ -507,7 +514,7 @@ export default function SignClient({ token }: { token: string }) {
           )}
 
           <p className="text-xs text-gray-400 text-center pt-2">
-            Secured by NextKey. This link is unique to you — please don&apos;t share it.
+            Secured by {brandStyle.secured}. This link is unique to you — please don&apos;t share it.
           </p>
         </div>
       </div>
@@ -523,6 +530,11 @@ function Centered({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Brand() {
-  return <div className="text-lg font-bold" style={{ color: TEAL }}>NextKey Property Strategists</div>;
+function Brand({ brand }: { brand?: SignBrand }) {
+  const style = signBrandStyle(brand);
+  return (
+    <div className="text-lg font-bold" style={{ color: style.colour }}>
+      {style.name}
+    </div>
+  );
 }

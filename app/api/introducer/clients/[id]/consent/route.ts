@@ -170,6 +170,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     signers: doc.signers,
     origin: publicOrigin(req),
     deliver: deliver === "in_person" ? "link" : "email",
+    /* Springboard, not NextKey. This client has never heard of NextKey, and the
+     * form they are signing names Springboard Homes as the party collecting
+     * their information. */
+    brand: "springboard",
     message:
       "This confirms you're happy for your details to be passed to Springboard Homes so they can " +
       "look at whether the Community Funding Program suits you.",
