@@ -73,6 +73,14 @@ export default function SignClient({ token }: { token: string }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [signerName, setSignerName] = useState("");
   const [brand, setBrand] = useState<SignBrand>("nextkey");
+  /* The signed-copy download says what it is doing.
+   *
+   * It was a plain <a>: the browser saved the file with no visible change to
+   * the page, so a working download looked identical to a broken one — and a
+   * link whose document had been superseded looked identical again, because a
+   * 404 body simply never became a file. Sean clicked it four times and got
+   * four copies, reasonably concluding it did not work. */
+  const [downloadState, setDownloadState] = useState<"idle" | "working" | "done" | "gone">("idle");
   const [docLabel, setDocLabel] = useState("document");
   const [docType, setDocType] = useState("");
 
@@ -309,13 +317,26 @@ export default function SignClient({ token }: { token: string }) {
         <div className="text-5xl mt-4">✓</div>
         <h1 className="text-xl font-bold text-gray-800 mt-2">Signed — thank you</h1>
         <p className="text-gray-600 mt-2">{`Your ${docLabel} has been signed. A copy has been emailed to you.`}</p>
-        <a
-          href={`/api/sign/${encodeURIComponent(token)}/signed`}
-          className="inline-block mt-5 px-5 py-2.5 rounded-lg text-white font-semibold"
+        <button
+          type="button"
+          onClick={() => void downloadSigned()}
+          disabled={downloadState === "working"}
+          className="inline-block mt-5 px-5 py-2.5 rounded-lg text-white font-semibold disabled:opacity-60"
           style={{ backgroundColor: signBrandStyle(brand).colour }}
         >
-          Download your signed copy
-        </a>
+          {downloadState === "working" ? "Preparing…" : "Download your signed copy"}
+        </button>
+        {downloadState === "done" && (
+          <p className="text-sm text-gray-500 mt-2">
+            Saved to your downloads. A copy is in your email too.
+          </p>
+        )}
+        {downloadState === "gone" && (
+          <p className="text-sm text-amber-800 mt-2">
+            That copy isn&apos;t available from this link any more. Check your email for it, or ask
+            whoever sent it to you for a fresh one.
+          </p>
+        )}
       </Centered>
     );
   }
@@ -339,6 +360,41 @@ export default function SignClient({ token }: { token: string }) {
   }
 
   const brandStyle = signBrandStyle(brand);
+
+  /**
+   * Fetch the signed copy and hand it to the browser as a blob.
+   *
+   * Fetching rather than linking so the two failures that used to be invisible
+   * are not: a rejected request becomes a message, and the wait becomes a
+   * label. A signing token can stop working while the page is still open —
+   * a superseded document is deleted and reissued, which is the correct
+   * behaviour — so "no longer available" is a real answer, not an error.
+   */
+  async function downloadSigned() {
+    setDownloadState("working");
+    try {
+      const res = await fetch(`/api/sign/${encodeURIComponent(token)}/signed`);
+      if (!res.ok) {
+        setDownloadState("gone");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `signed-${docType || "document"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Revoked on a timeout rather than immediately: Safari in particular
+      // starts the save asynchronously and a URL revoked in the same tick
+      // yields an empty file.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      setDownloadState("done");
+    } catch {
+      setDownloadState("gone");
+    }
+  }
   const licenceRequired = docType === "eoi";
   const canSign = hasSignature && consent && !submitting && (!licenceRequired || hasLicence);
 
