@@ -557,6 +557,11 @@ export function toPortalView(row: Record<string, unknown>) {
      * liabilities in its payload. */
     fact_find_started: factFindStarted(row.fact_find_data),
     documents_requested: Boolean(row.document_request_id),
+    /* That a Needs Analysis exists — not its id, and certainly not its
+     * contents. The introducer's window into the CRM stays coarse; what they
+     * need is "has my client signed it yet", which the detail route answers
+     * from the signature requests. */
+    needs_analysis_created: Boolean(row.needs_analysis_id),
     first_name: (row.first_name as string) ?? "",
     last_name: (row.last_name as string) ?? "",
     email: (row.email as string) ?? null,

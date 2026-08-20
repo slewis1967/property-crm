@@ -346,6 +346,21 @@ function PackBanner({ client }: { client: Record<string, string | null> }) {
         unexpired-check and the signed consent form did. The audit trail below records who and when.
       </p>
       <div className="mt-3 flex flex-wrap gap-4 text-sm">
+        {/* The Needs Analysis first: it is the document YLA receive, and the one
+            whose signature gates the submission. The fact find is the source it
+            was derived from and goes to brokers instead. */}
+        {client.needs_analysis_id ? (
+          <Link
+            href={`/needs-analysis/${client.needs_analysis_id}`}
+            className="font-medium text-gray-700 underline"
+          >
+            Open the Needs Analysis
+          </Link>
+        ) : (
+          <span className="text-amber-800">
+            No Needs Analysis on this pack — YLA cannot be sent one.
+          </span>
+        )}
         {client.fact_find_id && (
           <Link
             href={`/fact-find/${client.fact_find_id}`}

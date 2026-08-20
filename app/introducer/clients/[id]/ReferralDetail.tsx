@@ -60,6 +60,7 @@ type Payload = {
     pack_label?: string;
     fact_find_started?: boolean;
     documents_requested?: boolean;
+    needs_analysis_created?: boolean;
   };
   missing_required: Labelled[];
   consent_statement: string;
@@ -68,6 +69,8 @@ type Payload = {
   grantExpiresAt?: string;
   info_requests: InfoRequest[];
   documents: DocRow[];
+  /** Needs Analysis signatures: how many asked, how many done. */
+  signature: { total: number; signed: number } | null;
   history: { action: string; actor_type: string; created_at: string }[];
 };
 
@@ -385,6 +388,8 @@ export default function ReferralDetail({ id }: { id: string }) {
           started={factFindStarted}
           editable={isDraft}
           documentsRequested={Boolean(client.documents_requested)}
+          needsAnalysisCreated={Boolean(client.needs_analysis_created)}
+          signature={data.signature}
         />
       )}
 
@@ -502,11 +507,15 @@ function FactFindCard({
   started,
   editable,
   documentsRequested,
+  needsAnalysisCreated,
+  signature,
 }: {
   clientId: string;
   started: boolean;
   editable: boolean;
   documentsRequested: boolean;
+  needsAnalysisCreated: boolean;
+  signature: { total: number; signed: number } | null;
 }) {
   return (
     <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
@@ -531,13 +540,43 @@ function FactFindCard({
       </div>
 
       {!editable && (
-        <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600">
-          {documentsRequested
-            ? "Your client has been emailed a link to upload their documents. We'll let you know when the pack is complete."
-            : "The document request hasn't gone out yet — Springboard will send it. Get in touch if it doesn't arrive."}
-        </p>
+        <div className="mt-3 space-y-2 border-t border-gray-100 pt-3 text-sm text-gray-600">
+          <p>
+            {documentsRequested
+              ? "Your client has been emailed a link to upload their documents."
+              : "The document request hasn't gone out yet — Springboard will send it. Get in touch if it doesn't arrive."}
+          </p>
+
+          {/* The signature is the thing that most often stalls a pack, and the
+              introducer is the person who can ring the client about it — so it
+              is stated plainly rather than left to be inferred from a stage. */}
+          {needsAnalysisCreated && <SignatureLine signature={signature} />}
+        </div>
       )}
     </section>
+  );
+}
+
+/** One line on where the Needs Analysis signature has got to. */
+function SignatureLine({ signature }: { signature: { total: number; signed: number } | null }) {
+  if (!signature) {
+    return (
+      <p className="text-amber-800">
+        Your client&apos;s Needs Analysis hasn&apos;t been sent for signature yet — Springboard will
+        arrange it.
+      </p>
+    );
+  }
+  const outstanding = signature.total - signature.signed;
+  if (outstanding <= 0) {
+    return <p className="text-green-800">Needs Analysis signed. Nothing outstanding from your client.</p>;
+  }
+  return (
+    <p className="text-amber-900">
+      Waiting on {outstanding === signature.total ? "" : `${outstanding} of ${signature.total} `}
+      {outstanding === 1 ? "a signature" : "signatures"} on your client&apos;s Needs Analysis. We
+      can&apos;t progress the application until it&apos;s signed — a nudge from you usually helps.
+    </p>
   );
 }
 
