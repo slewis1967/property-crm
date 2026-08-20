@@ -109,6 +109,11 @@ export default function ReferralDetail({ id }: { id: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
+  /* The client's consent form, as a document THEY sign. Fetched separately
+   * because it is a different resource with a different lifecycle — issuing it
+   * does not change the referral. */
+  const [consentDoc, setConsentDoc] = useState<ConsentState | null>(null);
+  const [consentLinks, setConsentLinks] = useState<{ name: string; url: string }[]>([]);
 
   // Applying the payload is separated from fetching it so the mount effect can
   // await the fetch and only then touch state — setState in an effect body
@@ -123,13 +128,25 @@ export default function ReferralDetail({ id }: { id: string }) {
     setValues(next);
   }, []);
 
+  const loadConsent = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/introducer/clients/${id}/consent`);
+      const json = await res.json();
+      if (res.ok) setConsentDoc((json.consent as ConsentState) ?? null);
+    } catch {
+      // Non-fatal: the card falls back to "not sent yet" and the submit gate
+      // is the thing that actually enforces it.
+    }
+  }, [id]);
+
   const load = useCallback(async () => {
     setError(null);
     const result = await fetchDetail(id);
     if (result.ok) apply(result.payload);
     else if (result.signedOut) router.push("/introducer");
     else setError(result.error);
-  }, [id, apply, router]);
+    await loadConsent();
+  }, [id, apply, router, loadConsent]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,11 +156,12 @@ export default function ReferralDetail({ id }: { id: string }) {
       if (result.ok) apply(result.payload);
       else if (result.signedOut) router.push("/introducer");
       else setError(result.error);
+      await loadConsent();
     })();
     return () => {
       cancelled = true;
     };
-  }, [id, apply, router]);
+  }, [id, apply, router, loadConsent]);
 
   if (error && !data) {
     return (
@@ -164,12 +182,16 @@ export default function ReferralDetail({ id }: { id: string }) {
   // The signed consent form, if it is already on the referral. Submit refuses
   // without it, so the button below is disabled rather than letting someone
   // fill the whole form and be told no at the end.
-  const consentDoc =
+  const uploadedConsent =
     data.documents.find(
       (d) =>
         d.label.toLowerCase() === CONSENT_FORM_LABEL.toLowerCase() &&
         (d.status === "uploaded" || d.status === "accepted"),
     ) ?? null;
+
+  /* Either kind of evidence unlocks submit — the server checks the same two
+   * things, in the same order. A "Sent" consent is not a signed one. */
+  const consentEvidenced = Boolean(consentDoc?.all_signed) || Boolean(uploadedConsent);
 
   async function save() {
     setBusy("save");
@@ -409,9 +431,15 @@ export default function ReferralDetail({ id }: { id: string }) {
               Still needed to submit: {data.missing_required.map((f) => f.label).join(", ")}.
             </p>
           )}
-          <ConsentForm
+          <ConsentCard
             clientId={id}
-            attached={consentDoc}
+            state={consentDoc}
+            attached={uploadedConsent}
+            links={consentLinks}
+            onIssued={async (links) => {
+              setConsentLinks(links);
+              await loadConsent();
+            }}
             onUploaded={load}
             onError={setError}
           />
@@ -438,7 +466,7 @@ export default function ReferralDetail({ id }: { id: string }) {
           <div className="mt-5 flex flex-wrap gap-3">
             <button
               onClick={submit}
-              disabled={busy !== null || !consent || !consentDoc}
+              disabled={busy !== null || !consent || !consentEvidenced}
               className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
               style={{ background: "#c7894e" }}
             >
@@ -635,19 +663,77 @@ function Progress({ stage }: { stage: string | null }) {
  * Only rendered on a draft. Once submitted, a replacement needs an information
  * request like any other document.
  */
-function ConsentForm({
+/** The consent form's state, from GET .../consent. */
+type ConsentState = {
+  id: string;
+  status: string;
+  delivery: string | null;
+  signers: { name: string; status: string }[];
+  all_signed: boolean;
+};
+
+/**
+ * The client's Referral Consent and Privacy Form.
+ *
+ * TWO WAYS TO GET IT, AND THE ORDER IS DELIBERATE. The client signing it
+ * electronically is the default: it captures who signed, when and from where,
+ * where an uploaded scan is a photographed page of unknown provenance. The
+ * upload stays for a client with no email, or a form already signed on paper.
+ *
+ * "Sign here now" is offered FIRST because the introducer is usually sitting
+ * with the client — and because emailing the form means holding someone's
+ * address in order to ask permission to hold it. Signing on the introducer's own
+ * device avoids contacting them before consent exists.
+ */
+function ConsentCard({
   clientId,
+  state,
   attached,
+  links,
+  onIssued,
   onUploaded,
   onError,
 }: {
   clientId: string;
+  state: ConsentState | null;
   attached: DocRow | null;
+  links: { name: string; url: string }[];
+  onIssued: (links: { name: string; url: string }[]) => Promise<void>;
   onUploaded: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [issuing, setIssuing] = useState<null | "in_person" | "email">(null);
   const input = useRef<HTMLInputElement | null>(null);
+
+  const signed = Boolean(state?.all_signed);
+  const done = signed || Boolean(attached);
+
+  async function issue(deliver: "in_person" | "email") {
+    setIssuing(deliver);
+    try {
+      const res = await fetch(`/api/introducer/clients/${clientId}/consent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliver }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        onError(json.error ?? "Could not prepare the consent form.");
+        return;
+      }
+      await onIssued(
+        ((json.links as { name: string; url: string }[]) ?? []).map((l) => ({
+          name: l.name,
+          url: l.url,
+        })),
+      );
+    } catch {
+      onError("We couldn't reach the server.");
+    } finally {
+      setIssuing(null);
+    }
+  }
 
   async function upload(file: File) {
     setUploading(true);
@@ -686,17 +772,87 @@ function ConsentForm({
   return (
     <div
       className={`rounded-xl border p-4 ${
-        attached ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"
+        done ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"
       }`}
     >
-      <p className={`text-sm font-semibold ${attached ? "text-green-900" : "text-amber-900"}`}>
-        {attached ? "Signed consent form attached" : "Signed consent form"}
+      <p className={`text-sm font-semibold ${done ? "text-green-900" : "text-amber-900"}`}>
+        {signed
+          ? "Consent form signed by your client"
+          : attached
+            ? "Signed consent form attached"
+            : "Your client needs to sign the consent form"}
       </p>
-      <p className={`mt-1 text-sm ${attached ? "text-green-900" : "text-amber-900"}`}>
-        {attached
-          ? attached.filename
-          : "Upload the Referral Consent and Privacy Form your client signed. A referral cannot be submitted without it — the signature on that form is what lets us pass their details on."}
+
+      <p className={`mt-1 text-sm ${done ? "text-green-900" : "text-amber-900"}`}>
+        {signed
+          ? state?.signers.map((sn) => sn.name).filter(Boolean).join(" and ") || "Signed."
+          : attached
+            ? attached.filename
+            : "Their signature on the Referral Consent and Privacy Form is what lets us pass their details on. A referral can't be submitted without it."}
       </p>
+
+      {/* Partly signed: name who is still outstanding, so the introducer knows
+          who to chase rather than just that "it isn't done". */}
+      {!signed && state && state.signers.length > 0 && (
+        <ul className="mt-2 space-y-0.5 text-sm text-amber-900">
+          {state.signers.map((sn, i) => (
+            <li key={i}>
+              {sn.status === "signed" ? "✓" : "•"} {sn.name || `Applicant ${i + 1}`} —{" "}
+              {sn.status === "signed" ? "signed" : "not signed yet"}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* The one-time signing links, shown once, for the in-person route. Each
+          URL is the credential — it is not stored anywhere and will not be shown
+          again, so it is opened now or the form is reissued. */}
+      {links.length > 0 && !signed && (
+        <div className="mt-3 rounded-lg border border-gray-300 bg-white p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Hand the device to your client
+          </p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {links.map((l) => (
+              <li key={l.url}>
+                <a
+                  href={l.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-gray-900 underline"
+                >
+                  Open the form for {l.name || "your client"} →
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-gray-500">
+            These links open once and aren&apos;t shown again. If you lose them, send the form again.
+          </p>
+        </div>
+      )}
+
+      {!done && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void issue("in_person")}
+            disabled={issuing !== null}
+            className="rounded-lg px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "#c7894e" }}
+          >
+            {issuing === "in_person" ? "Preparing…" : "Sign here now"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void issue("email")}
+            disabled={issuing !== null}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+          >
+            {issuing === "email" ? "Sending…" : "Email it to them"}
+          </button>
+        </div>
+      )}
 
       <input
         ref={(el) => {
@@ -711,14 +867,22 @@ function ConsentForm({
           if (file) void upload(file);
         }}
       />
-      <button
-        type="button"
-        onClick={() => input.current?.click()}
-        disabled={uploading}
-        className="mt-3 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
-      >
-        {uploading ? "Uploading…" : attached ? "Replace it" : "Attach the signed form"}
-      </button>
+
+      {/* The paper fallback, deliberately quieter than the two above. */}
+      {!signed && (
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          disabled={uploading}
+          className="mt-3 block text-xs text-gray-600 underline disabled:opacity-50"
+        >
+          {uploading
+            ? "Uploading…"
+            : attached
+              ? "Replace the uploaded form"
+              : "Or upload a form they signed on paper"}
+        </button>
+      )}
     </div>
   );
 }
