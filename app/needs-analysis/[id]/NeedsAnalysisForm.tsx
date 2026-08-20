@@ -30,6 +30,7 @@ import {
   MARITAL_STATUSES,
   NEEDS_ANALYSIS_STATUSES,
   NEEDS_ANALYSIS_TERMINAL_STATUS,
+  OTHER_INCOME_TYPES,
   OWNER_OPTIONS,
   PAY_FREQUENCIES,
   PREFERRED_CONTACT_OPTIONS,
@@ -38,6 +39,7 @@ import {
   emptyAsset,
   emptyLiability,
   emptyNeedsAnalysis,
+  emptyOtherIncome,
   formatMoney,
   outstandingSections,
   type Applicant,
@@ -967,14 +969,112 @@ export default function NeedsAnalysisForm({ id }: { id: string }) {
           </div>
         </Section>
 
-        {/* Other income */}
+        {/* Other income — a row per source, attributed to an applicant.
+            The paper form's single household line could not say WHOSE income it
+            was or how much, so a lender could not use it for one applicant's
+            servicing and the income reconciliation was reduced to scanning the
+            prose for a first name. See OTHER_INCOME_TYPES. */}
         <Section title="Other income">
-          <Area
-            label="Bonus, Commission, Centrelink, Family Assistance"
-            rows={3}
-            value={data.other_income}
-            onChange={(v) => update((d) => void (d.other_income = v))}
-          />
+          <div className="space-y-2">
+            {(data.other_incomes ?? []).map((o, i) => (
+              <div key={o.id} className="grid grid-cols-[1fr_1.4fr_0.9fr_0.8fr_1fr_auto] gap-2 items-end">
+                <label className="block">
+                  {i === 0 && <Label>Type</Label>}
+                  <select
+                    value={o.type}
+                    onChange={(e) => update((d) => void (d.other_incomes[i].type = e.target.value))}
+                    className={inputCls}
+                  >
+                    <option value="">—</option>
+                    {OTHER_INCOME_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  {i === 0 && <Label>Who pays it / what it is</Label>}
+                  <input
+                    value={o.description}
+                    onChange={(e) => update((d) => void (d.other_incomes[i].description = e.target.value))}
+                    className={inputCls}
+                  />
+                </label>
+                <label className="block">
+                  {i === 0 && <Label>Amount</Label>}
+                  <input
+                    type="number"
+                    value={o.amount ?? ""}
+                    onChange={(e) =>
+                      update(
+                        (d) => void (d.other_incomes[i].amount = e.target.value === "" ? null : Number(e.target.value)),
+                      )
+                    }
+                    className={`${inputCls} print-hide tabular-nums`}
+                  />
+                  <PrintMoney value={o.amount} />
+                </label>
+                <label className="block">
+                  {i === 0 && <Label>How often</Label>}
+                  <select
+                    value={o.frequency}
+                    onChange={(e) => update((d) => void (d.other_incomes[i].frequency = e.target.value))}
+                    className={inputCls}
+                  >
+                    {FREQ_OPTS.map((f) => (
+                      <option key={f.value} value={f.value}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  {i === 0 && <Label>Whose</Label>}
+                  <select
+                    value={o.owner}
+                    onChange={(e) => update((d) => void (d.other_incomes[i].owner = e.target.value))}
+                    className={inputCls}
+                  >
+                    <option value="">—</option>
+                    {OWNER_OPTS.map((w) => (
+                      <option key={w.value} value={w.value}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  onClick={() => update((d) => void d.other_incomes.splice(i, 1))}
+                  className="no-print text-gray-400 hover:text-red-600 pb-2 px-1"
+                  title="Remove row"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() =>
+              update((d) => void (d.other_incomes ?? (d.other_incomes = [])).push(emptyOtherIncome("", d.other_incomes.length)))
+            }
+            className="no-print mt-2 text-sm text-[#0F4C5C] hover:underline"
+          >
+            + Add other income
+          </button>
+
+          {/* A document signed before this became rows keeps its sentence, and
+              it is shown rather than dropped — for some clients it is the only
+              record of their extra income. Read-only: re-typing it into rows is
+              an advisor's judgement, not something to do on their behalf. */}
+          {data.other_income.trim() !== "" && (
+            <div className="mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2">
+              <div className="text-[11px] uppercase tracking-wide font-semibold text-amber-900">
+                Previously recorded as a note
+              </div>
+              <div className="mt-1 whitespace-pre-wrap text-sm text-amber-900">{data.other_income}</div>
+            </div>
+          )}
         </Section>
 
         {/* Assets */}

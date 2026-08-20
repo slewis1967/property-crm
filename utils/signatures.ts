@@ -21,6 +21,7 @@ export const SIGN_DOC_TYPES: ComplianceDocType[] = [
   "introducer_nda",
   "introducer_agreement",
   "introducer_schedule",
+  "referral_consent",
 ];
 
 export function isSignDocType(v: unknown): v is ComplianceDocType {
@@ -40,6 +41,7 @@ export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
   introducer_nda: "Mutual Confidentiality Agreement",
   introducer_agreement: "Introducer Referral Agreement",
   introducer_schedule: "Commission Schedule",
+  referral_consent: "Referral Consent and Privacy Form",
 };
 
 /** The lifecycle of a single signer's request. */

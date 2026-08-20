@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { signBrand, signBrandStyle, type SignBrand } from "../../../utils/sign-brand";
 
 const TEAL = "#0F4C5C";
 
@@ -71,6 +72,7 @@ function downscaleImage(file: File): Promise<string> {
 export default function SignClient({ token }: { token: string }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [signerName, setSignerName] = useState("");
+  const [brand, setBrand] = useState<SignBrand>("nextkey");
   const [docLabel, setDocLabel] = useState("document");
   const [docType, setDocType] = useState("");
 
@@ -104,6 +106,12 @@ export default function SignClient({ token }: { token: string }) {
         if (cancelled) return;
         const state = (json?.state as LoadState) ?? "error";
         setLoadState(state);
+        /* OUTSIDE the "ready" branch on purpose. Someone reopening a link they
+         * already signed, or one that has expired, still sees a page with a
+         * company's name on it — and it should be the company they dealt with,
+         * not whichever one we default to. An unknown token carries no brand
+         * and falls back, correctly: we do not know who they are. */
+        setBrand(signBrand(json.brand));
         if (state === "ready") {
           setSignerName(typeof json.signer_name === "string" ? json.signer_name : "");
           setDocLabel(typeof json.doc_label === "string" ? json.doc_label : "document");
@@ -287,7 +295,7 @@ export default function SignClient({ token }: { token: string }) {
   if (declined) {
     return (
       <Centered>
-        <Brand />
+        <Brand brand={brand} />
         <h1 className="text-xl font-bold text-gray-800 mt-4">Response recorded</h1>
         <p className="text-gray-600 mt-2">{"You've declined to sign this document. You can close this window."}</p>
       </Centered>
@@ -297,14 +305,14 @@ export default function SignClient({ token }: { token: string }) {
   if (submitted) {
     return (
       <Centered>
-        <Brand />
+        <Brand brand={brand} />
         <div className="text-5xl mt-4">✓</div>
         <h1 className="text-xl font-bold text-gray-800 mt-2">Signed — thank you</h1>
         <p className="text-gray-600 mt-2">{`Your ${docLabel} has been signed. A copy has been emailed to you.`}</p>
         <a
           href={`/api/sign/${encodeURIComponent(token)}/signed`}
           className="inline-block mt-5 px-5 py-2.5 rounded-lg text-white font-semibold"
-          style={{ backgroundColor: TEAL }}
+          style={{ backgroundColor: signBrandStyle(brand).colour }}
         >
           Download your signed copy
         </a>
@@ -323,21 +331,22 @@ export default function SignClient({ token }: { token: string }) {
             : "This signing link is not valid. Please contact your adviser.";
     return (
       <Centered>
-        <Brand />
+        <Brand brand={brand} />
         <h1 className="text-xl font-bold text-gray-800 mt-4">Unable to sign</h1>
         <p className="text-gray-600 mt-2">{msg}</p>
       </Centered>
     );
   }
 
+  const brandStyle = signBrandStyle(brand);
   const licenceRequired = docType === "eoi";
   const canSign = hasSignature && consent && !submitting && (!licenceRequired || hasLicence);
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="rounded-t-xl px-6 py-4 text-white" style={{ backgroundColor: TEAL }}>
-          <div className="text-lg font-bold">NextKey Property Strategists</div>
+        <div className="rounded-t-xl px-6 py-4 text-white" style={{ backgroundColor: brandStyle.colour }}>
+          <div className="text-lg font-bold">{brandStyle.name}</div>
         </div>
         <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 space-y-6">
           <div>
@@ -507,7 +516,7 @@ export default function SignClient({ token }: { token: string }) {
           )}
 
           <p className="text-xs text-gray-400 text-center pt-2">
-            Secured by NextKey. This link is unique to you — please don&apos;t share it.
+            Secured by {brandStyle.secured}. This link is unique to you — please don&apos;t share it.
           </p>
         </div>
       </div>
@@ -523,6 +532,11 @@ function Centered({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Brand() {
-  return <div className="text-lg font-bold" style={{ color: TEAL }}>NextKey Property Strategists</div>;
+function Brand({ brand }: { brand?: SignBrand }) {
+  const style = signBrandStyle(brand);
+  return (
+    <div className="text-lg font-bold" style={{ color: style.colour }}>
+      {style.name}
+    </div>
+  );
 }

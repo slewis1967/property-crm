@@ -35,6 +35,7 @@ import { advanceApplicationOnNdaSigned } from "../../../../../utils/introducer-n
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { resolveIdentity } from "../../../../../utils/mailIdentities";
+import { signBrandStyle } from "../../../../../utils/sign-brand";
 import { clientIp, rateKeyFromToken } from "../../_shared";
 
 export const runtime = "nodejs";
@@ -180,7 +181,14 @@ export async function POST(
     }
 
     // Email the signed copy to the signer and the advisor (best-effort).
-    await emailSignedCopy(row.doc_type, row.signer_email, row.created_by, path, upErr ? null : true);
+    await emailSignedCopy(
+      row.doc_type,
+      row.signer_email,
+      row.created_by,
+      path,
+      upErr ? null : true,
+      row.brand,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (e) {
@@ -199,7 +207,12 @@ async function emailSignedCopy(
   advisorEmail: string | null,
   path: string,
   uploaded: boolean | null,
+  brand?: string | null,
 ): Promise<void> {
+  /* The brand the signer actually saw when they signed. This email used to send
+   * from the Springboard sender under a NextKey letterhead — half-converted, and
+   * confusing for whichever client received it. */
+  const brandStyle = signBrandStyle(brand);
   const label = DOC_TYPE_LABEL[docType as keyof typeof DOC_TYPE_LABEL] ?? "document";
   let attachments: { name: string; url: string }[] | undefined;
   if (uploaded) {
@@ -217,10 +230,9 @@ async function emailSignedCopy(
     </div>
   </div>`;
 
-  // Send from the validated Springboard sender (same identity as the "send for
-  // signature" request email) so the signed-copy mail actually delivers and the
-  // brand is consistent for the Springboard lead. Still best-effort.
-  const sender = resolveIdentity("springboard");
+  // Same identity as the "send for signature" request email, so the signed copy
+  // arrives from the address the signer already heard from. Best-effort.
+  const sender = resolveIdentity(brandStyle.identity);
   const recipients = [signerEmail, advisorEmail].filter((e): e is string => !!e);
   for (const to of recipients) {
     const res = await sendBrevoEmail({

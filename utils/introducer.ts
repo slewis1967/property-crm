@@ -11,6 +11,51 @@
  * added here but not there would be editable after submit without authorisation.
  */
 
+import {
+  hydrateNeedsAnalysis,
+  outstandingSections,
+  type NeedsAnalysisData,
+} from "./needsAnalysis";
+
+/**
+ * Which of the two things an introducer can send us.
+ *
+ * `referral` is the Tier 1 form that has always existed: coarse details, triaged
+ * by a human, promoted to the CRM only if a super admin accepts it.
+ *
+ * `full` is the Tier 2 submission pack — the same fact find and document
+ * collection a staff member would assemble. It does NOT go through the accept
+ * gate (see the header of migrations/20260820_introducer_tier2_pack.sql for why,
+ * and for what stands in its place). Only a firm whose `introducers.tier` is
+ * 't2' may hold one; enforced in the route, and again by a database trigger.
+ */
+export const INTRODUCER_PACK_TYPES = ["referral", "full"] as const;
+export type IntroducerPackType = (typeof INTRODUCER_PACK_TYPES)[number];
+
+export const PACK_LABELS: Record<IntroducerPackType, string> = {
+  referral: "Referral",
+  full: "Full submission pack",
+};
+
+export function isPackType(v: unknown): v is IntroducerPackType {
+  return typeof v === "string" && (INTRODUCER_PACK_TYPES as readonly string[]).includes(v);
+}
+
+/** Accreditation tiers, as recorded on `introducers.tier`. */
+export type IntroducerTier = "t1" | "t2";
+
+/**
+ * May this firm send a full pack?
+ *
+ * One function rather than `tier === "t2"` scattered across routes and pages, so
+ * "who is allowed to do credit assistance for us" is written down once. Anything
+ * unrecognised — including the NULL tier every firm activated before the column
+ * existed carries — is Tier 1. Never read upwards.
+ */
+export function canSendFullPack(tier: string | null | undefined): boolean {
+  return tier === "t2";
+}
+
 /** Referral lifecycle. Mirrors the CHECK constraint on introducer_clients.status. */
 export const INTRODUCER_CLIENT_STATUSES = [
   "draft",
@@ -85,6 +130,25 @@ export type IntroducerField = {
   required?: boolean;
   options?: readonly string[];
   hint?: string;
+/**
+   * Not asked on a FULL PACK, because the Needs Analysis covers it properly.
+   *
+   * On a Tier 1 referral the whole "Their situation" block is the point: rough
+   * bands we can triage from and confirm with the client later. On a pack every
+   * one of them is answered better a few screens on —
+   *
+   *   employment / income   exactly, per applicant, at a frequency
+   *   savings               as an asset with a value
+   *   intent / timeframe    in `needs_objectives`, in the client's own words
+   *
+   * — and asking twice is worse than redundant: "$90,000 – $120,000" sitting
+   * beside an exact $3,800 a fortnight is two versions of one fact that can
+   * disagree, and nothing says which one the assessor should believe.
+   *
+   * So a pack's first page collects only what the rest of the process needs to
+   * work: who the client is, how to reach them, and where they are.
+   */
+  skipOnPack?: boolean;
 };
 
 export const INCOME_BANDS = [
@@ -149,16 +213,35 @@ export const INTRODUCER_FIELDS: readonly IntroducerField[] = [
   { key: "applicant2_email", label: "Second applicant — email", group: "applicant2", type: "email" },
   { key: "applicant2_phone", label: "Second applicant — mobile", group: "applicant2", type: "tel" },
 
-  { key: "employment_status", label: "Employment", group: "circumstances", type: "select", options: EMPLOYMENT_STATUSES, required: true },
-  { key: "income_band", label: "Household income", group: "circumstances", type: "select", options: INCOME_BANDS, required: true },
-  { key: "deposit_band", label: "Savings / deposit", group: "circumstances", type: "select", options: DEPOSIT_BANDS, required: true },
-  { key: "purchase_intent", label: "What they're looking to do", group: "circumstances", type: "select", options: PURCHASE_INTENTS, required: true },
-  { key: "timeframe", label: "Timeframe", group: "circumstances", type: "select", options: TIMEFRAMES, required: true },
-  { key: "buying_in", label: "Where they want to buy", group: "circumstances", type: "text" },
-  { key: "notes", label: "Anything else we should know", group: "circumstances", type: "textarea" },
+  // The whole "Their situation" block. A full pack is asked none of it — see
+  // `skipOnPack`.
+  { key: "employment_status", label: "Employment", group: "circumstances", type: "select", options: EMPLOYMENT_STATUSES, required: true, skipOnPack: true },
+  { key: "income_band", label: "Household income", group: "circumstances", type: "select", options: INCOME_BANDS, required: true, skipOnPack: true },
+  { key: "deposit_band", label: "Savings / deposit", group: "circumstances", type: "select", options: DEPOSIT_BANDS, required: true, skipOnPack: true },
+  { key: "purchase_intent", label: "What they're looking to do", group: "circumstances", type: "select", options: PURCHASE_INTENTS, required: true, skipOnPack: true },
+  { key: "timeframe", label: "Timeframe", group: "circumstances", type: "select", options: TIMEFRAMES, required: true, skipOnPack: true },
+  { key: "buying_in", label: "Where they want to buy", group: "circumstances", type: "text", skipOnPack: true },
+  { key: "notes", label: "Anything else we should know", group: "circumstances", type: "textarea", skipOnPack: true },
 ];
 
 export const INTRODUCER_FIELD_KEYS: readonly string[] = INTRODUCER_FIELDS.map((f) => f.key);
+
+/**
+ * The fields THIS pack asks for.
+ *
+ * A referral asks everything. A full pack asks only what the rest of the process
+ * needs to work — who the client is, how to reach them, where they are, and who
+ * else is applying — because everything else is captured properly on the Needs
+ * Analysis. See `skipOnPack`.
+ *
+ * This narrows what is SHOWN and REQUIRED, not what may be STORED:
+ * `pickEditableFields` still accepts the full allow-list, so a referral that
+ * already carries a band keeps it rather than having it silently dropped.
+ */
+export function fieldsForPack(packType: IntroducerPackType): readonly IntroducerField[] {
+  if (packType !== "full") return INTRODUCER_FIELDS;
+  return INTRODUCER_FIELDS.filter((f) => !f.skipOnPack);
+}
 
 export function fieldLabel(key: string): string {
   return INTRODUCER_FIELDS.find((f) => f.key === key)?.label ?? key;
@@ -349,9 +432,143 @@ export function evaluateEdit(
   };
 }
 
-/** Which required fields are still missing? Empty array means ready to submit. */
+/**
+ * Which required fields are still missing? Empty array means ready to submit.
+ *
+ * Reads the pack type off the record, so a full pack is not blocked on bands it
+ * was never shown. Getting this wrong in the other direction is the nastier
+ * failure: the form would hide a field and the submit would then refuse over it,
+ * with nothing on screen to fix.
+ */
 export function missingRequiredFields(record: ClientRecordShape): string[] {
-  return INTRODUCER_FIELDS.filter((f) => f.required && isBlank(record[f.key])).map((f) => f.key);
+  const packType: IntroducerPackType = isPackType(record.pack_type) ? record.pack_type : "referral";
+  return fieldsForPack(packType)
+    .filter((f) => f.required && isBlank(record[f.key]))
+    .map((f) => f.key);
+}
+
+/* ── Tier 2: the full submission pack ────────────────────────────────────── */
+
+/**
+ * Seed a blank Needs Analysis from the referral details already typed.
+ *
+ * The Tier 1 fields and the Needs Analysis's first page ask several of the same
+ * questions. Re-typing them is how the two end up disagreeing about the client's
+ * own name, so applicant 1 and 2 are filled from the referral and the introducer
+ * corrects rather than transcribes.
+ *
+ * Deliberately conservative — only fields that mean the same thing on both
+ * sides. `income_band` is a band and `income_amount` is a number, so income is
+ * NOT carried across: turning "$90,000 – $120,000" into a figure would invent
+ * precision the client never gave, and the income reconciliation would then
+ * compare their payslips against our invention.
+ */
+export function seedNeedsAnalysisFromReferral(record: ClientRecordShape): NeedsAnalysisData {
+  const data = hydrateNeedsAnalysis({});
+  const str = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+  data.applicants[0].given_names = str(record.first_name);
+  data.applicants[0].surname = str(record.last_name);
+  data.applicants[0].dob = str(record.dob);
+  data.applicants[0].contact.email = str(record.email);
+  data.applicants[0].contact.mobile_phone = str(record.phone);
+  data.applicants[0].current_address.suburb = str(record.suburb);
+  data.applicants[0].current_address.state = str(record.state);
+  data.applicants[0].current_address.postcode = str(record.postcode);
+
+  data.applicants[1].given_names = str(record.applicant2_first_name);
+  data.applicants[1].surname = str(record.applicant2_last_name);
+  data.applicants[1].contact.email = str(record.applicant2_email);
+  data.applicants[1].contact.mobile_phone = str(record.applicant2_phone);
+
+  return data;
+}
+
+/**
+ * What still stops this pack being submitted?
+ *
+ * STRICTER THAN THE STAFF FORM, ON PURPOSE. `outstandingSections` is advisory on
+ * the staff side because a Needs Analysis is filled in over the course of an
+ * interview with the file open. Here, submit creates the opportunity, emails the
+ * client and locks the pack in one irreversible move, and the introducer does
+ * not get to come back and finish it — so the whole list is a gate.
+ *
+ * IT ALSO DEMANDS INCOME AND EMPLOYMENT, which `outstandingSections` does not.
+ * Those are what the income reconciliation triangulates against the client's
+ * payslips and ATO statements; without them the pack sails past the one check
+ * that exists because a file went out declaring $186k against payslips worth
+ * $154k. A pack that skips the check is the one most in need of it.
+ */
+export function packSubmitBlockers(raw: unknown): string[] {
+  const data = hydrateNeedsAnalysis(raw);
+  const blockers = [...outstandingSections(data)];
+
+  data.applicants.forEach((a, i) => {
+    const inUse = Boolean(a.given_names.trim() || a.surname.trim());
+    if (!inUse) return;
+    const who = `Applicant ${i + 1}`;
+    if (!a.given_names.trim() || !a.surname.trim()) push(blockers, `${who} full name`);
+    if (!a.dob.trim()) push(blockers, `${who} date of birth`);
+    if (!a.current_address.street.trim()) push(blockers, `${who} current address`);
+    if (!a.contact.email.trim()) push(blockers, `${who} email — they can't be sent anything without it`);
+
+    const emp = a.current_employment;
+    if (!emp.employment_type) push(blockers, `${who} employment type`);
+    // Someone not working has no income to declare, and asking for one would
+    // invite a made-up number into a document the client signs.
+    const working = emp.employment_type !== "unemployed" && emp.employment_type !== "retired";
+    if (working) {
+      if (emp.income_amount == null) push(blockers, `${who} income`);
+      if (!emp.pay_frequency) push(blockers, `${who} pay frequency`);
+      if (!emp.employer.street.trim() && !emp.occupation.trim()) {
+        push(blockers, `${who} employer or occupation`);
+      }
+    }
+  });
+
+  return blockers;
+}
+
+function push(list: string[], value: string): void {
+  if (!list.includes(value)) list.push(value);
+}
+
+/**
+ * Is there anything in this blob at all?
+ *
+ * `needs_analysis_data` defaults to '{}', and `hydrateNeedsAnalysis` turns that
+ * into a fully-shaped empty template — so "has the introducer started" cannot be
+ * answered by looking for keys. Ask whether an applicant has a name.
+ */
+export function packStarted(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const data = hydrateNeedsAnalysis(raw);
+  return data.applicants.some((a) => a.given_names.trim() !== "" || a.surname.trim() !== "");
+}
+
+/**
+ * How many applicants is this pack for?
+ *
+ * Drives how many document-collection requests get created and how many people
+ * are asked to sign — each applicant uploads their own ID, payslips and super
+ * statement, and a document signed by one of two people is refused outright by
+ * utils/yla-package.ts.
+ */
+export function packApplicantCount(raw: unknown): 1 | 2 {
+  const data = hydrateNeedsAnalysis(raw);
+  const second = data.applicants[1];
+  return second.given_names.trim() || second.surname.trim() ? 2 : 1;
+}
+
+/** "John Smith" for applicant `i` (0-based). "" if that slot is unused. */
+export function packApplicantName(raw: unknown, i: 0 | 1): string {
+  const a = hydrateNeedsAnalysis(raw).applicants[i];
+  return [a.given_names.trim(), a.surname.trim()].filter(Boolean).join(" ");
+}
+
+/** The address applicant `i` is written to. "" when we don't have one. */
+export function packApplicantEmail(raw: unknown, i: 0 | 1): string {
+  return hydrateNeedsAnalysis(raw).applicants[i].contact.email.trim();
 }
 
 /**
@@ -400,9 +617,27 @@ export function normaliseAuPhone(input: string): string | null {
  */
 export function toPortalView(row: Record<string, unknown>) {
   const status = String(row.status ?? "draft") as IntroducerClientStatus;
+  const packType: IntroducerPackType = isPackType(row.pack_type) ? row.pack_type : "referral";
   return {
     id: String(row.id),
     client_ref: (row.client_ref as string) ?? null,
+    pack_type: packType,
+    pack_label: PACK_LABELS[packType],
+    /* Whether the fact find has been started and whether a document request
+     * exists — NOT the fact find itself, and never the request's token. The
+     * blob is fetched separately by the pack form, which is the only surface
+     * entitled to it; a list view has no business carrying a client's
+     * liabilities in its payload. */
+    /* Named for the pack, not the document, so the portal's own vocabulary
+     * survives the next time the document underneath it changes — which it just
+     * did, from a Fact Find to a Needs Analysis. */
+    pack_started: packStarted(row.needs_analysis_data),
+    documents_requested: Boolean(row.document_request_id),
+    /* That a Needs Analysis exists — not its id, and certainly not its
+     * contents. The introducer's window into the CRM stays coarse; what they
+     * need is "has my client signed it yet", which the detail route answers
+     * from the signature requests. */
+    needs_analysis_created: Boolean(row.needs_analysis_id),
     first_name: (row.first_name as string) ?? "",
     last_name: (row.last_name as string) ?? "",
     email: (row.email as string) ?? null,

@@ -28,7 +28,7 @@ import { randomInt } from "node:crypto";
 import { createHash } from "node:crypto";
 import { supabase } from "./supabase";
 import { newToken, hashToken, safeEqual } from "./sign-token";
-import { introducerTablesMissing } from "./introducer";
+import { introducerTablesMissing, type IntroducerTier } from "./introducer";
 import { introducerEntityColumnMissing } from "./introducer-entity";
 
 /** Session cookie. `__Host-` prefix pins it to this exact origin, path `/`, secure. */
@@ -68,6 +68,13 @@ export type IntroducerIdentity = {
    */
   accreditationExpiresAt: string | null;
   smsfCompetencyExpiresAt: string | null;
+  /**
+   * The firm's accreditation tier — 't1' refers, 't2' also completes the fact
+   * find and collects documents. Resolved with the session so no route ever
+   * decides it from something the caller sent, and defaulted DOWN: a firm on
+   * the older schema, or one whose tier came back unrecognised, is Tier 1.
+   */
+  tier: IntroducerTier;
 };
 
 export type LoginChallenge = {
@@ -340,8 +347,11 @@ async function finishLogin(
       isPrimary: Boolean(user.is_primary),
       // Not read on the login path. Nothing at sign-in depends on them, and the
       // very next request resolves the session and picks them up from the firm.
+      // `tier` is the same story, and defaults DOWN for the same reason: if
+      // anything ever did read it here, the safe answer is the narrower one.
       accreditationExpiresAt: null,
       smsfCompetencyExpiresAt: null,
+      tier: "t1",
     },
   };
 }
@@ -360,7 +370,7 @@ const SESSION_SELECT =
 const SESSION_SELECT_WITH_EXPIRY =
   "id,introducer_user_id,introducer_id,expires_at,revoked_at,last_seen_at," +
   "introducer_users(id,email,full_name,is_primary,status," +
-  "introducers(firm_name,status,accreditation_expires_at,smsf_competency_expires_at))";
+  "introducers(firm_name,status,tier,accreditation_expires_at,smsf_competency_expires_at))";
 
 export async function resolveSession(rawToken: string | null | undefined): Promise<IntroducerIdentity | null> {
   if (!rawToken || typeof rawToken !== "string" || rawToken.length < 20) return null;
@@ -417,6 +427,7 @@ export async function resolveSession(rawToken: string | null | undefined): Promi
     | {
         firm_name?: string;
         status?: string;
+        tier?: string | null;
         accreditation_expires_at?: string | null;
         smsf_competency_expires_at?: string | null;
       }
@@ -446,6 +457,10 @@ export async function resolveSession(rawToken: string | null | undefined): Promi
     isPrimary: Boolean(user.is_primary),
     accreditationExpiresAt: firm.accreditation_expires_at ?? null,
     smsfCompetencyExpiresAt: firm.smsf_competency_expires_at ?? null,
+    // The narrow rung of the select doesn't ask for `tier`, so a pre-migration
+    // schema lands here as undefined. Tier 1 — the direction the column's own
+    // DEFAULT chose, for the same reason.
+    tier: firm.tier === "t2" ? "t2" : "t1",
   };
 }
 
