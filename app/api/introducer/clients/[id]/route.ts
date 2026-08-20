@@ -242,8 +242,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const record = await loadOwnClient(auth, id);
   if (!record) return NextResponse.json({ ok: false, error: "Not found." }, { status: 404 });
 
-  // Only a draft can be discarded. Once submitted, the referral is a record of
-  // something that happened — deleting it would erase the audit trail with it.
+  /* Only a draft can be discarded. Once submitted, the referral is a record of
+   * something that happened — deleting it would erase the audit trail with it.
+   *
+   * The events themselves SURVIVE the delete either way: `client_id` is SET NULL
+   * rather than cascaded (migrations/20260821c). Before that it cascaded into an
+   * append-only table whose trigger refuses every DELETE, so this route could
+   * not succeed at all — a draft could be created and never discarded. */
   if (record.status !== "draft") {
     return NextResponse.json(
       { ok: false, error: "Submitted referrals can't be deleted. Contact Springboard if this was sent in error." },
