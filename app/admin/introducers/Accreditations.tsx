@@ -25,6 +25,7 @@ type Application = {
   firm_name: string | null;
   tier: string;
   agreement_variant: string;
+  recruits_introducers?: boolean | null;
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -278,6 +279,11 @@ function Card({
               Paid
             </span>
           )}
+          {app.recruits_introducers && (
+            <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-900">
+              Recruiter
+            </span>
+          )}
           {app.accreditation_no && (
             <p className="mt-1 font-mono text-xs tabular-nums text-gray-500">{app.accreditation_no}</p>
           )}
@@ -421,7 +427,7 @@ function Card({
               {app.agreement_variant === "paid" ? (
                 <Prompt
                   label={app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
-                  placeholder="Referral fee, e.g. $2,500 per settled referral"
+                  placeholder="Referral fee, e.g. $5,000 per settled referral, including GST"
                   busy={busy}
                   onSubmit={(fee) =>
                     act(
@@ -439,6 +445,28 @@ function Card({
                   }
                 >
                   {app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                </Action>
+              )}
+
+              {/* Granted BEFORE the schedule issues, because the schedule
+                  snapshots it — flipping this afterwards would leave the row
+                  disagreeing with the document they signed. Paid only; the
+                  standard arrangement pays nothing at all, so there is nothing
+                  for a network to earn. */}
+              {app.agreement_variant === "paid" && (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", recruits_introducers: !app.recruits_introducers },
+                      app.recruits_introducers
+                        ? "Network entitlement removed — document sent."
+                        : "Recruiter arrangement granted — document sent.",
+                    )
+                  }
+                >
+                  {app.recruits_introducers ? "Remove network fee" : "Pays on recruits’ deals"}
                 </Action>
               )}
 

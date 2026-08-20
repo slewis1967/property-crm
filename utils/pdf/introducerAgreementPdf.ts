@@ -89,11 +89,26 @@ function clauses(d: IntroducerAgreementData): string {
         separately. Until you have signed that document, this clause governs.</p>`;
     }
 
+    /* THE TERMS BELOW TRACK THE REFERRAL FEE ADDENDUM (Document 2B) and must
+     * continue to. Two instruments describing one fee is already one too many;
+     * two describing it DIFFERENTLY is a dispute waiting to be had. An earlier
+     * version of this renderer said "paid within 30 days of settlement", which
+     * the addendum does not say and Springboard could not honour — it pays out
+     * of a Program Fee that has not necessarily cleared by then. If the
+     * addendum changes, change this with it.
+     *
+     * ONE PHRASE IS RESERVED. "No referral fee is payable" opens the STANDARD
+     * schedule, where it means Springboard pays nothing at all. Nothing in the
+     * paid schedule may lead with it — a conditional withholding and a blanket
+     * "we pay you nothing" must not read alike to someone skimming their own
+     * contract. A test pins this. */
+    const network = d.recruits_introducers;
+
     return `${head}
       <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;">
         <tr>
           <td style="padding:10px 12px;border:1px solid #e1e4ec;background:#f7f8fb;width:55%;">
-            Referral fee, per settled matter introduced by you
+            Referral fee, per settled matter${network ? " introduced by you or by an introducer you recruited" : " introduced by you"}
           </td>
           <td style="padding:10px 12px;border:1px solid #e1e4ec;font-weight:600;">
             ${field(d.fee_per_settlement)}
@@ -101,9 +116,38 @@ function clauses(d: IntroducerAgreementData): string {
         </tr>
       </table>
       ${d.fee_notes.trim() ? `<p>${esc(d.fee_notes)}</p>` : ""}
-      <p><strong>When it is payable.</strong> A referral fee is earned only when the matter you
-        introduced settles, and is paid within 30 days of settlement. Nothing is payable on a referral
-        that does not settle, whatever the reason.</p>
+      <p><strong>One per client.</strong> One referral fee is payable for each client, however many
+        referrals, products or people are involved in bringing them to us.</p>
+      <p><strong>When it is payable.</strong> A referral fee is earned only when the matter settles, and
+        only after Springboard has received its Program Fee for that matter in cleared funds. It is then
+        paid within 14 days of your invoice. This is routinely several months after the referral is made:
+        it is not near-term income and must never be presented to anyone as if it were. Nothing is
+        payable on a referral that does not settle, whatever the reason.</p>
+      <p><strong>If it unwinds.</strong> The fee is repayable on demand if the settlement is later
+        rescinded or unwound, or if Springboard&rsquo;s Program Fee is refunded or clawed back.</p>
+      <p><strong>Disclosure is a condition of payment.</strong> A referral fee is withheld for any client
+        who was not given the referral-fee disclosure required by your Referral Fee Addendum, before any
+        personal information was collected from them, whether or not the matter settles. Springboard may
+        require the signed disclosure before paying and will not pay without it.</p>
+      <p><strong>Accreditation must be current.</strong> A referral earns nothing if the accreditation of
+        the introducer who made it was suspended, lapsed or withdrawn at the moment it was made${
+          network ? ", and nothing is payable to you on a network referral unless your own accreditation is also current at that moment" : ""
+        }.</p>
+      ${
+        network
+          ? `<p><strong>Introducers you recruit.</strong> You are paid the fee above on a settled matter
+              introduced by an accredited introducer you recruited into the programme, on the same
+              conditions as your own. Every such introducer is separately accredited by Springboard,
+              contracts with Springboard directly, and is responsible for their own conduct and
+              disclosure; recruiting them makes you neither their employer nor their principal, and
+              confers on you no authority over their referrals.</p>
+             <p><strong>What you pay them is yours to decide.</strong> Whether you pay an introducer you
+              recruited any share of this fee, and how much, is a matter between you and them.
+              Springboard is not a party to it, pays them nothing, and owes them nothing. You must not
+              represent otherwise, and any arrangement you make with them must not require or encourage
+              anything their own agreement with Springboard forbids.</p>`
+          : ""
+      }
       <p><strong>What it is not.</strong> This fee is consideration for an introduction only. It is not
         payable for, and must not be represented as payment for, credit assistance, financial advice, or
         any service requiring a licence you do not hold.</p>

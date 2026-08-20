@@ -88,6 +88,8 @@ const {
   AGREEMENT_SEQUENCE,
 } = await import("./introducer-agreement-signing");
 const { introducerDocDataFor } = await import("./introducer-doc-signing");
+const { readyToIssue } = await import("./introducer-agreement");
+const { renderIntroducerAgreementHtml } = await import("./pdf/introducerAgreementPdf");
 
 const APP_ID = "545f633f-5700-404e-a787-f0b60f718e04";
 const NOW = new Date("2026-08-20T00:00:00.000Z");
@@ -252,5 +254,102 @@ describe("agreementProgress", () => {
     const p = await agreementProgress(APP_ID);
     expect(p.signed).toEqual([]);
     expect(p.complete).toBe(false);
+  });
+});
+
+describe("the BDM arrangement", () => {
+  const bdm = () =>
+    app({
+      agreement_variant: "paid",
+      fee_per_settlement: "$5,000 per settled referral, including GST",
+      recruits_introducers: true,
+    });
+
+  it("carries the network entitlement onto the schedule and nothing else", () => {
+    expect(
+      introducerDocDataFor(bdm(), "introducer_schedule", NOW.toISOString()).recruits_introducers,
+    ).toBe(true);
+    // The referral agreement says what the introducer may do; the money — and
+    // therefore the network entitlement — lives only in the schedule.
+    expect(
+      introducerDocDataFor(bdm(), "introducer_agreement", NOW.toISOString()).recruits_introducers,
+    ).toBe(false);
+  });
+
+  it("refuses a network entitlement on the standard arrangement", () => {
+    // Springboard pays a standard introducer nothing at all, so there is
+    // nothing for a network to earn a share of.
+    const wrong = introducerDocDataFor(
+      app({ recruits_introducers: true }),
+      "introducer_schedule",
+      NOW.toISOString(),
+    );
+    wrong.recruits_introducers = true;
+    expect(readyToIssue(wrong)).toMatchObject({ ok: false });
+    expect(
+      readyToIssue(wrong) as { reason: string },
+    ).toHaveProperty("reason", expect.stringMatching(/STANDARD arrangement/));
+  });
+
+  it("says on the document that the fee covers recruits' settled matters", async () => {
+    const d = introducerDocDataFor(bdm(), "introducer_schedule", NOW.toISOString());
+    const html = await renderIntroducerAgreementHtml(d, []);
+    expect(html).toMatch(/introduced by you or by an introducer you recruited/);
+    expect(html).toMatch(/Introducers you recruit/);
+    // The recruit contracts with Springboard, not with the BDM — the clause
+    // that keeps this from reading as employment or agency.
+    expect(html).toMatch(/neither their employer nor their principal/);
+    // And what the BDM pays them is explicitly outside our documents.
+    expect(html).toMatch(/Springboard is not a party to it/);
+  });
+
+  it("leaves a non-recruiter's schedule saying only what it used to", async () => {
+    const d = introducerDocDataFor(
+      app({ agreement_variant: "paid", fee_per_settlement: "$5,000" }),
+      "introducer_schedule",
+      NOW.toISOString(),
+    );
+    const html = await renderIntroducerAgreementHtml(d, []);
+    expect(html).not.toMatch(/Introducers you recruit/);
+    expect(html).toMatch(/per settled matter introduced by you/);
+  });
+});
+
+describe("the paid schedule tracks the Referral Fee Addendum", () => {
+  const paid = () =>
+    introducerDocDataFor(
+      app({ agreement_variant: "paid", fee_per_settlement: "$5,000 including GST" }),
+      "introducer_schedule",
+      NOW.toISOString(),
+    );
+
+  it("pays on the addendum's terms, not 30 days from settlement", async () => {
+    // The earlier wording promised payment Springboard could not honour — it
+    // pays out of a Program Fee that has not necessarily cleared by then. Two
+    // instruments describing one fee differently is a dispute waiting to happen.
+    const html = await renderIntroducerAgreementHtml(paid(), []);
+    expect(html).toMatch(/Program Fee for that matter in cleared funds/);
+    expect(html).toMatch(/within 14 days of your invoice/);
+    expect(html).not.toMatch(/within 30 days of settlement/);
+  });
+
+  it("carries the clawback, the one-per-client cap and the disclosure condition", async () => {
+    const html = await renderIntroducerAgreementHtml(paid(), []);
+    expect(html.replace(/\s+/g, " ")).toMatch(/repayable on demand if the settlement is later rescinded or unwound/);
+    expect(html).toMatch(/One referral fee is payable for each client/);
+    expect(html).toMatch(/A referral fee is withheld for any client/);
+    // And never the standard schedule's blanket phrase, which means the
+    // opposite and which a paid introducer must not meet in their own document.
+    expect(html).not.toMatch(/No referral fee is payable/);
+    expect(html).toMatch(/Accreditation must be current/);
+  });
+
+  it("still says the standard arrangement pays nothing, in as many words", async () => {
+    const html = await renderIntroducerAgreementHtml(
+      introducerDocDataFor(app(), "introducer_schedule", NOW.toISOString()),
+      [],
+    );
+    expect(html).toMatch(/No referral fee is payable/);
+    expect(html).not.toMatch(/within 14 days of your invoice/);
   });
 });

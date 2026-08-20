@@ -69,6 +69,7 @@ export function introducerDocDataFor(
   if (docType === "introducer_schedule" && d.variant === "paid") {
     d.fee_per_settlement = (app.fee_per_settlement ?? "").trim();
     d.fee_notes = (app.fee_notes ?? "").trim();
+    d.recruits_introducers = app.recruits_introducers === true;
   }
   return d;
 }

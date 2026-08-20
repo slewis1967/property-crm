@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { columnMissing } from "../../../../../../../utils/column-missing";
 import { requireSuperAdmin } from "../../../_shared";
 import { supabase } from "../../../../../../../utils/supabase";
 import {
@@ -75,9 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const firmName = app.firm_name?.trim() || app.legal_name;
 
-  const { data: firm, error: firmErr } = await supabase
-    .from("introducers")
-    .insert({
+  const firmRow: Record<string, unknown> = {
       firm_name: firmName,
       contact_name: app.legal_name,
       contact_email: app.email,
@@ -91,6 +90,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       agreement_ref: app.accreditation_no,
       accreditation_no: app.accreditation_no,
       agreement_signed_at: new Date().toISOString(),
+      /* The recruiter chain, carried across on the same reasoning as the
+       * expiries below: the referral path reads it and the firm row is what a
+       * later correction is applied to. `recruits_introducers` is an
+       * entitlement stated in a signed schedule, so it moves with the person it
+       * was granted to rather than being re-derived. */
+      recruited_by_introducer_id: app.recruited_by_introducer_id ?? null,
+      recruits_introducers: app.recruits_introducers === true,
       /* Copied, not joined. Every referral submitted from the portal has to
        * check these, and the firm row is already in hand at that point — a join
        * back to the application would put a second query on the hot path for a
@@ -104,9 +110,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // before anything does.
       tier: app.tier === "t2" ? "t2" : "t1",
       created_by: auth,
-    })
+  };
+
+  /* Two rungs, for the window where this code has deployed and
+   * 20260821d_introducer_recruiter_chain.sql has not. Activation is the worst
+   * place to break the house rule that code ships before the SQL: the candidate
+   * has signed everything and is waiting on a login, and "could not create the
+   * introducer firm" would be a dead end for a reason that has nothing to do
+   * with them. Dropping the recruiter columns costs an attribution that can be
+   * set afterwards; failing costs the activation. */
+  const RECRUITER_KEYS = ["recruited_by_introducer_id", "recruits_introducers"];
+  let { data: firm, error: firmErr } = await supabase
+    .from("introducers")
+    .insert(firmRow)
     .select("id,firm_name")
     .single();
+
+  if (firmErr && columnMissing(firmErr, RECRUITER_KEYS)) {
+    for (const k of RECRUITER_KEYS) delete firmRow[k];
+    ({ data: firm, error: firmErr } = await supabase
+      .from("introducers")
+      .insert(firmRow)
+      .select("id,firm_name")
+      .single());
+  }
 
   if (firmErr || !firm) {
     return NextResponse.json({ ok: false, error: "Could not create the introducer firm." }, { status: 500 });

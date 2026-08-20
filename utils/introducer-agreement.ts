@@ -83,6 +83,12 @@ export type IntroducerAgreementData = {
   fee_per_settlement: string;
   fee_notes: string;
 
+  /** This introducer is paid on settled referrals submitted by introducers they
+   *  recruited, as well as on their own — the BDM arrangement. Snapshotted like
+   *  everything else: a schedule signed without the network entitlement must go
+   *  on reading that way after the person is later given one. */
+  recruits_introducers: boolean;
+
   /** Stamped at issue so the rendered document carries its own date. */
   issued_at: string;
   /** Free text shown under the title, e.g. "Tier 1 accreditation". */
@@ -108,6 +114,7 @@ export function emptyIntroducerAgreement(
     licence_ref: "COMP-8317",
     fee_per_settlement: "",
     fee_notes: "",
+    recruits_introducers: false,
     issued_at: "",
     subtitle: "",
   };
@@ -143,6 +150,9 @@ export function hydrateIntroducerAgreement(blob: unknown): IntroducerAgreementDa
     licence_ref: str(raw.licence_ref, base.licence_ref),
     fee_per_settlement: str(raw.fee_per_settlement, base.fee_per_settlement),
     fee_notes: str(raw.fee_notes, base.fee_notes),
+    // Anything but an explicit true is false. A document that predates the BDM
+    // arrangement must not acquire a network entitlement by being re-read.
+    recruits_introducers: raw.recruits_introducers === true,
     issued_at: str(raw.issued_at, base.issued_at),
     subtitle: str(raw.subtitle, base.subtitle),
   };
@@ -190,6 +200,13 @@ export function readyToIssue(d: IntroducerAgreementData): { ok: true } | { ok: f
           "a referral fee has been entered on a STANDARD schedule, which promises money the standard agreement says is not payable. Either clear the fee or move them onto the paid arrangement",
       };
     }
+  }
+  if (d.recruits_introducers && d.variant !== "paid") {
+    return {
+      ok: false,
+      reason:
+        "this introducer is marked as earning on referrals from introducers they recruit, but they are on the STANDARD arrangement, under which Springboard pays nothing at all. Move them onto the paid arrangement or clear the network entitlement",
+    };
   }
   if (d.doc_type !== "introducer_nda" && !d.accreditation_no.trim()) {
     return {

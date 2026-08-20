@@ -58,6 +58,11 @@ export type Application = {
    *  20260821c_introducer_referral_fee.sql runs. */
   fee_per_settlement?: string | null;
   fee_notes?: string | null;
+  /** Who brought this introducer in, and whether they are paid on the
+   *  settlements of introducers THEY recruited. Absent until
+   *  20260821d_introducer_recruiter_chain.sql runs. */
+  recruited_by_introducer_id?: string | null;
+  recruits_introducers?: boolean | null;
   created_at: string;
   updated_at: string;
   withdrawn_reason: string | null;
@@ -85,10 +90,16 @@ const ACCREDITATION_COLUMNS =
  *  which is exactly what it means. */
 const FEE_COLUMNS = "fee_per_settlement, fee_notes";
 
+/** Added by `20260821d_introducer_recruiter_chain.sql`. A pending migration
+ *  reads as "nobody recruits anybody", which is what it meant before the BDM
+ *  arrangement existed. */
+const RECRUITER_COLUMNS = "recruited_by_introducer_id, recruits_introducers";
+
 /** Widest first. Each rung drops the most recent migration's columns, so a read
  *  keeps working against a database that is one or two migrations behind the
  *  deploy — the house rule being that code ships before the SQL is run. */
 const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`,
@@ -274,6 +285,45 @@ export async function setReferralFee(
         ok: false,
         error:
           "A referral fee cannot be set on the standard arrangement, which says no fee is payable. Move them onto the paid variant first.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Grant or withdraw the network entitlement — "this introducer is paid on
+ * settled referrals from introducers they recruited".
+ *
+ * Separate from setReferralFee because it is a different decision: the fee is
+ * the amount, this is the scope. Both are terms of a schedule somebody signs,
+ * so both must be settled BEFORE that document issues — it snapshots them, and
+ * a row that quietly disagrees with the signed instrument is worse than one
+ * merely out of date.
+ */
+export async function setRecruiterEntitlement(
+  id: string,
+  recruits: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ recruits_introducers: recruits, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["recruits_introducers"])) {
+      return {
+        ok: false,
+        error:
+          "Recruiter arrangements are not switched on yet — run migrations/20260821d_introducer_recruiter_chain.sql.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "Only a paid introducer can earn on referrals from introducers they recruit — the standard arrangement pays nothing at all. Move them onto the paid variant first.",
       };
     }
     throw error;

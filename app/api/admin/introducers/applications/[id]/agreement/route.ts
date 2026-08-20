@@ -6,6 +6,7 @@ import {
   logOnboardingEvent,
   mintLinkToken,
   setReferralFee,
+  setRecruiterEntitlement,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import { canSignAgreement, onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
 import {
@@ -94,6 +95,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // The fee first, if one was given: the schedule snapshots it at issue, so
     // setting it afterwards would leave the signed document disagreeing with
     // the record behind it.
+    if (typeof body.recruits_introducers === "boolean") {
+      const granted = await setRecruiterEntitlement(id, body.recruits_introducers);
+      if (!granted.ok) return NextResponse.json({ ok: false, error: granted.error }, { status: 409 });
+      app = (await findById(id)) ?? app;
+    }
     if (typeof body.fee_per_settlement === "string") {
       const saved = await setReferralFee(
         id,
