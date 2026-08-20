@@ -52,13 +52,20 @@ export async function GET(
     }
     const row = found.row;
 
-    if (row.status === "signed") return stateResponse("signed");
-    if (row.status === "declined") return stateResponse("declined");
+    /* The brand travels with EVERY state, not just "ready". Someone reopening a
+     * link they already signed, or one that has expired, still sees a page with
+     * a company's name at the top of it — and it should be the company they
+     * dealt with. An unknown TOKEN gets no brand, correctly: we do not know who
+     * they are, so there is nothing to claim. */
+    const brand = { brand: signBrand(row.brand) };
+
+    if (row.status === "signed") return stateResponse("signed", brand);
+    if (row.status === "declined") return stateResponse("declined", brand);
     if (row.status === "expired" || isExpired(row.expires_at, Date.now())) {
-      return stateResponse("expired");
+      return stateResponse("expired", brand);
     }
     // Any other terminal status we don't explicitly render → generic invalid.
-    if (isTerminalStatus(row.status)) return stateResponse("invalid");
+    if (isTerminalStatus(row.status)) return stateResponse("invalid", brand);
 
     // First valid view: sent → viewed (idempotent; don't clobber a later status).
     if (row.status === "sent") {
@@ -77,7 +84,7 @@ export async function GET(
        * derived from doc_type: the same document can belong to either business,
        * and a Springboard client must not be asked to sign under NextKey's
        * letterhead. */
-      brand: signBrand(row.brand),
+      ...brand,
     });
   } catch (e) {
     // Never leak internals to the public page.
