@@ -138,6 +138,18 @@ export async function sendNdaSigningEmail(opts: {
  * Accreditation passed. Separate from the step email because it is the one
  * moment in the flow worth marking — and because it carries the number they
  * will quote from then on.
+ *
+ * CARRIES THE CERTIFICATE, when there is one. This used to say the certificate
+ * was "attached to your accreditation page" and attach nothing, which sent a
+ * newly accredited person off to fetch the one document they actually want —
+ * and left them with nothing at all on the day the link in this email went
+ * stale. A certificate is a thing you keep, so it is sent as a file.
+ *
+ * `certificate` is optional because the two callers arrive here at different
+ * moments: the exam webhook fires on the pass itself, when the number exists
+ * and the PDF does not, and the certificate route fires once it has rendered
+ * one. The copy says which of those happened rather than promising an
+ * attachment that is not there.
  */
 export async function sendAccreditationPassedEmail(opts: {
   to: string;
@@ -145,6 +157,7 @@ export async function sendAccreditationPassedEmail(opts: {
   accreditationNo: string;
   rawToken: string;
   origin: string;
+  certificate?: { filename: string; base64: string };
 }) {
   const url = `${opts.origin.replace(/\/+$/, "")}/introducer/onboarding/${encodeURIComponent(opts.rawToken)}`;
 
@@ -155,8 +168,11 @@ export async function sendAccreditationPassedEmail(opts: {
     html: shell(
       "You're accredited",
       `<p>Hi ${firstName(opts.legalName)},</p>
-       <p>You passed the Springboard introducer accreditation exam. Your certificate is attached to your
-          accreditation page, and your number is:</p>
+       <p>You passed the Springboard introducer accreditation exam. ${
+         opts.certificate
+           ? "Your certificate is attached to this email — keep a copy."
+           : "Your certificate is being prepared and will follow shortly."
+       } Your number is:</p>
        <p style="margin:16px 0;font-size:20px;font-weight:700;letter-spacing:0.03em;color:#020e40;">${opts.accreditationNo}</p>
        <p>There's one step left — signing the introducer agreement and commission schedule. Once that's
           done your portal access opens automatically.</p>
@@ -164,6 +180,9 @@ export async function sendAccreditationPassedEmail(opts: {
       `This link is personal to ${opts.to} — please don't forward it.`,
       "Introducer accreditation",
     ),
+    attachments: opts.certificate
+      ? [{ name: opts.certificate.filename, content: opts.certificate.base64 }]
+      : undefined,
     tags: ["introducer", "onboarding", "passed"],
   });
 }

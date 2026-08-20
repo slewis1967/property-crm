@@ -5,7 +5,7 @@ import {
   findById,
   setState,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import {
   mintExamInvite,
@@ -128,7 +128,7 @@ export async function POST(
 
   // Rotate the onboarding link at the same time. They are being sent somewhere
   // new; the credential that takes them there should be current.
-  const freshToken = await reissueToken(application.id);
+  const freshToken = await mintLinkToken(application.id, "exam");
 
   let emailed = true;
   let emailError: string | null = null;

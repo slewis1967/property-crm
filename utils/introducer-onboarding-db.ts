@@ -88,6 +88,12 @@ const COLUMNS = COLUMN_LADDER[0];
  *  candidate whose link expired needs a different sentence to one who typoed. */
 export type LookupFailure = "not_found" | "expired";
 
+/** Every link an applicant has been sent, one row each. Added by
+ *  `20260820_introducer_onboarding_link_tokens.sql`; every read and write of it
+ *  degrades to the application row's own `token_hash` while that SQL is
+ *  pending, per the house rule that code ships before the migration is run. */
+const LINK_TABLE = "introducer_application_tokens";
+
 /**
  * Select once with the entity columns, and again without them if that
  * migration is still pending.
@@ -107,15 +113,54 @@ async function selectApplication<T>(
   return last!;
 }
 
+/** True when the link table has not been created yet — see LINK_TABLE. */
+function linkTableMissing(err: unknown): boolean {
+  const msg = typeof err === "string" ? err : (err as { message?: string })?.message || "";
+  return /introducer_application_tokens/.test(msg) && /does not exist|schema cache|relation/i.test(msg);
+}
+
+/**
+ * Resolve a raw token to an application.
+ *
+ * Two places to look, in this order:
+ *
+ *   1. `introducer_application_tokens` — every link the candidate has ever been
+ *      sent, each live until it expires. This is the table that stops a new
+ *      email from killing the last one (see the 20260820 migration).
+ *   2. `introducer_applications.token_hash` — the newest link, still kept in
+ *      sync. The fallback for a deploy that has landed ahead of the SQL, and
+ *      for a token minted by an older deploy after the backfill ran.
+ *
+ * A hash present in (1) is answered from (1) alone, expiry included: falling
+ * through to the column for a link we have deliberately expired or revoked
+ * would quietly undo the decision.
+ */
 export async function findByToken(
   rawToken: string,
 ): Promise<{ ok: true; application: Application } | { ok: false; reason: LookupFailure }> {
+  const hash = hashToken(rawToken);
+
+  const link = await supabase
+    .from(LINK_TABLE)
+    .select("application_id, expires_at, revoked_at")
+    .eq("token_hash", hash)
+    .maybeSingle();
+
+  if (link.error && !linkTableMissing(link.error)) throw link.error;
+
+  if (!link.error && link.data) {
+    const row = link.data as { application_id: string; expires_at: string; revoked_at: string | null };
+    // A revoked link reads as expired, not as unknown: the holder is a real
+    // candidate and "ask us for a fresh one" is the sentence that helps them.
+    if (row.revoked_at || new Date(row.expires_at).getTime() < Date.now()) {
+      return { ok: false, reason: "expired" };
+    }
+    const app = await findById(row.application_id);
+    return app ? { ok: true, application: app } : { ok: false, reason: "not_found" };
+  }
+
   const { data, error } = await selectApplication((columns) =>
-    supabase
-      .from("introducer_applications")
-      .select(columns)
-      .eq("token_hash", hashToken(rawToken))
-      .maybeSingle(),
+    supabase.from("introducer_applications").select(columns).eq("token_hash", hash).maybeSingle(),
   );
 
   if (error) throw error;
@@ -239,23 +284,69 @@ export async function createApplication(
     .single();
 
   if (error) throw error;
+
+  // Record the invite link alongside every later one, so the table is the whole
+  // history rather than everything-except-the-first. Non-fatal: the column
+  // above already carries this hash, and the lookup falls back to it.
+  const linked = await supabase
+    .from(LINK_TABLE)
+    .insert({ application_id: (data as unknown as Application).id, token_hash: token.hash, expires_at: expires, purpose: "invite" });
+  if (linked.error && !linkTableMissing(linked.error)) throw linked.error;
+
   return { application: data as unknown as Application, rawToken: token.raw };
 }
 
-/** Mint a new link for an existing application, invalidating the old one. */
-export async function reissueToken(
+/** Why a link was minted. Recorded so the audit file can say which email a
+ *  candidate was holding, and never used as a gate. */
+export type LinkPurpose = "invite" | "nda" | "exam" | "certificate" | "agreement" | "reissue";
+
+/**
+ * Mint a fresh link for an existing application. The previous ones KEEP WORKING.
+ *
+ * This used to be `reissueToken`, and minting also revoked: the new hash
+ * overwrote the old one on the application row, so the last email sent was the
+ * only email that worked. Every routine step send therefore broke the link in
+ * the send before it, and two staff clicks a few seconds apart — issue the
+ * certificate, then send the agreement — left the candidate holding a dead link
+ * to the page their certificate lives on. That is exactly what happened to
+ * SBI-2026-0004 and -0005.
+ *
+ * So the link goes into `introducer_application_tokens`, one row per link, all
+ * of them live until they expire. The application row still carries the newest
+ * hash and expiry: nothing else has to learn about a second table, and a deploy
+ * that lands before the SQL keeps resolving the latest link.
+ *
+ * Revocation did not go away, it just has to be asked for now — set `revoked_at`
+ * on the row, which is what you want when a link has gone astray and what you
+ * never wanted when you were merely sending the next email.
+ */
+export async function mintLinkToken(
   id: string,
+  purpose: LinkPurpose,
   days = 30,
 ): Promise<string> {
   const token = newToken();
+  const expires = new Date(Date.now() + days * 86_400_000).toISOString();
+
+  // The link row first: an application pointing at a hash with no row behind it
+  // would resolve through the fallback anyway, whereas a row with no
+  // application pointing at it is simply an extra working link. Fail this and
+  // we have minted nothing, which is the honest outcome.
+  const linked = await supabase
+    .from(LINK_TABLE)
+    .insert({ application_id: id, token_hash: token.hash, expires_at: expires, purpose });
+
+  // Before the 20260820 migration there is nowhere to put it, and the single
+  // column below is all there is — the old behaviour, warts and all, rather
+  // than a send that fails because the SQL is pending.
+  if (linked.error && !linkTableMissing(linked.error)) throw linked.error;
+
   const { error } = await supabase
     .from("introducer_applications")
-    .update({
-      token_hash: token.hash,
-      token_expires_at: new Date(Date.now() + days * 86_400_000).toISOString(),
-    })
+    .update({ token_hash: token.hash, token_expires_at: expires })
     .eq("id", id);
   if (error) throw error;
+
   return token.raw;
 }
 
