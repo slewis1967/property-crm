@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
 import type { OpportunityDoc } from "./OpportunityDocuments";
 import type { SupportingDoc, UploadTarget } from "./OpportunitySupportingDocuments";
+import type { IncomeCheckState, IncomeFinding, IncomeApplicantView } from "./OpportunityIncomeCheck";
 import { fetchEmailEvents, summariseEmailEvents } from "../../../utils/email-events";
 import type { LiveTask } from "./OpportunityTasks";
 import {
@@ -120,6 +121,59 @@ async function fetchSupportingDocuments(opportunityId: string): Promise<Supporti
   } catch (e) {
     log.warn("opportunity_supporting_documents.fetch_failed", { ...errInfo(e) });
     return [];
+  }
+}
+
+/**
+ * The income reconciliation verdict for this opportunity's application, as
+ * recorded by the background sweep. Read-only — the panel shows stored state
+ * and only re-runs on demand, so the page never pays for a model call.
+ *
+ * Siblings all carry the same verdict (it is application-level), so the first
+ * row with one wins; `requestId` falls back to any live request so the panel
+ * can still offer a first check on an application never swept.
+ */
+async function fetchIncomeCheck(opportunityId: string): Promise<IncomeCheckState> {
+  const empty: IncomeCheckState = {
+    requestId: null,
+    status: null,
+    summary: null,
+    findings: [],
+    applicants: [],
+    evaluatedAt: null,
+    extractedAt: null,
+  };
+  try {
+    const { data } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select(
+        "id,status,income_status,income_summary,income_findings,income_applicants,income_evaluated_at,income_extracted_at",
+      )
+      .eq("opportunity_id", opportunityId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true });
+    const rows = data ?? [];
+    if (!rows.length) return empty;
+
+    const withVerdict = rows.find((r) => r.income_evaluated_at) ?? rows[0]!;
+    return {
+      requestId: String(withVerdict.id),
+      status: (withVerdict.income_status as "pass" | "attention" | null) ?? null,
+      summary: (withVerdict.income_summary as string) ?? null,
+      findings: Array.isArray(withVerdict.income_findings)
+        ? (withVerdict.income_findings as IncomeFinding[])
+        : [],
+      applicants: Array.isArray(withVerdict.income_applicants)
+        ? (withVerdict.income_applicants as IncomeApplicantView[])
+        : [],
+      evaluatedAt: (withVerdict.income_evaluated_at as string) ?? null,
+      extractedAt: (withVerdict.income_extracted_at as string) ?? null,
+    };
+  } catch (e) {
+    // Pre-migration environments have none of these columns. A missing income
+    // check must never take the opportunity page down with it.
+    log.warn("opportunity_income_check.fetch_failed", { ...errInfo(e) });
+    return empty;
   }
 }
 
@@ -316,11 +370,12 @@ export default async function OpportunityDetailPage({
     lead.primary_contact_id = await resolveContactIdByEmail(lead.email);
   }
 
-  const [{ ghlContactId, archive }, documents, supportingDocuments, uploadTargets, emailActivity, liveTasks] = await Promise.all([
+  const [{ ghlContactId, archive }, documents, supportingDocuments, uploadTargets, incomeCheck, emailActivity, liveTasks] = await Promise.all([
     resolveGhlArchiveForLead(lead.email),
     fetchOpportunityDocuments(lead.primary_contact_id, id),
     fetchSupportingDocuments(id),
     fetchUploadTargets(id),
+    fetchIncomeCheck(id),
     fetchEmailEvents(lead.email ?? "").then(summariseEmailEvents),
     fetchLiveTasks(lead.primary_contact_id),
   ]);
@@ -333,6 +388,7 @@ export default async function OpportunityDetailPage({
       documents={documents}
       supportingDocuments={supportingDocuments}
       uploadTargets={uploadTargets}
+      incomeCheck={incomeCheck}
       emailActivity={emailActivity}
       liveTasks={liveTasks}
       opportunityId={id}

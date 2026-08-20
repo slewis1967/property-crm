@@ -14,6 +14,7 @@ import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
 import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
 import OpportunitySupportingDocuments, { type SupportingDoc, type UploadTarget } from "./OpportunitySupportingDocuments";
+import OpportunityIncomeCheck, { type IncomeCheckState } from "./OpportunityIncomeCheck";
 import OpportunityEmailActivity from "./OpportunityEmailActivity";
 import type { EmailMessage } from "../../../utils/email-events";
 import OpportunityTasks, { type LiveTask } from "./OpportunityTasks";
@@ -112,6 +113,7 @@ export default function OpportunityDetail({
   documents = [],
   supportingDocuments = [],
   uploadTargets = [],
+  incomeCheck,
   emailActivity = [],
   liveTasks = [],
   opportunityId,
@@ -122,6 +124,7 @@ export default function OpportunityDetail({
   documents?: OpportunityDoc[];
   supportingDocuments?: SupportingDoc[];
   uploadTargets?: UploadTarget[];
+  incomeCheck?: IncomeCheckState;
   emailActivity?: EmailMessage[];
   liveTasks?: LiveTask[];
   opportunityId: string;
@@ -765,6 +768,12 @@ export default function OpportunityDetail({
             documents={supportingDocuments}
             uploadTargets={uploadTargets}
           />
+
+          {/* Do the numbers INSIDE those documents support what was declared?
+              Sits directly under the document list because that list is where
+              the false confidence comes from — every row can read "Accepted"
+              while the file is being assessed on income nobody reconciled. */}
+          {incomeCheck && <OpportunityIncomeCheck state={incomeCheck} />}
 
           <OpportunityEmailActivity messages={emailActivity} />
 
