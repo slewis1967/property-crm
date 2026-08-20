@@ -41,7 +41,8 @@ const CLIENT_COLUMNS_BASE =
  * feature, it empties every introducer's referral list. The fallback costs one
  * extra query in the window between deploy and migration, and nothing after.
  */
-const CLIENT_COLUMNS = `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id`;
+const CLIENT_COLUMNS =
+  `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id,needs_analysis_id`;
 
 /** Postgres 42703 / PostgREST PGRST204 — the column is absent, not the table. */
 function packColumnMissing(error: { code?: string; message?: string } | null | undefined): boolean {

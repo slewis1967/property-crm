@@ -106,6 +106,32 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .order("created_at", { ascending: true })
     .limit(100);
 
+  /* Whether the client has signed the Needs Analysis.
+   *
+   * Counted, never listed: the introducer learns that their client has one
+   * outstanding signature, not the signer's email, token state or IP evidence.
+   * A pack cannot reach YLA until this is done (yla-package.ts checks for the
+   * captured marks), so it is the one thing the introducer can usefully chase —
+   * which is the whole reason it is exposed at all.
+   *
+   * Best-effort: a missing signature_requests table, or a pack from before this
+   * shipped, reports "nothing to sign" rather than failing the page. */
+  let signature: { total: number; signed: number } | null = null;
+  if (record.needs_analysis_id) {
+    const { data: sigs } = await supabase
+      .from("signature_requests")
+      .select("status")
+      .eq("doc_type", "needs_analysis")
+      .eq("doc_id", record.needs_analysis_id);
+    if (sigs && sigs.length) {
+      const rows = sigs as { status: string }[];
+      signature = {
+        total: rows.length,
+        signed: rows.filter((r) => r.status === "signed").length,
+      };
+    }
+  }
+
   const editability = editabilityOf(record, grant, infoReqs);
 
   return NextResponse.json({
@@ -123,6 +149,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       created_at: r.created_at,
     })),
     documents: docs ?? [],
+    signature,
     history: events ?? [],
   });
 }

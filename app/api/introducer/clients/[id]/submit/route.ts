@@ -25,10 +25,19 @@
  *
  * A `full` pack (Tier 2) does not wait. It becomes `accepted` in this same call,
  * and on the way it creates the NEXUS opportunity, promotes the fact find into a
- * real `borrower_fact_finds` row, and emails each applicant their document-upload
- * link. Sean's decision of 20 August 2026; the reasoning, and what now stands in
- * place of the accept gate, is in the header of
- * migrations/20260820_introducer_tier2_pack.sql.
+ * real `borrower_fact_finds` row, creates CONTACTS for the applicants, derives
+ * the NEEDS ANALYSIS from the fact find and sends it to the client to sign, and
+ * emails each applicant their document-upload link. Sean's decision of 20 August
+ * 2026; the reasoning, and what now stands in place of the accept gate, is in the
+ * header of migrations/20260820_introducer_tier2_pack.sql.
+ *
+ * THE NEEDS ANALYSIS IS NOT OPTIONAL, AND IT IS NOT THE FACT FIND. utils/
+ * yla-package.ts: "YLA do not receive a Fact Find — they receive a Needs
+ * Analysis" (Sean, 2026-07-25; the Fact Find goes to brokers). It resolves that
+ * document by `contact_id` and requires the terminal status WITH captured
+ * signatures, so a pack that produced only a fact find, or only a draft, dead-
+ * ended at the YLA submission after the client had already done all the work.
+ * See migrations/20260820b_introducer_pack_needs_analysis.sql.
  *
  * THE THREE CHECKS ABOVE ARE THEREFORE LOAD-BEARING IN A WAY THEY WERE NOT
  * BEFORE. For a Tier 1 referral they protect a review queue. For a Tier 2 pack
@@ -58,7 +67,11 @@ import {
   normaliseAuPhone,
 } from "../../../../../../utils/introducer";
 import { applicantSummary, hydrateFactFind } from "../../../../../../utils/factfind";
+import { factFindToNeedsAnalysis } from "../../../../../../utils/factFindToNeedsAnalysis";
+import { applicantSummary as naApplicantSummary } from "../../../../../../utils/needsAnalysis";
+import { syncFactFindContacts } from "../../../../../../utils/contact-sync";
 import { createDocumentRequest } from "../../../../../../utils/document-requests-create";
+import { createSignatureRequests } from "../../../../../../utils/signature-requests-create";
 import { publicOrigin } from "../../../../../../utils/document-requests-db";
 import { isExpiredOn } from "../../../../../../utils/introducer-onboarding";
 import { businessDayKey } from "../../../../../../utils/datetime";
@@ -357,6 +370,67 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
+    /* Contacts, like any other lead. Sean's call, 20 August 2026.
+     *
+     * Not cosmetic: everything downstream resolves compliance documents by
+     * `contact_id` — yla-package.ts does `.eq("contact_id", …)` — so a pack
+     * without one cannot be assembled for submission even once the Needs
+     * Analysis exists. `syncFactFindContacts` also writes the id back onto the
+     * fact find row, dedupes on email then name+DOB, and never throws: it is a
+     * side effect of a submission that has already happened. */
+    const contacts = await syncFactFindContacts(ff.id);
+    const contactId = contacts.primaryContactId;
+    if (!contactId) {
+      console.error("[introducer] tier 2 contact sync produced no contact", {
+        client_id: record.id,
+        fact_find_id: ff.id,
+      });
+    }
+
+    /* The Needs Analysis, derived rather than re-keyed.
+     *
+     * `factFindToNeedsAnalysis` is the same bridge the staff "seed a Needs
+     * Analysis" button uses, so there is one mapping and not two that drift. It
+     * returns review notes for every assumption it had to make (an ambiguous
+     * asset type, an address it could not split); those go on the record so the
+     * assessor sees them rather than inheriting silent guesses.
+     *
+     * Draft, not Complete. The client signs it — that is what moves it — and
+     * marking it terminal here would both lock it before anyone reviewed it and
+     * fake the very signature evidence yla-package.ts checks for. */
+    const { data: naSeed, notes: naNotes } = factFindToNeedsAnalysis(factFind);
+    const { data: na, error: naErr } = await supabase
+      .from("nccp_needs_analyses")
+      .insert({
+        applicant_name:
+          naApplicantSummary(naSeed) ||
+          displayName(record as { first_name?: string; last_name?: string }),
+        status: "Draft",
+        contact_id: contactId,
+        loan_amount: naSeed.loan_amount_sought,
+        data: naSeed,
+        created_by: auth.email,
+      })
+      .select("id")
+      .single();
+
+    if (naErr || !na) {
+      console.error("[introducer] tier 2 needs analysis insert failed", {
+        client_id: record.id,
+        fact_find_id: ff.id,
+        error: naErr?.message,
+      });
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "The opportunity and fact find were created but the Needs Analysis could not be, so the " +
+            "pack has NOT been submitted. Please contact Springboard rather than submitting again.",
+        },
+        { status: 500 },
+      );
+    }
+
     const { data: accepted, error: accErr } = await supabase
       .from("introducer_clients")
       .update({
@@ -373,6 +447,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         decided_by: "system:tier2_pack",
         opportunity_id: opportunityId,
         fact_find_id: ff.id,
+        needs_analysis_id: na.id,
+        contact_id: contactId,
         updated_at: now,
       })
       .eq("id", record.id)
@@ -409,6 +485,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         client_ref: accepted.client_ref,
         opportunity_id: opportunityId,
         fact_find_id: ff.id,
+        needs_analysis_id: na.id,
+        contact_id: contactId,
+        needs_analysis_notes: naNotes,
         consent_confirmed_at: now,
       },
     });
@@ -432,6 +511,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       factFindData: record.fact_find_data,
       opportunityId,
       factFindId: ff.id,
+      contactId,
       phone: String(record.phone ?? ""),
       createdBy: auth.email,
     });
@@ -450,6 +530,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       actor: "system:tier2_pack",
       action: docs.error ? "document_request_failed" : "document_request_sent",
       detail: { emailed: docs.emailed, error: docs.error ?? null },
+    });
+
+    /* Ask the client to sign the Needs Analysis.
+     *
+     * Best-effort and last, for the same reason as the document request: it is
+     * outward-facing, it is retryable, and the submission has already happened.
+     * If it fails the pack still exists and staff can resend from the CRM —
+     * whereas failing the submit here would leave the opportunity, fact find,
+     * contacts and Needs Analysis behind and tell the introducer nothing
+     * happened. */
+    const signature = await requestPackSignature({
+      req,
+      needsAnalysisId: na.id,
+      factFindData: record.fact_find_data,
+      createdBy: auth.email,
+    });
+
+    await logIntroducerEvent({
+      clientId: record.id,
+      introducerId: auth.introducerId,
+      actorType: "system",
+      actor: "system:tier2_pack",
+      action: signature.error ? "needs_analysis_signature_failed" : "needs_analysis_sent_to_sign",
+      detail: { needs_analysis_id: na.id, error: signature.error ?? null },
     });
 
     /* The office hears about a pack differently, and must. Nobody accepted
@@ -474,8 +578,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       client: toPortalView(accepted),
       opportunity_id: opportunityId,
       fact_find_id: ff.id,
+      needs_analysis_id: na.id,
+      contact_id: contactId,
       documents_sent: docs.emailed,
       documents_error: docs.error,
+      signature_sent: signature.error === null,
+      signature_error: signature.error,
     });
   }
 
@@ -578,6 +686,7 @@ async function requestDocumentsForPack(input: {
   factFindData: unknown;
   opportunityId: string | null;
   factFindId: string;
+  contactId: string | null;
   phone: string;
   createdBy: string;
 }): Promise<PackDocumentsResult> {
@@ -601,6 +710,7 @@ async function requestDocumentsForPack(input: {
       sendEmail: Boolean(packApplicantEmail(input.factFindData, 0)),
       opportunityId: input.opportunityId,
       factFindId: input.factFindId,
+      contactId: input.contactId,
       introducerClientId: input.clientId,
       applicationId,
       createdBy: input.createdBy,
@@ -621,6 +731,7 @@ async function requestDocumentsForPack(input: {
         sendEmail: Boolean(email2),
         opportunityId: input.opportunityId,
         factFindId: input.factFindId,
+        contactId: input.contactId,
         introducerClientId: input.clientId,
         // Share applicant 1's reference and application so both sets of
         // documents arrive as one application, in one Drive folder.
@@ -645,5 +756,67 @@ async function requestDocumentsForPack(input: {
       emailed: false,
       error: e instanceof Error ? e.message : "document request failed",
     };
+  }
+}
+
+/**
+ * Send the pack's Needs Analysis to the client(s) for signature.
+ *
+ * WHY THIS EXISTS AT ALL. yla-package.ts assembles the submission from the
+ * Needs Analysis and the Credit File Authorisation, and takes neither on trust:
+ * it requires the terminal status AND captured signature marks, because a
+ * package once went out with a `signed` status and two empty signature boxes.
+ * So a Needs Analysis nobody has signed is not a step closer to a YLA
+ * submission — it is the same dead end as not having one.
+ *
+ * Every applicant with a name signs, and each needs their own address. A joint
+ * document signed by one of two people is refused by the packager, so a missing
+ * second email is reported here rather than half-sending and looking done.
+ *
+ * Never throws — by the time this runs the pack is submitted and there is
+ * nothing useful to abort.
+ */
+async function requestPackSignature(input: {
+  req: Request;
+  needsAnalysisId: string;
+  factFindData: unknown;
+  createdBy: string;
+}): Promise<{ error: string | null }> {
+  try {
+    const count = packApplicantCount(input.factFindData);
+    const signers: { name: string; email: string }[] = [];
+    const missing: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const idx = i as 0 | 1;
+      const name = packApplicantName(input.factFindData, idx);
+      const email = packApplicantEmail(input.factFindData, idx);
+      if (email) signers.push({ name, email });
+      else missing.push(name || `Applicant ${i + 1}`);
+    }
+
+    if (missing.length) {
+      return {
+        error:
+          `No email address for ${missing.join(", ")}, so the Needs Analysis could not be sent for ` +
+          `signature. Springboard will arrange it.`,
+      };
+    }
+
+    const result = await createSignatureRequests({
+      docType: "needs_analysis",
+      docId: input.needsAnalysisId,
+      signers,
+      origin: publicOrigin(input.req),
+      message:
+        "This confirms the details your introducer recorded with you. Please review it and sign — " +
+        "we can't progress your application until it's signed.",
+      createdBy: input.createdBy,
+    });
+
+    return { error: result.ok ? null : result.error };
+  } catch (e) {
+    console.error("[introducer] pack signature request failed", e);
+    return { error: e instanceof Error ? e.message : "signature request failed" };
   }
 }
