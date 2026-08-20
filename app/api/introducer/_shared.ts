@@ -25,11 +25,31 @@ import type { ActiveGrant, OpenInfoRequest } from "../../../utils/introducer";
 export type { IntroducerIdentity };
 
 /** Columns the portal is allowed to read back. Mirrors toPortalView's whitelist. */
-const CLIENT_COLUMNS =
+const CLIENT_COLUMNS_BASE =
   "id,client_ref,introducer_id,submitted_by,first_name,last_name,email,phone,dob,state,suburb,postcode," +
   "applicant2_first_name,applicant2_last_name,applicant2_email,applicant2_phone," +
   "employment_status,income_band,deposit_band,purchase_intent,timeframe,buying_in,notes," +
   "status,stage,message_to_introducer,submitted_at,consent_confirmed_at,created_at,updated_at";
+
+/**
+ * The same list plus the Tier 2 pack columns, which arrive with
+ * migrations/20260820_introducer_tier2_pack.sql.
+ *
+ * TWO RUNGS, WIDEST FIRST — the same shape as resolveSession, for the same
+ * reason: code ships before the SQL is run, and asking for a column that is not
+ * there yet fails the WHOLE select. A failed select here doesn't degrade one
+ * feature, it empties every introducer's referral list. The fallback costs one
+ * extra query in the window between deploy and migration, and nothing after.
+ */
+const CLIENT_COLUMNS = `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id`;
+
+/** Postgres 42703 / PostgREST PGRST204 — the column is absent, not the table. */
+function packColumnMissing(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  if (error.code === "42703" || error.code === "PGRST204") return true;
+  const msg = (error.message ?? "").toLowerCase();
+  return msg.includes("pack_type") || msg.includes("fact_find_data");
+}
 
 /**
  * Resolve the signed-in introducer, or return the 401 the caller should return.
@@ -68,12 +88,16 @@ export async function loadOwnClient(
   clientId: string,
 ): Promise<OwnClient | null> {
   if (!clientId || typeof clientId !== "string") return null;
-  const { data, error } = await supabase
-    .from("introducer_clients")
-    .select(CLIENT_COLUMNS)
-    .eq("id", clientId)
-    .eq("introducer_id", identity.introducerId)
-    .maybeSingle();
+  const query = (columns: string) =>
+    supabase
+      .from("introducer_clients")
+      .select(columns)
+      .eq("id", clientId)
+      .eq("introducer_id", identity.introducerId)
+      .maybeSingle();
+
+  let { data, error } = await query(CLIENT_COLUMNS);
+  if (error && packColumnMissing(error)) ({ data, error } = await query(CLIENT_COLUMNS_BASE));
   if (error || !data) return null;
   // Double cast: the Supabase client can't infer a row shape from a select
   // string this long, so it falls back to a union that includes its error type.
@@ -82,12 +106,16 @@ export async function loadOwnClient(
 
 /** Every referral belonging to this introducer, newest activity first. */
 export async function listOwnClients(identity: IntroducerIdentity) {
-  const { data, error } = await supabase
-    .from("introducer_clients")
-    .select(CLIENT_COLUMNS)
-    .eq("introducer_id", identity.introducerId)
-    .order("updated_at", { ascending: false })
-    .limit(500);
+  const query = (columns: string) =>
+    supabase
+      .from("introducer_clients")
+      .select(columns)
+      .eq("introducer_id", identity.introducerId)
+      .order("updated_at", { ascending: false })
+      .limit(500);
+
+  let { data, error } = await query(CLIENT_COLUMNS);
+  if (error && packColumnMissing(error)) ({ data, error } = await query(CLIENT_COLUMNS_BASE));
   if (error) return [];
   return (data ?? []) as unknown as OwnClient[];
 }

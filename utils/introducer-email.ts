@@ -247,6 +247,58 @@ export async function sendReferralUpdateEmail(opts: {
 }
 
 /** New-referral notification to the office, so a submission isn't sat on. */
+/**
+ * A Tier 2 pack landed — and unlike a referral, it is already live.
+ *
+ * A SEPARATE FUNCTION RATHER THAN A FLAG ON THE ONE BELOW, because every
+ * sentence differs. sendNewReferralNotice says "awaiting review" and "nothing
+ * has been created in the CRM yet"; both are false here, and an internal email
+ * that misdescribes what happened is worse than no email — it tells the office
+ * to expect a queue item that will never appear, and implies a client has not
+ * been contacted when they have.
+ *
+ * This one exists to make an automatic acceptance visible. Nobody clicked
+ * anything, so if this doesn't arrive, nothing else announces the opportunity.
+ */
+export async function sendNewPackNotice(opts: {
+  to: string[];
+  firmName: string;
+  introducerName: string;
+  clientRef: string;
+  clientName: string;
+  clientId: string;
+  opportunityId: string | null;
+  factFindId: string;
+  documentsSent: boolean;
+}) {
+  if (opts.to.length === 0) return { ok: false as const, error: "No recipients" };
+  const url = `${portalBaseUrl()}/admin/introducers/submissions/${opts.clientId}`;
+  const factFindUrl = `${portalBaseUrl()}/fact-find/${opts.factFindId}`;
+  const documents = opts.documentsSent
+    ? `<p style="color:#6b7280;font-size:13px;">The client has been emailed their document upload link.</p>`
+    : `<p style="color:#b45309;font-size:13px;"><strong>The document request did not send.</strong> The client has NOT been asked for their documents — please send it from the CRM.</p>`;
+
+  return sendBrevoEmail({
+    to: opts.to.map((email) => ({ email })),
+    subject: `Tier 2 pack accepted: ${opts.clientRef} — ${opts.clientName}`,
+    html: internalShell(
+      "Tier 2 submission pack — already accepted",
+      `<p><strong>${opts.firmName}</strong> (${opts.introducerName}) has submitted a full pack.</p>
+       <p style="margin:4px 0;"><strong>${opts.clientRef}</strong> — ${opts.clientName}</p>
+       <p style="color:#6b7280;font-size:13px;">This did NOT go through the review queue. A Tier 2 pack arrives complete, so the opportunity${
+         opts.opportunityId ? ` (${opts.opportunityId})` : ""
+       } and the fact find were created on submission and it is with the assessor now.</p>
+       ${documents}
+       <p style="margin:24px 0;">
+         <a href="${url}" style="background:#da9845;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600;display:inline-block;">Open the pack</a>
+         <a href="${factFindUrl}" style="color:#1b1f44;text-decoration:underline;padding:12px 8px;display:inline-block;">Open the fact find</a>
+       </p>`,
+      "Internal notification — NextKey CRM.",
+    ),
+    tags: ["introducer", "internal", "tier2-pack"],
+  });
+}
+
 export async function sendNewReferralNotice(opts: {
   to: string[];
   firmName: string;
