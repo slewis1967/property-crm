@@ -19,6 +19,7 @@ import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db
 import { hydrateNeedsAnalysis } from "./needsAnalysis";
 import {
   reconcile,
+  worstSeverity,
   type AtoEvidence,
   type DeclaredIncome,
   type IncomeEvidence,
@@ -184,6 +185,45 @@ export async function loadDeclaredIncome(contactId: string | null): Promise<Decl
     (named ?? out[0]!).otherIncomeNote = note;
   }
   return out;
+}
+
+/**
+ * Record a reconciliation verdict against every sibling row of the application.
+ *
+ * Shared by the sweep and the on-demand route so the two can never drift — the
+ * same reason /verify and submit-to-yla share runApplicationVerification. It
+ * lives here rather than in the sweep because the route must not import the
+ * sweep just to save its own result.
+ *
+ * Written to every sibling, like drive_folder_url: the verdict is
+ * application-level, and denormalising it lets any single request row answer
+ * "does this file need attention?" without a join.
+ */
+export async function persistIncomeResult(
+  run: Extract<IncomeRunResult, { ok: true }>,
+  fallbackRequestId: string,
+  now: Date,
+): Promise<string | null> {
+  const worst = worstSeverity(run.result.findings);
+  const patch: Record<string, unknown> = {
+    income_status: run.result.pass && worst !== "warn" ? "pass" : "attention",
+    income_summary: run.result.summary,
+    income_findings: run.result.findings,
+    income_applicants: run.result.applicants,
+    income_evaluated_at: now.toISOString(),
+    updated_at: now.toISOString(),
+  };
+  // Only stamp the extraction cache when we actually re-read the PDFs; a
+  // re-score must not claim the documents were read again, or the sweep would
+  // stop noticing genuinely new uploads.
+  if (run.extracted) {
+    patch.income_evidence = run.evidence;
+    patch.income_extracted_at = now.toISOString();
+  }
+
+  const ids = run.siblingIds.length ? run.siblingIds : [fallbackRequestId];
+  const { error } = await supabase.from(DOCUMENT_REQUESTS_TABLE).update(patch).in("id", ids);
+  return error ? error.message : null;
 }
 
 /** Needs Analysis stores an amount plus a frequency; servicing wants per annum. */
