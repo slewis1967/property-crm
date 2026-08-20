@@ -20,7 +20,7 @@
  */
 import { supabase } from "./supabase";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
-import { runIncomeReconciliation } from "./income-reconciliation-run";
+import { runIncomeReconciliation, persistIncomeResult } from "./income-reconciliation-run";
 import { worstSeverity, type IncomeEvidence } from "./income-reconciliation";
 import { log, errInfo } from "./logger";
 
@@ -161,29 +161,12 @@ export async function runIncomeSweep(opts?: { now?: Date; budget?: number }): Pr
       }
 
       const worst = worstSeverity(run.result.findings);
-      const status = run.result.pass && worst !== "warn" ? "pass" : "attention";
-      if (status === "attention") out.attention++;
+      if (!run.result.pass || worst === "warn") out.attention++;
 
-      const patch: Record<string, unknown> = {
-        income_status: status,
-        income_summary: run.result.summary,
-        income_findings: run.result.findings,
-        income_applicants: run.result.applicants,
-        income_evaluated_at: now.toISOString(),
-        updated_at: now.toISOString(),
-      };
-      if (run.extracted) {
-        patch.income_evidence = run.evidence;
-        patch.income_extracted_at = now.toISOString();
-      }
-
-      // Written to every sibling so any one row can answer "does this file need
-      // attention?" — the same denormalisation drive_folder_url uses.
-      const { error: upErr } = await supabase
-        .from(DOCUMENT_REQUESTS_TABLE)
-        .update(patch)
-        .in("id", run.siblingIds.length ? run.siblingIds : [row.id]);
-      if (upErr) out.errors.push(`${row.client_ref ?? row.id}: ${upErr.message}`);
+      // Same writer the on-demand route uses, so a swept verdict and a
+      // hand-triggered one can never disagree about what gets stored.
+      const upErr = await persistIncomeResult(run, row.id, now);
+      if (upErr) out.errors.push(`${row.client_ref ?? row.id}: ${upErr}`);
     } catch (e) {
       log.error("income_sweep.failed", { request_id: row.id, ...errInfo(e) });
       out.errors.push(`${row.client_ref ?? row.id}: ${e instanceof Error ? e.message : "failed"}`);

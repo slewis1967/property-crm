@@ -15,7 +15,10 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../../utils/ai-rate-limit";
-import { runIncomeReconciliation } from "../../../../../utils/income-reconciliation-run";
+import {
+  runIncomeReconciliation,
+  persistIncomeResult,
+} from "../../../../../utils/income-reconciliation-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +35,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const run = await runIncomeReconciliation(id);
   if (!run.ok) return NextResponse.json({ ok: false, error: run.error }, { status: run.status });
 
+  // Persist, so the panel that triggered this shows the answer when it
+  // refreshes. Returning the verdict without recording it makes the button
+  // look broken: it computes the result, throws it away, and the page re-reads
+  // the same empty state it started from.
+  const saveError = await persistIncomeResult(run, id, new Date());
+
   return NextResponse.json({
+    save_error: saveError,
     ok: true,
     application_id: run.applicationId,
     client_ref: run.clientRef,
