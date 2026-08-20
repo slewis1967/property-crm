@@ -1,8 +1,9 @@
 /**
  * Runs the income reconciliation for one APPLICATION: reads the financial
  * content out of the payslips and ATO income statements the client uploaded,
- * reads the declared position off the Needs Analysis, and hands both to the
- * pure logic in utils/income-reconciliation.ts.
+ * reads the declared position off the Needs Analysis (or, failing that, the
+ * Fact Find), and hands both to the pure logic in
+ * utils/income-reconciliation.ts.
  *
  * Deliberately mirrors utils/yla-verification-run.ts — same storage bucket,
  * same sibling-request gathering, same single-wave concurrency, same model
@@ -16,7 +17,9 @@
 import { supabase } from "./supabase";
 import { MODELS, orChat } from "./openrouter";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
-import { hydrateNeedsAnalysis } from "./needsAnalysis";
+import { hydrateNeedsAnalysis, type NeedsAnalysisData } from "./needsAnalysis";
+import { hydrateFactFind } from "./factfind";
+import { factFindToNeedsAnalysis } from "./factFindToNeedsAnalysis";
 import {
   reconcile,
   worstSeverity,
@@ -29,7 +32,8 @@ import {
 } from "./income-reconciliation";
 
 const BUCKET = "client-documents";
-const SELECT = "id,client_ref,application_id,applicant_name,contact_id,status,created_at";
+const SELECT =
+  "id,client_ref,application_id,applicant_name,contact_id,fact_find_id,status,created_at";
 
 /** Matches yla-verification-run: one wave, sized to clear inside the request window. */
 const AI_CONCURRENCY = 16;
@@ -130,22 +134,12 @@ function parseJson(raw: string): Record<string, unknown> {
 }
 
 /**
- * The declared position, per applicant, off the most recent signed-or-draft
- * Needs Analysis. Draft counts: the whole point is to catch a bad figure BEFORE
- * it's signed, and by the time it's terminal it has already gone out.
+ * The declared position, per applicant, read off a Needs Analysis.
+ *
+ * Pure and exported so the Fact Find path below can reuse it rather than
+ * growing a second extraction that drifts from this one.
  */
-export async function loadDeclaredIncome(contactId: string | null): Promise<DeclaredIncome[]> {
-  if (!contactId) return [];
-  const { data, error } = await supabase
-    .from("nccp_needs_analyses")
-    .select("id,data,updated_at")
-    .eq("contact_id", contactId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error || !data) return [];
-
-  const na = hydrateNeedsAnalysis((data as { data: unknown }).data);
+export function needsAnalysisToDeclaredIncome(na: NeedsAnalysisData): DeclaredIncome[] {
   const out: DeclaredIncome[] = [];
 
   for (const a of na.applicants ?? []) {
@@ -185,6 +179,75 @@ export async function loadDeclaredIncome(contactId: string | null): Promise<Decl
     (named ?? out[0]!).otherIncomeNote = note;
   }
   return out;
+}
+
+/**
+ * The declared position for one application, per applicant.
+ *
+ * TWO SOURCES, IN ORDER OF AUTHORITY.
+ *
+ *   1. The most recent signed-or-draft Needs Analysis for the contact. Draft
+ *      counts: the whole point is to catch a bad figure BEFORE it's signed, and
+ *      by the time it's terminal it has already gone out.
+ *   2. Failing that, the Fact Find the document request was raised against.
+ *
+ * THE FALLBACK IS NOT A NICETY. This function returning [] does not raise a
+ * finding — it sets `declaredUnavailable` and the reconciliation quietly has
+ * nothing to compare the payslips against. So every application without a
+ * Needs Analysis was silently exempt from the check that exists because a file
+ * went out declaring $186k against payslips worth $154k.
+ *
+ * A Tier 2 introducer pack is exactly that shape: it produces a Fact Find, no
+ * Needs Analysis, and no contact id, and it reaches the assessor without a
+ * human having approved it (see the header of
+ * migrations/20260820_introducer_tier2_pack.sql). The submissions with the most
+ * reason to be checked were the ones being skipped — an introducer paid on
+ * completion is the last person whose income figure should go unverified.
+ *
+ * The Fact Find is carried through `factFindToNeedsAnalysis`, the bridge the
+ * staff "seed a Needs Analysis" button already uses, rather than a second
+ * mapper. It maps a Fact Find's gross annual onto `income_amount` at frequency
+ * "pa", which is precisely what this needs. What it CANNOT supply is employer,
+ * employment basis and start date — the Fact Find has no fields for them — so
+ * the employer-match and part-year findings stay quiet on a Fact-Find-only
+ * application. The headline declared-vs-evidenced comparison, which is the one
+ * that caught Halliday, works.
+ */
+export async function loadDeclaredIncome(source: {
+  contactId: string | null;
+  factFindId?: string | null;
+}): Promise<DeclaredIncome[]> {
+  if (source.contactId) {
+    const { data, error } = await supabase
+      .from("nccp_needs_analyses")
+      .select("id,data,updated_at")
+      .eq("contact_id", source.contactId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!error && data) {
+      const declared = needsAnalysisToDeclaredIncome(
+        hydrateNeedsAnalysis((data as { data: unknown }).data),
+      );
+      // An empty Needs Analysis is not a reason to ignore a Fact Find that has
+      // the figures — fall through rather than returning nothing.
+      if (declared.length) return declared;
+    }
+  }
+
+  if (source.factFindId) {
+    const { data, error } = await supabase
+      .from("borrower_fact_finds")
+      .select("id,data")
+      .eq("id", source.factFindId)
+      .maybeSingle();
+    if (!error && data) {
+      const ff = hydrateFactFind((data as { data: unknown }).data);
+      return needsAnalysisToDeclaredIncome(factFindToNeedsAnalysis(ff).data);
+    }
+  }
+
+  return [];
 }
 
 /**
@@ -271,9 +334,10 @@ export async function runIncomeReconciliation(
     if (sibs && sibs.length) siblings = sibs;
   }
 
-  const declared = await loadDeclaredIncome(
-    (request as { contact_id?: string | null }).contact_id ?? null,
-  );
+  const declared = await loadDeclaredIncome({
+    contactId: (request as { contact_id?: string | null }).contact_id ?? null,
+    factFindId: (request as { fact_find_id?: string | null }).fact_find_id ?? null,
+  });
 
   /**
    * Applicant labels must agree between the declared side and the evidence
