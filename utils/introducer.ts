@@ -130,6 +130,25 @@ export type IntroducerField = {
   required?: boolean;
   options?: readonly string[];
   hint?: string;
+/**
+   * Not asked on a FULL PACK, because the Needs Analysis covers it properly.
+   *
+   * On a Tier 1 referral the whole "Their situation" block is the point: rough
+   * bands we can triage from and confirm with the client later. On a pack every
+   * one of them is answered better a few screens on —
+   *
+   *   employment / income   exactly, per applicant, at a frequency
+   *   savings               as an asset with a value
+   *   intent / timeframe    in `needs_objectives`, in the client's own words
+   *
+   * — and asking twice is worse than redundant: "$90,000 – $120,000" sitting
+   * beside an exact $3,800 a fortnight is two versions of one fact that can
+   * disagree, and nothing says which one the assessor should believe.
+   *
+   * So a pack's first page collects only what the rest of the process needs to
+   * work: who the client is, how to reach them, and where they are.
+   */
+  skipOnPack?: boolean;
 };
 
 export const INCOME_BANDS = [
@@ -194,16 +213,35 @@ export const INTRODUCER_FIELDS: readonly IntroducerField[] = [
   { key: "applicant2_email", label: "Second applicant — email", group: "applicant2", type: "email" },
   { key: "applicant2_phone", label: "Second applicant — mobile", group: "applicant2", type: "tel" },
 
-  { key: "employment_status", label: "Employment", group: "circumstances", type: "select", options: EMPLOYMENT_STATUSES, required: true },
-  { key: "income_band", label: "Household income", group: "circumstances", type: "select", options: INCOME_BANDS, required: true },
-  { key: "deposit_band", label: "Savings / deposit", group: "circumstances", type: "select", options: DEPOSIT_BANDS, required: true },
-  { key: "purchase_intent", label: "What they're looking to do", group: "circumstances", type: "select", options: PURCHASE_INTENTS, required: true },
-  { key: "timeframe", label: "Timeframe", group: "circumstances", type: "select", options: TIMEFRAMES, required: true },
-  { key: "buying_in", label: "Where they want to buy", group: "circumstances", type: "text" },
-  { key: "notes", label: "Anything else we should know", group: "circumstances", type: "textarea" },
+  // The whole "Their situation" block. A full pack is asked none of it — see
+  // `skipOnPack`.
+  { key: "employment_status", label: "Employment", group: "circumstances", type: "select", options: EMPLOYMENT_STATUSES, required: true, skipOnPack: true },
+  { key: "income_band", label: "Household income", group: "circumstances", type: "select", options: INCOME_BANDS, required: true, skipOnPack: true },
+  { key: "deposit_band", label: "Savings / deposit", group: "circumstances", type: "select", options: DEPOSIT_BANDS, required: true, skipOnPack: true },
+  { key: "purchase_intent", label: "What they're looking to do", group: "circumstances", type: "select", options: PURCHASE_INTENTS, required: true, skipOnPack: true },
+  { key: "timeframe", label: "Timeframe", group: "circumstances", type: "select", options: TIMEFRAMES, required: true, skipOnPack: true },
+  { key: "buying_in", label: "Where they want to buy", group: "circumstances", type: "text", skipOnPack: true },
+  { key: "notes", label: "Anything else we should know", group: "circumstances", type: "textarea", skipOnPack: true },
 ];
 
 export const INTRODUCER_FIELD_KEYS: readonly string[] = INTRODUCER_FIELDS.map((f) => f.key);
+
+/**
+ * The fields THIS pack asks for.
+ *
+ * A referral asks everything. A full pack asks only what the rest of the process
+ * needs to work — who the client is, how to reach them, where they are, and who
+ * else is applying — because everything else is captured properly on the Needs
+ * Analysis. See `skipOnPack`.
+ *
+ * This narrows what is SHOWN and REQUIRED, not what may be STORED:
+ * `pickEditableFields` still accepts the full allow-list, so a referral that
+ * already carries a band keeps it rather than having it silently dropped.
+ */
+export function fieldsForPack(packType: IntroducerPackType): readonly IntroducerField[] {
+  if (packType !== "full") return INTRODUCER_FIELDS;
+  return INTRODUCER_FIELDS.filter((f) => !f.skipOnPack);
+}
 
 export function fieldLabel(key: string): string {
   return INTRODUCER_FIELDS.find((f) => f.key === key)?.label ?? key;
@@ -394,9 +432,19 @@ export function evaluateEdit(
   };
 }
 
-/** Which required fields are still missing? Empty array means ready to submit. */
+/**
+ * Which required fields are still missing? Empty array means ready to submit.
+ *
+ * Reads the pack type off the record, so a full pack is not blocked on bands it
+ * was never shown. Getting this wrong in the other direction is the nastier
+ * failure: the form would hide a field and the submit would then refuse over it,
+ * with nothing on screen to fix.
+ */
 export function missingRequiredFields(record: ClientRecordShape): string[] {
-  return INTRODUCER_FIELDS.filter((f) => f.required && isBlank(record[f.key])).map((f) => f.key);
+  const packType: IntroducerPackType = isPackType(record.pack_type) ? record.pack_type : "referral";
+  return fieldsForPack(packType)
+    .filter((f) => f.required && isBlank(record[f.key]))
+    .map((f) => f.key);
 }
 
 /* ── Tier 2: the full submission pack ────────────────────────────────────── */
