@@ -5,7 +5,7 @@ import {
   setState,
   allocateAccreditationNumber,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import {
   onboardingTablesMissing,
@@ -95,6 +95,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   let certificatePath: string | null = app.certificate_path;
   let pdfGenerated = false;
+  // Held so the email below can carry it. The certificate is the one document
+  // in this flow the holder actually wants a copy of, and asking them to come
+  // back through a link to collect it is how someone ends up with none.
+  let certificateBase64: string | null = null;
   try {
     const html = await renderCertificateHtml({
       legalName: app.legal_name,
@@ -115,6 +119,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (upErr) throw new Error(upErr.message);
     certificatePath = key;
+    certificateBase64 = Buffer.from(pdf).toString("base64");
     pdfGenerated = true;
   } catch (err) {
     // A certificate that fails to render must not block accreditation — the
@@ -147,13 +152,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   let emailed = true;
   try {
-    const fresh = await reissueToken(id);
+    const fresh = await mintLinkToken(id, "certificate");
     await sendAccreditationPassedEmail({
       to: app.email,
       legalName: app.legal_name,
       accreditationNo,
       rawToken: fresh,
       origin: new URL(req.url).origin,
+      // Only when this run actually produced one. A render that failed above is
+      // already logged; the email still goes, minus a promise it cannot keep.
+      certificate: certificateBase64
+        ? {
+            filename: `Springboard-Accreditation-${accreditationNo}.pdf`,
+            base64: certificateBase64,
+          }
+        : undefined,
     });
   } catch (err) {
     emailed = false;

@@ -4,7 +4,7 @@ import {
   findById,
   setState,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import { canSignAgreement, onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
 import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-onboarding-email";
@@ -69,7 +69,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     let emailed = true;
     try {
-      const fresh = await reissueToken(id);
+      const fresh = await mintLinkToken(id, "agreement");
       await sendOnboardingStepEmail({
         to: app.email,
         legalName: app.legal_name,

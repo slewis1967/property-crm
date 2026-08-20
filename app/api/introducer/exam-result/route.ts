@@ -6,7 +6,7 @@ import {
   allocateAccreditationNumber,
   setState,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../utils/introducer-onboarding-db";
 import { onboardingTablesMissing } from "../../../../utils/introducer-onboarding";
 import { sendAccreditationPassedEmail } from "../../../../utils/introducer-onboarding-email";
@@ -175,13 +175,19 @@ export async function POST(req: Request) {
     });
   }
 
-  // The applicant's onboarding link is rotated at this point. They are about to
-  // be sent a link to sign an agreement, and the credential that reaches that
-  // step should not be the same one that has been sitting in an inbox since the
-  // invitation.
+  // A fresh link for this email, and the ones already in their inbox go on
+  // working. Minting used to revoke, on the reasoning that the credential
+  // reaching the agreement step should not be the one that had sat in an inbox
+  // since the invitation — but that bought little (same person, same address,
+  // either way) and cost a great deal: it is what left candidates holding a
+  // dead link to their own certificate. Revocation is deliberate now, for a
+  // link actually known to have gone astray.
+  //
+  // No certificate to attach yet: the number exists from here, the PDF only
+  // once a super admin issues it. That send carries the file.
   let emailed = true;
   try {
-    const freshToken = await reissueToken(applicationId);
+    const freshToken = await mintLinkToken(applicationId, "certificate");
     await sendAccreditationPassedEmail({
       to: application.email,
       legalName: application.legal_name,
