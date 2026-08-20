@@ -61,6 +61,32 @@ const SECURITY_HEADERS = [
   },
 ];
 
+/**
+ * The signing pages embed the document the client is about to sign, as a PDF,
+ * in an <object> on the same origin.
+ *
+ * `frame-ancestors 'none'` plus `X-Frame-Options: DENY` forbid that — including
+ * from our own page — so the viewer refused to render and every signer saw
+ * "Your browser can't display the document inline. Use the link below to open
+ * it." The document was fine; the header would not let them read it in place.
+ *
+ * That is a bad failure for THIS page in particular. The whole point of a
+ * consent form is that the person signing has read it, and a viewer that shows
+ * an error where the document should be invites signing without reading.
+ *
+ * 'self' rather than removing the directive: only our own pages may frame these
+ * responses, so the clickjacking protection the original was reaching for stays
+ * in place everywhere it matters. Scoped to the two PDF endpoints and nothing
+ * else — SAMEORIGIN is not the default for this app and should not become it.
+ */
+const FRAMEABLE_BY_US = SECURITY_HEADERS.map((h) => {
+  if (h.key === "Content-Security-Policy") {
+    return { ...h, value: h.value.replace("frame-ancestors 'none'", "frame-ancestors 'self'") };
+  }
+  if (h.key === "X-Frame-Options") return { key: "X-Frame-Options", value: "SAMEORIGIN" };
+  return h;
+});
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
@@ -71,8 +97,19 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     return [
+      // The two same-origin PDF endpoints the signing page embeds.
+      { source: "/api/sign/:token/preview", headers: FRAMEABLE_BY_US },
+      { source: "/api/sign/:token/signed", headers: FRAMEABLE_BY_US },
+      /* Everything else keeps frame-ancestors 'none'.
+       *
+       * The negative lookahead is load-bearing: Next.js APPLIES EVERY MATCHING
+       * ENTRY rather than letting a later one win, so a plain "/:path*"
+       * catch-all here would send a second Content-Security-Policy alongside
+       * the relaxed one — and a browser given two CSP headers enforces the
+       * intersection, i.e. the strictest. The exception would silently do
+       * nothing. Excluding the paths is the only way to actually override. */
       {
-        source: "/:path*",
+        source: "/:path((?!api/sign/[^/]+/(?:preview|signed)).*)",
         headers: SECURITY_HEADERS,
       },
     ];
