@@ -1,48 +1,62 @@
 import { describe, it, expect } from "vitest";
 import {
   canSendFullPack,
-  factFindStarted,
-  factFindSubmitBlockers,
   isPackType,
   packApplicantCount,
   packApplicantEmail,
   packApplicantName,
-  seedFactFindFromReferral,
+  packStarted,
+  packSubmitBlockers,
+  seedNeedsAnalysisFromReferral,
   toPortalView,
 } from "./introducer";
-import { emptyFactFind, hydrateFactFind, type FactFindData } from "./factfind";
+import { emptyNeedsAnalysis, hydrateNeedsAnalysis, type NeedsAnalysisData } from "./needsAnalysis";
 
 /**
  * The Tier 2 pack's own promises, pinned.
  *
- * A pack skips the super-admin accept gate, which means these functions are no
- * longer "validation" in the ordinary sense — they are the last thing between an
- * introducer and a live CRM opportunity plus an email to a member of the public.
- * Three of them carry that weight:
+ * A pack skips the super-admin accept gate, so these functions are no longer
+ * "validation" in the ordinary sense — they are the last thing between an
+ * introducer and a live CRM opportunity, an email to a member of the public, and
+ * a compliance document that person then signs.
  *
- *   canSendFullPack       — must default DOWN. Anything unrecognised is Tier 1.
- *   factFindSubmitBlockers — must be non-empty for anything short of a finished
- *                            fact find, because nobody downstream gets to send
- *                            it back.
- *   toPortalView          — must still not leak the blob it now knows about.
+ *   canSendFullPack     must default DOWN. Anything unrecognised is Tier 1.
+ *   packSubmitBlockers  must be non-empty for anything short of a finished
+ *                       Needs Analysis, because nobody downstream gets to send
+ *                       it back.
+ *   toPortalView        must still not leak the document it now knows about.
  */
 
-/** A fact find with everything `outstandingSections` and the hard gate want. */
-function completeFactFind(): FactFindData {
-  const d = emptyFactFind();
-  d.applicants[0].given_names = "Ada";
-  d.applicants[0].family_name = "Lovelace";
-  d.applicants[0].date_of_birth = "1815-12-10";
-  d.applicants[0].address = "12 Analytical St, Brisbane QLD";
-  d.applicants[0].annual_income = 120_000;
-  d.applicants[0].email = "ada@example.com";
-  d.loan.amount_required = 600_000;
-  d.loan.purpose = "Purchase of an owner-occupied home";
-  d.loan.repayment_strategy = "Principal and interest from salary";
-  d.securities[0].address = "9 Difference Rd, Brisbane";
-  for (const key of Object.keys(d.disclosures)) d.disclosures[key].answer = "no";
-  d.declarations.info_confirmed = true;
-  d.declarations.privacy.acknowledged = true;
+/** A Needs Analysis with everything the submit gate asks for. */
+function completePack(second = false): NeedsAnalysisData {
+  const d = emptyNeedsAnalysis();
+  d.interview_type = "face_to_face";
+  d.needs_objectives = "Buy a first home in the next six months.";
+  d.loan_amount_sought = 640_000;
+
+  const a = d.applicants[0];
+  a.given_names = "David";
+  a.surname = "Halliday";
+  a.dob = "1984-03-02";
+  a.current_address.street = "12 Bay Village Rd";
+  a.contact.email = "david@example.com";
+  a.current_employment.employment_type = "payg";
+  a.current_employment.income_amount = 3_000;
+  a.current_employment.pay_frequency = "fn";
+  a.current_employment.occupation = "Retail assistant";
+
+  if (second) {
+    const b = d.applicants[1];
+    b.given_names = "Jane";
+    b.surname = "Halliday";
+    b.dob = "1986-07-11";
+    b.current_address.street = "12 Bay Village Rd";
+    b.contact.email = "jane@example.com";
+    b.current_employment.employment_type = "payg";
+    b.current_employment.income_amount = 2_000;
+    b.current_employment.pay_frequency = "fn";
+    b.current_employment.occupation = "Nurse";
+  }
   return d;
 }
 
@@ -59,12 +73,9 @@ describe("canSendFullPack", () => {
    * would hand the wider authority to the entire back catalogue at once.
    */
   it("defaults DOWN for anything unrecognised", () => {
-    expect(canSendFullPack(null)).toBe(false);
-    expect(canSendFullPack(undefined)).toBe(false);
-    expect(canSendFullPack("")).toBe(false);
-    expect(canSendFullPack("T2")).toBe(false);
-    expect(canSendFullPack("t3")).toBe(false);
-    expect(canSendFullPack("tier2")).toBe(false);
+    for (const v of [null, undefined, "", "T2", "t3", "tier2"]) {
+      expect(canSendFullPack(v)).toBe(false);
+    }
   });
 });
 
@@ -74,177 +85,205 @@ describe("isPackType", () => {
     expect(isPackType("full")).toBe(true);
     expect(isPackType("t2")).toBe(false);
     expect(isPackType(null)).toBe(false);
-    expect(isPackType(undefined)).toBe(false);
   });
 });
 
-describe("seedFactFindFromReferral", () => {
+describe("seedNeedsAnalysisFromReferral", () => {
   it("carries the details that mean the same thing on both sides", () => {
-    const d = seedFactFindFromReferral({
-      first_name: "Ada",
-      last_name: "Lovelace",
-      email: "ada@example.com",
+    const d = seedNeedsAnalysisFromReferral({
+      first_name: "David",
+      last_name: "Halliday",
+      email: "david@example.com",
       phone: "0400 000 000",
-      dob: "1815-12-10",
-      suburb: "Brisbane",
-      state: "QLD",
-      postcode: "4000",
-      applicant2_first_name: "Charles",
-      applicant2_last_name: "Babbage",
+      dob: "1984-03-02",
+      suburb: "Bateau Bay",
+      state: "NSW",
+      postcode: "2261",
+      applicant2_first_name: "Jane",
+      applicant2_last_name: "Halliday",
     });
-    expect(d.applicants[0].given_names).toBe("Ada");
-    expect(d.applicants[0].family_name).toBe("Lovelace");
-    expect(d.applicants[0].email).toBe("ada@example.com");
-    expect(d.applicants[0].date_of_birth).toBe("1815-12-10");
-    expect(d.applicants[0].address).toBe("Brisbane, QLD");
-    expect(d.applicants[1].given_names).toBe("Charles");
+    expect(d.applicants[0].given_names).toBe("David");
+    expect(d.applicants[0].surname).toBe("Halliday");
+    expect(d.applicants[0].contact.email).toBe("david@example.com");
+    expect(d.applicants[0].dob).toBe("1984-03-02");
+    expect(d.applicants[0].current_address.suburb).toBe("Bateau Bay");
+    expect(d.applicants[0].current_address.state).toBe("NSW");
+    expect(d.applicants[1].given_names).toBe("Jane");
   });
 
   /**
-   * Income is a BAND on a referral and a NUMBER on a fact find. Converting one
-   * to the other invents precision the client never gave — and the capacity
-   * engine would then treat the invention as declared income.
+   * Income is a BAND on a referral and a NUMBER on the Needs Analysis.
+   * Converting one to the other invents precision the client never gave — and
+   * the income reconciliation would then compare their payslips against our
+   * invention, in a document they have signed.
    */
   it("does not invent an income figure from an income band", () => {
-    const d = seedFactFindFromReferral({ income_band: "$90,000 – $120,000" });
-    expect(d.applicants[0].annual_income).toBeNull();
+    const d = seedNeedsAnalysisFromReferral({ income_band: "$90,000 – $120,000" });
+    expect(d.applicants[0].current_employment.income_amount).toBeNull();
   });
 
-  it("produces a blob a fresh referral can be seeded from without error", () => {
-    expect(() => seedFactFindFromReferral({})).not.toThrow();
-    expect(seedFactFindFromReferral({}).applicants).toHaveLength(2);
+  it("copes with a referral that has nothing in it", () => {
+    expect(() => seedNeedsAnalysisFromReferral({})).not.toThrow();
   });
 });
 
-describe("factFindSubmitBlockers", () => {
-  it("is empty only for a finished fact find", () => {
-    expect(factFindSubmitBlockers(completeFactFind())).toEqual([]);
+describe("packSubmitBlockers", () => {
+  it("is empty only for a finished Needs Analysis", () => {
+    expect(packSubmitBlockers(completePack())).toEqual([]);
+    expect(packSubmitBlockers(completePack(true))).toEqual([]);
   });
 
   it("refuses an empty blob", () => {
-    expect(factFindSubmitBlockers({}).length).toBeGreaterThan(0);
-    expect(factFindSubmitBlockers(null).length).toBeGreaterThan(0);
+    expect(packSubmitBlockers({}).length).toBeGreaterThan(0);
+    expect(packSubmitBlockers(null).length).toBeGreaterThan(0);
   });
 
   /**
-   * The stub case. A pack with a name and nothing else must not slip through:
-   * on the staff side `outstandingSections` is advisory because the file stays
-   * open, but here submit is the end of the road.
+   * INCOME AND EMPLOYMENT ARE GATED HERE AND NOT ON THE STAFF FORM. They are
+   * what the income reconciliation triangulates against the client's payslips
+   * and ATO statements. Without them a pack sails past the one check that
+   * exists because a file went out declaring $186k against payslips worth
+   * $154k — and a pack is the submission least able to afford that, since no
+   * human approved it.
    */
-  it("refuses a stub carrying only a name", () => {
-    const d = emptyFactFind();
-    d.applicants[0].given_names = "Ada";
-    d.applicants[0].family_name = "Lovelace";
-    const blockers = factFindSubmitBlockers(d);
-    expect(blockers).toContain("Applicant 1 date of birth");
-    expect(blockers).toContain("Loan amount required");
+  it("demands income, frequency and employment type", () => {
+    const d = completePack();
+    d.applicants[0].current_employment.income_amount = null;
+    d.applicants[0].current_employment.pay_frequency = "";
+    const blockers = packSubmitBlockers(d);
+    expect(blockers).toContain("Applicant 1 income");
+    expect(blockers).toContain("Applicant 1 pay frequency");
   });
 
-  it("names an unanswered disclosure rather than passing over it", () => {
-    const d = completeFactFind();
-    d.disclosures.bankruptcy.answer = null;
-    expect(factFindSubmitBlockers(d)).toContain("All disclosure questions answered");
+  /**
+   * Someone not working has no income to declare, and demanding one would
+   * invite a made-up number into a document the client signs.
+   */
+  it("does not demand income from someone who isn't working", () => {
+    const d = completePack();
+    d.applicants[0].current_employment.employment_type = "retired";
+    d.applicants[0].current_employment.income_amount = null;
+    d.applicants[0].current_employment.pay_frequency = "";
+    const blockers = packSubmitBlockers(d);
+    expect(blockers).not.toContain("Applicant 1 income");
+    expect(blockers).not.toContain("Applicant 1 pay frequency");
   });
 
-  it("does not report the same gap twice when both lists catch it", () => {
-    const d = completeFactFind();
-    d.applicants[0].date_of_birth = "";
-    const blockers = factFindSubmitBlockers(d);
-    expect(blockers.filter((b) => b === "Applicant 1 date of birth")).toHaveLength(1);
+  /** Every applicant is emailed the document to sign and their upload link. */
+  it("demands an email for each applicant in use", () => {
+    const d = completePack(true);
+    d.applicants[1].contact.email = "";
+    expect(packSubmitBlockers(d).join(" ")).toMatch(/Applicant 2 email/);
   });
 
   it("holds a second applicant to the same standard once they exist", () => {
-    const d = completeFactFind();
-    d.applicants[1].given_names = "Charles";
-    d.applicants[1].family_name = "Babbage";
-    expect(factFindSubmitBlockers(d)).toContain("Applicant 2 date of birth");
+    const d = completePack(true);
+    d.applicants[1].dob = "";
+    expect(packSubmitBlockers(d)).toContain("Applicant 2 date of birth");
+  });
+
+  it("does not report the same gap twice when both lists catch it", () => {
+    const d = completePack();
+    d.applicants[0].dob = "";
+    expect(packSubmitBlockers(d).filter((b) => b === "Applicant 1 date of birth")).toHaveLength(1);
+  });
+
+  it("names the interview and the objectives, which the assessor reads first", () => {
+    const d = completePack();
+    d.interview_type = "";
+    d.needs_objectives = "";
+    const blockers = packSubmitBlockers(d);
+    expect(blockers).toContain("Interview type");
+    expect(blockers).toContain("Needs & objectives");
   });
 });
 
-describe("factFindStarted", () => {
+describe("packStarted", () => {
   /**
-   * `fact_find_data` defaults to '{}' and hydrates into a fully-shaped empty
-   * template, so "has this been started" cannot be answered by looking for keys.
+   * `needs_analysis_data` defaults to '{}' and hydrates into a fully-shaped
+   * empty template, so "has this been started" cannot be answered by looking
+   * for keys.
    */
   it("reads an empty or hydrated-empty blob as not started", () => {
-    expect(factFindStarted({})).toBe(false);
-    expect(factFindStarted(null)).toBe(false);
-    expect(factFindStarted(emptyFactFind())).toBe(false);
-    expect(factFindStarted(hydrateFactFind({}))).toBe(false);
+    expect(packStarted({})).toBe(false);
+    expect(packStarted(null)).toBe(false);
+    expect(packStarted(emptyNeedsAnalysis())).toBe(false);
+    expect(packStarted(hydrateNeedsAnalysis({}))).toBe(false);
   });
 
   it("reads a named applicant as started", () => {
-    const d = emptyFactFind();
-    d.applicants[0].given_names = "Ada";
-    expect(factFindStarted(d)).toBe(true);
+    const d = emptyNeedsAnalysis();
+    d.applicants[0].given_names = "David";
+    expect(packStarted(d)).toBe(true);
   });
 });
 
-describe("packApplicantCount", () => {
-  it("is 1 until the second applicant has a name", () => {
-    expect(packApplicantCount(completeFactFind())).toBe(1);
+describe("who the pack is for", () => {
+  it("is one applicant until the second has a name", () => {
+    expect(packApplicantCount(completePack())).toBe(1);
+    expect(packApplicantName(completePack(), 0)).toBe("David Halliday");
+    expect(packApplicantEmail(completePack(), 0)).toBe("david@example.com");
   });
 
-  it("is 2 once they do, so they get their own upload link", () => {
-    const d = completeFactFind();
-    d.applicants[1].family_name = "Babbage";
+  /**
+   * Each applicant needs their own link and their own signature —
+   * yla-package.ts refuses a document not signed by everyone asked.
+   */
+  it("is both once the second one exists", () => {
+    const d = completePack(true);
     expect(packApplicantCount(d)).toBe(2);
-  });
-
-  it("survives a blob that predates the fact find entirely", () => {
-    expect(packApplicantCount({})).toBe(1);
-  });
-});
-
-describe("packApplicantName / packApplicantEmail", () => {
-  it("reads the fact find, which is authoritative by submit", () => {
-    const d = completeFactFind();
-    expect(packApplicantName(d, 0)).toBe("Ada Lovelace");
-    expect(packApplicantEmail(d, 0)).toBe("ada@example.com");
+    expect(packApplicantEmail(d, 1)).toBe("jane@example.com");
   });
 
   it("returns empty strings rather than throwing on an unused applicant", () => {
-    expect(packApplicantName(completeFactFind(), 1)).toBe("");
-    expect(packApplicantEmail(completeFactFind(), 1)).toBe("");
+    expect(packApplicantName(completePack(), 1)).toBe("");
+    expect(packApplicantEmail(completePack(), 1)).toBe("");
+  });
+
+  it("survives a blob that predates the pack entirely", () => {
+    expect(packApplicantCount({})).toBe(1);
   });
 });
 
 describe("toPortalView with a pack", () => {
   /**
-   * The whitelist gained three fields and must not have gained a fourth by
-   * accident. `fact_find_data` is the client's entire financial position; it is
-   * fetched by the fact find's own route and belongs in no list payload.
+   * The whitelist must not have grown by accident. `needs_analysis_data` is the
+   * client's entire financial position AND the document they sign; it is
+   * fetched by its own route and belongs in no list payload.
    */
-  it("reports that a fact find exists without carrying it", () => {
-    const d = emptyFactFind();
-    d.applicants[0].given_names = "Ada";
+  it("reports the pack's state without carrying the document", () => {
+    const d = emptyNeedsAnalysis();
+    d.applicants[0].given_names = "David";
     const view = toPortalView({
       id: "abc",
-      status: "draft",
+      status: "accepted",
       pack_type: "full",
-      fact_find_data: d,
+      needs_analysis_data: d,
+      needs_analysis_id: "na-1",
       document_request_id: "dr-1",
-      // Internal columns that must still never surface.
+      contact_id: "c-1",
       decision_reason: "internal only",
-      fact_find_id: "ff-1",
     });
     expect(view.pack_type).toBe("full");
-    expect(view.fact_find_started).toBe(true);
+    expect(view.pack_started).toBe(true);
+    expect(view.needs_analysis_created).toBe(true);
     expect(view.documents_requested).toBe(true);
-    expect(view).not.toHaveProperty("fact_find_data");
-    expect(view).not.toHaveProperty("fact_find_id");
+    expect(view).not.toHaveProperty("needs_analysis_data");
+    expect(view).not.toHaveProperty("needs_analysis_id");
+    expect(view).not.toHaveProperty("contact_id");
     expect(view).not.toHaveProperty("decision_reason");
   });
 
   it("reads a row with no pack columns as an ordinary referral", () => {
     const view = toPortalView({ id: "abc", status: "draft" });
     expect(view.pack_type).toBe("referral");
-    expect(view.fact_find_started).toBe(false);
-    expect(view.documents_requested).toBe(false);
+    expect(view.pack_started).toBe(false);
+    expect(view.needs_analysis_created).toBe(false);
   });
 
   it("refuses to promote an unrecognised pack_type", () => {
-    const view = toPortalView({ id: "abc", status: "draft", pack_type: "premium" });
-    expect(view.pack_type).toBe("referral");
+    expect(toPortalView({ id: "abc", status: "draft", pack_type: "premium" }).pack_type).toBe(
+      "referral",
+    );
   });
 });

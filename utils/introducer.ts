@@ -12,11 +12,10 @@
  */
 
 import {
-  factFindCompletionBlockers,
-  hydrateFactFind,
+  hydrateNeedsAnalysis,
   outstandingSections,
-  type FactFindData,
-} from "./factfind";
+  type NeedsAnalysisData,
+} from "./needsAnalysis";
 
 /**
  * Which of the two things an introducer can send us.
@@ -403,35 +402,36 @@ export function missingRequiredFields(record: ClientRecordShape): string[] {
 /* ── Tier 2: the full submission pack ────────────────────────────────────── */
 
 /**
- * Seed a blank fact find from the referral details already typed.
+ * Seed a blank Needs Analysis from the referral details already typed.
  *
- * The Tier 1 fields and the fact find's first page ask several of the same
+ * The Tier 1 fields and the Needs Analysis's first page ask several of the same
  * questions. Re-typing them is how the two end up disagreeing about the client's
  * own name, so applicant 1 and 2 are filled from the referral and the introducer
  * corrects rather than transcribes.
  *
  * Deliberately conservative — only fields that mean the same thing on both
- * sides. `income_band` is a band and `annual_income` is a number, so income is
+ * sides. `income_band` is a band and `income_amount` is a number, so income is
  * NOT carried across: turning "$90,000 – $120,000" into a figure would invent
- * precision the client never gave, and the capacity engine would then treat the
- * invention as declared income.
+ * precision the client never gave, and the income reconciliation would then
+ * compare their payslips against our invention.
  */
-export function seedFactFindFromReferral(record: ClientRecordShape): FactFindData {
-  const data = hydrateFactFind({});
+export function seedNeedsAnalysisFromReferral(record: ClientRecordShape): NeedsAnalysisData {
+  const data = hydrateNeedsAnalysis({});
   const str = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 
   data.applicants[0].given_names = str(record.first_name);
-  data.applicants[0].family_name = str(record.last_name);
-  data.applicants[0].email = str(record.email);
-  data.applicants[0].phone_home = str(record.phone);
-  data.applicants[0].date_of_birth = str(record.dob);
-  data.applicants[0].address = [str(record.suburb), str(record.state)].filter(Boolean).join(", ");
-  data.applicants[0].postcode = str(record.postcode);
+  data.applicants[0].surname = str(record.last_name);
+  data.applicants[0].dob = str(record.dob);
+  data.applicants[0].contact.email = str(record.email);
+  data.applicants[0].contact.mobile_phone = str(record.phone);
+  data.applicants[0].current_address.suburb = str(record.suburb);
+  data.applicants[0].current_address.state = str(record.state);
+  data.applicants[0].current_address.postcode = str(record.postcode);
 
   data.applicants[1].given_names = str(record.applicant2_first_name);
-  data.applicants[1].family_name = str(record.applicant2_last_name);
-  data.applicants[1].email = str(record.applicant2_email);
-  data.applicants[1].phone_home = str(record.applicant2_phone);
+  data.applicants[1].surname = str(record.applicant2_last_name);
+  data.applicants[1].contact.email = str(record.applicant2_email);
+  data.applicants[1].contact.mobile_phone = str(record.applicant2_phone);
 
   return data;
 }
@@ -439,63 +439,88 @@ export function seedFactFindFromReferral(record: ClientRecordShape): FactFindDat
 /**
  * What still stops this pack being submitted?
  *
- * TWO LISTS, AND THE DISTINCTION MATTERS. `factFindCompletionBlockers` is the
- * hard gate the staff side uses to stop a stub being signed off as Complete —
- * name, DOB and address for every applicant in use. `outstandingSections` is the
- * advisory list of everything a credit submission actually needs. On the staff
- * side the second is advisory because a fact find is filled in over several
- * conversations with the file open in front of you.
+ * STRICTER THAN THE STAFF FORM, ON PURPOSE. `outstandingSections` is advisory on
+ * the staff side because a Needs Analysis is filled in over the course of an
+ * interview with the file open. Here, submit creates the opportunity, emails the
+ * client and locks the pack in one irreversible move, and the introducer does
+ * not get to come back and finish it — so the whole list is a gate.
  *
- * Here it is NOT advisory. A Tier 2 submit creates the opportunity and emails
- * the client in one irreversible move, and the introducer does not get to come
- * back and finish it afterwards — the pack locks. So both lists are enforced,
- * and the whole thing is one gate rather than a warning someone can click past.
+ * IT ALSO DEMANDS INCOME AND EMPLOYMENT, which `outstandingSections` does not.
+ * Those are what the income reconciliation triangulates against the client's
+ * payslips and ATO statements; without them the pack sails past the one check
+ * that exists because a file went out declaring $186k against payslips worth
+ * $154k. A pack that skips the check is the one most in need of it.
  */
-export function factFindSubmitBlockers(raw: unknown): string[] {
-  const data = hydrateFactFind(raw);
-  const hard = factFindCompletionBlockers(data);
-  const advisory = outstandingSections(data);
-  // Union, preserving the hard blockers' order — they name the applicant, so
-  // they read better first.
-  return [...hard, ...advisory.filter((s) => !hard.includes(s))];
+export function packSubmitBlockers(raw: unknown): string[] {
+  const data = hydrateNeedsAnalysis(raw);
+  const blockers = [...outstandingSections(data)];
+
+  data.applicants.forEach((a, i) => {
+    const inUse = Boolean(a.given_names.trim() || a.surname.trim());
+    if (!inUse) return;
+    const who = `Applicant ${i + 1}`;
+    if (!a.given_names.trim() || !a.surname.trim()) push(blockers, `${who} full name`);
+    if (!a.dob.trim()) push(blockers, `${who} date of birth`);
+    if (!a.current_address.street.trim()) push(blockers, `${who} current address`);
+    if (!a.contact.email.trim()) push(blockers, `${who} email — they can't be sent anything without it`);
+
+    const emp = a.current_employment;
+    if (!emp.employment_type) push(blockers, `${who} employment type`);
+    // Someone not working has no income to declare, and asking for one would
+    // invite a made-up number into a document the client signs.
+    const working = emp.employment_type !== "unemployed" && emp.employment_type !== "retired";
+    if (working) {
+      if (emp.income_amount == null) push(blockers, `${who} income`);
+      if (!emp.pay_frequency) push(blockers, `${who} pay frequency`);
+      if (!emp.employer.street.trim() && !emp.occupation.trim()) {
+        push(blockers, `${who} employer or occupation`);
+      }
+    }
+  });
+
+  return blockers;
+}
+
+function push(list: string[], value: string): void {
+  if (!list.includes(value)) list.push(value);
 }
 
 /**
  * Is there anything in this blob at all?
  *
- * `fact_find_data` defaults to '{}', and `hydrateFactFind` turns that into a
- * fully-shaped empty template — so "has the introducer started the fact find"
- * cannot be answered by looking for keys. Ask whether an applicant has a name.
+ * `needs_analysis_data` defaults to '{}', and `hydrateNeedsAnalysis` turns that
+ * into a fully-shaped empty template — so "has the introducer started" cannot be
+ * answered by looking for keys. Ask whether an applicant has a name.
  */
-export function factFindStarted(raw: unknown): boolean {
+export function packStarted(raw: unknown): boolean {
   if (!raw || typeof raw !== "object") return false;
-  const data = hydrateFactFind(raw);
-  return data.applicants.some((a) => a.given_names.trim() !== "" || a.family_name.trim() !== "");
+  const data = hydrateNeedsAnalysis(raw);
+  return data.applicants.some((a) => a.given_names.trim() !== "" || a.surname.trim() !== "");
 }
 
 /**
  * How many applicants is this pack for?
  *
- * Drives how many document-collection requests get created — each applicant
- * uploads their own ID, payslips and super statement, so each needs their own
- * link. Reads the fact find rather than the referral's applicant-2 fields,
- * because by submit the fact find is the authoritative version.
+ * Drives how many document-collection requests get created and how many people
+ * are asked to sign — each applicant uploads their own ID, payslips and super
+ * statement, and a document signed by one of two people is refused outright by
+ * utils/yla-package.ts.
  */
 export function packApplicantCount(raw: unknown): 1 | 2 {
-  const data = hydrateFactFind(raw);
+  const data = hydrateNeedsAnalysis(raw);
   const second = data.applicants[1];
-  return second.given_names.trim() || second.family_name.trim() ? 2 : 1;
+  return second.given_names.trim() || second.surname.trim() ? 2 : 1;
 }
 
-/** "John Smith" for applicant `i` (0-based), from the fact find. "" if unused. */
+/** "John Smith" for applicant `i` (0-based). "" if that slot is unused. */
 export function packApplicantName(raw: unknown, i: 0 | 1): string {
-  const a = hydrateFactFind(raw).applicants[i];
-  return [a.given_names.trim(), a.family_name.trim()].filter(Boolean).join(" ");
+  const a = hydrateNeedsAnalysis(raw).applicants[i];
+  return [a.given_names.trim(), a.surname.trim()].filter(Boolean).join(" ");
 }
 
-/** The email we'd send applicant `i`'s upload link to. "" when we don't have one. */
+/** The address applicant `i` is written to. "" when we don't have one. */
 export function packApplicantEmail(raw: unknown, i: 0 | 1): string {
-  return hydrateFactFind(raw).applicants[i].email.trim();
+  return hydrateNeedsAnalysis(raw).applicants[i].contact.email.trim();
 }
 
 /**
@@ -555,7 +580,10 @@ export function toPortalView(row: Record<string, unknown>) {
      * blob is fetched separately by the pack form, which is the only surface
      * entitled to it; a list view has no business carrying a client's
      * liabilities in its payload. */
-    fact_find_started: factFindStarted(row.fact_find_data),
+    /* Named for the pack, not the document, so the portal's own vocabulary
+     * survives the next time the document underneath it changes — which it just
+     * did, from a Fact Find to a Needs Analysis. */
+    pack_started: packStarted(row.needs_analysis_data),
     documents_requested: Boolean(row.document_request_id),
     /* That a Needs Analysis exists — not its id, and certainly not its
      * contents. The introducer's window into the CRM stays coarse; what they

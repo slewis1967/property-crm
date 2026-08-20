@@ -54,10 +54,16 @@ const CLIENT_COLUMNS_BASE =
  */
 const CLIENT_COLUMNS_PACK =
   `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id`;
-const CLIENT_COLUMNS = `${CLIENT_COLUMNS_PACK},needs_analysis_id`;
+const CLIENT_COLUMNS_NA = `${CLIENT_COLUMNS_PACK},needs_analysis_id`;
+const CLIENT_COLUMNS = `${CLIENT_COLUMNS_NA},needs_analysis_data`;
 
 /** Widest first. Each entry is tried until one succeeds. */
-const CLIENT_COLUMN_RUNGS = [CLIENT_COLUMNS, CLIENT_COLUMNS_PACK, CLIENT_COLUMNS_BASE];
+const CLIENT_COLUMN_RUNGS = [
+  CLIENT_COLUMNS,
+  CLIENT_COLUMNS_NA,
+  CLIENT_COLUMNS_PACK,
+  CLIENT_COLUMNS_BASE,
+];
 
 /**
  * The columns the ladder above is prepared to give up. Keep in step with
@@ -71,6 +77,7 @@ const PACK_COLUMNS = [
   "fact_find_id",
   "document_request_id",
   "needs_analysis_id",
+  "needs_analysis_data",
 ] as const;
 
 const packColumnMissing = (error: { code?: string; message?: string } | null | undefined) =>

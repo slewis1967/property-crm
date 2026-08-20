@@ -2,19 +2,19 @@ import { redirect } from "next/navigation";
 import { requireIntroducerPage } from "../../../session";
 import PortalHeader from "../../../PortalHeader";
 import AccreditationNotice from "../../../AccreditationNotice";
-import FactFindPack from "./FactFindPack";
+import NeedsAnalysisPack from "./NeedsAnalysisPack";
 import { canSendFullPack } from "../../../../../utils/introducer";
 import { businessDayKey } from "../../../../../utils/datetime";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Fact find — Springboard Introducer Portal",
+  title: "Needs Analysis — Springboard Introducer Portal",
   robots: { index: false, follow: false },
 };
 
 /**
- * The fact find, for one pack.
+ * The Needs Analysis, for one pack.
  *
  * A Tier 1 firm is redirected rather than shown an explanation, because there is
  * nothing here for them to understand — they cannot have a pack, so they cannot
@@ -22,7 +22,7 @@ export const metadata = {
  * and whether it belongs to them, is decided by the API the form calls; that
  * check filters on the session's introducer id and 404s otherwise.
  */
-export default async function IntroducerFactFindPage({
+export default async function IntroducerNeedsAnalysisPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -41,7 +41,7 @@ export default async function IntroducerFactFindPage({
         today={businessDayKey(new Date().toISOString())!}
       />
       <main className="mx-auto max-w-4xl px-4 py-7">
-        <FactFindPack id={id} />
+        <NeedsAnalysisPack id={id} />
       </main>
     </div>
   );

@@ -24,27 +24,37 @@
  * as it always has.
  *
  * A `full` pack (Tier 2) does not wait. It becomes `accepted` in this same call,
- * and on the way it creates the NEXUS opportunity, promotes the fact find into a
- * real `borrower_fact_finds` row, creates CONTACTS for the applicants, derives
- * the NEEDS ANALYSIS from the fact find and sends it to the client to sign, and
- * emails each applicant their document-upload link. Sean's decision of 20 August
- * 2026; the reasoning, and what now stands in place of the accept gate, is in the
- * header of migrations/20260820_introducer_tier2_pack.sql.
+ * and on the way it creates the NEXUS opportunity, promotes the NEEDS ANALYSIS
+ * into a real `nccp_needs_analyses` row, creates CONTACTS for the applicants,
+ * sends the Needs Analysis to the client to sign, and emails each applicant
+ * their document-upload link. Sean's decision of 20 August 2026; the reasoning,
+ * and what now stands in place of the accept gate, is in the header of
+ * migrations/20260820_introducer_tier2_pack.sql.
  *
- * THE NEEDS ANALYSIS IS NOT OPTIONAL, AND IT IS NOT THE FACT FIND. utils/
+ * THE NEEDS ANALYSIS IS THE DOCUMENT, AND IT IS NOT DERIVED. utils/
  * yla-package.ts: "YLA do not receive a Fact Find — they receive a Needs
  * Analysis" (Sean, 2026-07-25; the Fact Find goes to brokers). It resolves that
  * document by `contact_id` and requires the terminal status WITH captured
- * signatures, so a pack that produced only a fact find, or only a draft, dead-
- * ended at the YLA submission after the client had already done all the work.
- * See migrations/20260820b_introducer_pack_needs_analysis.sql.
+ * signatures.
+ *
+ * An earlier version had the introducer complete a Fact Find and machine-
+ * translated it here. That put acknowledged guesses — an unconfirmed pay
+ * frequency, an unsplit address — into a document over a real signature, and it
+ * threw away the employer, basis and start date the income reconciliation needs.
+ * The introducer now completes the Needs Analysis itself. See
+ * migrations/20260820c_introducer_pack_collects_needs_analysis.sql.
+ *
+ * NO FACT FIND IS CREATED. needsAnalysisToFactFind maps applicants only, so
+ * writing one would put a half-empty compliance document in the CRM that nobody
+ * filled in and nobody signed. Staff have a one-click seed from the Needs
+ * Analysis when a broker submission needs one.
  *
  * THE THREE CHECKS ABOVE ARE THEREFORE LOAD-BEARING IN A WAY THEY WERE NOT
  * BEFORE. For a Tier 1 referral they protect a review queue. For a Tier 2 pack
  * they are the last thing standing before a live CRM record and an email to a
- * member of the public. A fourth joins them for the full pack: the fact find
- * must actually be finished, because nobody downstream gets a chance to send it
- * back.
+ * member of the public. A fourth joins them for the full pack: the Needs
+ * Analysis must actually be finished, because nobody downstream gets a chance to
+ * send it back.
  */
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -60,16 +70,17 @@ import {
   looksLikeEmail,
   displayName,
   canSendFullPack,
-  factFindSubmitBlockers,
+  packSubmitBlockers,
   packApplicantCount,
   packApplicantEmail,
   packApplicantName,
   normaliseAuPhone,
 } from "../../../../../../utils/introducer";
-import { applicantSummary, hydrateFactFind } from "../../../../../../utils/factfind";
-import { factFindToNeedsAnalysis } from "../../../../../../utils/factFindToNeedsAnalysis";
-import { applicantSummary as naApplicantSummary } from "../../../../../../utils/needsAnalysis";
-import { syncFactFindContacts } from "../../../../../../utils/contact-sync";
+import {
+  applicantSummary as naApplicantSummary,
+  hydrateNeedsAnalysis,
+} from "../../../../../../utils/needsAnalysis";
+import { syncNeedsAnalysisContacts } from "../../../../../../utils/contact-sync";
 import { createDocumentRequest } from "../../../../../../utils/document-requests-create";
 import { createSignatureRequests } from "../../../../../../utils/signature-requests-create";
 import { publicOrigin } from "../../../../../../utils/document-requests-db";
@@ -259,7 +270,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    const blockers = factFindSubmitBlockers(record.fact_find_data);
+    const blockers = packSubmitBlockers(record.needs_analysis_data);
     if (blockers.length > 0) {
       return NextResponse.json(
         {
@@ -272,7 +283,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    const factFind = hydrateFactFind(record.fact_find_data);
+    const needsAnalysis = hydrateNeedsAnalysis(record.needs_analysis_data);
 
     /* The opportunity first. If NEXUS is unreachable nothing else has happened
      * yet, and the pack stays a draft the introducer can submit again - the
@@ -289,7 +300,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           email,
           phone: normaliseAuPhone(String(record.phone ?? "")) ?? String(record.phone ?? ""),
           // Tagged at the source, and distinguishably from a Tier 1 referral:
-          // these arrive already fact-found and are a different kind of lead.
+          // these arrive with a completed Needs Analysis and are a different
+          // kind of lead.
           source: `introducer-pack:${auth.firmName}`,
           state: record.state ?? null,
         }),
@@ -331,41 +343,46 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    /* Promote the blob into a real fact find.
+    /* Promote the blob into a real Needs Analysis.
      *
-     * "In review", not "Complete". The introducer has finished it; an assessor
-     * has not read it. Marking it Complete here would make it read-only (see
-     * utils/compliance-audit.ts) before anyone on our side had looked, and
-     * "Complete" is a sign-off, not a delivery receipt. */
-    const { data: ff, error: ffErr } = await supabase
-      .from("borrower_fact_finds")
+     * A copy, not a translation — the introducer typed `NeedsAnalysisData` and
+     * this is the same shape the table holds.
+     *
+     * "Draft", not "Complete". The CLIENT'S SIGNATURE is what moves it, and
+     * that has not happened yet. Marking it terminal here would lock the
+     * document read-only before anyone reviewed it (see
+     * utils/compliance-audit.ts) and, worse, would fake the very state
+     * yla-package.ts checks for — it requires the terminal status AND captured
+     * signature marks, precisely because a package once went out reading
+     * "signed" with two empty signature boxes. */
+    const { data: na, error: naErr } = await supabase
+      .from("nccp_needs_analyses")
       .insert({
         applicant_name:
-          applicantSummary(factFind) ||
+          naApplicantSummary(needsAnalysis) ||
           displayName(record as { first_name?: string; last_name?: string }),
-        status: "In review",
-        loan_amount: factFind.loan.amount_required,
-        referred_by: auth.firmName,
-        data: factFind,
+        status: "Draft",
+        loan_amount: needsAnalysis.loan_amount_sought,
+        data: needsAnalysis,
         created_by: auth.email,
       })
       .select("id")
       .single();
 
-    if (ffErr || !ff) {
-      console.error("[introducer] tier 2 fact find insert failed", {
+    if (naErr || !na) {
+      console.error("[introducer] tier 2 needs analysis insert failed", {
         client_id: record.id,
         opportunity_id: opportunityId,
-        error: ffErr?.message,
+        error: naErr?.message,
       });
-      // The opportunity exists. Say so, rather than implying a clean failure -
+      // The opportunity exists. Say so, rather than implying a clean failure —
       // otherwise a retry creates a second one.
       return NextResponse.json(
         {
           ok: false,
           error:
-            "The opportunity was created but the fact find could not be saved against it, so the " +
-            "pack has NOT been submitted. Please contact Springboard rather than submitting again.",
+            "The opportunity was created but the Needs Analysis could not be saved against it, so " +
+            "the pack has NOT been submitted. Please contact Springboard rather than submitting again.",
         },
         { status: 500 },
       );
@@ -375,61 +392,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
      *
      * Not cosmetic: everything downstream resolves compliance documents by
      * `contact_id` — yla-package.ts does `.eq("contact_id", …)` — so a pack
-     * without one cannot be assembled for submission even once the Needs
-     * Analysis exists. `syncFactFindContacts` also writes the id back onto the
-     * fact find row, dedupes on email then name+DOB, and never throws: it is a
-     * side effect of a submission that has already happened. */
-    const contacts = await syncFactFindContacts(ff.id);
+     * without one cannot be assembled for submission at all.
+     * `syncNeedsAnalysisContacts` writes the id back onto the Needs Analysis
+     * row, dedupes on email then name+DOB, and never throws: it is a side
+     * effect of a submission that has already happened. */
+    const contacts = await syncNeedsAnalysisContacts(na.id);
     const contactId = contacts.primaryContactId;
     if (!contactId) {
       console.error("[introducer] tier 2 contact sync produced no contact", {
         client_id: record.id,
-        fact_find_id: ff.id,
+        needs_analysis_id: na.id,
       });
-    }
-
-    /* The Needs Analysis, derived rather than re-keyed.
-     *
-     * `factFindToNeedsAnalysis` is the same bridge the staff "seed a Needs
-     * Analysis" button uses, so there is one mapping and not two that drift. It
-     * returns review notes for every assumption it had to make (an ambiguous
-     * asset type, an address it could not split); those go on the record so the
-     * assessor sees them rather than inheriting silent guesses.
-     *
-     * Draft, not Complete. The client signs it — that is what moves it — and
-     * marking it terminal here would both lock it before anyone reviewed it and
-     * fake the very signature evidence yla-package.ts checks for. */
-    const { data: naSeed, notes: naNotes } = factFindToNeedsAnalysis(factFind);
-    const { data: na, error: naErr } = await supabase
-      .from("nccp_needs_analyses")
-      .insert({
-        applicant_name:
-          naApplicantSummary(naSeed) ||
-          displayName(record as { first_name?: string; last_name?: string }),
-        status: "Draft",
-        contact_id: contactId,
-        loan_amount: naSeed.loan_amount_sought,
-        data: naSeed,
-        created_by: auth.email,
-      })
-      .select("id")
-      .single();
-
-    if (naErr || !na) {
-      console.error("[introducer] tier 2 needs analysis insert failed", {
-        client_id: record.id,
-        fact_find_id: ff.id,
-        error: naErr?.message,
-      });
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "The opportunity and fact find were created but the Needs Analysis could not be, so the " +
-            "pack has NOT been submitted. Please contact Springboard rather than submitting again.",
-        },
-        { status: 500 },
-      );
     }
 
     /* The flip, with the newest columns made optional.
@@ -458,7 +431,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // should say which rule rather than name a super admin who was not there.
       decided_by: "system:tier2_pack",
       opportunity_id: opportunityId,
-      fact_find_id: ff.id,
       needs_analysis_id: na.id,
       contact_id: contactId,
       updated_at: now,
@@ -492,7 +464,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       console.error("[introducer] tier 2 accept flip failed", {
         client_id: record.id,
         opportunity_id: opportunityId,
-        fact_find_id: ff.id,
+        needs_analysis_id: na.id,
         error: accErr?.message,
       });
       return NextResponse.json(
@@ -515,10 +487,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       detail: {
         client_ref: accepted.client_ref,
         opportunity_id: opportunityId,
-        fact_find_id: ff.id,
         needs_analysis_id: na.id,
         contact_id: contactId,
-        needs_analysis_notes: naNotes,
         consent_confirmed_at: now,
       },
     });
@@ -539,9 +509,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const docs = await requestDocumentsForPack({
       req,
       clientId: record.id,
-      factFindData: record.fact_find_data,
+      packData: record.needs_analysis_data,
       opportunityId,
-      factFindId: ff.id,
       contactId,
       phone: String(record.phone ?? ""),
       createdBy: auth.email,
@@ -574,7 +543,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const signature = await requestPackSignature({
       req,
       needsAnalysisId: na.id,
-      factFindData: record.fact_find_data,
+      packData: record.needs_analysis_data,
       createdBy: auth.email,
     });
 
@@ -600,7 +569,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       clientName: displayName(accepted),
       clientId: record.id,
       opportunityId,
-      factFindId: ff.id,
+      needsAnalysisId: na.id,
       documentsSent: docs.emailed,
     }).catch((e) => console.error("[introducer] pack notice failed", e));
 
@@ -608,7 +577,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       ok: true,
       client: toPortalView(accepted),
       opportunity_id: opportunityId,
-      fact_find_id: ff.id,
       needs_analysis_id: na.id,
       contact_id: contactId,
       documents_sent: docs.emailed,
@@ -722,16 +690,15 @@ type PackDocumentsResult = {
 async function requestDocumentsForPack(input: {
   req: Request;
   clientId: string;
-  factFindData: unknown;
+  packData: unknown;
   opportunityId: string | null;
-  factFindId: string;
   contactId: string | null;
   phone: string;
   createdBy: string;
 }): Promise<PackDocumentsResult> {
   try {
     const origin = publicOrigin(input.req);
-    const count = packApplicantCount(input.factFindData);
+    const count = packApplicantCount(input.packData);
 
     /* The grouping id is minted UP FRONT and given to BOTH requests, not
      * derived from applicant 1's row afterwards. Setting it only on the second
@@ -742,13 +709,12 @@ async function requestDocumentsForPack(input: {
     const applicationId = count === 2 ? randomUUID() : null;
 
     const first = await createDocumentRequest({
-      applicantName: packApplicantName(input.factFindData, 0),
-      applicantEmail: packApplicantEmail(input.factFindData, 0),
+      applicantName: packApplicantName(input.packData, 0),
+      applicantEmail: packApplicantEmail(input.packData, 0),
       applicantPhone: input.phone,
       origin,
-      sendEmail: Boolean(packApplicantEmail(input.factFindData, 0)),
+      sendEmail: Boolean(packApplicantEmail(input.packData, 0)),
       opportunityId: input.opportunityId,
-      factFindId: input.factFindId,
       contactId: input.contactId,
       introducerClientId: input.clientId,
       applicationId,
@@ -762,14 +728,13 @@ async function requestDocumentsForPack(input: {
     let error = first.emailError;
 
     if (count === 2) {
-      const email2 = packApplicantEmail(input.factFindData, 1);
+      const email2 = packApplicantEmail(input.packData, 1);
       const second = await createDocumentRequest({
-        applicantName: packApplicantName(input.factFindData, 1),
+        applicantName: packApplicantName(input.packData, 1),
         applicantEmail: email2,
         origin,
         sendEmail: Boolean(email2),
         opportunityId: input.opportunityId,
-        factFindId: input.factFindId,
         contactId: input.contactId,
         introducerClientId: input.clientId,
         // Share applicant 1's reference and application so both sets of
@@ -818,18 +783,18 @@ async function requestDocumentsForPack(input: {
 async function requestPackSignature(input: {
   req: Request;
   needsAnalysisId: string;
-  factFindData: unknown;
+  packData: unknown;
   createdBy: string;
 }): Promise<{ error: string | null }> {
   try {
-    const count = packApplicantCount(input.factFindData);
+    const count = packApplicantCount(input.packData);
     const signers: { name: string; email: string }[] = [];
     const missing: string[] = [];
 
     for (let i = 0; i < count; i++) {
       const idx = i as 0 | 1;
-      const name = packApplicantName(input.factFindData, idx);
-      const email = packApplicantEmail(input.factFindData, idx);
+      const name = packApplicantName(input.packData, idx);
+      const email = packApplicantEmail(input.packData, idx);
       if (email) signers.push({ name, email });
       else missing.push(name || `Applicant ${i + 1}`);
     }

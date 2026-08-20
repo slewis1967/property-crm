@@ -1,20 +1,27 @@
 /**
- * GET   /api/introducer/clients/<id>/fact-find  — the pack's fact find
- * PATCH /api/introducer/clients/<id>/fact-find  — save it
+ * GET   /api/introducer/clients/<id>/needs-analysis  — the pack's Needs Analysis
+ * PATCH /api/introducer/clients/<id>/needs-analysis  — save it
  *
  * PUBLIC (session-scoped). Tier 2 only, and only for a pack whose `pack_type` is
- * 'full' — a Tier 1 referral has no fact find and asking for one is a 404 rather
- * than an empty form, because an empty form invites someone to fill it in and
- * then discover it was never going anywhere.
+ * 'full' — a Tier 1 referral has no Needs Analysis and asking for one is a 404
+ * rather than an empty form, because an empty form invites someone to fill it in
+ * and then discover it was never going anywhere.
  *
- * SEPARATE FROM THE DETAIL ROUTE ON PURPOSE. `fact_find_data` is the whole
- * financial position — income, liabilities, licence numbers, disclosures about
- * bankruptcy. The referral list and detail payloads carry a boolean saying
- * whether it has been started, and nothing else. This route is the one surface
- * entitled to the blob, and it hands it back only to the firm that wrote it.
+ * THIS IS THE DOCUMENT, not a step toward it. utils/yla-package.ts: "YLA do not
+ * receive a Fact Find — they receive a Needs Analysis" (Sean, 2026-07-25). What
+ * the introducer types here is what the client signs and what the assessor
+ * reads. It is not machine-translated on the way — see the header of
+ * migrations/20260820c_introducer_pack_collects_needs_analysis.sql for why that
+ * direction was abandoned.
  *
- * THE LOCK APPLIES HERE TOO. `fact_find_data` is in the database trigger's
- * changed-column list (migrations/20260820), so a submitted pack cannot be
+ * SEPARATE FROM THE DETAIL ROUTE ON PURPOSE. `needs_analysis_data` is the whole
+ * financial position — income, liabilities, living expenses, identity documents.
+ * The referral list and detail payloads carry a boolean saying whether it has
+ * been started, and nothing else. This route is the one surface entitled to the
+ * blob, and it hands it back only to the firm that wrote it.
+ *
+ * THE LOCK APPLIES HERE TOO. `needs_analysis_data` is in the database trigger's
+ * changed-column list (migrations/20260820c), so a submitted pack cannot be
  * edited even if this route forgot to check. It doesn't forget — but the trigger
  * is what makes that a promise rather than an intention.
  */
@@ -29,11 +36,11 @@ import {
 } from "../../../_shared";
 import {
   canSendFullPack,
-  factFindSubmitBlockers,
+  packSubmitBlockers,
   grantIsActive,
-  seedFactFindFromReferral,
+  seedNeedsAnalysisFromReferral,
 } from "../../../../../../utils/introducer";
-import { hydrateFactFind } from "../../../../../../utils/factfind";
+import { hydrateNeedsAnalysis } from "../../../../../../utils/needsAnalysis";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +56,12 @@ function tierRefusal() {
   );
 }
 
+/** Does an active grant cover the document itself? */
+function unlockedFor(grant: Awaited<ReturnType<typeof activeGrantFor>>): boolean {
+  if (!grantIsActive(grant)) return false;
+  return grant!.scope === "full" || (grant!.fields ?? []).includes("needs_analysis_data");
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireIntroducer();
   if (auth instanceof NextResponse) return auth;
@@ -61,14 +74,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
 
   const grant = await activeGrantFor(record.id);
-  const unlocked = grantIsActive(grant) && (grant!.scope === "full" || (grant!.fields ?? []).includes("fact_find_data"));
+  const unlocked = unlockedFor(grant);
   const editable = record.status === "draft" || unlocked;
 
   /* An empty blob is seeded from the referral fields on read rather than only at
    * create, so a pack started before this shipped — or one whose seed lost a
    * race with the introducer editing the referral details afterwards — still
    * opens with the client's name in it instead of a blank first page. */
-  const raw = record.fact_find_data as unknown;
+  const raw = record.needs_analysis_data as unknown;
   const started = raw && typeof raw === "object" && Object.keys(raw).length > 0;
 
   return NextResponse.json({
@@ -77,8 +90,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     status: record.status,
     editable,
     grant_expires_at: unlocked ? grant!.expires_at : null,
-    data: started ? hydrateFactFind(raw) : seedFactFindFromReferral(record),
-    blockers: factFindSubmitBlockers(raw),
+    data: started ? hydrateNeedsAnalysis(raw) : seedNeedsAnalysisFromReferral(record),
+    blockers: packSubmitBlockers(raw),
   });
 }
 
@@ -99,39 +112,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   /* Who may write, and why.
    *
    * A draft is freely editable. After submit the only way in is an unlock grant
-   * that covers the fact find — an open info request is NOT enough, and the
+   * that covers the document — an open info request is NOT enough, and the
    * trigger agrees. An info request exists to collect a detail somebody forgot;
-   * re-opening a submitted financial position is a different act, and it needs a
-   * super admin to have said so. */
+   * re-opening a Needs Analysis the client has already signed is a different
+   * act, and it needs a super admin to have said so. */
   const grant = await activeGrantFor(record.id);
-  const unlocked =
-    grantIsActive(grant) && (grant!.scope === "full" || (grant!.fields ?? []).includes("fact_find_data"));
+  const unlocked = unlockedFor(grant);
 
   if (record.status !== "draft" && !unlocked) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          "This pack has been submitted and the fact find is locked. Ask Springboard to authorise a " +
-          "change if something needs correcting.",
+          "This pack has been submitted and the Needs Analysis is locked. Ask Springboard to " +
+          "authorise a change if something needs correcting.",
         code: "locked",
       },
       { status: 403 },
     );
   }
 
-  /* Normalise through `hydrateFactFind` rather than storing what arrived.
+  /* Normalise through `hydrateNeedsAnalysis` rather than storing what arrived.
    *
    * It is the same function the staff form loads through, so a blob written here
-   * and a blob written at /fact-find have identical shape — which is what makes
-   * the promotion at submit a copy rather than a translation. It also means an
-   * unknown key posted by a modified client is dropped instead of stored: the
-   * hydrator rebuilds from the template and takes only fields it knows. */
-  const data = hydrateFactFind(body.data);
+   * and a blob written at /needs-analysis have identical shape — which is what
+   * makes the promotion at submit a copy rather than a translation. It also
+   * means an unknown key posted by a modified client is dropped instead of
+   * stored: the hydrator rebuilds from the template and takes only fields it
+   * knows. */
+  const data = hydrateNeedsAnalysis(body.data);
 
   const { error } = await supabase
     .from("introducer_clients")
-    .update({ fact_find_data: data, updated_at: new Date().toISOString() })
+    .update({ needs_analysis_data: data, updated_at: new Date().toISOString() })
     .eq("id", record.id)
     .eq("introducer_id", auth.introducerId)   // belt-and-braces: the tenant filter again
     .select("id")
@@ -143,7 +156,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // letting it read as an ordinary failure.
     const locked = error.message?.includes("is locked");
     if (locked) {
-      console.error("[introducer] lock trigger rejected a fact find write the route allowed", {
+      console.error("[introducer] lock trigger rejected a needs analysis write the route allowed", {
         client_id: record.id,
         status: record.status,
       });
@@ -153,7 +166,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ok: false,
         error: locked
           ? "This pack is locked. Ask Springboard to authorise the change."
-          : "Could not save the fact find. Your work is still on this screen — try again.",
+          : "Could not save. Your work is still on this screen — try again.",
       },
       { status: locked ? 403 : 500 },
     );
@@ -180,8 +193,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     introducerId: auth.introducerId,
     actorType: "introducer",
     actor: auth.email,
-    action: record.status === "draft" ? "fact_find_saved" : "fact_find_authorised_change",
+    action: record.status === "draft" ? "needs_analysis_saved" : "needs_analysis_authorised_change",
   });
 
-  return NextResponse.json({ ok: true, blockers: factFindSubmitBlockers(data) });
+  return NextResponse.json({ ok: true, blockers: packSubmitBlockers(data) });
 }

@@ -15,7 +15,7 @@
  *   authorised    — a change window is open, and it says what and for how long
  *
  * AND TWO SHAPES. A Tier 1 referral submits into a review queue. A Tier 2 pack
- * carries a fact find, and submitting it creates the opportunity and emails the
+ * carries a Needs Analysis, and submitting it creates the opportunity and emails the
  * client on the spot — no queue, no way back. The submit button therefore has to
  * say two different things, and the pack's version has to be unmistakable about
  * being irreversible. Deriving that from `pack_type` on the payload, not from
@@ -58,7 +58,7 @@ type Payload = {
     status_label: string;
     pack_type?: string;
     pack_label?: string;
-    fact_find_started?: boolean;
+    pack_started?: boolean;
     documents_requested?: boolean;
     needs_analysis_created?: boolean;
   };
@@ -157,7 +157,7 @@ export default function ReferralDetail({ id }: { id: string }) {
   const isDraft = client.status === "draft";
   const canEditAnything = data.editable.length > 0;
   const isPack = client.pack_type === "full";
-  const factFindStarted = Boolean(client.fact_find_started);
+  const packStarted = Boolean(client.pack_started);
 
   const requestedFields = new Set(data.info_requests.flatMap((r) => r.fields.map((f) => f.key)));
 
@@ -383,9 +383,9 @@ export default function ReferralDetail({ id }: { id: string }) {
       )}
 
       {isPack && (
-        <FactFindCard
+        <NeedsAnalysisCard
           clientId={id}
-          started={factFindStarted}
+          started={packStarted}
           editable={isDraft}
           documentsRequested={Boolean(client.documents_requested)}
           needsAnalysisCreated={Boolean(client.needs_analysis_created)}
@@ -425,7 +425,7 @@ export default function ReferralDetail({ id }: { id: string }) {
             <span className="text-sm leading-relaxed text-gray-700">{data.consent_statement}</span>
           </label>
           {/* A pack's submit is a bigger door than a referral's, and it is
-              described as one. It creates the opportunity, files the fact find
+              described as one. It creates the opportunity, files the Needs Analysis
               and emails the client — none of which a review step can undo,
               because there is no review step. */}
           {isPack && (
@@ -495,14 +495,14 @@ export default function ReferralDetail({ id }: { id: string }) {
 }
 
 /**
- * The fact find, as seen from the pack.
+ * The Needs Analysis, as seen from the pack.
  *
  * Deliberately a signpost and not a summary. Rendering "total assets $412,000"
  * here would put the client's financial position on a page the introducer leaves
- * open on a shared screen, to save one click. The fact find lives behind its own
+ * open on a shared screen, to save one click. The document lives behind its own
  * route for the same reason its API does.
  */
-function FactFindCard({
+function NeedsAnalysisCard({
   clientId,
   started,
   editable,
@@ -521,7 +521,9 @@ function FactFindCard({
     <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Fact find</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            Client Needs Analysis
+          </h2>
           <p className="mt-1 text-sm text-gray-600">
             {editable
               ? started
@@ -531,11 +533,11 @@ function FactFindCard({
           </p>
         </div>
         <Link
-          href={`/introducer/clients/${clientId}/fact-find`}
+          href={`/introducer/clients/${clientId}/needs-analysis`}
           className="shrink-0 rounded-lg px-4 py-2 text-sm font-semibold text-white"
           style={{ background: editable ? "#c7894e" : "#6b7280" }}
         >
-          {editable ? (started ? "Continue" : "Start the fact find") : "View"}
+          {editable ? (started ? "Continue" : "Start the Needs Analysis") : "View"}
         </Link>
       </div>
 
