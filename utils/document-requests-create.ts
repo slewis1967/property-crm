@@ -38,7 +38,7 @@ import { columnMissing } from "./column-missing";
  * PGRST204. See utils/column-missing.ts.
  */
 const insertColumnMissing = (error: { code?: string; message?: string } | null) =>
-  columnMissing(error, ["introducer_client_id"]);
+  columnMissing(error, ["introducer_client_id", "needs_analysis_id"]);
 
 const AMBER = "#B45309";
 
@@ -81,6 +81,8 @@ export type CreateDocumentRequestInput = {
   opportunityId?: string | null;
   contactId?: string | null;
   factFindId?: string | null;
+  /** The Needs Analysis these uploads are evidence for. Set by a Tier 2 pack. */
+  needsAnalysisId?: string | null;
   /** Links the per-applicant requests of one joint application together. */
   applicationId?: string | null;
   /** Share applicant 1's reference (and Drive folder) with applicant 2. */
@@ -127,6 +129,7 @@ export async function createDocumentRequest(
     opportunity_id: input.opportunityId ?? null,
     contact_id: input.contactId ?? null,
     fact_find_id: input.factFindId ?? null,
+    needs_analysis_id: input.needsAnalysisId ?? null,
     submit_target: input.submitTarget ?? "yla",
     broker_id: input.broker?.id ?? null,
     broker_name: input.broker?.name ?? null,
@@ -150,8 +153,13 @@ export async function createDocumentRequest(
    * upload link. Retry without it — losing the back-pointer is a far smaller
    * problem than losing the request, and the row still carries the fact find
    * and opportunity ids that connect it to the pack. */
-  if (error && insertColumnMissing(error) && insert.introducer_client_id) {
+  /* Both provenance columns arrive after this table did, and the house rule is
+   * that code ships before the SQL is run. Losing a back-pointer is a far
+   * smaller problem than losing the request — a client already promised their
+   * upload link — so drop them and retry rather than failing. */
+  if (error && insertColumnMissing(error) && (insert.introducer_client_id || insert.needs_analysis_id)) {
     delete insert.introducer_client_id;
+    delete insert.needs_analysis_id;
     ({ data: row, error } = await supabase
       .from(DOCUMENT_REQUESTS_TABLE)
       .insert(insert)

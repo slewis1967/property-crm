@@ -536,6 +536,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       clientId: record.id,
       packData: record.needs_analysis_data,
       opportunityId,
+      needsAnalysisId: na.id,
       contactId,
       phone: String(record.phone ?? ""),
       createdBy: auth.email,
@@ -717,6 +718,7 @@ async function requestDocumentsForPack(input: {
   clientId: string;
   packData: unknown;
   opportunityId: string | null;
+  needsAnalysisId: string;
   contactId: string | null;
   phone: string;
   createdBy: string;
@@ -740,6 +742,7 @@ async function requestDocumentsForPack(input: {
       origin,
       sendEmail: Boolean(packApplicantEmail(input.packData, 0)),
       opportunityId: input.opportunityId,
+      needsAnalysisId: input.needsAnalysisId,
       contactId: input.contactId,
       introducerClientId: input.clientId,
       applicationId,
@@ -760,6 +763,7 @@ async function requestDocumentsForPack(input: {
         origin,
         sendEmail: Boolean(email2),
         opportunityId: input.opportunityId,
+        needsAnalysisId: input.needsAnalysisId,
         contactId: input.contactId,
         introducerClientId: input.clientId,
         // Share applicant 1's reference and application so both sets of
