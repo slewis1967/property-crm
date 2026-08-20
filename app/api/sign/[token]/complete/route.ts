@@ -187,7 +187,7 @@ export async function POST(
       row.created_by,
       path,
       upErr ? null : true,
-      (row as { brand?: string | null }).brand,
+      row.brand,
     );
 
     return NextResponse.json({ ok: true });
