@@ -21,6 +21,7 @@ import {
   type IntroducerIdentity,
 } from "../../../utils/introducer-auth";
 import type { ActiveGrant, OpenInfoRequest } from "../../../utils/introducer";
+import { columnMissing } from "../../../utils/column-missing";
 
 export type { IntroducerIdentity };
 
@@ -32,25 +33,48 @@ const CLIENT_COLUMNS_BASE =
   "status,stage,message_to_introducer,submitted_at,consent_confirmed_at,created_at,updated_at";
 
 /**
- * The same list plus the Tier 2 pack columns, which arrive with
- * migrations/20260820_introducer_tier2_pack.sql.
+ * The same list plus the Tier 2 pack columns.
  *
- * TWO RUNGS, WIDEST FIRST — the same shape as resolveSession, for the same
+ * THREE RUNGS, WIDEST FIRST — the same shape as resolveSession, for the same
  * reason: code ships before the SQL is run, and asking for a column that is not
  * there yet fails the WHOLE select. A failed select here doesn't degrade one
- * feature, it empties every introducer's referral list. The fallback costs one
- * extra query in the window between deploy and migration, and nothing after.
+ * feature, it empties every introducer's referral list.
+ *
+ * Three rather than two because the pack columns arrived in two migrations, and
+ * dropping straight from "everything" to "none" would make every pack render as
+ * an ordinary referral — fact find hidden, chooser wrong — just because the
+ * LATER migration hadn't run. Each rung gives up only what that migration added.
+ *
+ *   PACK_NA  everything (20260820 + 20260820b)
+ *   PACK     the pack, without the Needs Analysis link (20260820 only)
+ *   BASE     no pack columns at all (pre-20260820)
+ *
+ * Costs one extra query per rung in the window between deploy and migration,
+ * and nothing afterwards.
  */
-const CLIENT_COLUMNS =
-  `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id,needs_analysis_id`;
+const CLIENT_COLUMNS_PACK =
+  `${CLIENT_COLUMNS_BASE},pack_type,fact_find_data,fact_find_id,document_request_id`;
+const CLIENT_COLUMNS = `${CLIENT_COLUMNS_PACK},needs_analysis_id`;
 
-/** Postgres 42703 / PostgREST PGRST204 — the column is absent, not the table. */
-function packColumnMissing(error: { code?: string; message?: string } | null | undefined): boolean {
-  if (!error) return false;
-  if (error.code === "42703" || error.code === "PGRST204") return true;
-  const msg = (error.message ?? "").toLowerCase();
-  return msg.includes("pack_type") || msg.includes("fact_find_data");
-}
+/** Widest first. Each entry is tried until one succeeds. */
+const CLIENT_COLUMN_RUNGS = [CLIENT_COLUMNS, CLIENT_COLUMNS_PACK, CLIENT_COLUMNS_BASE];
+
+/**
+ * The columns the ladder above is prepared to give up. Keep in step with
+ * CLIENT_COLUMN_RUNGS: a column missing from this list means no rung fires for
+ * it and the referral list comes back empty, which is the exact failure the
+ * ladder exists to prevent.
+ */
+const PACK_COLUMNS = [
+  "pack_type",
+  "fact_find_data",
+  "fact_find_id",
+  "document_request_id",
+  "needs_analysis_id",
+] as const;
+
+const packColumnMissing = (error: { code?: string; message?: string } | null | undefined) =>
+  columnMissing(error, PACK_COLUMNS);
 
 /**
  * Resolve the signed-in introducer, or return the 401 the caller should return.
@@ -97,8 +121,12 @@ export async function loadOwnClient(
       .eq("introducer_id", identity.introducerId)
       .maybeSingle();
 
-  let { data, error } = await query(CLIENT_COLUMNS);
-  if (error && packColumnMissing(error)) ({ data, error } = await query(CLIENT_COLUMNS_BASE));
+  let data = null;
+  let error = null;
+  for (const columns of CLIENT_COLUMN_RUNGS) {
+    ({ data, error } = await query(columns));
+    if (!error || !packColumnMissing(error)) break;
+  }
   if (error || !data) return null;
   // Double cast: the Supabase client can't infer a row shape from a select
   // string this long, so it falls back to a union that includes its error type.
@@ -115,8 +143,12 @@ export async function listOwnClients(identity: IntroducerIdentity) {
       .order("updated_at", { ascending: false })
       .limit(500);
 
-  let { data, error } = await query(CLIENT_COLUMNS);
-  if (error && packColumnMissing(error)) ({ data, error } = await query(CLIENT_COLUMNS_BASE));
+  let data = null;
+  let error = null;
+  for (const columns of CLIENT_COLUMN_RUNGS) {
+    ({ data, error } = await query(columns));
+    if (!error || !packColumnMissing(error)) break;
+  }
   if (error) return [];
   return (data ?? []) as unknown as OwnClient[];
 }

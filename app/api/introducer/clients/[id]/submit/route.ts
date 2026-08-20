@@ -73,6 +73,7 @@ import { syncFactFindContacts } from "../../../../../../utils/contact-sync";
 import { createDocumentRequest } from "../../../../../../utils/document-requests-create";
 import { createSignatureRequests } from "../../../../../../utils/signature-requests-create";
 import { publicOrigin } from "../../../../../../utils/document-requests-db";
+import { columnMissing } from "../../../../../../utils/column-missing";
 import { isExpiredOn } from "../../../../../../utils/introducer-onboarding";
 import { businessDayKey } from "../../../../../../utils/datetime";
 import { sendNewPackNotice, sendNewReferralNotice } from "../../../../../../utils/introducer-email";
@@ -431,31 +432,61 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       );
     }
 
-    const { data: accepted, error: accErr } = await supabase
-      .from("introducer_clients")
-      .update({
-        status: "accepted",
-        submitted_at: now,
-        submitted_by: auth.userId,
-        consent_confirmed_at: now,
-        consent_statement: CONSENT_STATEMENT,
-        stage: "documents",
-        stage_updated_at: now,
-        decided_at: now,
-        // Not a person. A Tier 2 pack is accepted by rule, and the audit trail
-        // should say which rule rather than name a super admin who was not there.
-        decided_by: "system:tier2_pack",
-        opportunity_id: opportunityId,
-        fact_find_id: ff.id,
-        needs_analysis_id: na.id,
-        contact_id: contactId,
-        updated_at: now,
-      })
-      .eq("id", record.id)
-      .eq("introducer_id", auth.introducerId)
-      .eq("status", "draft")            // no double-submit: a second call matches nothing
-      .select("*")
-      .single();
+    /* The flip, with the newest columns made optional.
+     *
+     * `needs_analysis_id` arrives with 20260820b and the house rule is that code
+     * ships before the SQL is run. Without this, a deploy that lands before the
+     * migration turns EVERY Tier 2 submit into the worst outcome available: the
+     * opportunity, fact find, contacts and Needs Analysis are all created, then
+     * the flip fails on the unknown column and the introducer is told the pack
+     * was not submitted. Everything exists and nothing says so.
+     *
+     * Retrying is safe. A failed UPDATE changed nothing, and `.eq("status",
+     * "draft")` still guards against a double-submit on the retry.
+     *
+     * The pack is worth more than the link, so we give up the link. */
+    const flip: Record<string, unknown> = {
+      status: "accepted",
+      submitted_at: now,
+      submitted_by: auth.userId,
+      consent_confirmed_at: now,
+      consent_statement: CONSENT_STATEMENT,
+      stage: "documents",
+      stage_updated_at: now,
+      decided_at: now,
+      // Not a person. A Tier 2 pack is accepted by rule, and the audit trail
+      // should say which rule rather than name a super admin who was not there.
+      decided_by: "system:tier2_pack",
+      opportunity_id: opportunityId,
+      fact_find_id: ff.id,
+      needs_analysis_id: na.id,
+      contact_id: contactId,
+      updated_at: now,
+    };
+
+    const applyFlip = (patch: Record<string, unknown>) =>
+      supabase
+        .from("introducer_clients")
+        .update(patch)
+        .eq("id", record.id)
+        .eq("introducer_id", auth.introducerId)
+        .eq("status", "draft")          // no double-submit: a second call matches nothing
+        .select("*")
+        .single();
+
+    let { data: accepted, error: accErr } = await applyFlip(flip);
+
+    if (accErr && packWriteColumnMissing(accErr)) {
+      console.error("[introducer] tier 2 flip retried without the newest columns", {
+        client_id: record.id,
+        error: accErr.message,
+        hint: "run migrations/20260820b_introducer_pack_needs_analysis.sql",
+      });
+      const { needs_analysis_id: _na, contact_id: _c, ...withoutNewColumns } = flip;
+      void _na;
+      void _c;
+      ({ data: accepted, error: accErr } = await applyFlip(withoutNewColumns));
+    }
 
     if (accErr || !accepted) {
       console.error("[introducer] tier 2 accept flip failed", {
@@ -622,6 +653,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   return NextResponse.json({ ok: true, client: toPortalView(data) });
 }
+
+/**
+ * The columns the flip is prepared to give up. Named rather than "any column
+ * error", so a genuine schema mismatch elsewhere is not swallowed by a retry
+ * that drops the wrong thing and was never going to help.
+ */
+const packWriteColumnMissing = (error: { code?: string; message?: string } | null) =>
+  columnMissing(error, ["needs_analysis_id", "contact_id"]);
 
 /** Who hears about a submission: the configured list, or the owner. */
 function officeRecipients(): string[] {
