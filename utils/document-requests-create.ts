@@ -27,23 +27,18 @@ import {
   docTableMissing,
   REQUEST_LIST_COLUMNS,
 } from "./document-requests-db";
+import { columnMissing } from "./column-missing";
 
 /**
- * "That column isn't there" — for an INSERT specifically.
+ * The one column this module is prepared to give up when it isn't there yet.
  *
- * Not `docColumnMissing` from document-requests-db, which matches Postgres 42703
- * and the text "column ... does not exist". A write through PostgREST to an
- * unknown column never reaches Postgres: PostgREST rejects it first with
- * PGRST204, "Could not find the 'x' column of 'y' in the schema cache", and
- * neither of those tests match it. The fallback below would therefore never
- * fire, which is the quiet way a pre-migration deploy takes the document request
- * down with it. Matches the convention amlColumnMissing already uses.
+ * NOT `docColumnMissing` from document-requests-db: that one matches 42703 and
+ * "column ... does not exist", neither of which a PostgREST INSERT produces —
+ * a write to an unknown column is rejected before Postgres sees it, as
+ * PGRST204. See utils/column-missing.ts.
  */
-function insertColumnMissing(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  if (error.code === "PGRST204" || error.code === "42703") return true;
-  return /could not find the .* column|column .* does not exist/i.test(error.message ?? "");
-}
+const insertColumnMissing = (error: { code?: string; message?: string } | null) =>
+  columnMissing(error, ["introducer_client_id"]);
 
 const AMBER = "#B45309";
 
