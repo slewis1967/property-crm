@@ -162,22 +162,49 @@ export function needsAnalysisToDeclaredIncome(na: NeedsAnalysisData): DeclaredIn
   }
 
   /**
-   * `other_income` ("Bonus, Commission, Centrelink, Family Assistance") is one
-   * shared free-text field for the whole household, but the claim inside it
-   * usually names one person — "David Casual Woolworths 1 day per $400 per
-   * week". Attaching it to every applicant would raise the same unevidenced
-   * -income finding twice, so it goes to whoever it names, and to the first
-   * applicant only when it names nobody.
+   * Other income, attributed by the person who entered it.
+   *
+   * THIS USED TO BE A GUESS. `other_income` was one shared free-text line for
+   * the whole household, so working out whose income it was meant scanning the
+   * prose for an applicant's first name and defaulting to applicant 1 when it
+   * named nobody — on a document the client signs. It is now rows carrying an
+   * explicit owner, so the guess is gone.
+   *
+   * `both` goes to every applicant in use: a jointly-received payment is income
+   * to each of them for the purpose of "did they declare something we can't
+   * evidence". A row with NO owner set is still surfaced — against applicant 1,
+   * and flagged as unattributed — because dropping it would hide a declared
+   * income from the very check that exists to notice unevidenced claims.
    */
-  const note = str(na.other_income);
-  if (note && out.length) {
-    const lower = note.toLowerCase();
-    const named = out.find((d) => {
-      const given = d.applicant.split(" ")[0]?.toLowerCase();
-      return given && given.length > 2 && lower.includes(given);
-    });
-    (named ?? out[0]!).otherIncomeNote = note;
+  for (const row of na.other_incomes ?? []) {
+    const amount = typeof row.amount === "number" && isFinite(row.amount) ? row.amount : null;
+    const label = [str(row.type), str(row.description)].filter(Boolean).join(" — ");
+    const money = amount == null ? "amount not stated" : `$${amount.toLocaleString("en-AU")} ${row.frequency}`;
+    const unattributed = row.owner !== "app1" && row.owner !== "app2" && row.owner !== "both";
+    const note = `${label || "Other income"}: ${money}${unattributed ? " (not attributed to an applicant)" : ""}`;
+
+    const targets: DeclaredIncome[] = [];
+    if (row.owner === "both") targets.push(...out);
+    else if (row.owner === "app2" && out[1]) targets.push(out[1]);
+    else if (out[0]) targets.push(out[0]);
+
+    for (const t of targets) {
+      t.otherIncomeNote = t.otherIncomeNote ? `${t.otherIncomeNote}; ${note}` : note;
+    }
   }
+
+  /**
+   * The legacy household line, for documents signed before the rows existed.
+   * Still attached to applicant 1 rather than guessed at — the guessing is what
+   * this change removed, and a sentence nobody has converted into rows is not
+   * evidence of whose income it is.
+   */
+  const legacy = str(na.other_income);
+  if (legacy && out.length) {
+    const note = `Recorded as a note: ${legacy}`;
+    out[0]!.otherIncomeNote = out[0]!.otherIncomeNote ? `${out[0]!.otherIncomeNote}; ${note}` : note;
+  }
+
   return out;
 }
 

@@ -55,6 +55,10 @@ describe("computeNeedsAnalysisTotals", () => {
       totalAssets: 0,
       totalLiabilities: 0,
       monthlyLivingExpenses: 0,
+      // Other income became rows attributed to an applicant; an empty form has
+      // none, and the total must be 0 rather than absent — the print document
+      // renders it as a figure.
+      monthlyOtherIncome: 0,
     });
   });
 
