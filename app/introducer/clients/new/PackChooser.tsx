@@ -47,14 +47,14 @@ export default function PackChooser({ canSendFullPack }: { canSendFullPack: bool
         <Card
           href="/introducer/clients/new?pack=full"
           title="Full submission pack"
-          lead="The complete fact find, ready to assess."
+          lead="The complete Needs Analysis, ready to assess."
           minutes="Allow 30–45 minutes with your client"
           available={canSendFullPack}
           requirement="Tier 2 accreditation"
           points={[
-            "Everything in a referral, plus the full borrower fact find",
-            "Income, liabilities, assets and the disclosure questions",
-            "Your client is emailed their document upload link on submit",
+            "Everything in a referral, plus the full Client Needs Analysis",
+            "Income, employment, assets, liabilities and living expenses",
+            "Your client signs it, and is emailed their document upload link",
           ]}
         />
       </div>

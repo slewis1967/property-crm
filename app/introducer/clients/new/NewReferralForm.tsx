@@ -13,10 +13,10 @@
  *             "submit" here is a one-way door and a form that doesn't say so is
  *             a form people press by accident.
  *
- *   full      One way out: continue to the fact find. There is deliberately no
- *             submit button here — a pack cannot be submitted until the fact
- *             find is finished, and offering a button that can only fail is a
- *             lie about how far along they are.
+ *   full      One way out: continue to the Needs Analysis. There is deliberately
+ *             no submit button here — a pack cannot be submitted until that
+ *             document is finished, and offering a button that can only fail is
+ *             a lie about how far along they are.
  *
  * The consent tick is required to submit but not to save a draft or to continue
  * — the confirmation belongs to the moment the details are actually handed over,
@@ -70,10 +70,10 @@ export default function NewReferralForm({
       const id = await createDraft();
       if (!id) return;
 
-      // A pack's next screen is the fact find, not the referral detail — the
-      // whole point of choosing it was that there is more to do.
+      // A pack's next screen is the Needs Analysis, not the referral detail —
+      // the whole point of choosing it was that there is more to do.
       if (mode === "continue") {
-        router.push(`/introducer/clients/${id}/fact-find`);
+        router.push(`/introducer/clients/${id}/needs-analysis`);
         router.refresh();
         return;
       }
@@ -120,7 +120,7 @@ export default function NewReferralForm({
       </h1>
       <p className="mt-1 text-sm text-gray-600">
         {isPack
-          ? "Start with who your client is. The fact find comes next, and you can stop and come back to it any time before you submit."
+          ? "Start with who your client is. The Needs Analysis comes next, and you can stop and come back to it any time before you submit."
           : "Tell us about your client."}{" "}
         Fields marked <span className="text-red-600">*</span> are needed before you can submit.
       </p>
@@ -128,7 +128,7 @@ export default function NewReferralForm({
       {isPack && (
         <ol className="mt-5 flex flex-wrap gap-x-2 gap-y-1 text-xs text-gray-500">
           <PackStep n={1} label="Client details" current />
-          <PackStep n={2} label="Fact find" />
+          <PackStep n={2} label="Needs Analysis" />
           <PackStep n={3} label="Consent and submit" last />
         </ol>
       )}
@@ -146,8 +146,9 @@ export default function NewReferralForm({
       {isPack ? (
         <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5">
           <p className="text-sm leading-relaxed text-gray-700">
-            Next you&apos;ll complete the borrower fact find with your client — income, liabilities,
-            assets and the disclosure questions. It saves as you go.
+            Next you&apos;ll complete the Client Needs Analysis with your client — their
+            situation, income, assets, liabilities and living expenses. It saves as you go, and it
+            is the document they sign.
           </p>
           <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             Nothing reaches Springboard or your client yet. That happens when you submit the
@@ -160,7 +161,7 @@ export default function NewReferralForm({
               className="rounded-lg px-5 py-2.5 font-semibold text-white disabled:opacity-50"
               style={{ background: "#c7894e" }}
             >
-              {busy === "continue" ? "Saving…" : "Continue to the fact find"}
+              {busy === "continue" ? "Saving…" : "Continue to the Needs Analysis"}
             </button>
             <button
               onClick={() => save("draft")}

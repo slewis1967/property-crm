@@ -17,7 +17,7 @@ import {
   pickEditableFields,
   toPortalView,
   canSendFullPack,
-  seedFactFindFromReferral,
+  seedNeedsAnalysisFromReferral,
 } from "../../../../utils/introducer";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../../../utils/introducer-auth";
@@ -116,9 +116,9 @@ export async function POST(req: Request) {
     status: "draft",
     pack_type: wantsFullPack ? "full" : "referral",
   };
-  // Carry the details they just typed into the fact find's first page, so the
-  // client's own name is entered once rather than twice.
-  if (wantsFullPack) insert.fact_find_data = seedFactFindFromReferral(fields);
+  // Carry the details they just typed onto the Needs Analysis's first page, so
+  // the client's own name is entered once rather than twice.
+  if (wantsFullPack) insert.needs_analysis_data = seedNeedsAnalysisFromReferral(fields);
 
   let { data, error } = await supabase
     .from("introducer_clients")
