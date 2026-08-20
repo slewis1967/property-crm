@@ -23,6 +23,7 @@ import {
   findRequestByToken,
 } from "../../../../utils/signature-requests-db";
 import { clientIp, rateKeyFromToken } from "../_shared";
+import { signBrand } from "../../../../utils/sign-brand";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +73,11 @@ export async function GET(
       signer_name: row.signer_name ?? "",
       doc_type: row.doc_type,
       doc_label: DOC_TYPE_LABEL[row.doc_type] ?? "Document",
+      /* Which business the signer sees. Carried on the request rather than
+       * derived from doc_type: the same document can belong to either business,
+       * and a Springboard client must not be asked to sign under NextKey's
+       * letterhead. */
+      brand: signBrand((row as { brand?: string | null }).brand),
     });
   } catch (e) {
     // Never leak internals to the public page.

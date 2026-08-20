@@ -840,6 +840,8 @@ async function requestPackSignature(input: {
       message:
         "This confirms the details your introducer recorded with you. Please review it and sign — " +
         "we can't progress your application until it's signed.",
+      // Same client, same programme, same brand as the consent form they signed.
+      brand: "springboard",
       createdBy: input.createdBy,
     });
 
