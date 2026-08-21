@@ -19,6 +19,8 @@ import { supabase } from "./supabase";
 import {
   emptyIntroducerAgreement,
   readyToIssue,
+  isValidSharePct,
+  TIER_BUILDER_SHARE,
   type IntroducerAgreementData,
   type IntroducerDocType,
 } from "./introducer-agreement";
@@ -60,6 +62,20 @@ export function introducerDocDataFor(
   d.acn = (app.acn ?? "").trim();
   d.registered_address = (app.registered_address ?? "").trim();
   d.accreditation_no = docType === "introducer_nda" ? "" : (app.accreditation_no ?? "").trim();
+
+  /* THE BUILDER SHARE, on both money-bearing documents — the agreement states
+   * it and the schedule sets it out, and two documents naming different splits
+   * is the dispute this whole module exists to avoid.
+   *
+   * Tier sets it: 75% for Tier 1, 90% for Tier 2. A per-introducer override on
+   * the application wins where one has been agreed, which is why this is not
+   * simply derived at render time. Not on the NDA, which is signed before the
+   * tier means anything commercially. */
+  if (docType !== "introducer_nda") {
+    d.builder_share_pct = isValidSharePct(app.builder_share_pct)
+      ? app.builder_share_pct
+      : TIER_BUILDER_SHARE[app.tier === "t2" ? "t2" : "t1"];
+  }
   d.issued_at = issuedAt;
   d.subtitle = app.tier === "t2" ? "Tier 2 accreditation" : "Tier 1 accreditation";
 

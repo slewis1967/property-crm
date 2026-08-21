@@ -16,6 +16,22 @@
 import { useCallback, useEffect, useState } from "react";
 import AuditFile from "./AuditFile";
 import { daysUntil, isExpiredOn } from "../../../utils/introducer-onboarding";
+import { TIER_BUILDER_SHARE, formatSharePct, isValidSharePct } from "../../../utils/introducer-agreement";
+
+/**
+ * The split that will be written into their agreement and schedule.
+ *
+ * Shown before sending rather than after, because both documents SNAPSHOT it:
+ * once they have signed, changing the number here changes nothing about what
+ * was agreed. This is the last point at which it is still editable.
+ */
+function shareFor(app: { tier: string; builder_share_pct?: number | null }): {
+  pct: number;
+  negotiated: boolean;
+} {
+  if (isValidSharePct(app.builder_share_pct)) return { pct: app.builder_share_pct, negotiated: true };
+  return { pct: TIER_BUILDER_SHARE[app.tier === "t2" ? "t2" : "t1"], negotiated: false };
+}
 
 type Application = {
   id: string;
@@ -26,6 +42,9 @@ type Application = {
   tier: string;
   agreement_variant: string;
   recruits_introducers?: boolean | null;
+  /** A negotiated override of the tier's builder-commission share. Absent or
+   *  null means the tier decides. Absent until 20260821h runs. */
+  builder_share_pct?: number | null;
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -419,6 +438,19 @@ function Card({
 
           {(app.state === "certificate_issued" || app.state === "agreement_sent") && (
             <>
+              {/* What the documents will say. A wrong percentage that reaches a
+                  signature is not correctable afterwards, so it is stated here
+                  in the open rather than left implicit in the tier. */}
+              <p className="w-full text-xs text-gray-600">
+                Builder commission share:{" "}
+                <strong className="tabular-nums" style={{ color: "#020e40" }}>
+                  {formatSharePct(shareFor(app).pct)}
+                </strong>{" "}
+                {shareFor(app).negotiated
+                  ? "— negotiated for this introducer"
+                  : `— the ${app.tier === "t2" ? "Tier 2" : "Tier 1"} default`}
+                . Panel stock only; paid once the builder has paid us.
+              </p>
               {/* The normal path now that the documents exist. Two of them, sent
                   one at a time, so this button is live at `agreement_sent` too:
                   pressing it again after the referral agreement is signed sends

@@ -16,6 +16,7 @@ import { supabase } from "./supabase";
 import { newToken, hashToken } from "./sign-token";
 import type { OnboardingState } from "./introducer-onboarding";
 import { columnMissing } from "./column-missing";
+import { isValidSharePct } from "./introducer-agreement";
 import {
   introducerEntityColumnMissing,
   type BusinessDetails,
@@ -58,6 +59,11 @@ export type Application = {
    *  20260821f_introducer_referral_fee.sql runs. */
   fee_per_settlement?: string | null;
   fee_notes?: string | null;
+  /** Per-introducer override of the tier's builder-commission share. Null means
+   *  "use the tier default" — 75 for Tier 1, 90 for Tier 2 — which is the
+   *  ordinary case. Absent until 20260821h_introducer_builder_share.sql runs,
+   *  and absent reads the same as null, so the default still applies. */
+  builder_share_pct?: number | null;
   /** Who brought this introducer in, and whether they are paid on the
    *  settlements of introducers THEY recruited. Absent until
    *  20260821g_introducer_recruiter_chain.sql runs. */
@@ -95,10 +101,18 @@ const FEE_COLUMNS = "fee_per_settlement, fee_notes";
  *  arrangement existed. */
 const RECRUITER_COLUMNS = "recruited_by_introducer_id, recruits_introducers";
 
+/** Added by `20260821h_introducer_builder_share.sql`. Only an OVERRIDE of the
+ *  tier default lives here, so a pending migration reads as "no override" and
+ *  every introducer simply gets their tier's share — which is the policy. This
+ *  rung is the one that degrades to correct behaviour rather than to degraded
+ *  behaviour. */
+const SHARE_COLUMNS = "builder_share_pct";
+
 /** Widest first. Each rung drops the most recent migration's columns, so a read
  *  keeps working against a database that is one or two migrations behind the
  *  deploy — the house rule being that code ships before the SQL is run. */
 const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}, ${SHARE_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
@@ -286,6 +300,47 @@ export async function setReferralFee(
         error:
           "A referral fee cannot be set on the standard arrangement, which says no fee is payable. Move them onto the paid variant first.",
       };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Override this introducer's share of the builder commission.
+ *
+ * The ordinary case is NOT to call this: tier sets the share, 75% for Tier 1
+ * and 90% for Tier 2, and `introducerDocDataFor` applies that default at issue.
+ * This exists for the introducer who has negotiated something else.
+ *
+ * Passing null clears the override and returns them to their tier's share.
+ * Like the fee, it must be settled BEFORE the documents issue — both the
+ * agreement and the schedule snapshot the figure, and a row that quietly
+ * disagrees with the signed instrument is worse than one merely out of date.
+ */
+export async function setBuilderShare(
+  id: string,
+  pct: number | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (pct !== null && !isValidSharePct(pct)) {
+    return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
+  }
+
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ builder_share_pct: pct, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["builder_share_pct"])) {
+      return {
+        ok: false,
+        error:
+          "Per-introducer shares are not switched on yet — run migrations/20260821h_introducer_builder_share.sql. Until then everyone gets their tier's share, which is 75% for Tier 1 and 90% for Tier 2.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
     }
     throw error;
   }

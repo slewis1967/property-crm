@@ -7,6 +7,7 @@ import {
   mintLinkToken,
   setReferralFee,
   setRecruiterEntitlement,
+  setBuilderShare,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import { canSignAgreement, onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
 import {
@@ -98,6 +99,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (typeof body.recruits_introducers === "boolean") {
       const granted = await setRecruiterEntitlement(id, body.recruits_introducers);
       if (!granted.ok) return NextResponse.json({ ok: false, error: granted.error }, { status: 409 });
+      app = (await findById(id)) ?? app;
+    }
+    /* A NEGOTIATED SHARE, where one has been agreed. The ordinary case sends
+     * nothing here and the tier decides — 75% at Tier 1, 90% at Tier 2. Set
+     * before issuing for the same reason as the fee: both documents snapshot
+     * the figure, and a row that disagrees with a signed contract is worse than
+     * one merely out of date. `null` clears an override and returns them to
+     * their tier's share. */
+    if (typeof body.builder_share_pct === "number" || body.builder_share_pct === null) {
+      const saved = await setBuilderShare(id, body.builder_share_pct);
+      if (!saved.ok) return NextResponse.json({ ok: false, error: saved.error }, { status: 409 });
       app = (await findById(id)) ?? app;
     }
     if (typeof body.fee_per_settlement === "string") {
