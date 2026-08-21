@@ -45,6 +45,9 @@ type Application = {
   /** A negotiated override of the tier's builder-commission share. Absent or
    *  null means the tier decides. Absent until 20260821h runs. */
   builder_share_pct?: number | null;
+  /** Which of this application's documents are fully signed, e.g.
+   *  ["introducer_nda","introducer_agreement"]. Attached by the list route. */
+  signed_documents?: string[];
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -56,6 +59,28 @@ type Application = {
   accreditation_expires_at?: string | null;
   smsf_competency_expires_at?: string | null;
 };
+
+/**
+ * What is actually outstanding.
+ *
+ * `agreement_sent` is a SPAN, not a moment. It covers "nothing signed yet",
+ * "referral agreement in, schedule outstanding", and the instant before both
+ * land — because the state only advances when BOTH documents are signed. A
+ * single flat string for the whole span told Sean his two introducers had not
+ * signed when both had, which reads as a lost signature rather than a step in
+ * progress.
+ */
+function stateHint(app: Application): string {
+  if (app.state === "agreement_sent" || app.state === "certificate_issued") {
+    const done = app.signed_documents ?? [];
+    const agreement = done.includes("introducer_agreement");
+    const schedule = done.includes("introducer_schedule");
+    if (agreement && schedule) return "Both documents signed — finishing up.";
+    if (agreement) return "Referral agreement signed. Waiting on the commission schedule.";
+    if (schedule) return "Commission schedule signed. Waiting on the referral agreement.";
+  }
+  return WAITING_ON[app.state] ?? app.state;
+}
 
 const STATE_LABEL: Record<string, string> = {
   invited: "Invited",
@@ -279,7 +304,7 @@ function Card({
             {app.firm_name ? `${app.firm_name} · ` : ""}
             {app.email}
           </p>
-          <p className="mt-1 text-sm text-gray-600">{WAITING_ON[app.state] ?? app.state}</p>
+          <p className="mt-1 text-sm text-gray-600">{stateHint(app)}</p>
           {app.state === "withdrawn" && app.withdrawn_reason && (
             <p className="mt-1 text-sm text-gray-500">{app.withdrawn_reason}</p>
           )}

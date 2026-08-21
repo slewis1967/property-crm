@@ -6,6 +6,7 @@ import {
   logOnboardingEvent,
 } from "../../../../../utils/introducer-onboarding-db";
 import { onboardingTablesMissing } from "../../../../../utils/introducer-onboarding";
+import { signedDocTypesFor } from "../../../../../utils/introducer-doc-signing";
 import { sendOnboardingInviteEmail } from "../../../../../utils/introducer-onboarding-email";
 import { supabase } from "../../../../../utils/supabase";
 
@@ -28,7 +29,35 @@ export async function GET(req: Request) {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    return NextResponse.json({ ok: true, applications: await listApplications() });
+    const applications = await listApplications();
+
+    /* WHICH OF THE TWO AGREEMENT DOCUMENTS ARE IN.
+     *
+     * `agreement_sent` covers a span, not a moment: the referral agreement may
+     * be signed with the commission schedule still outstanding, and the state
+     * column cannot tell those apart because it only advances when BOTH are in.
+     * Without this the panel said "Waiting for them to sign the agreement" to
+     * someone who had already signed it, which reads as the signature having
+     * been lost — that is exactly what it looked like for SBI-2026-0004 and
+     * -0005 on 21 August.
+     *
+     * Best-effort: this is a progress hint. If it fails the page still lists
+     * every application, which matters more than the annotation.
+     */
+    let signed = new Map<string, Set<string>>();
+    try {
+      signed = await signedDocTypesFor(applications.map((a) => a.id));
+    } catch {
+      signed = new Map();
+    }
+
+    return NextResponse.json({
+      ok: true,
+      applications: applications.map((a) => ({
+        ...a,
+        signed_documents: [...(signed.get(a.id) ?? [])],
+      })),
+    });
   } catch (err) {
     if (onboardingTablesMissing(err)) {
       // The migration has not been applied yet. Say so plainly rather than
