@@ -203,6 +203,16 @@ export async function openIntroducerDocSigning(
     signer_email: app.email,
     token_hash: hash,
     status: "sent" as const,
+    /* SPRINGBOARD, NOT NEXTKEY. Every introducer document is a Springboard
+     * instrument — the PDF is Springboard-headed and the contracting party is
+     * the licensor — so the page it is signed on has to match. Left unset, the
+     * column defaults to 'nextkey' and an introducer opened a Springboard
+     * contract inside NextKey chrome; that is what all three NDAs did, and
+     * both agreements sent on 21 August before this was put right.
+     *
+     * In the patch rather than only on insert, so re-sending a link corrects
+     * the brand on a request that was created before this existed. */
+    brand: "springboard" as const,
     sent_at: now.toISOString(),
     expires_at: new Date(now.getTime() + SIGNING_LINK_DAYS * 86_400_000).toISOString(),
     // Clear anything an earlier attempt left behind, so a rotated link starts
