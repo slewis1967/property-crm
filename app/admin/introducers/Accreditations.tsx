@@ -527,6 +527,25 @@ function Card({
                 </Action>
               )}
 
+              {/* AMEND A SIGNED DOCUMENT. Available once the agreement is in,
+                  because that is the only time it is needed — and it is the one
+                  action here that reaches back past a signature. The signed
+                  version is superseded and KEPT, never edited. */}
+              {(app.signed_documents ?? []).includes("introducer_agreement") && (
+                <Prompt
+                  label="Re-issue a corrected agreement"
+                  placeholder="What was wrong with it? Goes on the document and in the email."
+                  busy={busy}
+                  onSubmit={(reason) =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "reissue", doc_type: "introducer_agreement", reason },
+                      "Corrected agreement issued and emailed. The signed version is kept.",
+                    )
+                  }
+                />
+              )}
+
               {/* Notice only: tells them the step is open and points at their
                   roadmap, where they can start signing themselves. */}
               {app.state === "certificate_issued" && (

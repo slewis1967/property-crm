@@ -113,6 +113,10 @@ export async function ensureIntroducerDoc(
     .select("id")
     .eq("application_id", app.id)
     .eq("doc_type", docType)
+    /* Superseded rows are history. Without this an amended document could never
+     * be reached: the oldest row wins, and the oldest row is the one that was
+     * replaced. See 20260821i. */
+    .is("superseded_at", null)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -131,6 +135,100 @@ export async function ensureIntroducerDoc(
   if (insErr) throw insErr;
 
   return { ok: true, id: (inserted as { id: string }).id, created: true };
+}
+
+export type ReissueResult =
+  | { ok: true; id: string; supersededId: string | null; signedOn: string }
+  | { ok: false; error: string };
+
+/**
+ * Amend a document and put the new version out for signature.
+ *
+ * WHAT THIS DOES NOT DO: touch the document that was signed. That row is
+ * evidence of what the person actually agreed to on that date, and the
+ * signature captured against it is a signature over THAT content — editing it
+ * in place would both destroy the record and invalidate the proof. So the old
+ * row is marked superseded, kept, and a new one is issued beside it.
+ *
+ * The new document carries the reason on its face (see amendmentBanner): a
+ * signer asked for a second copy of something they signed last week will assume
+ * it is a duplicate unless the page itself says otherwise.
+ *
+ * `reason` is required. An amendment with no stated reason is indistinguishable
+ * from an accident, and the person being asked to re-sign deserves to know what
+ * changed and why.
+ */
+export async function reissueIntroducerDoc(
+  app: Application,
+  docType: IntroducerDocType,
+  reason: string,
+  now: Date,
+): Promise<ReissueResult> {
+  const why = reason.trim();
+  if (!why) return { ok: false, error: "Say what changed — an unexplained amendment is just a duplicate." };
+
+  // The document being replaced, and when it was signed. Both go onto the new
+  // one so it can name what it supersedes.
+  const { data: current, error: findErr } = await supabase
+    .from(INTRODUCER_DOCS_TABLE)
+    .select("id,status")
+    .eq("application_id", app.id)
+    .eq("doc_type", docType)
+    .is("superseded_at", null)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (findErr) throw findErr;
+
+  const currentId = (current as { id: string } | null)?.id ?? null;
+
+  let signedOn = "";
+  if (currentId) {
+    const { data: req } = await supabase
+      .from(SIGNATURE_REQUESTS_TABLE)
+      .select("signed_at,status")
+      .eq("doc_id", currentId)
+      .eq("signer_index", 1)
+      .maybeSingle();
+    const at = (req as { signed_at?: string | null } | null)?.signed_at;
+    if (at) {
+      signedOn = new Date(at).toLocaleDateString("en-AU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Australia/Brisbane",
+      });
+    }
+  }
+
+  const data = introducerDocDataFor(app, docType, now.toISOString());
+  data.amends_signed_on = signedOn;
+  data.amendment_reason = why;
+
+  const ready = readyToIssue(data);
+  if (!ready.ok) return { ok: false, error: ready.reason };
+
+  const { data: inserted, error: insErr } = await supabase
+    .from(INTRODUCER_DOCS_TABLE)
+    .insert({ application_id: app.id, doc_type: docType, status: "Draft", data })
+    .select("id")
+    .single();
+  if (insErr) throw insErr;
+  const newId = (inserted as { id: string }).id;
+
+  /* Supersede AFTER the replacement exists. If the insert fails, the old
+   * document is still the live one — which is the safe direction to fail in.
+   * The reverse order would leave the application with no live agreement at
+   * all. */
+  if (currentId) {
+    const { error: supErr } = await supabase
+      .from(INTRODUCER_DOCS_TABLE)
+      .update({ superseded_at: now.toISOString(), superseded_by: newId })
+      .eq("id", currentId);
+    if (supErr) throw supErr;
+  }
+
+  return { ok: true, id: newId, supersededId: currentId, signedOn };
 }
 
 /** The application a signed introducer document belongs to. Used by the
@@ -257,7 +355,12 @@ export async function signedDocTypesFor(
   const { data: docs, error: docErr } = await supabase
     .from(INTRODUCER_DOCS_TABLE)
     .select("id,application_id,doc_type")
-    .in("application_id", applicationIds as string[]);
+    .in("application_id", applicationIds as string[])
+    /* THE ONE THAT MATTERS MOST. A superseded agreement is signed — that is why
+     * it needed replacing rather than editing. Counting it would report the
+     * step complete while the amended document sat unsigned, the exact false
+     * "all done" this mechanism exists to prevent. */
+    .is("superseded_at", null);
   if (docErr) throw docErr;
 
   const rows = (docs ?? []) as { id: string; application_id: string; doc_type: IntroducerDocType }[];
@@ -292,7 +395,8 @@ export async function signedDocTypes(applicationId: string): Promise<Set<Introdu
   const { data: docs, error: docErr } = await supabase
     .from(INTRODUCER_DOCS_TABLE)
     .select("id,doc_type")
-    .eq("application_id", applicationId);
+    .eq("application_id", applicationId)
+    .is("superseded_at", null);
   if (docErr) throw docErr;
 
   const rows = (docs ?? []) as { id: string; doc_type: IntroducerDocType }[];

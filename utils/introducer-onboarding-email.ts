@@ -186,6 +186,57 @@ export async function sendAgreementSigningEmail(opts: {
 }
 
 /**
+ * An amended document, and why it is being sent again.
+ *
+ * THE SUBJECT LINE HAS ONE JOB: stop this being read as a duplicate. Someone
+ * who signed an agreement last week and sees another one will assume a system
+ * glitch and leave it — so the reason leads, in the subject and in the first
+ * line, and the mail says plainly that the earlier signature is not lost.
+ */
+/** Contract text goes into an HTML email — escape it rather than trusting it. */
+function escapeHtml(v: string): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
+}
+
+export async function sendAmendedDocumentEmail(opts: {
+  to: string;
+  legalName: string;
+  rawToken: string;
+  origin: string;
+  docLabel: string;
+  reason: string;
+  signedOn: string;
+}) {
+  const url = `${opts.origin.replace(/\/+$/, "")}/sign/${encodeURIComponent(opts.rawToken)}`;
+
+  return sendBrevoEmail({
+    to: [{ email: opts.to, name: opts.legalName }],
+    ...springboardSender(),
+    subject: `Please re-sign: we have corrected your ${opts.docLabel}`,
+    html: shell(
+      `A corrected ${opts.docLabel}`,
+      `<p>Hi ${firstName(opts.legalName)},</p>
+       <p>We have found an error in the ${escapeHtml(opts.docLabel)}${
+         opts.signedOn ? ` you signed on ${escapeHtml(opts.signedOn)}` : " you signed"
+       }, and need you to sign a corrected version. This is not a duplicate and it is not a system
+          error — please do not ignore it.</p>
+       <p><strong>What was wrong:</strong> ${escapeHtml(opts.reason)}</p>
+       <p>Nothing you have already done is lost. The version you signed is kept with your records,
+          and it remains the agreement between us until you sign this one. The correction is
+          highlighted at the top of the document.</p>
+       ${button(url, `Read and sign the corrected ${opts.docLabel.toLowerCase()}`)}
+       <p>If anything in it is not what you understood, reply to this email before signing rather
+          than after.</p>`,
+      `This link is personal to ${opts.to} — please don't forward it.`,
+      "Introducer accreditation",
+    ),
+    tags: ["introducer", "onboarding", "amendment"],
+  });
+}
+
+/**
  * Accreditation passed. Separate from the step email because it is the one
  * moment in the flow worth marking — and because it carries the number they
  * will quote from then on.

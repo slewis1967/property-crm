@@ -30,12 +30,18 @@ type Query = {
   op: "select" | "insert" | "update";
   eq: [string, unknown][];
   ins: [string, unknown[]][];
+  /** `.is(col, null)` — an ABSENT column reads as null, exactly as it does in
+   *  Postgres. Rows inserted through this mock carry no `superseded_at` key at
+   *  all, and treating that as "not null" would make every live-document query
+   *  match nothing. */
+  iss: [string, unknown][];
   payload: Row | null;
 };
 
 const matches = (r: Row, q: Query) =>
   q.eq.every(([c, v]) => r[c] === v) &&
-  q.ins.every(([c, vs]) => vs.includes(r[c] as never));
+  q.ins.every(([c, vs]) => vs.includes(r[c] as never)) &&
+  q.iss.every(([c, v]) => (r[c] ?? null) === v);
 
 function run(q: Query) {
   const rows = store[q.table];
@@ -56,13 +62,14 @@ function run(q: Query) {
 vi.mock("./supabase", () => ({
   supabase: {
     from(table: keyof typeof store) {
-      const q: Query = { table, op: "select", eq: [], ins: [], payload: null };
+      const q: Query = { table, op: "select", eq: [], ins: [], iss: [], payload: null };
       const api = {
         select: () => api,
         insert: (row: Row) => ((q.op = "insert"), (q.payload = row), api),
         update: (row: Row) => ((q.op = "update"), (q.payload = row), api),
         eq: (c: string, v: unknown) => (q.eq.push([c, v]), api),
         in: (c: string, v: unknown[]) => (q.ins.push([c, v]), api),
+        is: (c: string, v: unknown) => (q.iss.push([c, v]), api),
         order: () => api,
         limit: () => api,
         maybeSingle: () => {
@@ -87,8 +94,10 @@ const {
   advanceApplicationOnAgreementSigned,
   AGREEMENT_SEQUENCE,
 } = await import("./introducer-agreement-signing");
-const { introducerDocDataFor, signedDocTypesFor } = await import("./introducer-doc-signing");
-const { readyToIssue } = await import("./introducer-agreement");
+const { introducerDocDataFor, signedDocTypesFor, reissueIntroducerDoc } = await import(
+  "./introducer-doc-signing"
+);
+const { readyToIssue, hydrateIntroducerAgreement } = await import("./introducer-agreement");
 const { renderIntroducerAgreementHtml } = await import("./pdf/introducerAgreementPdf");
 
 const APP_ID = "545f633f-5700-404e-a787-f0b60f718e04";
@@ -453,5 +462,99 @@ describe("tier sets the builder-commission share", () => {
     const html = await renderIntroducerAgreementHtml({ ...d }, []);
     expect(html).toContain("75%");
     expect(html).not.toContain("90%");
+  });
+});
+
+/**
+ * Amending a document that has already been signed.
+ *
+ * The 21 August agreements said a client might "build with" a builder off the
+ * panel. Springboard sells completed homes; there is no construction. Two
+ * people had signed it by the time it was caught, so the wording could not
+ * simply be corrected — the signed instrument had to be superseded and a
+ * corrected one signed in its place.
+ */
+describe("amending a signed document", () => {
+  const REASON = "Clause 2 described building a home. The programme is completed homes only.";
+
+  it("keeps the signed document rather than editing it", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    const original = store.introducer_agreement_docs.at(-1)!;
+    const originalData = JSON.stringify(original.data);
+
+    const out = await reissueIntroducerDoc(app(), "introducer_agreement", REASON, NOW);
+    expect(out.ok).toBe(true);
+
+    // The signed row is still there, its content untouched — the signature was
+    // captured over THAT text.
+    expect(JSON.stringify(original.data)).toBe(originalData);
+    expect(original.superseded_at).toBeTruthy();
+    expect(store.introducer_agreement_docs).toHaveLength(2);
+  });
+
+  it("points the superseded document at the one that replaced it", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    const out = await reissueIntroducerDoc(app(), "introducer_agreement", REASON, NOW);
+    const old = store.introducer_agreement_docs[0];
+    expect(out.ok && old.superseded_by).toBe(out.ok ? out.id : "");
+  });
+
+  /**
+   * THE FAILURE THAT WOULD BE WORST. A superseded agreement IS signed — that is
+   * why it needed replacing. If it still counted, the panel would report the
+   * step complete while the corrected document sat unsigned, and nobody would
+   * ever chase it.
+   */
+  it("stops counting the superseded signature as progress", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    expect([...((await signedDocTypesFor([APP_ID])).get(APP_ID) ?? [])]).toEqual([
+      "introducer_agreement",
+    ]);
+
+    await reissueIntroducerDoc(app(), "introducer_agreement", REASON, NOW);
+    expect([...((await signedDocTypesFor([APP_ID])).get(APP_ID) ?? [])]).toEqual([]);
+  });
+
+  it("offers the corrected document for signature, not the old one", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    const out = await reissueIntroducerDoc(app(), "introducer_agreement", REASON, NOW);
+
+    const next = await openAgreementSigning(app(), NOW);
+    expect(next.ok && next.docType).toBe("introducer_agreement");
+    expect(next.ok && next.docId).toBe(out.ok ? out.id : "");
+  });
+
+  it("carries the reason onto the document itself", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    await reissueIntroducerDoc(app(), "introducer_agreement", REASON, NOW);
+    const fresh = store.introducer_agreement_docs.at(-1)!;
+    const html = await renderIntroducerAgreementHtml(
+      hydrateIntroducerAgreement((fresh as { data: unknown }).data),
+      [],
+    );
+    expect(html).toContain(REASON);
+    expect(html).toMatch(/This replaces the/);
+  });
+
+  it("refuses an amendment with no stated reason", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    const out = await reissueIntroducerDoc(app(), "introducer_agreement", "   ", NOW);
+    expect(out.ok).toBe(false);
+    // And nothing was superseded on the way to refusing.
+    expect(store.introducer_agreement_docs).toHaveLength(1);
+    expect(store.introducer_agreement_docs[0].superseded_at).toBeFalsy();
+  });
+
+  it("leaves an original issue with no amendment banner", async () => {
+    await openAgreementSigning(app(), NOW);
+    const first = store.introducer_agreement_docs.at(-1)!;
+    const html = await renderIntroducerAgreementHtml(hydrateIntroducerAgreement((first as { data: unknown }).data), []);
+    expect(html).not.toMatch(/This replaces the/);
   });
 });

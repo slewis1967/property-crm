@@ -62,6 +62,41 @@ function sharePhrase(d: IntroducerAgreementData): string {
     : `<span style="background:#fff3cd;color:#8a6d3b;padding:0 4px;">[share not set]</span>`;
 }
 
+/**
+ * The banner on an amended document.
+ *
+ * Loud on purpose, and immediately under the title. A person asked to sign a
+ * second copy of something they signed last week will assume it is a duplicate
+ * unless the page tells them otherwise — and if they assume that, the amendment
+ * achieves nothing. Empty for an original issue, which is nearly every document.
+ */
+function amendmentBanner(d: IntroducerAgreementData): string {
+  /* THE REASON IS WHAT MAKES IT AN AMENDMENT, not the date. Gating on the date
+   * meant a re-issue whose original signing timestamp we could not read printed
+   * NO banner at all — the signer would get a document that looked identical to
+   * the one they signed, with nothing on it to say why it had come back. The
+   * date is a nicety; the notice is the point. */
+  if (!d.amendment_reason.trim() && !d.amends_signed_on.trim()) return "";
+  const when = d.amends_signed_on.trim()
+    ? ` you signed on ${esc(d.amends_signed_on)}`
+    : " you signed earlier";
+  return `
+    <div style="border:2px solid ${AMBER};background:#fdf6ef;padding:12px 14px;margin:0 0 20px;">
+      <div style="font-weight:700;color:${NAVY};margin-bottom:4px;">
+        This replaces the ${esc(INTRODUCER_DOC_LABEL[d.doc_type])}${when}.
+      </div>
+      <div>${
+        d.amendment_reason.trim()
+          ? esc(d.amendment_reason)
+          : "It has been amended and re-issued for signature."
+      }</div>
+      <div style="margin-top:6px;color:#6b7280;font-size:12px;">
+        The version you signed earlier is kept with your records and is not deleted. This version
+        governs from the moment you sign it; until then, the earlier one stands.
+      </div>
+    </div>`;
+}
+
 function clauses(d: IntroducerAgreementData): string {
   if (d.doc_type === "introducer_nda") {
     return `
@@ -328,6 +363,7 @@ export async function renderIntroducerAgreementHtml(
       }
     </div>
   </div>
+  ${amendmentBanner(data)}
   ${clauses(data)}
   ${signatureBlock(data, sig)}
   <div style="margin-top:26px;padding-top:10px;border-top:1px solid #e1e4ec;color:#9ca3af;font-size:10px;">

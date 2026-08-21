@@ -142,6 +142,20 @@ export type IntroducerAgreementData = {
    *  on reading that way after the person is later given one. */
   recruits_introducers: boolean;
 
+  /**
+   * When this document amends one already signed.
+   *
+   * ON THE INSTRUMENT, NOT JUST IN THE EMAIL. Someone asked to sign a second
+   * copy of something they signed last week will assume it is a duplicate and
+   * either ignore it or sign without reading. The document has to say on its
+   * face what it replaces and why, because that is the page they are actually
+   * looking at when they decide.
+   *
+   * Blank on an original issue, which is almost every document.
+   */
+  amends_signed_on: string;
+  amendment_reason: string;
+
   /** Stamped at issue so the rendered document carries its own date. */
   issued_at: string;
   /** Free text shown under the title, e.g. "Tier 1 accreditation". */
@@ -169,6 +183,8 @@ export function emptyIntroducerAgreement(
     fee_per_settlement: "",
     fee_notes: "",
     recruits_introducers: false,
+    amends_signed_on: "",
+    amendment_reason: "",
     issued_at: "",
     subtitle: "",
   };
@@ -212,6 +228,8 @@ export function hydrateIntroducerAgreement(blob: unknown): IntroducerAgreementDa
     // Anything but an explicit true is false. A document that predates the BDM
     // arrangement must not acquire a network entitlement by being re-read.
     recruits_introducers: raw.recruits_introducers === true,
+    amends_signed_on: str(raw.amends_signed_on, base.amends_signed_on),
+    amendment_reason: str(raw.amendment_reason, base.amendment_reason),
     issued_at: str(raw.issued_at, base.issued_at),
     subtitle: str(raw.subtitle, base.subtitle),
   };
