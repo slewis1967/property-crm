@@ -15,6 +15,8 @@
 import { supabase } from "./supabase";
 import { newToken, hashToken } from "./sign-token";
 import type { OnboardingState } from "./introducer-onboarding";
+import { columnMissing } from "./column-missing";
+import { isValidSharePct } from "./introducer-agreement";
 import {
   introducerEntityColumnMissing,
   type BusinessDetails,
@@ -52,6 +54,21 @@ export type Application = {
   entity_type?: EntityType | null;
   registered_address?: string | null;
   business_details_at?: string | null;
+  /** The agreed referral fee, rendered verbatim into the commission schedule.
+   *  Only ever set on the `paid` variant. Absent until
+   *  20260821f_introducer_referral_fee.sql runs. */
+  fee_per_settlement?: string | null;
+  fee_notes?: string | null;
+  /** Per-introducer override of the tier's builder-commission share. Null means
+   *  "use the tier default" — 75 for Tier 1, 90 for Tier 2 — which is the
+   *  ordinary case. Absent until 20260821h_introducer_builder_share.sql runs,
+   *  and absent reads the same as null, so the default still applies. */
+  builder_share_pct?: number | null;
+  /** Who brought this introducer in, and whether they are paid on the
+   *  settlements of introducers THEY recruited. Absent until
+   *  20260821g_introducer_recruiter_chain.sql runs. */
+  recruited_by_introducer_id?: string | null;
+  recruits_introducers?: boolean | null;
   created_at: string;
   updated_at: string;
   withdrawn_reason: string | null;
@@ -73,10 +90,31 @@ const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_a
 const ACCREDITATION_COLUMNS =
   "certificate_issued_at, accreditation_expires_at, smsf_competency_expires_at";
 
+/** Added by `20260821f_introducer_referral_fee.sql`. Only the commission
+ *  schedule needs them, and it refuses to issue a paid schedule without a fee
+ *  either way — so a pending migration reads as "the fee has not been set",
+ *  which is exactly what it means. */
+const FEE_COLUMNS = "fee_per_settlement, fee_notes";
+
+/** Added by `20260821g_introducer_recruiter_chain.sql`. A pending migration
+ *  reads as "nobody recruits anybody", which is what it meant before the BDM
+ *  arrangement existed. */
+const RECRUITER_COLUMNS = "recruited_by_introducer_id, recruits_introducers";
+
+/** Added by `20260821h_introducer_builder_share.sql`. Only an OVERRIDE of the
+ *  tier default lives here, so a pending migration reads as "no override" and
+ *  every introducer simply gets their tier's share — which is the policy. This
+ *  rung is the one that degrades to correct behaviour rather than to degraded
+ *  behaviour. */
+const SHARE_COLUMNS = "builder_share_pct";
+
 /** Widest first. Each rung drops the most recent migration's columns, so a read
  *  keeps working against a database that is one or two migrations behind the
  *  deploy — the house rule being that code ships before the SQL is run. */
 const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}, ${SHARE_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
   `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`,
   BASE_COLUMNS,
@@ -215,6 +253,132 @@ export async function saveBusinessDetails(
         ok: false,
         error:
           "Business details are not switched on yet — run migrations/20260814_introducer_entity_details.sql.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Record the agreed referral fee.
+ *
+ * Staff-writable and paid-variant only — the check constraint refuses a fee on
+ * standard terms, because Document 2 says no fee is payable and a figure stored
+ * beside it would contradict the contract it ships with. Refused once the
+ * schedule has issued: that document snapshots the amount, and a row that
+ * quietly disagrees with the signed instrument behind it is worse than one
+ * merely out of date.
+ */
+export async function setReferralFee(
+  id: string,
+  fee: string,
+  notes: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({
+      fee_per_settlement: fee.trim() || null,
+      fee_notes: notes.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["fee_per_settlement", "fee_notes"])) {
+      return {
+        ok: false,
+        error:
+          "Referral fees are not switched on yet — run migrations/20260821f_introducer_referral_fee.sql.",
+      };
+    }
+    // The constraint, surfaced as the choice it actually represents rather than
+    // as a database error nobody outside this file can read.
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "A referral fee cannot be set on the standard arrangement, which says no fee is payable. Move them onto the paid variant first.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Override this introducer's share of the builder commission.
+ *
+ * The ordinary case is NOT to call this: tier sets the share, 75% for Tier 1
+ * and 90% for Tier 2, and `introducerDocDataFor` applies that default at issue.
+ * This exists for the introducer who has negotiated something else.
+ *
+ * Passing null clears the override and returns them to their tier's share.
+ * Like the fee, it must be settled BEFORE the documents issue — both the
+ * agreement and the schedule snapshot the figure, and a row that quietly
+ * disagrees with the signed instrument is worse than one merely out of date.
+ */
+export async function setBuilderShare(
+  id: string,
+  pct: number | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (pct !== null && !isValidSharePct(pct)) {
+    return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
+  }
+
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ builder_share_pct: pct, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["builder_share_pct"])) {
+      return {
+        ok: false,
+        error:
+          "Per-introducer shares are not switched on yet — run migrations/20260821h_introducer_builder_share.sql. Until then everyone gets their tier's share, which is 75% for Tier 1 and 90% for Tier 2.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Grant or withdraw the network entitlement — "this introducer is paid on
+ * settled referrals from introducers they recruited".
+ *
+ * Separate from setReferralFee because it is a different decision: the fee is
+ * the amount, this is the scope. Both are terms of a schedule somebody signs,
+ * so both must be settled BEFORE that document issues — it snapshots them, and
+ * a row that quietly disagrees with the signed instrument is worse than one
+ * merely out of date.
+ */
+export async function setRecruiterEntitlement(
+  id: string,
+  recruits: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ recruits_introducers: recruits, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["recruits_introducers"])) {
+      return {
+        ok: false,
+        error:
+          "Recruiter arrangements are not switched on yet — run migrations/20260821g_introducer_recruiter_chain.sql.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "Only a paid introducer can earn on referrals from introducers they recruit — the standard arrangement pays nothing at all. Move them onto the paid variant first.",
       };
     }
     throw error;

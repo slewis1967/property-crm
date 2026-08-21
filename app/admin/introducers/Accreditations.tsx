@@ -16,6 +16,22 @@
 import { useCallback, useEffect, useState } from "react";
 import AuditFile from "./AuditFile";
 import { daysUntil, isExpiredOn } from "../../../utils/introducer-onboarding";
+import { TIER_BUILDER_SHARE, formatSharePct, isValidSharePct } from "../../../utils/introducer-agreement";
+
+/**
+ * The split that will be written into their agreement and schedule.
+ *
+ * Shown before sending rather than after, because both documents SNAPSHOT it:
+ * once they have signed, changing the number here changes nothing about what
+ * was agreed. This is the last point at which it is still editable.
+ */
+function shareFor(app: { tier: string; builder_share_pct?: number | null }): {
+  pct: number;
+  negotiated: boolean;
+} {
+  if (isValidSharePct(app.builder_share_pct)) return { pct: app.builder_share_pct, negotiated: true };
+  return { pct: TIER_BUILDER_SHARE[app.tier === "t2" ? "t2" : "t1"], negotiated: false };
+}
 
 type Application = {
   id: string;
@@ -25,6 +41,10 @@ type Application = {
   firm_name: string | null;
   tier: string;
   agreement_variant: string;
+  recruits_introducers?: boolean | null;
+  /** A negotiated override of the tier's builder-commission share. Absent or
+   *  null means the tier decides. Absent until 20260821h runs. */
+  builder_share_pct?: number | null;
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -278,6 +298,11 @@ function Card({
               Paid
             </span>
           )}
+          {app.recruits_introducers && (
+            <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-900">
+              Recruiter
+            </span>
+          )}
           {app.accreditation_no && (
             <p className="mt-1 font-mono text-xs tabular-nums text-gray-500">{app.accreditation_no}</p>
           )}
@@ -411,21 +436,95 @@ function Card({
             </Action>
           )}
 
-          {app.state === "certificate_issued" && (
-            <Action busy={busy} onClick={() => act(`${base}/agreement`, { action: "send" }, "Agreement sent for signature.")}>
-              Send the agreement
-            </Action>
-          )}
+          {(app.state === "certificate_issued" || app.state === "agreement_sent") && (
+            <>
+              {/* What the documents will say. A wrong percentage that reaches a
+                  signature is not correctable afterwards, so it is stated here
+                  in the open rather than left implicit in the tier. */}
+              <p className="w-full text-xs text-gray-600">
+                Builder commission share:{" "}
+                <strong className="tabular-nums" style={{ color: "#020e40" }}>
+                  {formatSharePct(shareFor(app).pct)}
+                </strong>{" "}
+                {shareFor(app).negotiated
+                  ? "— negotiated for this introducer"
+                  : `— the ${app.tier === "t2" ? "Tier 2" : "Tier 1"} default`}
+                . Panel stock only; paid once the builder has paid us.
+              </p>
+              {/* The normal path now that the documents exist. Two of them, sent
+                  one at a time, so this button is live at `agreement_sent` too:
+                  pressing it again after the referral agreement is signed sends
+                  the commission schedule. Deliberately does not mark anything
+                  executed — the application advances when they sign. */}
+              {app.agreement_variant === "paid" ? (
+                <Prompt
+                  label={app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                  placeholder="Referral fee, e.g. $5,000 per settled referral, including GST"
+                  busy={busy}
+                  onSubmit={(fee) =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", fee_per_settlement: fee },
+                      "Emailed — they sign it on screen.",
+                    )
+                  }
+                />
+              ) : (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(`${base}/agreement`, { action: "esign" }, "Emailed — they sign it on screen.")
+                  }
+                >
+                  {app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                </Action>
+              )}
 
-          {app.state === "agreement_sent" && (
-            <Prompt
-              label="Record agreement signed"
-              placeholder="How was it executed? e.g. e-signed, emailed back"
-              busy={busy}
-              onSubmit={(method) =>
-                act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
-              }
-            />
+              {/* Granted BEFORE the schedule issues, because the schedule
+                  snapshots it — flipping this afterwards would leave the row
+                  disagreeing with the document they signed. Paid only; the
+                  standard arrangement pays nothing at all, so there is nothing
+                  for a network to earn. */}
+              {app.agreement_variant === "paid" && (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", recruits_introducers: !app.recruits_introducers },
+                      app.recruits_introducers
+                        ? "Network entitlement removed — document sent."
+                        : "Recruiter arrangement granted — document sent.",
+                    )
+                  }
+                >
+                  {app.recruits_introducers ? "Remove network fee" : "Pays on recruits’ deals"}
+                </Action>
+              )}
+
+              {/* Notice only: tells them the step is open and points at their
+                  roadmap, where they can start signing themselves. */}
+              {app.state === "certificate_issued" && (
+                <Action
+                  busy={busy}
+                  onClick={() => act(`${base}/agreement`, { action: "send" }, "Notice sent.")}
+                >
+                  Just tell them it&rsquo;s ready
+                </Action>
+              )}
+
+              {/* Kept for the ones who sign on paper or email a scan back. */}
+              {app.state === "agreement_sent" && (
+                <Prompt
+                  label="Record agreement signed"
+                  placeholder="How was it executed? e.g. emailed back, signed on paper"
+                  busy={busy}
+                  onSubmit={(method) =>
+                    act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
+                  }
+                />
+              )}
+            </>
           )}
 
           {app.state === "agreement_signed" && (

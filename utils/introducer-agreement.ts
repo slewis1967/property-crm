@@ -32,14 +32,56 @@ export const INTRODUCER_DOC_TERMINAL_STATUS = "Signed";
 /**
  * Which commercial terms this introducer is on.
  *
- *   standard — Document 2. Springboard pays no referral fee.
- *   paid     — Documents 2A + 2B. A Referral Fee per settled referral, offered
- *              by invitation only.
+ *   standard — Document 2. The builder-commission share only.
+ *   paid     — Documents 2A + 2B. The builder-commission share AND a Referral
+ *              Fee per settled matter out of the Program Fee, by invitation.
  *
- * This is not cosmetic: the two documents say opposite things about whether
- * money changes hands, and issuing the wrong one to someone would be issuing an
- * agreement that contradicts what they were actually offered.
+ * WHAT THIS NO LONGER MEANS. It used to be the line between paid and unpaid,
+ * and the standard schedule said in terms that Springboard pays nothing at all.
+ * That stopped being true when the builder-commission share became the primary
+ * arrangement: every accredited introducer is now paid on settled panel stock,
+ * and a standard introducer telling a client they are not paid would be denying
+ * their own contract. The variant is now the line between one income stream and
+ * two.
+ *
+ * Still not cosmetic: the wrong one issues an agreement that contradicts what
+ * the person was actually offered.
  */
+/**
+ * The introducer's tier, repeated here rather than imported from
+ * introducer-onboarding so this module stays free of dependencies — it is
+ * pulled in by both the server plumbing and the PDF renderer.
+ */
+export type IntroducerTierRef = "t1" | "t2";
+
+/**
+ * What share of the builder's commission each tier earns on a settled matter.
+ *
+ * THIS IS THE PRIMARY WAY AN INTRODUCER IS PAID, and it applies to every
+ * accreditation regardless of variant. Both tiers must source their stock from
+ * the Springboard builder panel; what differs is the split of what the builder
+ * pays us.
+ *
+ * Distinct from the Referral Fee below, and funded from somewhere else: this is
+ * a share of the BUILDER's commission, while the Referral Fee is paid out of
+ * the Program Fee Springboard receives. An introducer may have both, and
+ * conflating them would pay one of them twice or pay one where two were owed.
+ */
+export const TIER_BUILDER_SHARE: Record<IntroducerTierRef, number> = {
+  t1: 75,
+  t2: 90,
+};
+
+/** A share is a percentage, and a contract cannot promise a nonsensical one. */
+export function isValidSharePct(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 100;
+}
+
+/** "90%" / "87.5%" — trailing zeroes are noise in a contract. */
+export function formatSharePct(v: number): string {
+  return `${Number(v.toFixed(2))}%`;
+}
+
 export const AGREEMENT_VARIANTS = ["standard", "paid"] as const;
 export type AgreementVariant = (typeof AGREEMENT_VARIANTS)[number];
 
@@ -78,10 +120,27 @@ export type IntroducerAgreementData = {
   licensor_abn: string;
   licence_ref: string;
 
-  /** Commission terms. Blank until the fee amounts are settled; the schedule
-   *  refuses to issue while they are (see readyToIssue). */
+  /**
+   * Share of the builder's commission on a settled matter, as a percentage.
+   *
+   * Defaulted from the tier (75 / 90) at issue and snapshotted like everything
+   * else, so an introducer later moved between tiers keeps the split they
+   * signed. Null on the NDA, which is signed long before any of this is
+   * settled, and on any document issued before the panel arrangement existed.
+   */
+  builder_share_pct: number | null;
+
+  /** The Referral Fee out of the Program Fee — the `paid` variant's second
+   *  stream, and nothing to do with the builder commission above. Blank until
+   *  settled; the paid schedule refuses to issue while it is (readyToIssue). */
   fee_per_settlement: string;
   fee_notes: string;
+
+  /** This introducer is paid on settled referrals submitted by introducers they
+   *  recruited, as well as on their own — the BDM arrangement. Snapshotted like
+   *  everything else: a schedule signed without the network entitlement must go
+   *  on reading that way after the person is later given one. */
+  recruits_introducers: boolean;
 
   /** Stamped at issue so the rendered document carries its own date. */
   issued_at: string;
@@ -106,8 +165,10 @@ export function emptyIntroducerAgreement(
     licensor_name: "G.B. Mayes Holdings Pty Ltd",
     licensor_abn: "49 634 656 947",
     licence_ref: "COMP-8317",
+    builder_share_pct: null,
     fee_per_settlement: "",
     fee_notes: "",
+    recruits_introducers: false,
     issued_at: "",
     subtitle: "",
   };
@@ -124,6 +185,10 @@ export function hydrateIntroducerAgreement(blob: unknown): IntroducerAgreementDa
   const variant: AgreementVariant = raw.variant === "paid" ? "paid" : "standard";
   const base = emptyIntroducerAgreement(docType, variant);
   const str = (v: unknown, fallback: string) => (typeof v === "string" && v.trim() ? v : fallback);
+  /* A share that is absent, malformed or out of range reads as "not stated"
+   * rather than as a number. Inventing one would put a figure nobody agreed to
+   * into a document that has already been signed. */
+  const share = isValidSharePct(raw.builder_share_pct) ? raw.builder_share_pct : null;
 
   return {
     doc_type: docType,
@@ -141,8 +206,12 @@ export function hydrateIntroducerAgreement(blob: unknown): IntroducerAgreementDa
     licensor_name: str(raw.licensor_name, base.licensor_name),
     licensor_abn: str(raw.licensor_abn, base.licensor_abn),
     licence_ref: str(raw.licence_ref, base.licence_ref),
+    builder_share_pct: share,
     fee_per_settlement: str(raw.fee_per_settlement, base.fee_per_settlement),
     fee_notes: str(raw.fee_notes, base.fee_notes),
+    // Anything but an explicit true is false. A document that predates the BDM
+    // arrangement must not acquire a network entitlement by being re-read.
+    recruits_introducers: raw.recruits_introducers === true,
     issued_at: str(raw.issued_at, base.issued_at),
     subtitle: str(raw.subtitle, base.subtitle),
   };
@@ -175,6 +244,20 @@ export function readyToIssue(d: IntroducerAgreementData): { ok: true } | { ok: f
   if (!d.legal_name.trim()) return { ok: false, reason: "the applicant's legal name is missing" };
   if (!d.email.trim()) return { ok: false, reason: "the applicant's email is missing" };
 
+  /* THE BUILDER SHARE IS THE ARRANGEMENT, so both money-bearing documents
+   * refuse without it. The agreement states it in clause 6 and the schedule
+   * sets it out in full; either going out with the split unstated would leave
+   * the introducer signing up to panel-only sourcing with no figure against
+   * what they get for it. The NDA is exempt — it is signed before the exam,
+   * long before any of this is decided. */
+  if (d.doc_type !== "introducer_nda" && !isValidSharePct(d.builder_share_pct)) {
+    return {
+      ok: false,
+      reason:
+        "the builder-commission share has not been set. It defaults from the tier — 75% for Tier 1, 90% for Tier 2 — so this means the tier is missing or the share was cleared by hand",
+    };
+  }
+
   if (d.doc_type === "introducer_schedule") {
     if (d.variant === "paid" && !d.fee_per_settlement.trim()) {
       return {
@@ -190,6 +273,13 @@ export function readyToIssue(d: IntroducerAgreementData): { ok: true } | { ok: f
           "a referral fee has been entered on a STANDARD schedule, which promises money the standard agreement says is not payable. Either clear the fee or move them onto the paid arrangement",
       };
     }
+  }
+  if (d.recruits_introducers && d.variant !== "paid") {
+    return {
+      ok: false,
+      reason:
+        "this introducer is marked as earning on referrals from introducers they recruit, but they are on the STANDARD arrangement, under which Springboard pays nothing at all. Move them onto the paid arrangement or clear the network entitlement",
+    };
   }
   if (d.doc_type !== "introducer_nda" && !d.accreditation_no.trim()) {
     return {
