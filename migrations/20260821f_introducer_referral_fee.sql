@@ -1,5 +1,14 @@
 -- Where a paid introducer's referral fee is recorded.
 --
+-- RENAMED FROM 20260821c, AND ALREADY APPLIED IN PRODUCTION. It was written as
+-- `20260821c_introducer_referral_fee.sql` and run under that name on 2026-08-20;
+-- `fee_per_settlement` and `fee_notes` are live, and SBI-2026-0005 already
+-- carries an amount. Meanwhile 20260821c and 20260821d were taken on master by
+-- the introducer_events pair, so two different files were claiming each ordinal
+-- and the order to run them in stopped being readable. Renumbered to f/g to
+-- settle that. Idempotent, so re-running it against production is a no-op — but
+-- it does not need running again.
+--
 -- WHY THIS IS NEEDED NOW. `readyToIssue` refuses a commission schedule on the
 -- `paid` variant with no fee amount — correctly, because "a contract about
 -- nothing" is its exact objection, and a schedule promising an unstated sum is

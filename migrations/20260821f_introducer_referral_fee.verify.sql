@@ -1,4 +1,4 @@
--- Verification for 20260821c_introducer_referral_fee.sql.
+-- Verification for 20260821f_introducer_referral_fee.sql.
 --
 -- Run AFTER the migration. Rolls itself back, so it is safe to run twice; it is
 -- not safe against production because it writes rows before undoing them.

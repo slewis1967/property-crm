@@ -55,12 +55,12 @@ export type Application = {
   business_details_at?: string | null;
   /** The agreed referral fee, rendered verbatim into the commission schedule.
    *  Only ever set on the `paid` variant. Absent until
-   *  20260821c_introducer_referral_fee.sql runs. */
+   *  20260821f_introducer_referral_fee.sql runs. */
   fee_per_settlement?: string | null;
   fee_notes?: string | null;
   /** Who brought this introducer in, and whether they are paid on the
    *  settlements of introducers THEY recruited. Absent until
-   *  20260821d_introducer_recruiter_chain.sql runs. */
+   *  20260821g_introducer_recruiter_chain.sql runs. */
   recruited_by_introducer_id?: string | null;
   recruits_introducers?: boolean | null;
   created_at: string;
@@ -84,13 +84,13 @@ const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_a
 const ACCREDITATION_COLUMNS =
   "certificate_issued_at, accreditation_expires_at, smsf_competency_expires_at";
 
-/** Added by `20260821c_introducer_referral_fee.sql`. Only the commission
+/** Added by `20260821f_introducer_referral_fee.sql`. Only the commission
  *  schedule needs them, and it refuses to issue a paid schedule without a fee
  *  either way — so a pending migration reads as "the fee has not been set",
  *  which is exactly what it means. */
 const FEE_COLUMNS = "fee_per_settlement, fee_notes";
 
-/** Added by `20260821d_introducer_recruiter_chain.sql`. A pending migration
+/** Added by `20260821g_introducer_recruiter_chain.sql`. A pending migration
  *  reads as "nobody recruits anybody", which is what it meant before the BDM
  *  arrangement existed. */
 const RECRUITER_COLUMNS = "recruited_by_introducer_id, recruits_introducers";
@@ -275,7 +275,7 @@ export async function setReferralFee(
       return {
         ok: false,
         error:
-          "Referral fees are not switched on yet — run migrations/20260821c_introducer_referral_fee.sql.",
+          "Referral fees are not switched on yet — run migrations/20260821f_introducer_referral_fee.sql.",
       };
     }
     // The constraint, surfaced as the choice it actually represents rather than
@@ -316,7 +316,7 @@ export async function setRecruiterEntitlement(
       return {
         ok: false,
         error:
-          "Recruiter arrangements are not switched on yet — run migrations/20260821d_introducer_recruiter_chain.sql.",
+          "Recruiter arrangements are not switched on yet — run migrations/20260821g_introducer_recruiter_chain.sql.",
       };
     }
     if ((error as { code?: string }).code === "23514") {

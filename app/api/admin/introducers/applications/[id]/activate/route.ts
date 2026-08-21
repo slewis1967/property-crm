@@ -113,7 +113,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   };
 
   /* Two rungs, for the window where this code has deployed and
-   * 20260821d_introducer_recruiter_chain.sql has not. Activation is the worst
+   * 20260821g_introducer_recruiter_chain.sql has not. Activation is the worst
    * place to break the house rule that code ships before the SQL: the candidate
    * has signed everything and is waiting on a login, and "could not create the
    * introducer firm" would be a dead end for a reason that has nothing to do

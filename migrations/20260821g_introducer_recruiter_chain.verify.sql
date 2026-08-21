@@ -1,4 +1,4 @@
--- Verification for 20260821d_introducer_recruiter_chain.sql.
+-- Verification for 20260821g_introducer_recruiter_chain.sql.
 --
 -- Run AFTER the migration. Rolls itself back, so it is safe to run twice; it is
 -- not safe against production because it writes rows before undoing them.
