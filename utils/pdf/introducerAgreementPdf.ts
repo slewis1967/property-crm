@@ -110,9 +110,12 @@ function clauses(d: IntroducerAgreementData): string {
           </td>
         </tr>
       </table>
-      <p><strong>Panel stock only.</strong> That share is payable on a matter settled on stock sourced
-        from the Springboard builder panel. You must source what you introduce from that panel; a matter
-        settled on stock from anywhere else earns nothing under this schedule.</p>
+      <p><strong>Panel stock only, and completed homes only.</strong> That share is payable on a matter
+        settled on stock sourced from the Springboard builder panel, and only where the property is a
+        <strong>completed home, ready to move into</strong>. The programme does not include
+        house-and-land packages, off-the-plan, or any property still to be built. A matter settled on
+        stock from anywhere else, or on a property not yet complete, earns nothing under this
+        schedule.</p>
       <p><strong>When it is payable.</strong> The share is earned when the matter settles, and is payable
         only after Springboard has received the corresponding commission from the builder in cleared
         funds. It is then paid within 14 days of your invoice. This is routinely several months after the
@@ -124,12 +127,13 @@ function clauses(d: IntroducerAgreementData): string {
         Springboard is consideration for Springboard&rsquo;s own work. It is not shared with you and
         forms no part of what you are paid under this schedule, whatever the client is charged and
         whether or not the matter settles.</p>
-      <p><strong>A builder who is not on the panel.</strong> If your client wants to build with someone
+      <p><strong>A builder who is not on the panel.</strong> If your client wants to buy through someone
         Springboard has no agreement with, introduce us to that builder. If Springboard reaches an
-        agreement with them, their stock becomes panel stock and your client&rsquo;s matter earns the
-        share above on the same terms as any other. Until that agreement is in place there is no builder
-        commission for you to have a share of, and you must not tell your client or the builder that a
-        fee is payable, that an agreement will be reached, or that any particular outcome is assured.</p>`;
+        agreement with them, their completed stock becomes panel stock and your client&rsquo;s matter
+        earns the share above on the same terms as any other. Until that agreement is in place there is
+        no builder commission for you to have a share of, and you must not tell your client or the
+        builder that a fee is payable, that an agreement will be reached, or that any particular outcome
+        is assured.</p>`;
 
     /* The standard arrangement is the builder share and nothing else. The
      * phrase below is a DEFINED TERM, not a blanket denial: "Referral Fee"
@@ -234,11 +238,14 @@ function clauses(d: IntroducerAgreementData): string {
       introduction to Springboard, by submitting their details through the Springboard introducer portal.
       That is the whole of your role.</p>
     <p><strong>2. Panel stock.</strong> You must source the stock you introduce from the Springboard
-      builder panel. If your client wants to build with a builder who is not on the panel, you may
-      introduce that builder to Springboard so that an agreement can be arranged with them; if one is
-      reached, their stock becomes panel stock. You must not commit Springboard to any arrangement with a
-      builder, negotiate terms on its behalf, or tell a client or a builder that an agreement will be
-      reached or that a fee is payable before one is in place.</p>
+      builder panel, and it must be a <strong>completed home, ready to move into</strong>. The programme
+      does not include house-and-land packages, off-the-plan, or any property still to be built, and you
+      must not present one to a client as though it were part of it. If your client wants to buy through
+      a builder who is not on the panel, you may introduce that builder to Springboard so that an
+      agreement can be arranged with them; if one is reached, their completed stock becomes panel stock.
+      You must not commit Springboard to any arrangement with a builder, negotiate terms on its behalf,
+      or tell a client or a builder that an agreement will be reached or that a fee is payable before one
+      is in place.</p>
     <p><strong>3. What you must not do.</strong> You must not provide credit assistance, suggest or
       assist a person to apply for a particular credit product, advise on the suitability of any product,
       or say anything about a product's terms beyond the approved language issued to you. If you are
