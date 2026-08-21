@@ -241,6 +241,52 @@ export async function openIntroducerDocSigning(
   return { ok: true, docId: doc.id, raw, issued: doc.created };
 }
 
+/**
+ * Which documents have come back signed, for MANY applications at once.
+ *
+ * Two queries total rather than two per application. The admin list calls this
+ * for every accreditation on screen, and the per-application version below
+ * would make that an N+1 — cheap at three introducers, not at fifty.
+ */
+export async function signedDocTypesFor(
+  applicationIds: readonly string[],
+): Promise<Map<string, Set<IntroducerDocType>>> {
+  const out = new Map<string, Set<IntroducerDocType>>();
+  if (applicationIds.length === 0) return out;
+
+  const { data: docs, error: docErr } = await supabase
+    .from(INTRODUCER_DOCS_TABLE)
+    .select("id,application_id,doc_type")
+    .in("application_id", applicationIds as string[]);
+  if (docErr) throw docErr;
+
+  const rows = (docs ?? []) as { id: string; application_id: string; doc_type: IntroducerDocType }[];
+  if (rows.length === 0) return out;
+
+  const { data: reqs, error: reqErr } = await supabase
+    .from(SIGNATURE_REQUESTS_TABLE)
+    .select("doc_id,status")
+    .in("doc_id", rows.map((r) => r.id));
+  if (reqErr) throw reqErr;
+
+  const byDoc = new Map<string, string[]>();
+  for (const r of (reqs ?? []) as { doc_id: string; status: string }[]) {
+    byDoc.set(r.doc_id, [...(byDoc.get(r.doc_id) ?? []), r.status]);
+  }
+
+  for (const row of rows) {
+    const statuses = byDoc.get(row.id) ?? [];
+    // Same rule as signedDocTypes and the completion route: every request row
+    // for the document must be signed, so the three cannot disagree.
+    if (statuses.length > 0 && statuses.every((s) => s === "signed")) {
+      const set = out.get(row.application_id) ?? new Set<IntroducerDocType>();
+      set.add(row.doc_type);
+      out.set(row.application_id, set);
+    }
+  }
+  return out;
+}
+
 /** Which of an application's documents have come back signed. */
 export async function signedDocTypes(applicationId: string): Promise<Set<IntroducerDocType>> {
   const { data: docs, error: docErr } = await supabase

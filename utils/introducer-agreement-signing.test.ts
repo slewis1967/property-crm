@@ -87,7 +87,7 @@ const {
   advanceApplicationOnAgreementSigned,
   AGREEMENT_SEQUENCE,
 } = await import("./introducer-agreement-signing");
-const { introducerDocDataFor } = await import("./introducer-doc-signing");
+const { introducerDocDataFor, signedDocTypesFor } = await import("./introducer-doc-signing");
 const { readyToIssue } = await import("./introducer-agreement");
 const { renderIntroducerAgreementHtml } = await import("./pdf/introducerAgreementPdf");
 
@@ -189,6 +189,38 @@ describe("openAgreementSigning", () => {
     await openAgreementSigning(app(), NOW);
     expect(store.signature_requests).toHaveLength(1);
     expect(store.signature_requests.at(-1)!.brand).toBe("springboard");
+  });
+
+  /**
+   * WHAT THE ADMIN PANEL READS. `agreement_sent` spans "nothing signed" through
+   * "agreement in, schedule outstanding", because the state only advances when
+   * both are in. Without this the panel told Sean two introducers had not
+   * signed when both had — which reads as a lost signature, not as progress.
+   */
+  it("reports the agreement as signed while the schedule is still out", async () => {
+    await openAgreementSigning(app(), NOW);
+    signCurrent();
+    const map = await signedDocTypesFor([APP_ID]);
+    expect([...(map.get(APP_ID) ?? [])]).toEqual(["introducer_agreement"]);
+  });
+
+  it("reports nothing signed before anything is", async () => {
+    await openAgreementSigning(app(), NOW);
+    const map = await signedDocTypesFor([APP_ID]);
+    expect(map.get(APP_ID) ?? new Set()).toEqual(new Set());
+  });
+
+  it("reports both once both are in", async () => {
+    for (let i = 0; i < AGREEMENT_SEQUENCE.length; i++) {
+      await openAgreementSigning(app(), NOW);
+      signCurrent();
+    }
+    const map = await signedDocTypesFor([APP_ID]);
+    expect([...(map.get(APP_ID) ?? [])].sort()).toEqual([...AGREEMENT_SEQUENCE].sort());
+  });
+
+  it("asks nothing of the database for an empty list", async () => {
+    expect((await signedDocTypesFor([])).size).toBe(0);
   });
 
   it("says so plainly when both are already in", async () => {
