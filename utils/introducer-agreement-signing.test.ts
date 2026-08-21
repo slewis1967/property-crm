@@ -172,6 +172,25 @@ describe("openAgreementSigning", () => {
     expect(store.signature_requests).toHaveLength(1);
   });
 
+  /**
+   * The signer opens a Springboard instrument, so the page around it must say
+   * Springboard. Left unset the column defaults to 'nextkey', which is what
+   * all three NDAs and both 21 August agreements went out as.
+   */
+  it("puts the signer on a Springboard page, not a NextKey one", async () => {
+    await openAgreementSigning(app(), NOW);
+    expect(store.signature_requests.at(-1)!.brand).toBe("springboard");
+  });
+
+  it("corrects the brand on a request minted before this existed", async () => {
+    await openAgreementSigning(app(), NOW);
+    // Simulate a row created by the older code, then re-send the link.
+    store.signature_requests.at(-1)!.brand = "nextkey";
+    await openAgreementSigning(app(), NOW);
+    expect(store.signature_requests).toHaveLength(1);
+    expect(store.signature_requests.at(-1)!.brand).toBe("springboard");
+  });
+
   it("says so plainly when both are already in", async () => {
     for (let i = 0; i < AGREEMENT_SEQUENCE.length; i++) {
       await openAgreementSigning(app(), NOW);
