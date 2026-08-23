@@ -98,13 +98,38 @@ describe("the builder-commission share", () => {
     expect(hydrateIntroducerAgreement({ ...sched(), builder_share_pct: 87.5 }).builder_share_pct).toBe(87.5);
   });
 
+  /**
+   * COMPLETED HOMES, NOT CONSTRUCTION. The programme sells finished stock a
+   * client moves into; it does not do house-and-land. The first draft of these
+   * clauses said a client might "build with" a builder, which describes a
+   * product that is not on offer — and it went out in two signed agreements on
+   * 21 August before it was caught. The word is "buy through".
+   */
+  it("never describes the client as building anything", async () => {
+    for (const t of ["introducer_agreement", "introducer_schedule"] as const) {
+      const html = (await renderIntroducerAgreementHtml(sched({ doc_type: t }))).replace(/\s+/g, " ");
+      expect(html, t).not.toMatch(/build with/i);
+      expect(html, t).not.toMatch(/wants to build/i);
+      expect(html, t).toMatch(/buy through/i);
+    }
+  });
+
+  it("says the stock must be a completed home, and rules out house-and-land", async () => {
+    for (const t of ["introducer_agreement", "introducer_schedule"] as const) {
+      const html = (await renderIntroducerAgreementHtml(sched({ doc_type: t }))).replace(/\s+/g, " ");
+      expect(html, t).toMatch(/completed home, ready to move into/);
+      expect(html, t).toMatch(/house-and-land/);
+      expect(html, t).toMatch(/still to be built/);
+    }
+  });
+
   it("states the panel-only obligation and the off-panel pathway", async () => {
     const html = (await renderIntroducerAgreementHtml(sched())).replace(/\s+/g, " ");
     expect(html).toMatch(/Panel stock only/);
-    expect(html).toMatch(/settled on stock from anywhere else earns nothing/);
+    expect(html).toMatch(/settled on stock from anywhere else, or on a property not yet complete, earns nothing/);
     // Sean's rule: they introduce the builder, and only then does it count.
     expect(html).toMatch(/introduce us to that builder/);
-    expect(html).toMatch(/their stock becomes panel stock/);
+    expect(html).toMatch(/their completed stock becomes panel stock/);
   });
 
   it("pays the share only once the builder has actually paid us", async () => {
