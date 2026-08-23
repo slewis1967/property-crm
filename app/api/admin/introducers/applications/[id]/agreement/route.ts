@@ -5,9 +5,19 @@ import {
   setState,
   logOnboardingEvent,
   mintLinkToken,
+  setReferralFee,
+  setRecruiterEntitlement,
+  setBuilderShare,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import { canSignAgreement, onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
-import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-onboarding-email";
+import { reissueIntroducerDoc, openIntroducerDocSigning } from "../../../../../../../utils/introducer-doc-signing";
+import { INTRODUCER_DOC_LABEL, INTRODUCER_DOC_TYPES, type IntroducerDocType } from "../../../../../../../utils/introducer-agreement";
+import {
+  sendAmendedDocumentEmail,
+  sendOnboardingStepEmail,
+  sendAgreementSigningEmail,
+} from "../../../../../../../utils/introducer-onboarding-email";
+import { openAgreementSigning } from "../../../../../../../utils/introducer-agreement-signing";
 
 /**
  * The introducer agreement and commission schedule.
@@ -15,16 +25,26 @@ import { sendOnboardingStepEmail } from "../../../../../../../utils/introducer-o
  *   POST { action: "send" }     mark them as out for signature
  *   POST { action: "signed", method }  record execution
  *
- * INTERIM, on the same terms as the NDA route. These belong in the e-signature
- * engine — the schema already admits `introducer_agreement` and
- * `introducer_schedule` as document types, which is the hard half. What is
- * missing is the per-document plumbing in utils/sign-doc-render.ts: a table, a
- * hydrator and a renderer, mapped through ComplianceDocType the way `eoi` is.
+ * THREE WAYS THROUGH, and e-signing is now the normal one.
  *
- * Until that exists, agreements get executed the way they are today and this
- * records who says so and how. `method` is mandatory so the file always answers
- * "how was this signed", and when e-signing lands it becomes one more value
- * rather than a route to delete.
+ *   { action: "esign" }              issue the next document and email it for
+ *                                    on-screen signature. Optionally carries
+ *                                    the referral fee, which a PAID schedule
+ *                                    cannot issue without.
+ *   { action: "send" }               the old notice-only path: mark them as out
+ *                                    for signature and email a link to the
+ *                                    roadmap, where they can start signing
+ *                                    themselves.
+ *   { action: "signed", method }     record an execution that happened
+ *                                    elsewhere, on paper or by email.
+ *
+ * The third is kept, not deprecated: not everyone signs on screen, and a
+ * signature that happened is worth recording however it happened. `method` stays
+ * mandatory so the audit file always answers "how was this signed".
+ *
+ * TWO DOCUMENTS. The referral agreement and the commission schedule are separate
+ * instruments, offered one at a time — see utils/introducer-agreement-signing.ts
+ * for why, and for the rule that the application advances only when both are in.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireSuperAdmin(req);
@@ -34,9 +54,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = await readJson(req);
   if (body instanceof NextResponse) return body;
 
-  const action = body.action === "signed" ? "signed" : body.action === "send" ? "send" : null;
+  /* AMEND AND RE-ISSUE. Separate from `esign` because it is a different act:
+   * esign puts an outstanding document in front of someone, this replaces one
+   * they have ALREADY SIGNED. Deliberately not gated on canSignAgreement — the
+   * premise is that an executed document was wrong, so the state machine's
+   * ordinary "is this step open" test does not apply. */
+  if (body.action === "reissue") return reissue(req, params, body);
+
+  const action =
+    body.action === "signed" ? "signed"
+    : body.action === "send" ? "send"
+    : body.action === "esign" ? "esign"
+    : null;
   if (!action) {
-    return NextResponse.json({ ok: false, error: "Action must be send or signed." }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Action must be esign, send, signed or reissue." },
+      { status: 400 },
+    );
   }
 
   let app;
@@ -61,6 +95,93 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       },
       { status: 409 },
     );
+  }
+
+  // E-SIGN: issue the next document, email it, and leave the application where
+  // it is. It advances when they actually sign — marking an agreement executed
+  // on the strength of an email having left the building would be a lie in the
+  // audit file. State moves to `agreement_sent` only so the roadmap stops
+  // saying "we are issuing your certificate".
+  if (action === "esign") {
+    // The fee first, if one was given: the schedule snapshots it at issue, so
+    // setting it afterwards would leave the signed document disagreeing with
+    // the record behind it.
+    if (typeof body.recruits_introducers === "boolean") {
+      const granted = await setRecruiterEntitlement(id, body.recruits_introducers);
+      if (!granted.ok) return NextResponse.json({ ok: false, error: granted.error }, { status: 409 });
+      app = (await findById(id)) ?? app;
+    }
+    /* A NEGOTIATED SHARE, where one has been agreed. The ordinary case sends
+     * nothing here and the tier decides — 75% at Tier 1, 90% at Tier 2. Set
+     * before issuing for the same reason as the fee: both documents snapshot
+     * the figure, and a row that disagrees with a signed contract is worse than
+     * one merely out of date. `null` clears an override and returns them to
+     * their tier's share. */
+    if (typeof body.builder_share_pct === "number" || body.builder_share_pct === null) {
+      const saved = await setBuilderShare(id, body.builder_share_pct);
+      if (!saved.ok) return NextResponse.json({ ok: false, error: saved.error }, { status: 409 });
+      app = (await findById(id)) ?? app;
+    }
+    if (typeof body.fee_per_settlement === "string") {
+      const saved = await setReferralFee(
+        id,
+        body.fee_per_settlement,
+        typeof body.fee_notes === "string" ? body.fee_notes : "",
+      );
+      if (!saved.ok) return NextResponse.json({ ok: false, error: saved.error }, { status: 409 });
+      app = (await findById(id)) ?? app;
+    }
+
+    let opened;
+    try {
+      opened = await openAgreementSigning(app, new Date());
+    } catch (err) {
+      if (onboardingTablesMissing(err)) {
+        return NextResponse.json({ ok: false, error: "Accreditation is not switched on yet." }, { status: 503 });
+      }
+      throw err;
+    }
+    if (!opened.ok) {
+      // `complete` is not a failure of this request — both documents are in and
+      // the application should already have moved. Say so plainly.
+      return NextResponse.json(
+        { ok: false, error: opened.error, complete: opened.reason === "complete" },
+        { status: 409 },
+      );
+    }
+
+    const sent = await sendAgreementSigningEmail({
+      to: app.email,
+      legalName: app.legal_name,
+      label: opened.label,
+      rawToken: opened.raw,
+      origin: new URL(req.url).origin,
+      accreditationNo: app.accreditation_no,
+      remaining: opened.remaining,
+    });
+    if (!sent.ok) {
+      // The email IS the action. Reporting success when nothing left the
+      // building would leave staff waiting on a signature that was never asked
+      // for. The document and link survive, so retrying just re-sends.
+      return NextResponse.json({ ok: false, error: `Could not send it: ${sent.error}` }, { status: 502 });
+    }
+
+    if (app.state !== "agreement_sent") await setState(id, "agreement_sent");
+    await logOnboardingEvent(id, "super_admin", auth, "agreement_sent_for_signature", {
+      doc_id: opened.docId,
+      doc_type: opened.docType,
+      issued: opened.issued,
+      remaining: opened.remaining,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      state: "agreement_sent",
+      emailed: true,
+      esign: true,
+      doc_type: opened.docType,
+      remaining: opened.remaining,
+    });
   }
 
   if (action === "send") {
@@ -109,4 +230,86 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // something of ours, and that should be somebody pressing a button.
     next: "activate",
   });
+}
+
+/**
+ * Replace a signed document with a corrected one.
+ *
+ * The signed version is NOT edited and NOT deleted — it is superseded and kept,
+ * because it is the record of what that person actually agreed to, and the
+ * signature was captured over that content. See reissueIntroducerDoc and
+ * migrations/20260821i.
+ *
+ * The email is part of the action rather than an afterthought. An amended
+ * document nobody is told about is worse than the error it fixes: the signer
+ * ends up holding two instruments with no idea which governs. So a send failure
+ * fails the whole request even though the document exists by then — retrying
+ * re-sends rather than duplicating, because the live document is reused once
+ * created.
+ */
+async function reissue(
+  req: Request,
+  params: Promise<{ id: string }>,
+  body: Record<string, unknown>,
+): Promise<NextResponse> {
+  const auth = await requireSuperAdmin(req);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+  const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+  if (!reason) {
+    return NextResponse.json(
+      { ok: false, error: "Say what was wrong with it — that goes on the document and in the email." },
+      { status: 400 },
+    );
+  }
+
+  const requested = typeof body.doc_type === "string" ? body.doc_type : "introducer_agreement";
+  if (!INTRODUCER_DOC_TYPES.includes(requested as IntroducerDocType)) {
+    return NextResponse.json({ ok: false, error: "Unknown document type." }, { status: 400 });
+  }
+  const docType = requested as IntroducerDocType;
+
+  let app;
+  try {
+    app = await findById(id);
+  } catch (err) {
+    if (onboardingTablesMissing(err)) {
+      return NextResponse.json({ ok: false, error: "Accreditation is not switched on yet." }, { status: 503 });
+    }
+    throw err;
+  }
+  if (!app) return NextResponse.json({ ok: false, error: "No such application." }, { status: 404 });
+
+  const done = await reissueIntroducerDoc(app, docType, reason, new Date());
+  if (!done.ok) return NextResponse.json({ ok: false, error: done.error }, { status: 409 });
+
+  const opened = await openIntroducerDocSigning(app, docType, new Date());
+  if (!opened.ok) return NextResponse.json({ ok: false, error: opened.error }, { status: 409 });
+
+  const sent = await sendAmendedDocumentEmail({
+    to: app.email,
+    legalName: app.legal_name,
+    rawToken: opened.raw,
+    origin: new URL(req.url).origin,
+    docLabel: INTRODUCER_DOC_LABEL[docType],
+    reason,
+    signedOn: done.signedOn,
+  });
+  if (!sent.ok) {
+    return NextResponse.json(
+      { ok: false, error: `The corrected document was created, but could not be emailed: ${sent.error}` },
+      { status: 502 },
+    );
+  }
+
+  await logOnboardingEvent(id, "super_admin", auth, "document_amended", {
+    doc_type: docType,
+    new_doc_id: done.id,
+    superseded_doc_id: done.supersededId,
+    superseded_signed_on: done.signedOn,
+    reason,
+  });
+
+  return NextResponse.json({ ok: true, doc_id: done.id, superseded: done.supersededId, emailed: true });
 }
