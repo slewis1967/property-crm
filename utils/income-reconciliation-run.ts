@@ -32,8 +32,19 @@ import {
 } from "./income-reconciliation";
 
 const BUCKET = "client-documents";
-const SELECT =
-  "id,client_ref,application_id,applicant_name,contact_id,fact_find_id,status,created_at";
+/**
+ * Exported so a test can assert it carries every column this module READS.
+ *
+ * A column left out of a PostgREST select is not an error — the field simply
+ * arrives undefined and whatever default sits behind it looks correct. That is
+ * how `signature_requests.brand` shipped stored-but-never-read on 2026-08-21:
+ * the row said "springboard" and the page said NextKey, with nothing logged.
+ * The same mistake here would silently send the reconciliation back to
+ * looking up a Needs Analysis by contact.
+ */
+export const REQUEST_SELECT =
+  "id,client_ref,application_id,applicant_name,contact_id,fact_find_id,needs_analysis_id,status,created_at";
+const SELECT = REQUEST_SELECT;
 
 /** Matches yla-verification-run: one wave, sized to clear inside the request window. */
 const AI_CONCURRENCY = 16;
@@ -243,7 +254,28 @@ export function needsAnalysisToDeclaredIncome(na: NeedsAnalysisData): DeclaredIn
 export async function loadDeclaredIncome(source: {
   contactId: string | null;
   factFindId?: string | null;
+  needsAnalysisId?: string | null;
 }): Promise<DeclaredIncome[]> {
+  /* THE REQUEST'S OWN DOCUMENT, when it has one.
+   *
+   * Looking the Needs Analysis up by contact is a search, not a link: it picks
+   * "the newest" when a person has more than one — referred twice, or reissued —
+   * and nothing on the request says which was meant. A Tier 2 pack knows
+   * exactly, and records it. */
+  if (source.needsAnalysisId) {
+    const { data, error } = await supabase
+      .from("nccp_needs_analyses")
+      .select("id,data")
+      .eq("id", source.needsAnalysisId)
+      .maybeSingle();
+    if (!error && data) {
+      const declared = needsAnalysisToDeclaredIncome(
+        hydrateNeedsAnalysis((data as { data: unknown }).data),
+      );
+      if (declared.length) return declared;
+    }
+  }
+
   if (source.contactId) {
     const { data, error } = await supabase
       .from("nccp_needs_analyses")
@@ -362,6 +394,7 @@ export async function runIncomeReconciliation(
   }
 
   const declared = await loadDeclaredIncome({
+    needsAnalysisId: (request as { needs_analysis_id?: string | null }).needs_analysis_id ?? null,
     contactId: (request as { contact_id?: string | null }).contact_id ?? null,
     factFindId: (request as { fact_find_id?: string | null }).fact_find_id ?? null,
   });
