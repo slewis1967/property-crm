@@ -1,6 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  MAIL_IDENTITY_KEYS,
+  MAIL_IDENTITY_LABELS,
+  DEFAULT_IDENTITY_KEY,
+  type MailIdentityKey,
+} from "../../utils/mailIdentities";
 
 interface TagCount {
   tag: string;
@@ -43,6 +49,9 @@ export default function BroadcastClient({
   const [htmlBody, setHtmlBody] = useState("");
   const [textBody, setTextBody] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  // One control decides two things that must never disagree: the regulatory
+  // identity the copy is reviewed under, and the address it is sent from.
+  const [brand, setBrand] = useState<MailIdentityKey>(DEFAULT_IDENTITY_KEY);
   const [confirmAll, setConfirmAll] = useState(false);
   const [violations, setViolations] = useState<Violation[] | null>(null);
   const [reviewFailed, setReviewFailed] = useState<string | null>(null);
@@ -81,6 +90,7 @@ export default function BroadcastClient({
           html_body: htmlBody,
           text_body: textBody,
           tag: selectedTag,
+          brand,
           review_token: tokenForRequest,
         }),
       });
@@ -183,6 +193,29 @@ export default function BroadcastClient({
       {/* Audience picker */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
         <h2 className="font-semibold mb-3">Audience</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <select
+            value={brand}
+            onChange={(e) => {
+              setBrand(e.target.value as MailIdentityKey);
+              // The review token is bound to the brand as well as the copy, so
+              // switching business invalidates it. Drop it now rather than
+              // letting the server reject it later.
+              setReviewToken(null);
+              setViolations(null);
+              setAckViolations(false);
+            }}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            aria-label="Sending business"
+          >
+            {MAIL_IDENTITY_KEYS.map((k) => (
+              <option key={k} value={k}>
+                Send as {MAIL_IDENTITY_LABELS[k]}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex items-center gap-2 mb-3">
           <select
             value={selectedTag ?? "__all__"}

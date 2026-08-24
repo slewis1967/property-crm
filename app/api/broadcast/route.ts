@@ -39,6 +39,12 @@ import {
 import { log, errInfo } from "../../../utils/logger";
 import { alertOps } from "../../../utils/alert";
 import { BROADCAST_SLUG_PREFIX } from "../../../utils/broadcast-history";
+import {
+  isMailIdentityKey,
+  resolveIdentity,
+  DEFAULT_IDENTITY_KEY,
+  type MailIdentityKey,
+} from "../../../utils/mailIdentities";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +53,11 @@ interface BroadcastInput {
   html_body: string;
   text_body: string;
   tag: string | null;
+  // Which business is sending. Decides BOTH the regulatory identity the copy is
+  // reviewed under and the from-envelope it is sent from — they must never
+  // disagree, which is why one field drives both. Absent = nextkey, so every
+  // existing caller behaves exactly as before.
+  brand: MailIdentityKey;
   // Server-issued token from a prior Phase-1 response. Presenting a valid
   // one (content + operator bound, 15-min TTL) is the ONLY way to send
   // after violations / a review outage. The old client-supplied
@@ -71,7 +82,7 @@ function genSlug(): string {
 // 5xx / rate-limit blips are common and the cost of a false-outage is high
 // (operator gets pushed onto the skip-review path).
 async function reviewWithRetry(
-  input: { subject: string; html_body: string; text_body: string },
+  input: { subject: string; html_body: string; text_body: string; brand: MailIdentityKey },
 ): Promise<{ violations: Violation[] }> {
   const ATTEMPTS = 3;
   let lastErr: unknown;
@@ -111,6 +122,9 @@ export async function POST(req: Request) {
   const html_body = sanitizeEmailHtml((body.html_body ?? "").trim());
   const text_body = (body.text_body ?? "").trim();
   const tag = body.tag ? String(body.tag).trim() : null;
+  // Unknown/absent brand resolves DOWN to the default rather than erroring: a
+  // typo must never silently review one business's copy as another's.
+  const brand: MailIdentityKey = isMailIdentityKey(body.brand) ? body.brand : DEFAULT_IDENTITY_KEY;
 
   if (!subject) {
     return NextResponse.json({ ok: false, error: "subject is required" }, { status: 400 });
@@ -128,7 +142,7 @@ export async function POST(req: Request) {
   //       the authenticated caller (issued by a prior Phase-1 response that
   //       flagged violations or hit a review outage).
   // Editing the copy invalidates the token (hash mismatch) → re-review.
-  const hash = contentHash(subject, html_body, text_body);
+  const hash = contentHash(subject, html_body, text_body, brand);
   const tokenCheck = verifyReviewToken(body.review_token, hash, operator);
 
   if (tokenCheck.ok) {
@@ -138,15 +152,16 @@ export async function POST(req: Request) {
       kind: tokenCheck.kind === "v" ? "violations_acknowledged" : "review_outage_skipped",
       subject,
       tag,
+      brand,
     });
   } else {
     // No valid token → the review MUST run now, regardless of any flags.
     let violations: Violation[] = [];
     try {
-      const review = await reviewWithRetry({ subject, html_body, text_body });
+      const review = await reviewWithRetry({ subject, html_body, text_body, brand });
       violations = review.violations;
     } catch (e) {
-      log.error("broadcast.review_outage", { operator, ...errInfo(e) });
+      log.error("broadcast.review_outage", { operator, brand, ...errInfo(e) });
       return NextResponse.json({
         ok: false,
         status: "review_failed",
@@ -161,6 +176,7 @@ export async function POST(req: Request) {
         operator,
         count: violations.length,
         subject,
+        brand,
       });
       return NextResponse.json({
         ok: false,
@@ -184,6 +200,7 @@ export async function POST(req: Request) {
     }, { status: 400 });
   }
 
+  const identity = resolveIdentity(brand);
   const slug = genSlug();
   const subjectPreview = subject.length > 60 ? subject.slice(0, 57) + "..." : subject;
   const audienceLabel = tag ? `tag:${tag}` : "all contacts";
@@ -198,7 +215,8 @@ export async function POST(req: Request) {
       slug,
       name: `Broadcast — ${subjectPreview}`,
       description:
-        `Ad-hoc email broadcast sent ${new Date().toISOString()} from /broadcast UI to ${audienceLabel}.`,
+        `Ad-hoc email broadcast sent ${new Date().toISOString()} from /broadcast UI to ${audienceLabel}` +
+        ` as ${identity.label} <${identity.fromEmail}>.`,
       channel: "email",
       is_active: false,
     })
@@ -248,7 +266,19 @@ export async function POST(req: Request) {
       position: 1,
       step_type: "send_email",
       delay_hours: 0,
-      payload: { subject, html_body, text_body },
+      // sender_email/sender_name are the other half of the brand firewall: the
+      // runner's module-level BREVO_SENDER_* is NextKey's, so a Springboard
+      // broadcast that omits these goes out under NextKey's name. Written for
+      // BOTH brands, never conditionally — an absent field is indistinguishable
+      // from a runner that ignored it.
+      payload: {
+        subject,
+        html_body,
+        text_body,
+        brand,
+        sender_email: identity.fromEmail,
+        sender_name: identity.fromName,
+      },
     });
   if (stepErr) {
     return await teardown(`failed to insert step: ${stepErr.message}`);
