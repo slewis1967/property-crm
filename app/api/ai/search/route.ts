@@ -112,7 +112,10 @@ export async function POST(req: Request) {
         system: PARSE_SYSTEM,
         user: `Today's date: ${new Date().toISOString().slice(0, 10)}\n\nQuery:\n${q}`,
         maxTokens: 1200,
-        effort: "medium",
+        // NL query → fixed JSON filter schema: deterministic extraction, not
+        // open-ended reasoning. Low effort + no thinking is sufficient.
+        effort: "low",
+        thinking: false,
       });
       const m = parseRaw.match(/\{[\s\S]*\}/);
       if (m) filters = JSON.parse(m[0]);
@@ -219,7 +222,11 @@ export async function POST(req: Request) {
         system: RANK_SYSTEM,
         user: rankInput,
         maxTokens: 3000,
-        effort: "medium",
+        // Sorting a pre-fetched contact list by relevance is a ranking task,
+        // not open-ended reasoning. Low effort + no thinking trims the
+        // per-search cost (search fires two uncached calls per query).
+        effort: "low",
+        thinking: false,
       });
       const m = rankRaw.match(/\{[\s\S]*\}/);
       if (m) {
