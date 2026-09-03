@@ -38,5 +38,20 @@ describe("makeReceiverProperty", () => {
     expect(Object.prototype.hasOwnProperty.call(r, "estate_name")).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(r, "lot_number")).toBe(false);
   });
+
+  it("omits hero_image_url for relative paths", () => {
+    const prop: StockRow = {
+      id: "22222222-2222-2222-2222-222222222222",
+      street_address: "34 Demo Ave",
+      suburb: "Sydney",
+      state: "NSW",
+      total_package_price: 600000,
+      brochure_url: "/storage/object.png", // relative — should be omitted
+    };
+    const fin: FinancialRow = { gross_developer_fee: 0 };
+    const media: MediaRow[] = [{ kind: "gallery", storage_path: "/files/image.jpg" }]; // relative — omit
+    const r = makeReceiverProperty(prop, fin, media);
+    expect(r.hero_image_url ?? null).toBeNull();
+  });
 });
 

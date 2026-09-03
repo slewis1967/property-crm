@@ -108,10 +108,19 @@ function deriveTitle(p: StockRow): string {
 }
 
 function pickHeroImage(p: StockRow, media?: MediaRow[]): string | null {
-  if (p.brochure_url && typeof p.brochure_url === "string") return p.brochure_url as string;
+  const isAbsoluteHttpUrl = (s: string | null | undefined): s is string => {
+    if (!s) return false;
+    try {
+      const u = new URL(s);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+  if (isAbsoluteHttpUrl(p.brochure_url)) return p.brochure_url!;
   for (const m of media ?? []) {
-    if (m.storage_path && typeof m.storage_path === "string") {
-      return m.storage_path;
+    if (isAbsoluteHttpUrl(m.storage_path)) {
+      return m.storage_path!;
     }
   }
   return null;
