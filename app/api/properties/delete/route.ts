@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
+import { publishPropertyWithdraw } from "../../../../utils/propchannel";
 
 import { requireAuth } from "../../../../utils/cf-access";
 /**
@@ -47,5 +48,12 @@ export async function POST(req: NextRequest) {
     })
     .in("id", ids);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Fire-and-forget PropChannel withdraw notifications
+  Promise.allSettled(ids.map((id: string) => publishPropertyWithdraw(id))).then((results) => {
+    const failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && (r.value as any)?.ok === false));
+    if (failed.length > 0) {
+      console.warn("[propchannel] some withdraw notifications failed", failed.length);
+    }
+  });
   return NextResponse.json({ ok: true, withdrawn: ids.length });
 }
