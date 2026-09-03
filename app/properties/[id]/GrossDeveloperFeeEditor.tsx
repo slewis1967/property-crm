@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 export default function GrossDeveloperFeeEditor({
   propertyId,
@@ -9,13 +9,10 @@ export default function GrossDeveloperFeeEditor({
   propertyId: string;
   initialValue: number | null;
 }) {
+  // Initialise from prop; subsequent prop changes are rare and can remount the component if needed
   const [value, setValue] = useState<string>(initialValue != null ? String(initialValue) : "");
   const [saving, startSaving] = useTransition();
   const [status, setStatus] = useState<"" | "saved" | "error">("");
-
-  useEffect(() => {
-    setValue(initialValue != null ? String(initialValue) : "");
-  }, [initialValue]);
 
   const onSave = () => {
     startSaving(async () => {
