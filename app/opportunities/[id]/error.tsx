@@ -25,7 +25,8 @@ export default function OpportunityDetailError({
           Couldn&apos;t load this opportunity
         </h1>
         <p className="text-sm text-gray-600 mb-1">
-          The opportunity failed to load. The NEXUS API may be unavailable.
+          Something went wrong rendering this opportunity. Try again — if it
+          keeps failing, the reference below identifies the error in the logs.
         </p>
         {error.digest && (
           <p className="text-xs text-gray-400 mb-4">

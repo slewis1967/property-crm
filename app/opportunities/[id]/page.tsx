@@ -283,6 +283,16 @@ async function fetchLiveTasks(contactId: string | null): Promise<LiveTask[]> {
  * that plainly had one. Returns the contacts.id or null. */
 async function resolveContactIdByEmail(email: string | null): Promise<string | null> {
   if (!email) return null;
+  try {
+    return await lookupContactIdByEmail(email);
+  } catch (e) {
+    // Best-effort fallback: no match just means scheduling stays unlinked.
+    log.warn("opportunity_detail.contact_lookup_failed", { ...errInfo(e) });
+    return null;
+  }
+}
+
+async function lookupContactIdByEmail(email: string): Promise<string | null> {
   const { data } = await supabase
     .from("contacts")
     .select("id")
@@ -292,9 +302,23 @@ async function resolveContactIdByEmail(email: string | null): Promise<string | n
 }
 
 /** Match this lead to its GHL counterpart via email + pull notes/conversations
- * /tasks /appointments scoped to that contact. Returns nulls if no match. */
+ * /tasks /appointments scoped to that contact. Returns nulls if no match, and
+ * degrades to an empty archive rather than throwing if Supabase is unreachable.
+ *
+ * Guarded because this runs inside the Promise.all below: every sibling fetch
+ * there already swallows its own failure, so an unguarded rejection here would
+ * reject the whole batch and blank the page over a secondary panel. */
 async function resolveGhlArchiveForLead(email: string | null) {
   if (!email) return { ghlContactId: null, archive: emptyArchive() };
+  try {
+    return await fetchGhlArchive(email);
+  } catch (e) {
+    log.warn("opportunity_detail.ghl_archive_failed", { ...errInfo(e) });
+    return { ghlContactId: null, archive: emptyArchive() };
+  }
+}
+
+async function fetchGhlArchive(email: string) {
   const { data: ghlContacts } = await supabase
     .from("ghl_archive_contacts")
     .select("id")
