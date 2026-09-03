@@ -6,8 +6,9 @@
  * A joint deal captures applicant 2 inside those forms' `applicants[1]`, and
  * that jsonb is server-side only — hence this endpoint rather than a client read.
  *
- * Response: { ok, applicant2_name, applicant_count, source }
+ * Response: { ok, applicant2_name, applicant2_email, applicant_count, source }
  *   applicant2_name: string | null   (null when no second applicant is on file)
+ *   applicant2_email: string | null  (null when that form captured no address)
  *   applicant_count: 1 | 2
  *   source: "fact_find" | "needs_analysis" | null
  *
@@ -16,25 +17,10 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { requireAuth } from "../../../../utils/cf-access";
+import { applicantName, applicantEmail, type Applicant } from "../../../../utils/prefill-applicant";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-type Applicant = Record<string, unknown>;
-
-/** Join the name parts a form uses. Fact Find: given_names + family_name.
- *  Needs Analysis: given_names + surname. Tolerant of either shape. */
-function applicantName(a: Applicant | undefined): string {
-  if (!a || typeof a !== "object") return "";
-  const given = String(a.given_names ?? a.first_name ?? "").trim();
-  const family = String(a.family_name ?? a.surname ?? a.last_name ?? "").trim();
-  return `${given} ${family}`.trim();
-}
-
-function applicantEmail(a: Applicant | undefined): string {
-  if (!a || typeof a !== "object") return "";
-  return String(a.email ?? "").trim();
-}
 
 /** newest row's { data, created_at } for a table filtered by contact_id */
 async function newest(table: string, contactId: string) {
