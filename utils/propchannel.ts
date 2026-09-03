@@ -1,27 +1,40 @@
 import crypto from "crypto";
 import { supabase } from "./supabase";
 
-type UpsertPayload = {
-  event: "property.upserted";
+export type ReceiverStatus = "available" | "reserved" | "sold" | "withdrawn";
+
+export type ReceiverProperty = {
   crm_property_id: string;
-  price?: number | null;
+  title: string;
+  suburb: string;
+  state: string;
+  price: number;
+  // Optional / nullish fields per receiver schema
+  developer_project?: string | null;
   beds?: number | null;
   baths?: number | null;
   cars?: number | null;
-  suburb?: string | null;
-  state?: string | null;
-  address?: string | null;
-  images?: string[];
-  gross_developer_fee?: number | null;
-  builder_name?: string | null;
-  estate_name?: string | null;
-  lot_number?: string | null;
-  status?: string | null;
+  address_line?: string | null;
+  postcode?: string | null;
+  property_type?: string | null;
+  land_sqm?: number | null;
+  build_sqm?: number | null;
+  est_rent_pw?: number | null;
+  smsf_suitable?: boolean | null;
+  developer_name?: string | null;
+  status: ReceiverStatus;
+  hero_image_url?: string | null;
+  gross_developer_fee: number; // nonnegative
+};
+
+type UpsertPayload = {
+  event: "property.upserted";
+  property: ReceiverProperty;
 };
 
 type WithdrawPayload = {
   event: "property.withdrawn";
-  crm_property_id: string;
+  property: ReceiverProperty;
 };
 
 function getEnv() {
@@ -40,6 +53,84 @@ function signBodyHex(body: string, secret: string): string {
   return crypto.createHmac("sha256", secret).update(body).digest("hex");
 }
 
+function normaliseStatus(s: unknown): ReceiverStatus {
+  const k = String(s || "").toLowerCase();
+  if (k === "sold") return "sold";
+  if (k === "withdrawn") return "withdrawn";
+  if (k === "hold" || k === "on hold" || k === "reserved") return "reserved";
+  return "available";
+}
+
+function deriveTitle(p: any): string {
+  const address = (p.street_address as string | null) ?? "";
+  const suburb = (p.suburb as string | null) ?? "";
+  const estate = (p.estate_name as string | null) ?? "";
+  const lot = (p.lot_number as string | null) ?? "";
+  if (address && suburb) return `${address}, ${suburb}`;
+  if (lot && estate) return `Lot ${lot} — ${estate}`;
+  if (estate && suburb) return `${estate}, ${suburb}`;
+  const builder = (p.builder_name as string | null) ?? "";
+  if (builder && suburb) return `${builder} — ${suburb}`;
+  return address || estate || builder || suburb || "Property";
+}
+
+function pickHeroImage(p: any, media?: Array<{ kind?: string | null; storage_path?: string | null }>): string | null {
+  if (p.brochure_url && typeof p.brochure_url === "string") return p.brochure_url as string;
+  for (const m of media ?? []) {
+    if (m.storage_path && typeof m.storage_path === "string") {
+      return m.storage_path;
+    }
+  }
+  return null;
+}
+
+export function makeReceiverProperty(
+  p: any,
+  fin?: { gross_developer_fee?: number | null } | null,
+  media?: Array<{ kind?: string | null; storage_path?: string | null }> | null,
+  overrideStatus?: ReceiverStatus,
+): ReceiverProperty {
+  const priceRaw: number | null =
+    (p.total_package_price as number | null) ??
+    (p.house_price as number | null) ??
+    null;
+  const price = priceRaw != null && isFinite(priceRaw) && priceRaw > 0 ? priceRaw : 0;
+  const gdfRaw = fin?.gross_developer_fee;
+  const hero = pickHeroImage(p, media ?? undefined);
+  const status = overrideStatus ?? normaliseStatus(p.status);
+  const state = ((p.state as string | null) ?? "").trim();
+  const suburb = ((p.suburb as string | null) ?? "").trim();
+  return {
+    crm_property_id: String(p.id),
+    title: deriveTitle(p),
+    suburb,
+    state,
+    price,
+    developer_project: (p.estate_name as string | null) ?? null,
+    beds: (p.bedrooms as number | null) ?? null,
+    baths: (p.bathrooms as number | null) ?? null,
+    cars: (p.car_spaces as number | null) ?? null,
+    address_line:
+      (p.street_address as string | null) ??
+      (p.estate_name as string | null) ??
+      (p.suburb as string | null) ??
+      null,
+    postcode: (p.postcode as string | null) ?? null,
+    property_type: ((p.property_type as string | null) ?? "house_land") || "house_land",
+    land_sqm: (p.land_size_sqm as number | null) ?? (p.land_size as number | null) ?? null,
+    build_sqm: (p.house_size as number | null) ?? null,
+    est_rent_pw: (p.expected_rent_weekly as number | null) ?? null,
+    smsf_suitable: false,
+    developer_name: (p.builder_name as string | null) ?? null,
+    status,
+    hero_image_url: hero,
+    gross_developer_fee:
+      gdfRaw != null && isFinite(gdfRaw as number) && (gdfRaw as number) >= 0
+        ? (gdfRaw as number)
+        : -1, // mark invalid; validator will block send
+  };
+}
+
 export async function buildUpsertPayload(propertyId: string): Promise<UpsertPayload | null> {
   const [{ data: prop }, { data: fin }, { data: media }] = await Promise.all([
     supabase.from("global_stock_pool").select("*").eq("id", propertyId).maybeSingle(),
@@ -54,39 +145,23 @@ export async function buildUpsertPayload(propertyId: string): Promise<UpsertPayl
       .eq("property_id", propertyId),
   ]);
   if (!prop) return null;
-  const images: string[] = [];
-  if (prop.brochure_url) images.push(prop.brochure_url as string);
-  for (const m of media ?? []) {
-    if (m.storage_path && typeof m.storage_path === "string") {
-      images.push(m.storage_path);
-    }
-  }
-  const price: number | null =
-    (prop.total_package_price as number | null) ??
-    (prop.house_price as number | null) ??
-    null;
-  const payload: UpsertPayload = {
-    event: "property.upserted",
-    crm_property_id: String(prop.id),
-    price,
-    beds: (prop.bedrooms as number | null) ?? null,
-    baths: (prop.bathrooms as number | null) ?? null,
-    cars: (prop.car_spaces as number | null) ?? null,
-    suburb: (prop.suburb as string | null) ?? null,
-    state: (prop.state as string | null) ?? null,
-    address:
-      (prop.street_address as string | null) ??
-      (prop.estate_name as string | null) ??
-      (prop.suburb as string | null) ??
-      null,
-    images: images.length > 0 ? images.slice(0, 10) : undefined,
-    gross_developer_fee: fin?.gross_developer_fee ?? null,
-    builder_name: (prop.builder_name as string | null) ?? null,
-    estate_name: (prop.estate_name as string | null) ?? null,
-    lot_number: (prop.lot_number as string | null) ?? null,
-    status: (prop.status as string | null) ?? null,
-  };
+  const property = makeReceiverProperty(prop, fin, media);
+  const payload: UpsertPayload = { event: "property.upserted", property };
   return payload;
+}
+
+function validateReceiverProperty(p: ReceiverProperty): { ok: true } | { ok: false; reason: string } {
+  if (!p.crm_property_id || p.crm_property_id.trim().length === 0)
+    return { ok: false, reason: "crm_property_id missing" };
+  if (!p.title || p.title.trim().length === 0) return { ok: false, reason: "title missing" };
+  if (!p.suburb || p.suburb.trim().length === 0) return { ok: false, reason: "suburb missing" };
+  if (!p.state || p.state.trim().length < 2) return { ok: false, reason: "state too short" };
+  if (!isFinite(p.price) || p.price <= 0) return { ok: false, reason: "price not positive" };
+  if (!isFinite(p.gross_developer_fee) || p.gross_developer_fee < 0)
+    return { ok: false, reason: "gross_developer_fee negative/missing" };
+  if (!["available", "reserved", "sold", "withdrawn"].includes(p.status))
+    return { ok: false, reason: "invalid status" };
+  return { ok: true };
 }
 
 async function postSignedJson(payload: object) {
@@ -121,14 +196,39 @@ async function postSignedJson(payload: object) {
 export async function publishPropertyUpsert(propertyId: string) {
   const payload = await buildUpsertPayload(propertyId);
   if (!payload) return { ok: false, error: "not_found" };
+  const v = validateReceiverProperty(payload.property);
+  if (v.ok !== true) {
+    console.warn("[propchannel] skip upsert: invalid_payload_local:", v.reason);
+    const { enabled } = getEnv();
+    if (!enabled) return { ok: false, error: "invalid_payload_local", reason: v.reason, skipped: true };
+    return { ok: false, error: "invalid_payload_local", reason: v.reason };
+  }
   return postSignedJson(payload);
 }
 
 export async function publishPropertyWithdraw(propertyId: string) {
-  const payload: WithdrawPayload = {
-    event: "property.withdrawn",
-    crm_property_id: propertyId,
-  };
+  const [{ data: prop }, { data: fin }, { data: media }] = await Promise.all([
+    supabase.from("global_stock_pool").select("*").eq("id", propertyId).maybeSingle(),
+    supabase
+      .from("property_financials")
+      .select("gross_developer_fee")
+      .eq("property_id", propertyId)
+      .maybeSingle(),
+    supabase
+      .from("property_media")
+      .select("kind,storage_path")
+      .eq("property_id", propertyId),
+  ]);
+  if (!prop) return { ok: false, error: "not_found" };
+  const property = makeReceiverProperty(prop, fin, media, "withdrawn");
+  const payload: WithdrawPayload = { event: "property.withdrawn", property };
+  const v = validateReceiverProperty(payload.property);
+  if (v.ok !== true) {
+    console.warn("[propchannel] skip withdraw: invalid_payload_local:", v.reason);
+    const { enabled } = getEnv();
+    if (!enabled) return { ok: false, error: "invalid_payload_local", reason: v.reason, skipped: true };
+    return { ok: false, error: "invalid_payload_local", reason: v.reason };
+  }
   return postSignedJson(payload);
 }
 
