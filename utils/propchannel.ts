@@ -3,6 +3,39 @@ import { supabase } from "./supabase";
 
 export type ReceiverStatus = "available" | "reserved" | "sold" | "withdrawn";
 
+// Minimal shape of the stock row fields we read from global_stock_pool
+export interface StockRow {
+  id: string;
+  street_address?: string | null;
+  suburb?: string | null;
+  state?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  car_spaces?: number | null;
+  total_package_price?: number | null;
+  house_price?: number | null;
+  builder_name?: string | null;
+  estate_name?: string | null;
+  lot_number?: string | null;
+  status?: string | null;
+  brochure_url?: string | null;
+  land_size_sqm?: number | null;
+  land_size?: number | null;
+  house_size?: number | null;
+  expected_rent_weekly?: number | null;
+  postcode?: string | null;
+  property_type?: string | null;
+}
+
+export interface MediaRow {
+  kind?: string | null;
+  storage_path?: string | null;
+}
+
+export interface FinancialRow {
+  gross_developer_fee?: number | null;
+}
+
 export type ReceiverProperty = {
   crm_property_id: string;
   title: string;
@@ -61,7 +94,7 @@ function normaliseStatus(s: unknown): ReceiverStatus {
   return "available";
 }
 
-function deriveTitle(p: any): string {
+function deriveTitle(p: StockRow): string {
   const address = (p.street_address as string | null) ?? "";
   const suburb = (p.suburb as string | null) ?? "";
   const estate = (p.estate_name as string | null) ?? "";
@@ -74,7 +107,7 @@ function deriveTitle(p: any): string {
   return address || estate || builder || suburb || "Property";
 }
 
-function pickHeroImage(p: any, media?: Array<{ kind?: string | null; storage_path?: string | null }>): string | null {
+function pickHeroImage(p: StockRow, media?: MediaRow[]): string | null {
   if (p.brochure_url && typeof p.brochure_url === "string") return p.brochure_url as string;
   for (const m of media ?? []) {
     if (m.storage_path && typeof m.storage_path === "string") {
@@ -85,9 +118,9 @@ function pickHeroImage(p: any, media?: Array<{ kind?: string | null; storage_pat
 }
 
 export function makeReceiverProperty(
-  p: any,
-  fin?: { gross_developer_fee?: number | null } | null,
-  media?: Array<{ kind?: string | null; storage_path?: string | null }> | null,
+  p: StockRow,
+  fin?: FinancialRow | null,
+  media?: MediaRow[] | null,
   overrideStatus?: ReceiverStatus,
 ): ReceiverProperty {
   const priceRaw: number | null =
@@ -145,7 +178,7 @@ export async function buildUpsertPayload(propertyId: string): Promise<UpsertPayl
       .eq("property_id", propertyId),
   ]);
   if (!prop) return null;
-  const property = makeReceiverProperty(prop, fin, media);
+  const property = makeReceiverProperty(prop as StockRow, fin as FinancialRow | null, (media as MediaRow[] | null));
   const payload: UpsertPayload = { event: "property.upserted", property };
   return payload;
 }
@@ -220,7 +253,7 @@ export async function publishPropertyWithdraw(propertyId: string) {
       .eq("property_id", propertyId),
   ]);
   if (!prop) return { ok: false, error: "not_found" };
-  const property = makeReceiverProperty(prop, fin, media, "withdrawn");
+  const property = makeReceiverProperty(prop as StockRow, fin as FinancialRow | null, (media as MediaRow[] | null), "withdrawn");
   const payload: WithdrawPayload = { event: "property.withdrawn", property };
   const v = validateReceiverProperty(payload.property);
   if (v.ok !== true) {

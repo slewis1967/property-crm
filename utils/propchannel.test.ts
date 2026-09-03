@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { makeReceiverProperty } from "./propchannel";
+import { makeReceiverProperty, type StockRow, type MediaRow, type FinancialRow } from "./propchannel";
 
 describe("makeReceiverProperty", () => {
   it("maps CRM stock row to nested receiver property shape", () => {
-    const prop = {
+    const prop: StockRow = {
       id: "11111111-1111-1111-1111-111111111111",
       street_address: "12 Sample St",
       suburb: "Brisbane",
@@ -19,10 +19,10 @@ describe("makeReceiverProperty", () => {
       status: "active",
       brochure_url: "https://example.com/hero.jpg",
     };
-    const fin = { gross_developer_fee: 25000 };
-    const media = [{ kind: "gallery", storage_path: "https://cdn.example.com/g1.jpg" }];
+    const fin: FinancialRow = { gross_developer_fee: 25000 };
+    const media: MediaRow[] = [{ kind: "gallery", storage_path: "https://cdn.example.com/g1.jpg" }];
 
-    const r = makeReceiverProperty(prop as any, fin, media as any);
+    const r = makeReceiverProperty(prop, fin, media);
     expect(r.crm_property_id).toBe(prop.id);
     expect(r.title.length).toBeGreaterThan(0);
     expect(r.suburb).toBe("Brisbane");
@@ -35,8 +35,8 @@ describe("makeReceiverProperty", () => {
     expect(r.hero_image_url).toBe("https://example.com/hero.jpg");
     expect(r.developer_project).toBe("Sunny Meadows");
     // Only allowed outbound keys are used (no estate_name / lot_number on receiver object)
-    expect((r as any).estate_name).toBeUndefined();
-    expect((r as any).lot_number).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(r, "estate_name")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(r, "lot_number")).toBe(false);
   });
 });
 

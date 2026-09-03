@@ -4,6 +4,15 @@ import { publishPropertyUpsert, propChannelEnv } from "../../../../utils/propcha
 
 export const dynamic = "force-dynamic";
 
+type PublishResult = {
+  ok: boolean;
+  status?: number;
+  body?: string;
+  error?: string;
+  reason?: string;
+  skipped?: boolean;
+};
+
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -11,8 +20,9 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: "ids[] is required" }, { status: 400 });
   }
-  const results = await Promise.allSettled(ids.map((id: string) => publishPropertyUpsert(id)));
-  const ok = results.filter((r) => r.status === "fulfilled" && (r.value as any)?.ok !== false).length;
+  const tasks: Promise<PublishResult>[] = ids.map((id: string) => publishPropertyUpsert(id) as Promise<PublishResult>);
+  const results = await Promise.allSettled(tasks);
+  const ok = results.filter((r) => r.status === "fulfilled" && r.value.ok !== false).length;
   const failed = results.length - ok;
   const env = propChannelEnv();
   return NextResponse.json({
@@ -21,7 +31,7 @@ export async function POST(req: NextRequest) {
     total: results.length,
     env: { enabled: env.enabled, url: env.url, hasSecret: env.hasSecret },
     results: results.map((r, i) =>
-      r.status === "fulfilled" ? { id: ids[i], ok: (r.value as any)?.ok !== false } : { id: ids[i], ok: false },
+      r.status === "fulfilled" ? { id: ids[i], ok: r.value.ok !== false } : { id: ids[i], ok: false },
     ),
   });
 }

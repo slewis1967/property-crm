@@ -50,7 +50,9 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // Fire-and-forget PropChannel withdraw notifications
   Promise.allSettled(ids.map((id: string) => publishPropertyWithdraw(id))).then((results) => {
-    const failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && (r.value as any)?.ok === false));
+    const failed = results.filter(
+      (r) => r.status === "rejected" || (r.status === "fulfilled" && r.value.ok === false),
+    );
     if (failed.length > 0) {
       console.warn("[propchannel] some withdraw notifications failed", failed.length);
     }
