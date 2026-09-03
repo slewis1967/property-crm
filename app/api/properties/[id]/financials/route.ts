@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
+import { publishPropertyUpsert } from "../../../../../utils/propchannel";
 import { requireAuth } from "../../../../../utils/cf-access";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,10 @@ export async function PATCH(
     .select("property_id,gross_developer_fee,updated_at")
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Publish updated property (includes gross_developer_fee) to PropChannel
+  publishPropertyUpsert(id).catch(() => {
+    /* logged in util */
+  });
   return NextResponse.json({ financials: data });
 }
 
