@@ -1,0 +1,57 @@
+import { describe, it, expect } from "vitest";
+import { makeReceiverProperty, type StockRow, type MediaRow, type FinancialRow } from "./propchannel";
+
+describe("makeReceiverProperty", () => {
+  it("maps CRM stock row to nested receiver property shape", () => {
+    const prop: StockRow = {
+      id: "11111111-1111-1111-1111-111111111111",
+      street_address: "12 Sample St",
+      suburb: "Brisbane",
+      state: "QLD",
+      bedrooms: 4,
+      bathrooms: 2,
+      car_spaces: 2,
+      total_package_price: 750000,
+      house_price: null,
+      builder_name: "Acme Homes",
+      estate_name: "Sunny Meadows",
+      lot_number: "42",
+      status: "active",
+      brochure_url: "https://example.com/hero.jpg",
+    };
+    const fin: FinancialRow = { gross_developer_fee: 25000 };
+    const media: MediaRow[] = [{ kind: "gallery", storage_path: "https://cdn.example.com/g1.jpg" }];
+
+    const r = makeReceiverProperty(prop, fin, media);
+    expect(r.crm_property_id).toBe(prop.id);
+    expect(r.title.length).toBeGreaterThan(0);
+    expect(r.suburb).toBe("Brisbane");
+    expect(r.state.length).toBeGreaterThanOrEqual(2);
+    expect(r.price).toBeGreaterThan(0);
+    expect(r.developer_name).toBe("Acme Homes");
+    expect(r.address_line).toContain("12 Sample St");
+    expect(r.status).toBe("available");
+    expect(r.gross_developer_fee).toBe(25000);
+    expect(r.hero_image_url).toBe("https://example.com/hero.jpg");
+    expect(r.developer_project).toBe("Sunny Meadows");
+    // Only allowed outbound keys are used (no estate_name / lot_number on receiver object)
+    expect(Object.prototype.hasOwnProperty.call(r, "estate_name")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(r, "lot_number")).toBe(false);
+  });
+
+  it("omits hero_image_url for relative paths", () => {
+    const prop: StockRow = {
+      id: "22222222-2222-2222-2222-222222222222",
+      street_address: "34 Demo Ave",
+      suburb: "Sydney",
+      state: "NSW",
+      total_package_price: 600000,
+      brochure_url: "/storage/object.png", // relative — should be omitted
+    };
+    const fin: FinancialRow = { gross_developer_fee: 0 };
+    const media: MediaRow[] = [{ kind: "gallery", storage_path: "/files/image.jpg" }]; // relative — omit
+    const r = makeReceiverProperty(prop, fin, media);
+    expect(r.hero_image_url ?? null).toBeNull();
+  });
+});
+
