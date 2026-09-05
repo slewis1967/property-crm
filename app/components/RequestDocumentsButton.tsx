@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { errMessage } from "../../utils/errors";
+import { describeDelivery, deliveryActionLabel } from "../../utils/document-request-delivery";
 
 /**
  * "Request Documents" — creates a document-collection request per applicant,
@@ -56,9 +57,12 @@ export default function RequestDocumentsButton({
 
   const name = (applicantName || "").trim();
   const email = (applicantEmail || "").trim();
-  // Whether clicking the action will actually email link(s), vs. only create a
-  // link the rep must deliver (no email on file).
-  const willSend = !!email || (count >= 2 && !!email2.trim());
+
+  // Who actually gets emailed, per applicant. See utils/document-request-delivery
+  // for why this is not a single willSend flag.
+  const { sendCount, linkOnlyCount } = describeDelivery(
+    count >= 2 ? [email, email2] : [email],
+  );
 
   async function createOne(body: Record<string, unknown>): Promise<{ ok: boolean; data?: Record<string, unknown>; error?: string }> {
     try {
@@ -219,7 +223,9 @@ export default function RequestDocumentsButton({
             <>
               <p className="text-sm font-semibold text-gray-900">Request documents</p>
               <p className="mt-1 text-sm text-gray-600">
-                Each applicant is emailed their own secure upload link automatically.
+                {linkOnlyCount === 0
+                  ? "Each applicant is emailed their own secure upload link automatically."
+                  : "Each applicant needs their own secure upload link — add an email below and it is sent automatically."}
               </p>
 
               <div className="mt-3 flex items-center justify-between gap-2 text-sm">
@@ -258,7 +264,11 @@ export default function RequestDocumentsButton({
 
               <div className="mt-3 rounded-md border border-gray-100 bg-gray-50 p-2 text-sm">
                 <p className="font-medium text-gray-900">Applicant 1 — {name || "Unknown"}</p>
-                <p className="text-gray-500">{email || "no email — link only"}</p>
+                {email ? (
+                  <p className="text-gray-500">{email}</p>
+                ) : (
+                  <p className="text-amber-700">No email on file — you&apos;ll need to send their link yourself.</p>
+                )}
               </div>
 
               {count >= 2 && (
@@ -274,9 +284,15 @@ export default function RequestDocumentsButton({
                     type="email"
                     value={email2}
                     onChange={(e) => setEmail2(e.target.value)}
-                    placeholder="Email (optional — for their own link)"
+                    placeholder="Email — for their own upload link"
                     className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                   />
+                  {!email2.trim() && (
+                    <p className="text-xs text-amber-700">
+                      No email — this applicant gets a link only, and you&apos;ll need to send it to
+                      them. Each applicant must supply their own documents.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -292,7 +308,7 @@ export default function RequestDocumentsButton({
                   disabled={sending}
                   className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 >
-                  {sending ? "Sending…" : willSend ? (count >= 2 ? "Send links" : "Send link") : "Create link"}
+                  {sending ? "Sending…" : deliveryActionLabel({ sendCount, linkOnlyCount })}
                 </button>
               </div>
             </>
