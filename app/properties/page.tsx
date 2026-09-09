@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { log, errInfo } from "../../utils/logger";
 import PropertyGrid from "./PropertyGrid";
@@ -147,11 +148,19 @@ export default async function PropertiesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-3">
         <h1 className="text-3xl font-bold">Aggregator Feed</h1>
-        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
-          Live Connection Active
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/properties/map"
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
+          >
+            📍 Map view
+          </Link>
+          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
+            Live Connection Active
+          </span>
+        </div>
       </div>
 
       {/* We pass the first page + total to the client component. The
