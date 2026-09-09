@@ -12,7 +12,7 @@
  * `editable` is computed server-side (see the GET route's `editabilityOf`) and
  * is authoritative there too — this is presentation, not enforcement.
  */
-import { INTRODUCER_FIELDS, type IntroducerField } from "../../utils/introducer";
+import { fieldsForPack, type IntroducerField, type IntroducerPackType } from "../../utils/introducer";
 
 export type FieldValues = Record<string, string>;
 
@@ -35,6 +35,7 @@ export default function ReferralFields({
   editable,
   onChange,
   highlight = [],
+  packType = "referral",
 }: {
   values: FieldValues;
   /** Field keys the user may edit right now. */
@@ -42,14 +43,22 @@ export default function ReferralFields({
   onChange: (key: string, value: string) => void;
   /** Fields to draw attention to — e.g. the ones we've just asked for. */
   highlight?: string[];
+  /**
+   * Which pack this is. A full pack is not asked for the coarse income,
+   * employment and savings bands — it captures all three exactly on the Needs
+   * Analysis, and asking twice produces two versions of one fact.
+   */
+  packType?: IntroducerPackType;
 }) {
   const canEdit = new Set(editable);
   const flagged = new Set(highlight);
+  const fields = fieldsForPack(packType);
 
   return (
     <div className="space-y-7">
       {GROUPS.map((group) => {
-        const fields = INTRODUCER_FIELDS.filter((f) => f.group === group.key);
+        const groupFields = fields.filter((f) => f.group === group.key);
+        if (groupFields.length === 0) return null;
         return (
           <section key={group.key}>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
@@ -57,7 +66,7 @@ export default function ReferralFields({
             </h2>
             {group.blurb && <p className="mt-1 text-sm text-gray-500">{group.blurb}</p>}
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              {fields.map((field) => (
+              {groupFields.map((field) => (
                 <Field
                   key={field.key}
                   field={field}

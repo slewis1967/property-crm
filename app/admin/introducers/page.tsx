@@ -1,5 +1,5 @@
 import { currentUserEmail } from "../../../utils/cf-access";
-import { isSuperAdmin } from "../../../utils/super-admin";
+import { isSuperAdmin, canOverrideCourse } from "../../../utils/super-admin";
 import AdminIntroducers from "./AdminIntroducers";
 
 // STAFF page — behind Cloudflare Access with the rest of the CRM. Deliberately
@@ -11,5 +11,13 @@ export const metadata = { title: "Introducers — NextKey CRM" };
 
 export default async function AdminIntroducersPage() {
   const email = await currentUserEmail();
-  return <AdminIntroducers viewerIsSuperAdmin={isSuperAdmin(email)} />;
+  // Two authorities, resolved separately. Accepting a referral is a super-admin
+  // act; reopening the accreditation course is narrower again, and a colleague
+  // who holds the first does not thereby hold the second.
+  return (
+    <AdminIntroducers
+      viewerIsSuperAdmin={isSuperAdmin(email)}
+      viewerCanOverrideCourse={canOverrideCourse(email)}
+    />
+  );
 }

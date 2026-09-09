@@ -5,6 +5,13 @@
  * first. Drafts are excluded unless explicitly asked for — a draft is an
  * introducer's private workspace, not something for us to read over their
  * shoulder, and nothing in it has been consented to yet.
+ *
+ * A TIER 2 PACK NEVER APPEARS IN THE DEFAULT QUEUE, AND THAT IS CORRECT. It
+ * arrives already `accepted` (it skips the accept gate — see
+ * migrations/20260820_introducer_tier2_pack.sql), so it has nothing waiting on a
+ * decision. `?status=all` is where you find one. It still carries `pack_type`
+ * here so the list can say which rows are packs rather than leaving someone to
+ * work it out from the status.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
@@ -27,7 +34,7 @@ export async function GET(req: Request) {
     .select(
       "id,client_ref,introducer_id,first_name,last_name,email,phone,state,suburb," +
         "purchase_intent,timeframe,income_band,deposit_band,status,stage,submitted_at,updated_at," +
-        "opportunity_id,introducers(firm_name)",
+        "opportunity_id,pack_type,fact_find_id,introducers(firm_name)",
     )
     .order("submitted_at", { ascending: false, nullsFirst: false })
     .limit(500);

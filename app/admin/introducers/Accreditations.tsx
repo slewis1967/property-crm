@@ -15,6 +15,23 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import AuditFile from "./AuditFile";
+import { daysUntil, isExpiredOn } from "../../../utils/introducer-onboarding";
+import { TIER_BUILDER_SHARE, formatSharePct, isValidSharePct } from "../../../utils/introducer-agreement";
+
+/**
+ * The split that will be written into their agreement and schedule.
+ *
+ * Shown before sending rather than after, because both documents SNAPSHOT it:
+ * once they have signed, changing the number here changes nothing about what
+ * was agreed. This is the last point at which it is still editable.
+ */
+function shareFor(app: { tier: string; builder_share_pct?: number | null }): {
+  pct: number;
+  negotiated: boolean;
+} {
+  if (isValidSharePct(app.builder_share_pct)) return { pct: app.builder_share_pct, negotiated: true };
+  return { pct: TIER_BUILDER_SHARE[app.tier === "t2" ? "t2" : "t1"], negotiated: false };
+}
 
 type Application = {
   id: string;
@@ -24,6 +41,13 @@ type Application = {
   firm_name: string | null;
   tier: string;
   agreement_variant: string;
+  recruits_introducers?: boolean | null;
+  /** A negotiated override of the tier's builder-commission share. Absent or
+   *  null means the tier decides. Absent until 20260821h runs. */
+  builder_share_pct?: number | null;
+  /** Which of this application's documents are fully signed, e.g.
+   *  ["introducer_nda","introducer_agreement"]. Attached by the list route. */
+  signed_documents?: string[];
   state: string;
   accreditation_no: string | null;
   exam_score: number | null;
@@ -31,7 +55,32 @@ type Application = {
   id_check_result: string | null;
   created_at: string;
   withdrawn_reason: string | null;
+  /** Both absent until 20260819_introducer_accreditation_expiry.sql runs. */
+  accreditation_expires_at?: string | null;
+  smsf_competency_expires_at?: string | null;
 };
+
+/**
+ * What is actually outstanding.
+ *
+ * `agreement_sent` is a SPAN, not a moment. It covers "nothing signed yet",
+ * "referral agreement in, schedule outstanding", and the instant before both
+ * land — because the state only advances when BOTH documents are signed. A
+ * single flat string for the whole span told Sean his two introducers had not
+ * signed when both had, which reads as a lost signature rather than a step in
+ * progress.
+ */
+function stateHint(app: Application): string {
+  if (app.state === "agreement_sent" || app.state === "certificate_issued") {
+    const done = app.signed_documents ?? [];
+    const agreement = done.includes("introducer_agreement");
+    const schedule = done.includes("introducer_schedule");
+    if (agreement && schedule) return "Both documents signed — finishing up.";
+    if (agreement) return "Referral agreement signed. Waiting on the commission schedule.";
+    if (schedule) return "Commission schedule signed. Waiting on the referral agreement.";
+  }
+  return WAITING_ON[app.state] ?? app.state;
+}
 
 const STATE_LABEL: Record<string, string> = {
   invited: "Invited",
@@ -71,8 +120,11 @@ const TONE: Record<string, string> = {
 
 export default function Accreditations({
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
 }: {
   viewerIsSuperAdmin: boolean;
+  /** Narrower than super-admin, and deliberately so — see utils/super-admin.ts. */
+  viewerCanOverrideCourse: boolean;
 }) {
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,6 +217,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => {
                   setNotice(msg);
                   setError(null);
@@ -186,6 +239,7 @@ export default function Accreditations({
                 key={a.id}
                 app={a}
                 viewerIsSuperAdmin={viewerIsSuperAdmin}
+                viewerCanOverrideCourse={viewerCanOverrideCourse}
                 onDone={async (msg) => { setNotice(msg); await load(); }}
                 onError={setError}
               />
@@ -200,11 +254,13 @@ export default function Accreditations({
 function Card({
   app,
   viewerIsSuperAdmin,
+  viewerCanOverrideCourse,
   onDone,
   onError,
 }: {
   app: Application;
   viewerIsSuperAdmin: boolean;
+  viewerCanOverrideCourse: boolean;
   onDone: (msg: string) => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -248,7 +304,7 @@ function Card({
             {app.firm_name ? `${app.firm_name} · ` : ""}
             {app.email}
           </p>
-          <p className="mt-1 text-sm text-gray-600">{WAITING_ON[app.state] ?? app.state}</p>
+          <p className="mt-1 text-sm text-gray-600">{stateHint(app)}</p>
           {app.state === "withdrawn" && app.withdrawn_reason && (
             <p className="mt-1 text-sm text-gray-500">{app.withdrawn_reason}</p>
           )}
@@ -267,6 +323,11 @@ function Card({
               Paid
             </span>
           )}
+          {app.recruits_introducers && (
+            <span className="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-900">
+              Recruiter
+            </span>
+          )}
           {app.accreditation_no && (
             <p className="mt-1 font-mono text-xs tabular-nums text-gray-500">{app.accreditation_no}</p>
           )}
@@ -275,6 +336,7 @@ function Card({
               Exam {app.exam_score}/{app.exam_total}
             </p>
           )}
+          <Validity app={app} />
         </div>
       </div>
 
@@ -354,15 +416,43 @@ function Card({
           )}
 
           {app.state === "id_verified" && (
-            <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
-              Send course invitation
-            </Action>
+            <>
+              <Action busy={busy} onClick={() => act(`${base}/exam-invite`, null, "Course invitation sent.")}>
+                Send course invitation
+              </Action>
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Course invitation sent with the gates open — recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
+            </>
           )}
 
           {app.state === "course_started" && (
-            <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
-              Re-send course link
-            </Action>
+            <>
+              <Action busy={busy} ghost onClick={() => act(`${base}/exam-invite`, null, "Course link re-sent.")}>
+                Re-send course link
+              </Action>
+              {viewerCanOverrideCourse && (
+                <Override
+                  busy={busy}
+                  onConfirm={() =>
+                    act(
+                      `${base}/exam-invite`,
+                      { override: true },
+                      "Link sent with the gates open — their progress is kept. Recorded in the audit file.",
+                    )
+                  }
+                />
+              )}
+            </>
           )}
 
           {app.state === "exam_passed" && (
@@ -371,21 +461,114 @@ function Card({
             </Action>
           )}
 
-          {app.state === "certificate_issued" && (
-            <Action busy={busy} onClick={() => act(`${base}/agreement`, { action: "send" }, "Agreement sent for signature.")}>
-              Send the agreement
-            </Action>
-          )}
+          {(app.state === "certificate_issued" || app.state === "agreement_sent") && (
+            <>
+              {/* What the documents will say. A wrong percentage that reaches a
+                  signature is not correctable afterwards, so it is stated here
+                  in the open rather than left implicit in the tier. */}
+              <p className="w-full text-xs text-gray-600">
+                Builder commission share:{" "}
+                <strong className="tabular-nums" style={{ color: "#020e40" }}>
+                  {formatSharePct(shareFor(app).pct)}
+                </strong>{" "}
+                {shareFor(app).negotiated
+                  ? "— negotiated for this introducer"
+                  : `— the ${app.tier === "t2" ? "Tier 2" : "Tier 1"} default`}
+                . Panel stock only; paid once the builder has paid us.
+              </p>
+              {/* The normal path now that the documents exist. Two of them, sent
+                  one at a time, so this button is live at `agreement_sent` too:
+                  pressing it again after the referral agreement is signed sends
+                  the commission schedule. Deliberately does not mark anything
+                  executed — the application advances when they sign. */}
+              {app.agreement_variant === "paid" ? (
+                <Prompt
+                  label={app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                  placeholder="Referral fee, e.g. $5,000 per settled referral, including GST"
+                  busy={busy}
+                  onSubmit={(fee) =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", fee_per_settlement: fee },
+                      "Emailed — they sign it on screen.",
+                    )
+                  }
+                />
+              ) : (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(`${base}/agreement`, { action: "esign" }, "Emailed — they sign it on screen.")
+                  }
+                >
+                  {app.state === "agreement_sent" ? "Send the next document" : "Send for e-signature"}
+                </Action>
+              )}
 
-          {app.state === "agreement_sent" && (
-            <Prompt
-              label="Record agreement signed"
-              placeholder="How was it executed? e.g. e-signed, emailed back"
-              busy={busy}
-              onSubmit={(method) =>
-                act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
-              }
-            />
+              {/* Granted BEFORE the schedule issues, because the schedule
+                  snapshots it — flipping this afterwards would leave the row
+                  disagreeing with the document they signed. Paid only; the
+                  standard arrangement pays nothing at all, so there is nothing
+                  for a network to earn. */}
+              {app.agreement_variant === "paid" && (
+                <Action
+                  busy={busy}
+                  onClick={() =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "esign", recruits_introducers: !app.recruits_introducers },
+                      app.recruits_introducers
+                        ? "Network entitlement removed — document sent."
+                        : "Recruiter arrangement granted — document sent.",
+                    )
+                  }
+                >
+                  {app.recruits_introducers ? "Remove network fee" : "Pays on recruits’ deals"}
+                </Action>
+              )}
+
+              {/* AMEND A SIGNED DOCUMENT. Available once the agreement is in,
+                  because that is the only time it is needed — and it is the one
+                  action here that reaches back past a signature. The signed
+                  version is superseded and KEPT, never edited. */}
+              {(app.signed_documents ?? []).includes("introducer_agreement") && (
+                <Prompt
+                  label="Re-issue a corrected agreement"
+                  placeholder="What was wrong with it? Goes on the document and in the email."
+                  busy={busy}
+                  onSubmit={(reason) =>
+                    act(
+                      `${base}/agreement`,
+                      { action: "reissue", doc_type: "introducer_agreement", reason },
+                      "Corrected agreement issued and emailed. The signed version is kept.",
+                    )
+                  }
+                />
+              )}
+
+              {/* Notice only: tells them the step is open and points at their
+                  roadmap, where they can start signing themselves. */}
+              {app.state === "certificate_issued" && (
+                <Action
+                  busy={busy}
+                  onClick={() => act(`${base}/agreement`, { action: "send" }, "Notice sent.")}
+                >
+                  Just tell them it&rsquo;s ready
+                </Action>
+              )}
+
+              {/* Kept for the ones who sign on paper or email a scan back. */}
+              {app.state === "agreement_sent" && (
+                <Prompt
+                  label="Record agreement signed"
+                  placeholder="How was it executed? e.g. emailed back, signed on paper"
+                  busy={busy}
+                  onSubmit={(method) =>
+                    act(`${base}/agreement`, { action: "signed", method }, "Agreement recorded — ready to activate.")
+                  }
+                />
+              )}
+            </>
           )}
 
           {app.state === "agreement_signed" && (
@@ -397,6 +580,63 @@ function Card({
       )}
     </div>
   );
+}
+
+/**
+ * How long this accreditation has left.
+ *
+ * Shown from the moment the certificate is issued, not only once it is close to
+ * running out: an expiry nobody sees until the warning fires is one that gets
+ * discovered by a refused referral.
+ *
+ * Silent when there is no date. Everyone certificated before expiries were
+ * recorded has none, and inventing "unknown — assume expired" on their card
+ * would put a red badge on every established introducer we have.
+ */
+function Validity({ app }: { app: Application }) {
+  if (!app.accreditation_expires_at) return null;
+
+  // The comparison is made against the local calendar day rather than an
+  // instant, matching the server: an expiry is a date, not a moment.
+  const today = new Date().toLocaleDateString("en-CA");
+  const expired = isExpiredOn(app.accreditation_expires_at, today);
+  const left = daysUntil(app.accreditation_expires_at, today);
+  const smsfExpired = isExpiredOn(app.smsf_competency_expires_at, today);
+
+  return (
+    <div className="mt-1">
+      <p
+        className={`text-xs tabular-nums ${
+          expired ? "font-semibold text-red-700" : left <= 60 ? "font-semibold text-amber-700" : "text-gray-500"
+        }`}
+      >
+        {expired
+          ? `Accreditation expired ${fmtDay(app.accreditation_expires_at)}`
+          : `Valid until ${fmtDay(app.accreditation_expires_at)}${left <= 60 ? ` · ${left} days` : ""}`}
+      </p>
+      {/* Reported, never enforced. A lapsed SMSF competency narrows what an
+          introducer may discuss; it does not stop a referral, and a badge that
+          implied otherwise would have staff suspending people over it. */}
+      {smsfExpired && (
+        <p className="text-xs text-amber-700">SMSF competency lapsed {fmtDay(app.smsf_competency_expires_at!)}</p>
+      )}
+      {expired && app.state === "activated" && (
+        <p className="mt-0.5 max-w-[16rem] text-xs text-red-700">
+          They cannot submit referrals. Start a new accreditation to renew.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "2027-08-14" → "14 Aug 2027". A calendar day, printed as one. */
+function fmtDay(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 function Action({
@@ -422,6 +662,65 @@ function Action({
     >
       {busy ? "Working…" : children}
     </button>
+  );
+}
+
+/**
+ * Reopen the course for someone who is stuck in it.
+ *
+ * The case this exists for: a candidate fails the exam, every topic they missed
+ * re-locks, and they are sent back through modules they have already worked
+ * through before they can try again. This lets them go straight back to those
+ * sections.
+ *
+ * Two clicks rather than one, and it says what it costs in between. The reading
+ * timers are the only evidence the register holds that a candidate was in front
+ * of the material — the exam itself only evidences that they can answer. Turning
+ * them off is the right call for sitting the course ourselves or supervising a
+ * re-sitting, and the wrong one for someone accrediting at a distance, so the
+ * button makes the operator say which they meant.
+ *
+ * UNLIKE AN ORDINARY RE-SEND, this one keeps their progress. Every other
+ * re-issued link is a deliberate fresh start; this is the opposite, and the
+ * panel says so, because an operator who has learned that re-sending wipes
+ * people would otherwise never reach for it on the candidate who most needs it.
+ */
+/* Rendered only for whoever holds `canOverrideCourse` — narrower than
+   super-admin, because this changes what an accreditation MEANS rather than who
+   holds one. Hiding it is a courtesy to everyone else, not the control: the
+   route checks the same authority, and a hidden button is a decoration. */
+function Override({ busy, onConfirm }: { busy: boolean; onConfirm: () => void }) {
+  const [asking, setAsking] = useState(false);
+
+  if (!asking) {
+    return (
+      <Action busy={busy} ghost onClick={() => setAsking(true)}>
+        Reopen the course for them
+      </Action>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-lg border border-amber-300 bg-amber-50 p-3">
+      <p className="text-sm text-amber-900">
+        This link turns off the reading timers, the cooling-off between attempts and the 24-hour lock
+        after five failures, and reopens every module they have already attempted — including any that
+        a failed exam sent them back through. <strong>Their progress is kept</strong>, unlike an
+        ordinary re-send.
+      </p>
+      <p className="mt-2 text-sm text-amber-900">
+        A module they have never opened stays locked, and they still have to pass at 100%. It is
+        recorded on the application, and a pass sat this way is marked as one in the audit file.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Action busy={busy} onClick={() => { setAsking(false); onConfirm(); }}>
+          Send it
+        </Action>
+        <Action busy={false} ghost onClick={() => setAsking(false)}>
+          Cancel
+        </Action>
+      </div>
+    </div>
   );
 }
 

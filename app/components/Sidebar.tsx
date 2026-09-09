@@ -91,6 +91,7 @@ const GROUPS: Group[] = [
     icon: "🏠",
     items: [
       { href: "/properties", icon: "🏘️", label: "Aggregator Feed" },
+      { href: "/properties/map", icon: "📍", label: "Stock Map" },
       { href: "/aggregator/review", icon: "🔍", label: "Review Queue", badge: "pendingReview" },
       { href: "/aggregator/runs", icon: "📜", label: "Ingestion Runs" },
       { href: "/aggregator/builders", icon: "🏗️", label: "Builders", badge: "draftBuilders" },

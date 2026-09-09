@@ -8,7 +8,7 @@
  * still-valid token behind on anything that copied it.
  */
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function PortalHeader({
@@ -45,6 +45,10 @@ export default function PortalHeader({
           </span>
         </Link>
         <div className="flex items-center gap-3">
+          <nav className="flex items-center gap-1 text-sm">
+            <NavLink href="/introducer/clients" label="Referrals" />
+            <NavLink href="/introducer/resources" label="Documents" />
+          </nav>
           {userName && <span className="hidden text-sm text-gray-600 sm:inline">{userName}</span>}
           <button
             onClick={signOut}
@@ -56,5 +60,26 @@ export default function PortalHeader({
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * Highlights on prefix, not exact equality, so a referral detail page still
+ * shows "Referrals" as the section you are in — which is where the Back link
+ * would take you.
+ */
+function NavLink({ href, label }: { href: string; label: string }) {
+  const pathname = usePathname();
+  const active = pathname === href || pathname.startsWith(`${href}/`);
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`rounded-lg px-2.5 py-1.5 font-medium ${
+        active ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
+      }`}
+    >
+      {label}
+    </Link>
   );
 }

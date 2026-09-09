@@ -18,15 +18,14 @@ import { supabase } from "../../../utils/supabase";
 import { requireAuth } from "../../../utils/cf-access";
 import { enforceRateLimit } from "../../../utils/rate-limit";
 import { log, errInfo } from "../../../utils/logger";
-import { recordAudit } from "../../../utils/compliance-audit";
-import { newToken } from "../../../utils/sign-token";
 import { isSignDocType } from "../../../utils/signatures";
 import { loadDoc } from "../../../utils/sign-doc-render";
-import { sendBrevoEmail } from "../../../utils/brevo";
-import { resolveIdentity } from "../../../utils/mailIdentities";
+import {
+  createSignatureRequests,
+  MAX_SIGNERS,
+} from "../../../utils/signature-requests-create";
 import {
   SIGNATURE_REQUESTS_TABLE,
-  SIGNATURE_MIGRATION_HINT,
   signatureTableMissing,
   isValidEmail,
   isUuid,
@@ -35,10 +34,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const MAX_SIGNERS = 2;
-const DEFAULT_EXPIRY_DAYS = 14;
-const TEAL = "#0F4C5C";
 
 /**
  * The public origin to build signing links from. Prefer an explicit env
@@ -52,35 +47,6 @@ function publicOrigin(req: Request): string {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
   if (host) return `${proto}://${host}`;
   return new URL(req.url).origin;
-}
-
-function signEmailHtml(signerName: string, docLabel: string, link: string, message: string): string {
-  const greeting = signerName ? `Hi ${escapeHtml(signerName)},` : "Hello,";
-  const note = message ? `<p style="margin:0 0 16px">${escapeHtml(message)}</p>` : "";
-  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:0 auto">
-    <div style="background:${TEAL};color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
-      <div style="font-size:18px;font-weight:bold">NextKey Property Strategists</div>
-    </div>
-    <div style="border:1px solid #e5e7eb;border-top:none;padding:22px;border-radius:0 0 8px 8px">
-      <p style="margin:0 0 16px">${greeting}</p>
-      <p style="margin:0 0 16px">You've been asked to review and electronically sign your <strong>${escapeHtml(docLabel)}</strong>.</p>
-      ${note}
-      <p style="margin:0 0 24px">
-        <a href="${link}" style="display:inline-block;background:${TEAL};color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">
-          Review &amp; sign
-        </a>
-      </p>
-      <p style="margin:0 0 8px;font-size:12px;color:#555">Or paste this link into your browser:</p>
-      <p style="margin:0 0 16px;font-size:12px;word-break:break-all"><a href="${link}" style="color:${TEAL}">${link}</a></p>
-      <p style="margin:0;font-size:12px;color:#888">This link is unique to you — please don't forward it. If you weren't expecting this, you can ignore this email.</p>
-    </div>
-  </div>`;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : c === '"' ? "&quot;" : "&#39;",
-  );
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -133,104 +99,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
     const docLabel = documentLabel(docType, doc.summary);
 
-    const message = typeof body.message === "string" ? body.message.slice(0, 1000) : "";
-    const days =
-      typeof body.expiresInDays === "number" && body.expiresInDays > 0 && body.expiresInDays <= 90
-        ? Math.floor(body.expiresInDays)
-        : DEFAULT_EXPIRY_DAYS;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-    const origin = publicOrigin(req);
+    const result = await createSignatureRequests({
+      docType,
+      docId,
+      docLabel,
+      signers,
+      origin: publicOrigin(req),
+      message: typeof body.message === "string" ? body.message : "",
+      expiresInDays: typeof body.expiresInDays === "number" ? body.expiresInDays : undefined,
+      createdBy: auth,
+    });
 
-    // These are Springboard compliance documents sent to Springboard leads, so
-    // the signer should recognise the Springboard brand — and, importantly,
-    // hello@springboardhomes.com.au is an already-validated Brevo sender, so the
-    // mail actually delivers. Reuse the composer's `springboard` identity rather
-    // than hardcoding the address so it stays in sync with env config.
-    const sender = resolveIdentity("springboard");
-
-    const created: { id: string; signer_index: number; signer_email: string; status: string }[] = [];
-    const createdIds: string[] = [];
-    const emailErrors: string[] = [];
-
-    for (let i = 0; i < signers.length; i++) {
-      const { raw, hash } = newToken();
-      const { data: inserted, error } = await supabase
-        .from(SIGNATURE_REQUESTS_TABLE)
-        .insert({
-          doc_type: docType,
-          doc_id: docId,
-          signer_index: i + 1,
-          signer_name: signers[i].name || null,
-          signer_email: signers[i].email,
-          token_hash: hash,
-          status: "sent",
-          created_by: auth,
-          sent_at: now.toISOString(),
-          expires_at: expiresAt,
-        })
-        .select("id,signer_index,signer_email,status")
-        .single();
-
-      if (error) {
-        if (signatureTableMissing(error)) {
-          return NextResponse.json({ ok: false, error: SIGNATURE_MIGRATION_HINT }, { status: 501 });
-        }
-        throw error;
-      }
-
-      const insertedRow = inserted as { id: string; signer_index: number; signer_email: string; status: string };
-      createdIds.push(insertedRow.id);
-
-      const link = `${origin}/sign/${raw}`;
-      const sent = await sendBrevoEmail({
-        to: [{ email: signers[i].email, name: signers[i].name || undefined }],
-        subject: `Please sign your ${docLabel}`,
-        html: signEmailHtml(signers[i].name, docLabel, link, message),
-        fromEmail: sender.fromEmail,
-        fromName: sender.fromName,
-        tags: ["e-signature"],
-      });
-      if (!sent.ok) {
-        // The email IS the action here — a rejected send must not be reported as
-        // success. Record the error and skip the "sent" audit for this signer.
-        emailErrors.push(`${signers[i].email}: ${sent.error}`);
-        continue;
-      }
-
-      created.push(insertedRow);
-
-      // Audit on the document itself. The audit action enum has no "sent" value,
-      // so log an 'update' with a clear note (per the compliance-audit contract).
-      await recordAudit({
-        docType,
-        docId,
-        action: "update",
-        changedBy: auth,
-        note: `Sent for signature to ${signers[i].email}`,
-      });
+    if (!result.ok) {
+      return NextResponse.json({ ok: false, error: result.error }, { status: result.status });
     }
-
-    if (emailErrors.length) {
-      // At least one signing email was rejected by Brevo. Delete the just-created
-      // request rows so the advisor gets a clean retry instead of a stuck "sent"
-      // row that never emailed, and surface the failure (SigningPanel shows the
-      // error) rather than a fake "Sent".
-      if (createdIds.length) {
-        const { error: delErr } = await supabase
-          .from(SIGNATURE_REQUESTS_TABLE)
-          .delete()
-          .in("id", createdIds);
-        if (delErr) log.error("sign.cleanup_after_email_failure_failed", { docType, docId, ...errInfo(delErr) });
-      }
-      log.warn("sign.email_send_failed", { docType, docId, errors: emailErrors });
-      return NextResponse.json(
-        { ok: false, error: `Could not send for signature: ${emailErrors.join("; ")}` },
-        { status: 502 },
-      );
-    }
-
-    return NextResponse.json({ ok: true, requests: created });
+    return NextResponse.json({ ok: true, requests: result.requests });
   } catch (e) {
     log.error("sign.create_requests_failed", { ...errInfo(e) });
     return NextResponse.json({ ok: false, error: "Could not send for signature" }, { status: 500 });

@@ -50,8 +50,42 @@ export const INCOME_GROSS_NET = ["gross", "net"] as const;
 export const PAY_FREQUENCIES = ["wk", "fn", "m", "pa"] as const;
 export type PayFrequency = (typeof PAY_FREQUENCIES)[number];
 
-/** Who an asset / liability belongs to. */
+/** Who an asset / liability / income belongs to. */
 export const OWNER_OPTIONS = ["app1", "app2", "both"] as const;
+
+/**
+ * The kinds of income that are not a salary from the applicant's main job.
+ *
+ * The paper form asks for these as one free-text line — "Bonus, Commission,
+ * Centrelink, Family Assistance" — for the whole household. That is not good
+ * enough for two reasons, and both have bitten:
+ *
+ *   1. IT IS NOT ATTRIBUTED. A household line cannot say WHOSE income it is,
+ *      so a lender assessing one applicant's servicing cannot use it, and the
+ *      income reconciliation had to guess by scanning the prose for a first
+ *      name (see loadDeclaredIncome). Guessing whose money it is, on a document
+ *      the client signs, is not a thing to keep doing.
+ *
+ *   2. IT IS NOT A NUMBER. "David casual Woolworths 1 day per $400 per week" is
+ *      a sentence, not an amount at a frequency, so nothing downstream can add
+ *      it up or compare it to a payslip. The unevidenced-income finding exists
+ *      precisely because that claim could not be checked.
+ *
+ * So other income is now rows: a type, an amount, a frequency, and whose it is.
+ */
+export const OTHER_INCOME_TYPES = [
+  "Bonus",
+  "Commission",
+  "Overtime",
+  "Second job",
+  "Rental income",
+  "Centrelink / Family Assistance",
+  "Child support",
+  "Investment / dividends",
+  "Superannuation / pension",
+  "Other",
+] as const;
+export type OtherIncomeType = (typeof OTHER_INCOME_TYPES)[number];
 
 /** Asset rows the paper form pre-prints, in order. */
 export const ASSET_TYPES = [
@@ -234,6 +268,19 @@ export type Liability = {
   owner: string;
 };
 
+export type OtherIncome = {
+  id: string;
+  /** One of OTHER_INCOME_TYPES. */
+  type: string;
+  /** Who pays it, or what it is — "Woolworths, 1 day/wk", "Family Tax Benefit A". */
+  description: string;
+  amount: number | null;
+  /** wk | fn | m | pa */
+  frequency: string;
+  /** app1 | app2 | both — WHOSE income this is. */
+  owner: string;
+};
+
 export type LivingExpense = {
   amount: number | null;
   /** wk | fn | m | pa */
@@ -255,7 +302,20 @@ export type NeedsAnalysisData = {
   first_home_buyer: boolean | null;
   applicants: [Applicant, Applicant];
   relative: Relative;
-  /** "Bonus, Commission, Centrelink, Family Assistance". */
+  /**
+   * Other income, per applicant, as rows. See OTHER_INCOME_TYPES.
+   */
+  other_incomes: OtherIncome[];
+  /**
+   * LEGACY. The single household free-text line this form used to carry.
+   *
+   * Retained and still rendered where non-empty, because Needs Analyses signed
+   * before other_incomes existed hold their only record of a client's extra
+   * income here — dropping the field would silently delete it from documents
+   * that have already been relied on. Nothing writes it now, and it is NOT
+   * auto-parsed into rows: splitting a sentence into an amount and an owner is
+   * exactly the guessing this change exists to stop.
+   */
   other_income: string;
   assets: Asset[];
   liabilities: Liability[];
@@ -362,6 +422,10 @@ export function emptyAsset(type: string, n: number): Asset {
   return { id: rowId("asset", n), type, description: "", estimated_value: null, owner: "", rental_income: null };
 }
 
+export function emptyOtherIncome(type: string, n: number): OtherIncome {
+  return { id: rowId("otherinc", n), type, description: "", amount: null, frequency: "m", owner: "" };
+}
+
 export function emptyLiability(type: string, n: number): Liability {
   return {
     id: rowId("liab", n),
@@ -412,6 +476,9 @@ export function emptyNeedsAnalysis(): NeedsAnalysisData {
     first_home_buyer: null,
     applicants: [emptyApplicant(), emptyApplicant()],
     relative: { name: "", phone: "", email: "", address: "" },
+    // No rows pre-printed: most households have no other income, and a grid of
+    // blank rows reads as something that must be filled in.
+    other_incomes: [],
     other_income: "",
     assets: defaultAssets(),
     liabilities: defaultLiabilities(),
@@ -483,6 +550,14 @@ export function hydrateNeedsAnalysis(raw: unknown): NeedsAnalysisData {
     first_home_buyer: typeof d.first_home_buyer === "boolean" ? d.first_home_buyer : base.first_home_buyer,
     applicants,
     relative: { ...base.relative, ...(d.relative ?? {}) },
+    /* Rows are taken wholesale (they're user-ordered) and NOT derived from the
+     * legacy `other_income` line. Parsing "David casual Woolworths 1 day per
+     * $400 per week" into an amount and an owner is precisely the guessing this
+     * change removed; a document signed under the old shape keeps its sentence,
+     * and a human decides what the rows should say. */
+    other_incomes: Array.isArray(d.other_incomes)
+      ? d.other_incomes.map((o) => ({ ...emptyOtherIncome("Other", 0), ...o }))
+      : base.other_incomes,
     other_income: d.other_income ?? base.other_income,
     assets: Array.isArray(d.assets) && d.assets.length ? d.assets.map((a) => ({ ...emptyAsset("Other", 0), ...a })) : base.assets,
     liabilities:
@@ -501,6 +576,8 @@ export type NeedsAnalysisTotals = {
   totalLiabilities: number;
   /** Sum of every living-expense line converted to a monthly figure. */
   monthlyLivingExpenses: number;
+  /** Sum of every other-income row converted to a monthly figure. */
+  monthlyOtherIncome: number;
 };
 
 const sum = (xs: (number | null | undefined)[]) =>
@@ -527,7 +604,26 @@ export function computeNeedsAnalysisTotals(data: NeedsAnalysisData): NeedsAnalys
     totalAssets: sum(data.assets.map((a) => a.estimated_value)),
     totalLiabilities: sum(data.liabilities.map((l) => l.loan_balance)),
     monthlyLivingExpenses: data.living_expenses.reduce((t, e) => t + toMonthly(e.amount, e.frequency), 0),
+    monthlyOtherIncome: (data.other_incomes ?? []).reduce(
+      (t, o) => t + toMonthly(o.amount, o.frequency),
+      0,
+    ),
   };
+}
+
+/**
+ * Other income belonging to one applicant, as a per-month figure.
+ *
+ * `both` counts for either applicant, because a jointly-received payment is
+ * income to the household the applicant is in — the caller decides whether to
+ * halve it. Nothing here guesses an owner: a row with no owner set belongs to
+ * nobody and is excluded, which is visible and correctable rather than silently
+ * attributed to applicant 1.
+ */
+export function monthlyOtherIncomeFor(data: NeedsAnalysisData, applicant: "app1" | "app2"): number {
+  return (data.other_incomes ?? [])
+    .filter((o) => o.owner === applicant || o.owner === "both")
+    .reduce((t, o) => t + toMonthly(o.amount, o.frequency), 0);
 }
 
 /** "$400,000" — whole dollars, the convention on the paper form. "" when unset. */

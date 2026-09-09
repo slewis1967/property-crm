@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { requireIntroducerPage } from "../session";
 import PortalHeader from "../PortalHeader";
+import AccreditationNotice from "../AccreditationNotice";
 import { listOwnClients } from "../../api/introducer/_shared";
 import { supabase } from "../../../utils/supabase";
 import { toPortalView, STATUS_LABELS, type IntroducerClientStatus } from "../../../utils/introducer";
+import { businessDayKey } from "../../../utils/datetime";
 
 // PUBLIC page, session-scoped. The list is built from the session's introducer
 // id — there is no path here that takes an id from the request.
@@ -45,6 +47,11 @@ export default async function IntroducerClientsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PortalHeader firmName={identity.firmName} userName={identity.fullName ?? identity.email} />
+      <AccreditationNotice
+        accreditationExpiresAt={identity.accreditationExpiresAt}
+        smsfCompetencyExpiresAt={identity.smsfCompetencyExpiresAt}
+        today={businessDayKey(new Date().toISOString())!}
+      />
 
       <main className="mx-auto max-w-4xl px-4 py-7">
         <div className="flex items-center justify-between gap-4">
@@ -120,6 +127,18 @@ export default async function IntroducerClientsPage() {
   );
 }
 
+/**
+ * What a draft is waiting on.
+ *
+ * "Not submitted" is true of every draft and therefore tells a Tier 2
+ * introducer with six packs on the go nothing at all. A pack's real state is
+ * whether the Needs Analysis has been started, so say that instead.
+ */
+function draftDetail(client: ReturnType<typeof toPortalView>): string {
+  if (client.pack_type !== "full") return "Not submitted";
+  return client.pack_started ? "Needs Analysis in progress" : "Needs Analysis not started";
+}
+
 function ReferralRow({
   client,
   actionNeeded,
@@ -144,12 +163,17 @@ function ReferralRow({
               )}
             </div>
             <div className="mt-0.5 truncate text-sm text-gray-600">
-              {client.status === "draft" ? "Not submitted" : client.stage_label}
+              {client.status === "draft" ? draftDetail(client) : client.stage_label}
               {client.suburb ? ` · ${client.suburb}` : ""}
               {client.state ? `, ${client.state}` : ""}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {client.pack_type === "full" && (
+              <span className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-medium text-white">
+                Pack
+              </span>
+            )}
             {actionNeeded && (
               <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
                 Action needed

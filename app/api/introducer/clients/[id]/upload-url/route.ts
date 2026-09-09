@@ -7,14 +7,24 @@
  * straight to storage, so they never traverse the Netlify function (whose body
  * limit turns multipart uploads into 500s). Same approach as the client portal.
  *
- * AN UPLOAD IS ONLY EVER A REPLY. It must name an OPEN information request that
- * asked for that exact document label. There is no path for an introducer to
- * attach files to a locked referral of their own accord — which is the same rule
- * as the field lock, applied to documents.
+ * AN UPLOAD IS ONLY EVER A REPLY — with exactly one exception. Normally it must
+ * name an OPEN information request that asked for that exact document label:
+ * there is no path for an introducer to attach files to a LOCKED referral of
+ * their own accord, which is the field lock applied to documents.
+ *
+ * THE EXCEPTION IS THE SIGNED CONSENT FORM, ON A DRAFT. The referral agreement
+ * makes the signed Referral Consent and Privacy Form a precondition of
+ * submitting, so it has to be attachable BEFORE submit — and before submit there
+ * is nothing to ask for, because there is no referral in the queue yet. It is
+ * allowed only while the referral is still a draft, which is precisely the
+ * window in which the introducer can change everything else too. Once submitted,
+ * the ordinary rule applies again and a replacement consent form needs an
+ * information request like any other document.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { requireIntroducer, loadOwnClient, logIntroducerEvent, readJson } from "../../../_shared";
+import { CONSENT_FORM_LABEL } from "../../../../../../utils/introducer";
 import { enforceRateLimit } from "../../../../../../utils/rate-limit";
 import { clientIp } from "../../../../../../utils/introducer-auth";
 
@@ -84,28 +94,38 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ok: false, error: "That file is too large — 15MB maximum." }, { status: 400 });
   }
 
-  // The authorisation check: an OPEN request on THIS referral that asked for
-  // THIS label. Re-read from the database rather than trusting the body.
-  const { data: infoReq } = await supabase
-    .from("introducer_info_requests")
-    .select("id,documents,status")
-    .eq("id", infoRequestId)
-    .eq("client_id", record.id)
-    .eq("status", "open")
-    .maybeSingle();
+  // The consent form on a still-editable draft is the one upload that is not a
+  // reply to anything — see the note at the top of this file.
+  const isConsentOnDraft =
+    label.toLowerCase() === CONSENT_FORM_LABEL.toLowerCase() && record.status === "draft";
 
-  if (!infoReq) {
-    return NextResponse.json(
-      { ok: false, error: "We haven't asked for a document on this referral. Contact Springboard if you need to send something." },
-      { status: 403 },
-    );
-  }
-  const asked = ((infoReq.documents as string[]) ?? []).map((d) => d.toLowerCase());
-  if (!asked.includes(label.toLowerCase())) {
-    return NextResponse.json(
-      { ok: false, error: "That isn't one of the documents we asked for." },
-      { status: 403 },
-    );
+  let infoReq: { id: string } | null = null;
+
+  if (!isConsentOnDraft) {
+    // The authorisation check: an OPEN request on THIS referral that asked for
+    // THIS label. Re-read from the database rather than trusting the body.
+    const { data: found } = await supabase
+      .from("introducer_info_requests")
+      .select("id,documents,status")
+      .eq("id", infoRequestId)
+      .eq("client_id", record.id)
+      .eq("status", "open")
+      .maybeSingle();
+
+    if (!found) {
+      return NextResponse.json(
+        { ok: false, error: "We haven't asked for a document on this referral. Contact Springboard if you need to send something." },
+        { status: 403 },
+      );
+    }
+    const asked = ((found.documents as string[]) ?? []).map((d) => d.toLowerCase());
+    if (!asked.includes(label.toLowerCase())) {
+      return NextResponse.json(
+        { ok: false, error: "That isn't one of the documents we asked for." },
+        { status: 403 },
+      );
+    }
+    infoReq = { id: found.id };
   }
 
   const ext = EXT_BY_MIME[mime] ?? "bin";
@@ -125,7 +145,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .from("introducer_documents")
     .insert({
       client_id: record.id,
-      info_request_id: infoReq.id,
+      // Null for the consent form on a draft: it answers no request, and
+      // inventing one to satisfy the column would put a request in the audit
+      // trail that nobody made.
+      info_request_id: infoReq?.id ?? null,
       label,
       filename,
       original_name: typeof body.filename === "string" ? body.filename.slice(0, 200) : null,
@@ -146,8 +169,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     introducerId: auth.introducerId,
     actorType: "introducer",
     actor: auth.email,
-    action: "document_uploaded",
-    detail: { label, info_request_id: infoReq.id },
+    action: isConsentOnDraft ? "consent_form_uploaded" : "document_uploaded",
+    detail: { label, info_request_id: infoReq?.id ?? null },
   });
 
   return NextResponse.json({

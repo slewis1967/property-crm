@@ -15,6 +15,8 @@
 import { supabase } from "./supabase";
 import { newToken, hashToken } from "./sign-token";
 import type { OnboardingState } from "./introducer-onboarding";
+import { columnMissing } from "./column-missing";
+import { isValidSharePct } from "./introducer-agreement";
 import {
   introducerEntityColumnMissing,
   type BusinessDetails,
@@ -43,11 +45,30 @@ export type Application = {
   exam_passed_at: string | null;
   accreditation_no: string | null;
   certificate_path: string | null;
+  /** Absent until 20260819_introducer_accreditation_expiry.sql runs. */
+  certificate_issued_at?: string | null;
+  accreditation_expires_at?: string | null;
+  smsf_competency_expires_at?: string | null;
   /** Applicant-supplied. Absent until 20260814_introducer_entity_details.sql runs. */
   acn?: string | null;
   entity_type?: EntityType | null;
   registered_address?: string | null;
   business_details_at?: string | null;
+  /** The agreed referral fee, rendered verbatim into the commission schedule.
+   *  Only ever set on the `paid` variant. Absent until
+   *  20260821f_introducer_referral_fee.sql runs. */
+  fee_per_settlement?: string | null;
+  fee_notes?: string | null;
+  /** Per-introducer override of the tier's builder-commission share. Null means
+   *  "use the tier default" — 75 for Tier 1, 90 for Tier 2 — which is the
+   *  ordinary case. Absent until 20260821h_introducer_builder_share.sql runs,
+   *  and absent reads the same as null, so the default still applies. */
+  builder_share_pct?: number | null;
+  /** Who brought this introducer in, and whether they are paid on the
+   *  settlements of introducers THEY recruited. Absent until
+   *  20260821g_introducer_recruiter_chain.sql runs. */
+  recruited_by_introducer_id?: string | null;
+  recruits_introducers?: boolean | null;
   created_at: string;
   updated_at: string;
   withdrawn_reason: string | null;
@@ -63,11 +84,53 @@ const BASE_COLUMNS =
  *  can fall back while that SQL is pending. */
 const ENTITY_COLUMNS = "acn, entity_type, registered_address, business_details_at";
 
-const COLUMNS = `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`;
+/** Added by `20260813b_...` and `20260819_introducer_accreditation_expiry.sql`.
+ *  Only the certificate path needs them, and it degrades to deriving the
+ *  expiries from today if they are not there yet. */
+const ACCREDITATION_COLUMNS =
+  "certificate_issued_at, accreditation_expires_at, smsf_competency_expires_at";
+
+/** Added by `20260821f_introducer_referral_fee.sql`. Only the commission
+ *  schedule needs them, and it refuses to issue a paid schedule without a fee
+ *  either way — so a pending migration reads as "the fee has not been set",
+ *  which is exactly what it means. */
+const FEE_COLUMNS = "fee_per_settlement, fee_notes";
+
+/** Added by `20260821g_introducer_recruiter_chain.sql`. A pending migration
+ *  reads as "nobody recruits anybody", which is what it meant before the BDM
+ *  arrangement existed. */
+const RECRUITER_COLUMNS = "recruited_by_introducer_id, recruits_introducers";
+
+/** Added by `20260821h_introducer_builder_share.sql`. Only an OVERRIDE of the
+ *  tier default lives here, so a pending migration reads as "no override" and
+ *  every introducer simply gets their tier's share — which is the policy. This
+ *  rung is the one that degrades to correct behaviour rather than to degraded
+ *  behaviour. */
+const SHARE_COLUMNS = "builder_share_pct";
+
+/** Widest first. Each rung drops the most recent migration's columns, so a read
+ *  keeps working against a database that is one or two migrations behind the
+ *  deploy — the house rule being that code ships before the SQL is run. */
+const COLUMN_LADDER = [
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}, ${SHARE_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}, ${RECRUITER_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}, ${FEE_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}, ${ACCREDITATION_COLUMNS}`,
+  `${BASE_COLUMNS}, ${ENTITY_COLUMNS}`,
+  BASE_COLUMNS,
+];
+
+const COLUMNS = COLUMN_LADDER[0];
 
 /** Why a token did not resolve. The page words each of these differently — a
  *  candidate whose link expired needs a different sentence to one who typoed. */
 export type LookupFailure = "not_found" | "expired";
+
+/** Every link an applicant has been sent, one row each. Added by
+ *  `20260820_introducer_onboarding_link_tokens.sql`; every read and write of it
+ *  degrades to the application row's own `token_hash` while that SQL is
+ *  pending, per the house rule that code ships before the migration is run. */
+const LINK_TABLE = "introducer_application_tokens";
 
 /**
  * Select once with the entity columns, and again without them if that
@@ -80,20 +143,62 @@ export type LookupFailure = "not_found" | "expired";
 async function selectApplication<T>(
   run: (columns: string) => PromiseLike<{ data: T; error: unknown }>,
 ): Promise<{ data: T; error: unknown }> {
-  const first = await run(COLUMNS);
-  if (first.error && introducerEntityColumnMissing(first.error)) return run(BASE_COLUMNS);
-  return first;
+  let last: { data: T; error: unknown } | null = null;
+  for (const columns of COLUMN_LADDER) {
+    last = await run(columns);
+    if (!last.error || !introducerEntityColumnMissing(last.error)) return last;
+  }
+  return last!;
 }
 
+/** True when the link table has not been created yet — see LINK_TABLE. */
+function linkTableMissing(err: unknown): boolean {
+  const msg = typeof err === "string" ? err : (err as { message?: string })?.message || "";
+  return /introducer_application_tokens/.test(msg) && /does not exist|schema cache|relation/i.test(msg);
+}
+
+/**
+ * Resolve a raw token to an application.
+ *
+ * Two places to look, in this order:
+ *
+ *   1. `introducer_application_tokens` — every link the candidate has ever been
+ *      sent, each live until it expires. This is the table that stops a new
+ *      email from killing the last one (see the 20260820 migration).
+ *   2. `introducer_applications.token_hash` — the newest link, still kept in
+ *      sync. The fallback for a deploy that has landed ahead of the SQL, and
+ *      for a token minted by an older deploy after the backfill ran.
+ *
+ * A hash present in (1) is answered from (1) alone, expiry included: falling
+ * through to the column for a link we have deliberately expired or revoked
+ * would quietly undo the decision.
+ */
 export async function findByToken(
   rawToken: string,
 ): Promise<{ ok: true; application: Application } | { ok: false; reason: LookupFailure }> {
+  const hash = hashToken(rawToken);
+
+  const link = await supabase
+    .from(LINK_TABLE)
+    .select("application_id, expires_at, revoked_at")
+    .eq("token_hash", hash)
+    .maybeSingle();
+
+  if (link.error && !linkTableMissing(link.error)) throw link.error;
+
+  if (!link.error && link.data) {
+    const row = link.data as { application_id: string; expires_at: string; revoked_at: string | null };
+    // A revoked link reads as expired, not as unknown: the holder is a real
+    // candidate and "ask us for a fresh one" is the sentence that helps them.
+    if (row.revoked_at || new Date(row.expires_at).getTime() < Date.now()) {
+      return { ok: false, reason: "expired" };
+    }
+    const app = await findById(row.application_id);
+    return app ? { ok: true, application: app } : { ok: false, reason: "not_found" };
+  }
+
   const { data, error } = await selectApplication((columns) =>
-    supabase
-      .from("introducer_applications")
-      .select(columns)
-      .eq("token_hash", hashToken(rawToken))
-      .maybeSingle(),
+    supabase.from("introducer_applications").select(columns).eq("token_hash", hash).maybeSingle(),
   );
 
   if (error) throw error;
@@ -148,6 +253,132 @@ export async function saveBusinessDetails(
         ok: false,
         error:
           "Business details are not switched on yet — run migrations/20260814_introducer_entity_details.sql.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Record the agreed referral fee.
+ *
+ * Staff-writable and paid-variant only — the check constraint refuses a fee on
+ * standard terms, because Document 2 says no fee is payable and a figure stored
+ * beside it would contradict the contract it ships with. Refused once the
+ * schedule has issued: that document snapshots the amount, and a row that
+ * quietly disagrees with the signed instrument behind it is worse than one
+ * merely out of date.
+ */
+export async function setReferralFee(
+  id: string,
+  fee: string,
+  notes: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({
+      fee_per_settlement: fee.trim() || null,
+      fee_notes: notes.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["fee_per_settlement", "fee_notes"])) {
+      return {
+        ok: false,
+        error:
+          "Referral fees are not switched on yet — run migrations/20260821f_introducer_referral_fee.sql.",
+      };
+    }
+    // The constraint, surfaced as the choice it actually represents rather than
+    // as a database error nobody outside this file can read.
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "A referral fee cannot be set on the standard arrangement, which says no fee is payable. Move them onto the paid variant first.",
+      };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Override this introducer's share of the builder commission.
+ *
+ * The ordinary case is NOT to call this: tier sets the share, 75% for Tier 1
+ * and 90% for Tier 2, and `introducerDocDataFor` applies that default at issue.
+ * This exists for the introducer who has negotiated something else.
+ *
+ * Passing null clears the override and returns them to their tier's share.
+ * Like the fee, it must be settled BEFORE the documents issue — both the
+ * agreement and the schedule snapshot the figure, and a row that quietly
+ * disagrees with the signed instrument is worse than one merely out of date.
+ */
+export async function setBuilderShare(
+  id: string,
+  pct: number | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (pct !== null && !isValidSharePct(pct)) {
+    return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
+  }
+
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ builder_share_pct: pct, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["builder_share_pct"])) {
+      return {
+        ok: false,
+        error:
+          "Per-introducer shares are not switched on yet — run migrations/20260821h_introducer_builder_share.sql. Until then everyone gets their tier's share, which is 75% for Tier 1 and 90% for Tier 2.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return { ok: false, error: "A share must be a percentage above 0 and no more than 100." };
+    }
+    throw error;
+  }
+  return { ok: true };
+}
+
+/**
+ * Grant or withdraw the network entitlement — "this introducer is paid on
+ * settled referrals from introducers they recruited".
+ *
+ * Separate from setReferralFee because it is a different decision: the fee is
+ * the amount, this is the scope. Both are terms of a schedule somebody signs,
+ * so both must be settled BEFORE that document issues — it snapshots them, and
+ * a row that quietly disagrees with the signed instrument is worse than one
+ * merely out of date.
+ */
+export async function setRecruiterEntitlement(
+  id: string,
+  recruits: boolean,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase
+    .from("introducer_applications")
+    .update({ recruits_introducers: recruits, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    if (columnMissing(error, ["recruits_introducers"])) {
+      return {
+        ok: false,
+        error:
+          "Recruiter arrangements are not switched on yet — run migrations/20260821g_introducer_recruiter_chain.sql.",
+      };
+    }
+    if ((error as { code?: string }).code === "23514") {
+      return {
+        ok: false,
+        error:
+          "Only a paid introducer can earn on referrals from introducers they recruit — the standard arrangement pays nothing at all. Move them onto the paid variant first.",
       };
     }
     throw error;
@@ -217,23 +448,69 @@ export async function createApplication(
     .single();
 
   if (error) throw error;
+
+  // Record the invite link alongside every later one, so the table is the whole
+  // history rather than everything-except-the-first. Non-fatal: the column
+  // above already carries this hash, and the lookup falls back to it.
+  const linked = await supabase
+    .from(LINK_TABLE)
+    .insert({ application_id: (data as unknown as Application).id, token_hash: token.hash, expires_at: expires, purpose: "invite" });
+  if (linked.error && !linkTableMissing(linked.error)) throw linked.error;
+
   return { application: data as unknown as Application, rawToken: token.raw };
 }
 
-/** Mint a new link for an existing application, invalidating the old one. */
-export async function reissueToken(
+/** Why a link was minted. Recorded so the audit file can say which email a
+ *  candidate was holding, and never used as a gate. */
+export type LinkPurpose = "invite" | "nda" | "exam" | "certificate" | "agreement" | "reissue";
+
+/**
+ * Mint a fresh link for an existing application. The previous ones KEEP WORKING.
+ *
+ * This used to be `reissueToken`, and minting also revoked: the new hash
+ * overwrote the old one on the application row, so the last email sent was the
+ * only email that worked. Every routine step send therefore broke the link in
+ * the send before it, and two staff clicks a few seconds apart — issue the
+ * certificate, then send the agreement — left the candidate holding a dead link
+ * to the page their certificate lives on. That is exactly what happened to
+ * SBI-2026-0004 and -0005.
+ *
+ * So the link goes into `introducer_application_tokens`, one row per link, all
+ * of them live until they expire. The application row still carries the newest
+ * hash and expiry: nothing else has to learn about a second table, and a deploy
+ * that lands before the SQL keeps resolving the latest link.
+ *
+ * Revocation did not go away, it just has to be asked for now — set `revoked_at`
+ * on the row, which is what you want when a link has gone astray and what you
+ * never wanted when you were merely sending the next email.
+ */
+export async function mintLinkToken(
   id: string,
+  purpose: LinkPurpose,
   days = 30,
 ): Promise<string> {
   const token = newToken();
+  const expires = new Date(Date.now() + days * 86_400_000).toISOString();
+
+  // The link row first: an application pointing at a hash with no row behind it
+  // would resolve through the fallback anyway, whereas a row with no
+  // application pointing at it is simply an extra working link. Fail this and
+  // we have minted nothing, which is the honest outcome.
+  const linked = await supabase
+    .from(LINK_TABLE)
+    .insert({ application_id: id, token_hash: token.hash, expires_at: expires, purpose });
+
+  // Before the 20260820 migration there is nowhere to put it, and the single
+  // column below is all there is — the old behaviour, warts and all, rather
+  // than a send that fails because the SQL is pending.
+  if (linked.error && !linkTableMissing(linked.error)) throw linked.error;
+
   const { error } = await supabase
     .from("introducer_applications")
-    .update({
-      token_hash: token.hash,
-      token_expires_at: new Date(Date.now() + days * 86_400_000).toISOString(),
-    })
+    .update({ token_hash: token.hash, token_expires_at: expires })
     .eq("id", id);
   if (error) throw error;
+
   return token.raw;
 }
 
@@ -277,6 +554,8 @@ export async function recordExamAttempt(
     itemIds?: string[];
     markedAt?: string;
     integrity?: unknown;
+    /** The sitting ran with the course's waits off and its module gates open. */
+    overridden?: boolean;
   },
 ): Promise<{ duplicate: boolean }> {
   // limit(1) rather than maybeSingle() alone: if a duplicate ever did slip
@@ -302,6 +581,7 @@ export async function recordExamAttempt(
     item_ids: attempt.itemIds ?? [],
     marked_at: attempt.markedAt ?? new Date().toISOString(),
     integrity: attempt.integrity ?? null,
+    waits_and_gates_overridden: attempt.overridden === true,
   });
 
   return { duplicate: false };

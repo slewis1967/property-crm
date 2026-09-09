@@ -13,7 +13,12 @@ import {
   logIntroducerEvent,
   readJson,
 } from "../_shared";
-import { pickEditableFields, toPortalView } from "../../../../utils/introducer";
+import {
+  pickEditableFields,
+  toPortalView,
+  canSendFullPack,
+  seedNeedsAnalysisFromReferral,
+} from "../../../../utils/introducer";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../../../utils/introducer-auth";
 
@@ -76,19 +81,74 @@ export async function POST(req: Request) {
 
   const fields = pickEditableFields(body);
 
-  const { data, error } = await supabase
+  /* Which of the two things they are starting.
+   *
+   * The tier check is here, on the session's own firm, and never on anything in
+   * the body — `pack_type` is the only thing the caller gets to say, and saying
+   * "full" without the accreditation to back it is refused. The database
+   * trigger refuses it a second time (see the migration); this exists so the
+   * introducer gets a sentence rather than a 500. */
+  const wantsFullPack = body.pack_type === "full";
+  if (wantsFullPack && !canSendFullPack(auth.tier)) {
+    await logIntroducerEvent({
+      introducerId: auth.introducerId,
+      actorType: "introducer",
+      actor: auth.email,
+      action: "full_pack_refused_tier",
+      detail: { tier: auth.tier },
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "A full submission pack needs Tier 2 accreditation. Your firm is accredited at Tier 1, " +
+          "which covers referrals. Contact Springboard if you'd like to be assessed at Tier 2.",
+        code: "tier_required",
+      },
+      { status: 403 },
+    );
+  }
+
+  const insert: Record<string, unknown> = {
+    ...fields,
+    introducer_id: auth.introducerId,
+    submitted_by: auth.userId,
+    status: "draft",
+    pack_type: wantsFullPack ? "full" : "referral",
+  };
+  // Carry the details they just typed onto the Needs Analysis's first page, so
+  // the client's own name is entered once rather than twice.
+  if (wantsFullPack) insert.needs_analysis_data = seedNeedsAnalysisFromReferral(fields);
+
+  let { data, error } = await supabase
     .from("introducer_clients")
-    .insert({
-      ...fields,
-      introducer_id: auth.introducerId,
-      submitted_by: auth.userId,
-      status: "draft",
-    })
+    .insert(insert)
     .select("*")
     .single();
 
+  /* Pre-migration fallback, and ONLY for a plain referral. If pack_type doesn't
+   * exist yet the Tier 1 flow must keep working, so retry without the new
+   * columns. A full pack, by contrast, must NOT quietly degrade into a referral
+   * that says nothing about a fact find — it fails loudly and says why. */
+  if (error && !wantsFullPack) {
+    const retry = await supabase
+      .from("introducer_clients")
+      .insert({ ...fields, introducer_id: auth.introducerId, submitted_by: auth.userId, status: "draft" })
+      .select("*")
+      .single();
+    if (!retry.error) ({ data, error } = retry);
+  }
+
   if (error || !data) {
-    return NextResponse.json({ ok: false, error: "Could not start the referral. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: wantsFullPack
+          ? "Could not start the submission pack. Please try again, and tell Springboard if it keeps failing."
+          : "Could not start the referral. Please try again.",
+      },
+      { status: 500 },
+    );
   }
 
   await logIntroducerEvent({
@@ -97,6 +157,7 @@ export async function POST(req: Request) {
     actorType: "introducer",
     actor: auth.email,
     action: "draft_created",
+    detail: { pack_type: insert.pack_type },
   });
 
   return NextResponse.json({ ok: true, client: toPortalView(data) }, { status: 201 });

@@ -32,9 +32,11 @@ import {
 } from "../../../../../utils/signature-requests-db";
 import { loadDoc, markDocSigned } from "../../../../../utils/sign-doc-render";
 import { advanceApplicationOnNdaSigned } from "../../../../../utils/introducer-nda";
+import { advanceApplicationOnAgreementSigned } from "../../../../../utils/introducer-agreement-signing";
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { resolveIdentity } from "../../../../../utils/mailIdentities";
+import { signBrandStyle } from "../../../../../utils/sign-brand";
 import { clientIp, rateKeyFromToken } from "../../_shared";
 
 export const runtime = "nodejs";
@@ -177,10 +179,35 @@ export async function POST(
           });
         }
       }
+
+      // The last step, and it takes TWO documents — the referral agreement and
+      // the commission schedule. Signing one advances nothing; the helper
+      // checks the whole set, so whichever of the two lands second is the one
+      // that opens activation. Same best-effort reasoning as the NDA above: the
+      // signature is durably recorded either way, and a failure here must not
+      // turn a completed signing into a 500 and invite them to sign twice.
+      if (row.doc_type === "introducer_agreement" || row.doc_type === "introducer_schedule") {
+        try {
+          await advanceApplicationOnAgreementSigned(row.doc_id, row.signer_email);
+        } catch (e) {
+          log.error("sign.introducer_agreement_advance_failed", {
+            docId: row.doc_id,
+            docType: row.doc_type,
+            message: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
     }
 
     // Email the signed copy to the signer and the advisor (best-effort).
-    await emailSignedCopy(row.doc_type, row.signer_email, row.created_by, path, upErr ? null : true);
+    await emailSignedCopy(
+      row.doc_type,
+      row.signer_email,
+      row.created_by,
+      path,
+      upErr ? null : true,
+      row.brand,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (e) {
@@ -199,7 +226,12 @@ async function emailSignedCopy(
   advisorEmail: string | null,
   path: string,
   uploaded: boolean | null,
+  brand?: string | null,
 ): Promise<void> {
+  /* The brand the signer actually saw when they signed. This email used to send
+   * from the Springboard sender under a NextKey letterhead — half-converted, and
+   * confusing for whichever client received it. */
+  const brandStyle = signBrandStyle(brand);
   const label = DOC_TYPE_LABEL[docType as keyof typeof DOC_TYPE_LABEL] ?? "document";
   let attachments: { name: string; url: string }[] | undefined;
   if (uploaded) {
@@ -217,10 +249,9 @@ async function emailSignedCopy(
     </div>
   </div>`;
 
-  // Send from the validated Springboard sender (same identity as the "send for
-  // signature" request email) so the signed-copy mail actually delivers and the
-  // brand is consistent for the Springboard lead. Still best-effort.
-  const sender = resolveIdentity("springboard");
+  // Same identity as the "send for signature" request email, so the signed copy
+  // arrives from the address the signer already heard from. Best-effort.
+  const sender = resolveIdentity(brandStyle.identity);
   const recipients = [signerEmail, advisorEmail].filter((e): e is string => !!e);
   for (const to of recipients) {
     const res = await sendBrevoEmail({

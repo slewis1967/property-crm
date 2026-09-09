@@ -33,7 +33,7 @@ export function signatureTableMissing(error: unknown): boolean {
  * signature_image, NEVER the signer's IP / user-agent evidence.
  */
 export const LIST_COLUMNS =
-  "id,doc_type,doc_id,signer_index,signer_name,signer_email,status,created_at,sent_at,viewed_at,signed_at,expires_at,signed_pdf_path,decline_reason";
+  "id,doc_type,doc_id,signer_index,signer_name,signer_email,status,brand,created_at,sent_at,viewed_at,signed_at,expires_at,signed_pdf_path,decline_reason";
 
 /** A signature request row as returned to the advisor status panel. */
 export type SignatureRequestListItem = {
@@ -44,6 +44,8 @@ export type SignatureRequestListItem = {
   signer_name: string | null;
   signer_email: string;
   status: string;
+  /** Which business the signer sees. See utils/sign-brand.ts. */
+  brand: string | null;
   created_at: string;
   sent_at: string | null;
   viewed_at: string | null;
@@ -72,6 +74,8 @@ export type SignatureRequestRow = {
   signer_name: string | null;
   signer_email: string;
   status: string;
+  /** Which business the signer sees. See utils/sign-brand.ts. */
+  brand: string | null;
   created_by: string | null;
   sent_at: string | null;
   viewed_at: string | null;
@@ -83,8 +87,14 @@ export type SignatureRequestRow = {
   decline_reason: string | null;
 };
 
+/* `brand` decides what the SIGNER sees — the letterhead on the signing page and
+ * on both emails. Leaving it out of this list does not fail: the row simply
+ * arrives without it, signBrand() reads undefined as "nextkey", and a
+ * Springboard client is shown NextKey's name with nothing logged. That is
+ * exactly how it shipped the first time. If you add a column the signer-facing
+ * code reads, add it here too. */
 const ROW_COLUMNS =
-  "id,doc_type,doc_id,signer_index,signer_name,signer_email,status,created_by,sent_at,viewed_at,signed_at,expires_at,signature_image,consent_at,signed_pdf_path,decline_reason";
+  "id,doc_type,doc_id,signer_index,signer_name,signer_email,status,brand,created_by,sent_at,viewed_at,signed_at,expires_at,signature_image,consent_at,signed_pdf_path,decline_reason";
 
 /**
  * Look up a signature request by its RAW token (which we hash before querying —

@@ -4,7 +4,7 @@ import {
   findById,
   setState,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../../../../utils/introducer-onboarding-db";
 import { onboardingTablesMissing } from "../../../../../../../utils/introducer-onboarding";
 import {
@@ -116,7 +116,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // back and check the page.
   let emailed = true;
   try {
-    const fresh = await reissueToken(id);
+    const fresh = await mintLinkToken(id, "nda");
     await sendOnboardingStepEmail({
       to: app.email,
       legalName: app.legal_name,

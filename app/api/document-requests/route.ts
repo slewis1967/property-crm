@@ -19,8 +19,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { requireAuth } from "../../../utils/cf-access";
 import { enforceRateLimit } from "../../../utils/rate-limit";
-import { newToken } from "../../../utils/sign-token";
-import { sendBrevoEmail } from "../../../utils/brevo";
+import { createDocumentRequest } from "../../../utils/document-requests-create";
 import { getBroker, type Broker } from "../../../utils/brokers";
 import {
   DOCUMENT_REQUESTS_TABLE,
@@ -35,35 +34,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const AMBER = "#B45309";
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
-}
-
-function inviteHtml(firstName: string, link: string): string {
-  const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : "Hello,";
-  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:0 auto">
-    <div style="background:${AMBER};color:#fff;padding:18px 22px;border-radius:8px 8px 0 0">
-      <div style="font-size:18px;font-weight:bold">Springboard Homes</div>
-    </div>
-    <div style="border:1px solid #e5e7eb;border-top:none;padding:22px;border-radius:0 0 8px 8px">
-      <p style="margin:0 0 16px">${greeting}</p>
-      <p style="margin:0 0 16px">To move your application forward we need a few documents. You can upload them securely from your phone — it takes just a few minutes and you don't need to create an account.</p>
-      <p style="margin:0 0 24px">
-        <a href="${link}" style="display:inline-block;background:${AMBER};color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">
-          Upload my documents
-        </a>
-      </p>
-      <p style="margin:0 0 8px;font-size:13px;color:#555">Or paste this link into your browser:</p>
-      <p style="margin:0 0 16px;font-size:13px;color:#555;word-break:break-all">${escapeHtml(link)}</p>
-      <p style="margin:0;font-size:13px;color:#555">If you're unsure about anything, just reply to this email or call your Springboard consultant.</p>
-    </div>
-  </div>`;
-}
 
 export async function POST(req: Request) {
   const auth = await requireAuth(req);
@@ -116,65 +86,33 @@ export async function POST(req: Request) {
     }
   }
 
-  const token = newToken();
+  const created = await createDocumentRequest({
+    applicantName,
+    applicantEmail,
+    applicantPhone: typeof body.applicant_phone === "string" ? body.applicant_phone : null,
+    origin: publicOrigin(req),
+    sendEmail,
+    opportunityId: typeof body.opportunity_id === "string" ? body.opportunity_id : null,
+    contactId: typeof body.contact_id === "string" ? body.contact_id : null,
+    factFindId: typeof body.fact_find_id === "string" ? body.fact_find_id : null,
+    applicationId,
+    clientRef: sharedRef ?? null,
+    submitTarget,
+    broker,
+    createdBy,
+  });
 
-  const insert: Record<string, unknown> = {
-    token_hash: token.hash,
-    applicant_name: applicantName,
-    applicant_email: applicantEmail,
-    applicant_phone:
-      typeof body.applicant_phone === "string" ? body.applicant_phone.trim() || null : null,
-    applicant_count: 1,
-    application_id: applicationId,
-    opportunity_id: typeof body.opportunity_id === "string" ? body.opportunity_id : null,
-    contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
-    fact_find_id: typeof body.fact_find_id === "string" ? body.fact_find_id : null,
-    submit_target: submitTarget,
-    broker_id: broker?.id ?? null,
-    broker_name: broker?.name ?? null,
-    broker_email: broker?.email ?? null,
-    broker_reference: broker?.reference ?? null,
-    created_by: createdBy,
-  };
-  // Only override the DB-default client_ref when sharing one across siblings.
-  if (sharedRef) insert.client_ref = sharedRef;
-
-  const { data: row, error } = await supabase
-    .from(DOCUMENT_REQUESTS_TABLE)
-    .insert(insert)
-    .select(REQUEST_LIST_COLUMNS)
-    .single();
-
-  if (error) {
-    if (docTableMissing(error)) {
-      return NextResponse.json({ ok: false, error: DOC_MIGRATION_HINT }, { status: 503 });
-    }
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  if (!created.ok) {
+    return NextResponse.json({ ok: false, error: created.error }, { status: created.status });
   }
 
-  // The raw token appears ONLY here, in this response — never stored, never
-  // logged, never returned by GET. If the rep loses the link they issue a new
-  // request rather than recovering this one.
-  const link = `${publicOrigin(req)}/portal/${token.raw}`;
-
-  let emailed = false;
-  let emailError: string | null = null;
-  if (sendEmail && applicantEmail) {
-    const first = applicantName.split(/\s+/)[0] ?? "";
-    const res = await sendBrevoEmail({
-      to: [{ email: applicantEmail, name: applicantName }],
-      subject: "Upload your documents — Springboard Homes",
-      html: inviteHtml(first, link),
-      fromName: "Springboard Homes",
-      fromEmail: process.env.SPRINGBOARD_SENDER_EMAIL || undefined,
-      replyTo: process.env.SPRINGBOARD_REPLY_TO || undefined,
-      tags: ["springboard", "document-portal"],
-    });
-    emailed = res.ok;
-    if (!res.ok) emailError = res.error ?? "email failed";
-  }
-
-  return NextResponse.json({ ok: true, request: row, link, emailed, email_error: emailError });
+  return NextResponse.json({
+    ok: true,
+    request: created.request,
+    link: created.link,
+    emailed: created.emailed,
+    email_error: created.emailError,
+  });
 }
 
 export async function GET(req: Request) {

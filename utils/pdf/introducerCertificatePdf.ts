@@ -25,6 +25,16 @@ export type CertificateData = {
   accreditationNo: string;
   tier: "t1" | "t2";
   issuedOn: string;
+  /**
+   * Both expiries, already formatted for print. A certificate with no expiry on
+   * its face is read as one that does not have one — which is exactly the
+   * misunderstanding the twelve-month term exists to prevent.
+   *
+   * They are separate dates because they run for different lengths: the
+   * accreditation twelve months, the SMSF competency six.
+   */
+  accreditationExpiresOn?: string | null;
+  smsfCompetencyExpiresOn?: string | null;
   /** Blank unless this is a replacement, in which case say so on its face. */
   reissued?: boolean;
 };
@@ -80,6 +90,17 @@ export async function renderCertificateHtml(d: CertificateData): Promise<string>
       <div style="text-align:right;">
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;">Issued</div>
         <div style="font-size:15px;color:${NAVY};font-weight:600;">${esc(d.issuedOn)}</div>
+        ${
+          d.accreditationExpiresOn
+            ? `<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-top:8px;">Valid until</div>
+               <div style="font-size:15px;color:${NAVY};font-weight:600;">${esc(d.accreditationExpiresOn)}</div>`
+            : ""
+        }
+        ${
+          d.smsfCompetencyExpiresOn
+            ? `<div style="font-size:11px;color:#6b7280;margin-top:6px;">SMSF competency expires ${esc(d.smsfCompetencyExpiresOn)}</div>`
+            : ""
+        }
       </div>
     </div>
 

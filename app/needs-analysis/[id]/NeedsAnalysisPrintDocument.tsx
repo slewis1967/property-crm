@@ -67,6 +67,15 @@ const PREFERRED_CONTACT_KEYS = PREFERRED_CONTACT_OPTIONS;
 /* ── Value helpers (blank, never "null"/"undefined") ─────────────────────────── */
 
 const t = (v: unknown): string => (v === null || v === undefined || v === "" ? "" : String(v));
+
+/** "fn" prints as "Fortnightly". A code on a document a client signs is not an
+ *  answer to "how often", it is a thing they have to be told the meaning of. */
+const FREQ_LABEL: Record<string, string> = {
+  wk: "Weekly",
+  fn: "Fortnightly",
+  m: "Monthly",
+  pa: "Yearly",
+};
 const m = (n: number | null | undefined): string => formatMoney(n ?? null);
 /** Join non-empty parts with a separator (for "state / postcode", "dob / gender"). */
 const joinParts = (parts: (string | number | null | undefined)[], sep = " / "): string =>
@@ -544,7 +553,65 @@ export default function NeedsAnalysisPrintDocument({
         <SectionTitle>
           Do you receive any other income (Bonus, Commission, Centrelink, Family Assistance)?
         </SectionTitle>
-        <div className="yla-box-field">{t(data.other_income)}</div>
+
+        {/* A row per source, attributed to an applicant. The paper form printed
+            one free-text line for the whole household, which could not say
+            whose income it was or how much — so a lender could not apply it to
+            one applicant's servicing. Signed documents that predate the change
+            still carry their sentence, printed below the table. */}
+        <table>
+          <thead>
+            <tr>
+              <th className="yla-colhead" style={{ width: "20%" }}>
+                Type
+              </th>
+              <th className="yla-colhead">Who pays it / what it is</th>
+              <th className="yla-colhead" style={{ width: "14%" }}>
+                Amount
+              </th>
+              <th className="yla-colhead" style={{ width: "10%" }}>
+                How often
+              </th>
+              <th className="yla-colhead" style={{ width: "22%" }}>
+                Whose
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data.other_incomes ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center" }}>
+                  No other income declared
+                </td>
+              </tr>
+            ) : (
+              (data.other_incomes ?? []).map((o) => (
+                <tr key={o.id}>
+                  <td>{t(o.type)}</td>
+                  <td>{t(o.description)}</td>
+                  <td>{m(o.amount)}</td>
+                  <td>{FREQ_LABEL[o.frequency] ?? t(o.frequency)}</td>
+                  <td>
+                    <ChkSet options={OWNER_OPTS} selected={o.owner} />
+                  </td>
+                </tr>
+              ))
+            )}
+            <tr>
+              <th className="yla-lbl" colSpan={2}>
+                Total Other Income (per month)
+              </th>
+              <td className="yla-money-total">{m(totals.monthlyOtherIncome) || "$0"}</td>
+              <td colSpan={2} />
+            </tr>
+          </tbody>
+        </table>
+
+        {data.other_income.trim() !== "" && (
+          <div className="yla-box-field" style={{ marginTop: 6 }}>
+            {t(data.other_income)}
+          </div>
+        )}
 
         <SectionTitle>Assets</SectionTitle>
         <table>

@@ -6,7 +6,7 @@ import {
   allocateAccreditationNumber,
   setState,
   logOnboardingEvent,
-  reissueToken,
+  mintLinkToken,
 } from "../../../../utils/introducer-onboarding-db";
 import { onboardingTablesMissing } from "../../../../utils/introducer-onboarding";
 import { sendAccreditationPassedEmail } from "../../../../utils/introducer-onboarding-email";
@@ -68,6 +68,12 @@ export async function POST(req: Request) {
   const paperId = typeof body.paperId === "string" ? body.paperId : "";
   const passed = body.passed === true;
   const identitySource = typeof body.identitySource === "string" ? body.identitySource : "";
+  // The exam function reads this off the SIGNED invite, not off the candidate's
+  // browser, so it is as trustworthy as anything else this webhook carries. It
+  // changes nothing about whether the attempt counts — an overridden sitting is
+  // still a 100% pass — but a pass sat under different conditions from every
+  // other one has to be legible in the record.
+  const overridden = body.overridden === true;
 
   if (!paperId) {
     return NextResponse.json({ ok: false, error: "paperId is required" }, { status: 400 });
@@ -111,6 +117,7 @@ export async function POST(req: Request) {
     itemIds: Array.isArray(body.itemIds) ? (body.itemIds as string[]) : [],
     markedAt: typeof body.markedAt === "string" ? body.markedAt : undefined,
     integrity: body.integrity ?? null,
+    overridden,
   });
 
   if (duplicate) {
@@ -154,15 +161,33 @@ export async function POST(req: Request) {
   await logOnboardingEvent(applicationId, "system", null, "exam_passed", {
     paper_id: paperId,
     accreditation_no: accreditationNo,
+    waits_and_gates_overridden: overridden,
   });
 
-  // The applicant's onboarding link is rotated at this point. They are about to
-  // be sent a link to sign an agreement, and the credential that reaches that
-  // step should not be the same one that has been sitting in an inbox since the
-  // invitation.
+  // Its own entry, because the audit file renders the action name and nothing
+  // else. Someone reading the trail has to be able to see that this pass was sat
+  // with the timers off and the module gates open, before they decide to issue a
+  // certificate off the back of it.
+  if (overridden) {
+    await logOnboardingEvent(applicationId, "system", null, "exam_passed_under_override", {
+      paper_id: paperId,
+      accreditation_no: accreditationNo,
+    });
+  }
+
+  // A fresh link for this email, and the ones already in their inbox go on
+  // working. Minting used to revoke, on the reasoning that the credential
+  // reaching the agreement step should not be the one that had sat in an inbox
+  // since the invitation — but that bought little (same person, same address,
+  // either way) and cost a great deal: it is what left candidates holding a
+  // dead link to their own certificate. Revocation is deliberate now, for a
+  // link actually known to have gone astray.
+  //
+  // No certificate to attach yet: the number exists from here, the PDF only
+  // once a super admin issues it. That send carries the file.
   let emailed = true;
   try {
-    const freshToken = await reissueToken(applicationId);
+    const freshToken = await mintLinkToken(applicationId, "certificate");
     await sendAccreditationPassedEmail({
       to: application.email,
       legalName: application.legal_name,

@@ -28,7 +28,8 @@ import { randomInt } from "node:crypto";
 import { createHash } from "node:crypto";
 import { supabase } from "./supabase";
 import { newToken, hashToken, safeEqual } from "./sign-token";
-import { introducerTablesMissing } from "./introducer";
+import { introducerTablesMissing, type IntroducerTier } from "./introducer";
+import { introducerEntityColumnMissing } from "./introducer-entity";
 
 /** Session cookie. `__Host-` prefix pins it to this exact origin, path `/`, secure. */
 export const INTRODUCER_COOKIE = "__Host-nk_introducer";
@@ -59,6 +60,21 @@ export type IntroducerIdentity = {
   fullName: string | null;
   firmName: string;
   isPrimary: boolean;
+  /**
+   * The firm's accreditation dates, resolved with the session so no route has
+   * to fetch them again. NULL means not recorded — every firm activated before
+   * expiries existed is in that state — and unrecorded is never read as
+   * expired.
+   */
+  accreditationExpiresAt: string | null;
+  smsfCompetencyExpiresAt: string | null;
+  /**
+   * The firm's accreditation tier — 't1' refers, 't2' also completes the fact
+   * find and collects documents. Resolved with the session so no route ever
+   * decides it from something the caller sent, and defaulted DOWN: a firm on
+   * the older schema, or one whose tier came back unrecognised, is Tier 1.
+   */
+  tier: IntroducerTier;
 };
 
 export type LoginChallenge = {
@@ -329,6 +345,13 @@ async function finishLogin(
       fullName: user.full_name ?? null,
       firmName: firm.firm_name ?? "",
       isPrimary: Boolean(user.is_primary),
+      // Not read on the login path. Nothing at sign-in depends on them, and the
+      // very next request resolves the session and picks them up from the firm.
+      // `tier` is the same story, and defaults DOWN for the same reason: if
+      // anything ever did read it here, the safe answer is the narrower one.
+      accreditationExpiresAt: null,
+      smsfCompetencyExpiresAt: null,
+      tier: "t1",
     },
   };
 }
@@ -340,17 +363,37 @@ async function finishLogin(
  * was true at login: suspending an introducer has to lock them out now, not in
  * thirty days when their cookie happens to expire.
  */
+const SESSION_SELECT =
+  "id,introducer_user_id,introducer_id,expires_at,revoked_at,last_seen_at," +
+  "introducer_users(id,email,full_name,is_primary,status,introducers(firm_name,status))";
+
+const SESSION_SELECT_WITH_EXPIRY =
+  "id,introducer_user_id,introducer_id,expires_at,revoked_at,last_seen_at," +
+  "introducer_users(id,email,full_name,is_primary,status," +
+  "introducers(firm_name,status,tier,accreditation_expires_at,smsf_competency_expires_at))";
+
 export async function resolveSession(rawToken: string | null | undefined): Promise<IntroducerIdentity | null> {
   if (!rawToken || typeof rawToken !== "string" || rawToken.length < 20) return null;
 
-  const { data: row, error } = await supabase
+  /* Two rungs, widest first. The expiry columns arrive with
+   * 20260819_introducer_accreditation_expiry.sql, and the house rule is that
+   * code ships before the SQL is run — asking for a column that is not there
+   * yet fails the whole select, and a failed select HERE signs every introducer
+   * out. The fallback costs one extra query in the window between deploy and
+   * migration, and nothing afterwards. */
+  let { data: row, error } = await supabase
     .from("introducer_sessions")
-    .select(
-      "id,introducer_user_id,introducer_id,expires_at,revoked_at,last_seen_at," +
-        "introducer_users(id,email,full_name,is_primary,status,introducers(firm_name,status))",
-    )
+    .select(SESSION_SELECT_WITH_EXPIRY)
     .eq("token_hash", hashToken(rawToken))
     .maybeSingle();
+
+  if (error && introducerEntityColumnMissing(error)) {
+    ({ data: row, error } = await supabase
+      .from("introducer_sessions")
+      .select(SESSION_SELECT)
+      .eq("token_hash", hashToken(rawToken))
+      .maybeSingle());
+  }
 
   if (error || !row) return null;
   // Double cast: the Supabase client can't infer a row shape from a select with
@@ -381,7 +424,13 @@ export async function resolveSession(rawToken: string | null | undefined): Promi
 
   const firmRaw = user.introducers;
   const firm = (Array.isArray(firmRaw) ? firmRaw[0] : firmRaw) as
-    | { firm_name?: string; status?: string }
+    | {
+        firm_name?: string;
+        status?: string;
+        tier?: string | null;
+        accreditation_expires_at?: string | null;
+        smsf_competency_expires_at?: string | null;
+      }
     | undefined;
   if (!firm || firm.status !== "active") return null;
 
@@ -406,6 +455,12 @@ export async function resolveSession(rawToken: string | null | undefined): Promi
     fullName: user.full_name,
     firmName: firm.firm_name ?? "",
     isPrimary: Boolean(user.is_primary),
+    accreditationExpiresAt: firm.accreditation_expires_at ?? null,
+    smsfCompetencyExpiresAt: firm.smsf_competency_expires_at ?? null,
+    // The narrow rung of the select doesn't ask for `tier`, so a pre-migration
+    // schema lands here as undefined. Tier 1 — the direction the column's own
+    // DEFAULT chose, for the same reason.
+    tier: firm.tier === "t2" ? "t2" : "t1",
   };
 }
 

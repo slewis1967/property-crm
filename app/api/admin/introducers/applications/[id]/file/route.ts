@@ -31,6 +31,61 @@ async function signed(bucket: string, path: string | null): Promise<string | nul
   return data?.signedUrl ?? null;
 }
 
+type ResourceAudit = {
+  title: string;
+  version: string;
+  requires_ack: boolean;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  /** An acknowledgement against a version that is no longer the published one.
+   *  Kept rather than hidden: "they read 2.0, we are now on 2.1" is a different
+   *  fact from "they have never read it", and only one of them is negligence. */
+  acknowledged_version: string | null;
+};
+
+/**
+ * The published shelf, annotated with what this introducer has confirmed.
+ *
+ * Driven from the RESOURCE list, not from the acknowledgement list. Listing only
+ * what they confirmed would make a document they have never opened invisible —
+ * which is exactly the row an auditor is looking for.
+ */
+async function resourceAcknowledgements(introducerId: string | null): Promise<ResourceAudit[]> {
+  const { data: shelf } = await supabase
+    .from("introducer_resources")
+    .select("id,title,version,requires_ack")
+    .eq("published", true)
+    .order("sort_order", { ascending: true });
+  if (!shelf?.length) return [];
+
+  const { data: acks } = introducerId
+    ? await supabase
+        .from("introducer_resource_acks")
+        .select("resource_id,version,acknowledged_at,acknowledged_by")
+        .eq("introducer_id", introducerId)
+    : { data: [] };
+
+  return shelf.map((r) => {
+    const mine = (acks ?? []).filter((a) => a.resource_id === r.id);
+    const current = mine.find(
+      (a) => String(a.version).trim().toLowerCase() === String(r.version).trim().toLowerCase(),
+    );
+    // Fall back to the most recent acknowledgement of ANY version, so a stale
+    // confirmation is reported as stale rather than as absent.
+    const latest = current ?? [...mine].sort((a, b) =>
+      String(b.acknowledged_at).localeCompare(String(a.acknowledged_at)),
+    )[0];
+    return {
+      title: r.title as string,
+      version: r.version as string,
+      requires_ack: Boolean(r.requires_ack),
+      acknowledged_at: latest?.acknowledged_at ?? null,
+      acknowledged_by: latest?.acknowledged_by ?? null,
+      acknowledged_version: latest?.version ?? null,
+    };
+  });
+}
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireStaff(req);
   if (auth instanceof NextResponse) return auth;
@@ -72,6 +127,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const docIds = new Set((docs.data ?? []).map((d) => d.id as string));
   const relevantSigs = (sigs.data ?? []).filter((s) => docIds.has(s.doc_id as string));
+
+  // Which manuals this introducer has confirmed reading, and -- the part an
+  // audit actually asks about -- which ones they have NOT confirmed at the
+  // version currently published. A list of confirmations alone reads as
+  // reassurance; the gap is the finding.
+  //
+  // Keyed off introducer_id, which only exists once the application is
+  // activated. Before that there is no portal login, so there is nothing to
+  // acknowledge and an empty section is the honest answer.
+  const resources = await resourceAcknowledgements(app.introducer_id ?? null);
 
   // Identity images: a purged row is reported as having existed and been
   // destroyed, rather than silently vanishing. That distinction is the whole
@@ -119,6 +184,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     identity_files: identityFiles.filter((f) => !f.purged_at).length,
     agreements: agreements.length,
     attempts: attempts.length,
+    resources_outstanding: resources.filter(
+      (r) => r.requires_ack && r.acknowledged_version !== r.version,
+    ).length,
   });
 
   return NextResponse.json({
@@ -154,6 +222,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       url: await signed("introducer-records", app.certificate_path),
     },
     agreements,
+    resources,
     // The complete trail, not a summary. An audit asks what happened, in order.
     events: (events.data ?? []).map((e) => ({
       at: e.created_at,

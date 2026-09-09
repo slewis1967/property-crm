@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "../../../utils/supabase";
 import AIPropertyMatches from "../../components/AIPropertyMatches";
+import GrossDeveloperFeeEditor from "./GrossDeveloperFeeEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,14 @@ export default async function PropertyDetailPage({
     mediaRows.find((m) => m.kind === "brochure_pdf" && m.storage_path)?.storage_path ??
     mediaRows.find((m) => m.source_url)?.source_url ??
     null;
+
+  // Property financial overrides
+  const { data: fin } = await supabase
+    .from("property_financials")
+    .select("gross_developer_fee")
+    .eq("property_id", id)
+    .maybeSingle();
+  const grossDeveloperFee: number | null = fin?.gross_developer_fee ?? null;
 
   const price = property.total_package_price ?? property.house_price ?? 0;
   const address =
@@ -220,6 +229,9 @@ export default async function PropertyDetailPage({
 
         {/* Right: financials + specs */}
         <div className="lg:col-span-2 space-y-5">
+          {/* CRM-only financials editor */}
+          <GrossDeveloperFeeEditor propertyId={String(property.id)} initialValue={grossDeveloperFee} />
+
           {/* Headline + price breakdown */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">

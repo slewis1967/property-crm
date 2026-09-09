@@ -1,4 +1,6 @@
 import { MODELS, orText } from "./openrouter";
+import { entityPreamble } from "./compliance-entity";
+import { type MailIdentityKey } from "./mailIdentities";
 
 export type ViolationSeverity = "high" | "medium" | "low";
 
@@ -14,15 +16,20 @@ export interface ComplianceReviewResult {
   violations: Violation[];
   reviewed_at: string;
   model: string;
+  /** Which business the copy was reviewed AS. Recorded so a flagged review can
+   *  be read back knowing whose regulatory position was applied. */
+  brand: MailIdentityKey;
   raw_response?: string;
 }
 
 const MODEL = MODELS.fast;
 
-const SYSTEM = `You are a compliance reviewer for NextKey Property Strategists (Queensland-based,
-NOT licensed under NCCP, NOT a real estate agent, NOT a financial planner). You are reviewing
-the subject and body of an outbound bulk email BEFORE it is sent to NextKey's contact list.
-
+/**
+ * Everything after the entity paragraph is brand-independent: the laws, the
+ * severity scale and the output contract apply the same to either business.
+ * Only the opening identity changes — see utils/compliance-entity.ts.
+ */
+const SYSTEM_BODY = `
 Your only job: flag wording that risks breach of Australian law. Be specific. Quote the exact
 snippet. Do not flag style or tone.
 
@@ -85,6 +92,11 @@ OUTPUT — STRICT JSON. No code fences, no preamble, no commentary outside the J
 }
 
 If the copy is clean, output: {"violations": []}`;
+
+/** The full SYSTEM prompt for one brand: who they are, then the shared rules. */
+export function buildSystem(brand: string | null | undefined): string {
+  return entityPreamble(brand) + "\n" + SYSTEM_BODY;
+}
 
 /**
  * Strip content that's irrelevant to compliance review but can dominate token
@@ -210,12 +222,15 @@ export async function reviewBroadcastCopy(args: {
   subject: string;
   html_body: string;
   text_body: string;
+  /** Which business is sending. Omitted = nextkey, preserving prior behaviour. */
+  brand?: MailIdentityKey;
 }): Promise<ComplianceReviewResult> {
+  const brand: MailIdentityKey = args.brand === "springboard" ? "springboard" : "nextkey";
   const text = await orText({
     model: MODEL,
     maxTokens: 2000,
     thinking: false,
-    system: SYSTEM,
+    system: buildSystem(brand),
     user: buildUserMessage(args.subject, args.html_body, args.text_body),
   });
 
@@ -223,6 +238,7 @@ export async function reviewBroadcastCopy(args: {
     violations: parseViolations(text),
     reviewed_at: new Date().toISOString(),
     model: MODEL,
+    brand,
     raw_response: text,
   };
 }

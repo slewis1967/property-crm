@@ -15,6 +15,7 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
+import { publishPropertyUpsert } from "../../../../../utils/propchannel";
 
 import { requireAuth } from "../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -153,6 +154,11 @@ export async function POST(
         proposed_property_id: inserted.id,
       })
       .eq("id", id);
+
+    // Notify PropChannel of new/updated property
+    publishPropertyUpsert(inserted.id).catch(() => {
+      /* logged in util */
+    });
 
     return NextResponse.json({ ok: true, action: "approved", property_id: inserted.id });
   }

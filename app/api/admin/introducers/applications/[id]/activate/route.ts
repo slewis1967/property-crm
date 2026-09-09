@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { columnMissing } from "../../../../../../../utils/column-missing";
 import { requireSuperAdmin } from "../../../_shared";
 import { supabase } from "../../../../../../../utils/supabase";
 import {
@@ -75,22 +76,64 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const firmName = app.firm_name?.trim() || app.legal_name;
 
-  const { data: firm, error: firmErr } = await supabase
-    .from("introducers")
-    .insert({
+  const firmRow: Record<string, unknown> = {
       firm_name: firmName,
       contact_name: app.legal_name,
       contact_email: app.email,
       contact_phone: app.phone,
       abn: app.abn,
       // The accreditation number IS the agreement reference: it is what the
-      // register, the certificate and the signed agreement all cite.
+      // register, the certificate and the signed agreement all cite. Written
+      // twice, under both names — `agreement_ref` is what the agreement calls
+      // it, `accreditation_no` is what the register calls it, and a reader
+      // should not have to know that they are the same field.
       agreement_ref: app.accreditation_no,
+      accreditation_no: app.accreditation_no,
       agreement_signed_at: new Date().toISOString(),
+      /* The recruiter chain, carried across on the same reasoning as the
+       * expiries below: the referral path reads it and the firm row is what a
+       * later correction is applied to. `recruits_introducers` is an
+       * entitlement stated in a signed schedule, so it moves with the person it
+       * was granted to rather than being re-derived. */
+      recruited_by_introducer_id: app.recruited_by_introducer_id ?? null,
+      recruits_introducers: app.recruits_introducers === true,
+      /* Copied, not joined. Every referral submitted from the portal has to
+       * check these, and the firm row is already in hand at that point — a join
+       * back to the application would put a second query on the hot path for a
+       * value that changes twice a year. It is also the row a suspension or a
+       * manual correction is applied to, so the copy is the one that should
+       * win. */
+      accreditation_expires_at: app.accreditation_expires_at ?? null,
+      smsf_competency_expires_at: app.smsf_competency_expires_at ?? null,
+      // The tier they were actually examined at. Nothing gates on it yet — the
+      // portal has no Tier 2 affordance to gate — but the firm has to know it
+      // before anything does.
+      tier: app.tier === "t2" ? "t2" : "t1",
       created_by: auth,
-    })
+  };
+
+  /* Two rungs, for the window where this code has deployed and
+   * 20260821g_introducer_recruiter_chain.sql has not. Activation is the worst
+   * place to break the house rule that code ships before the SQL: the candidate
+   * has signed everything and is waiting on a login, and "could not create the
+   * introducer firm" would be a dead end for a reason that has nothing to do
+   * with them. Dropping the recruiter columns costs an attribution that can be
+   * set afterwards; failing costs the activation. */
+  const RECRUITER_KEYS = ["recruited_by_introducer_id", "recruits_introducers"];
+  let { data: firm, error: firmErr } = await supabase
+    .from("introducers")
+    .insert(firmRow)
     .select("id,firm_name")
     .single();
+
+  if (firmErr && columnMissing(firmErr, RECRUITER_KEYS)) {
+    for (const k of RECRUITER_KEYS) delete firmRow[k];
+    ({ data: firm, error: firmErr } = await supabase
+      .from("introducers")
+      .insert(firmRow)
+      .select("id,firm_name")
+      .single());
+  }
 
   if (firmErr || !firm) {
     return NextResponse.json({ ok: false, error: "Could not create the introducer firm." }, { status: 500 });
@@ -126,6 +169,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await logOnboardingEvent(id, "super_admin", auth, "activated", {
     introducer_id: firm.id,
     accreditation_no: app.accreditation_no,
+    accreditation_expires_at: app.accreditation_expires_at ?? null,
+    smsf_competency_expires_at: app.smsf_competency_expires_at ?? null,
   });
 
   let inviteSent = true;
