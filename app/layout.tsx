@@ -181,6 +181,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🏘️</span> Aggregator Feed
             </Link>
+            <Link href="/properties/map" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
+              <span>🗺️</span> Stock Map
+            </Link>
             <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
               <span>🔍</span>
               <span className="flex-1">Review Queue</span>
