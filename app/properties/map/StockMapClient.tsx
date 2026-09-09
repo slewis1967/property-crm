@@ -13,11 +13,21 @@
  * the page of stock the feed happens to have loaded.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { SuburbCluster, UnlocatedSuburb } from "../../../utils/geo/clusters";
 import { PRICE_LEGEND } from "./bands";
+import {
+  BASEMAPS,
+  BASEMAP_ORDER,
+  subscribeBasemap,
+  getBasemapSnapshot,
+  getBasemapServerSnapshot,
+  setStoredBasemap,
+  streetViewUrl,
+  addressMapsUrl,
+} from "./basemaps";
 
 const StockMapCanvas = dynamic(() => import("./StockMapCanvas"), {
   ssr: false,
@@ -88,6 +98,17 @@ export default function StockMapClient({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeNote, setGeocodeNote] = useState("");
+  // Read through useSyncExternalStore, not useState(() => localStorage...):
+  // the latter renders a different value on client and server and React
+  // explicitly does NOT patch up the resulting attribute mismatch, which left
+  // the toggle showing Streets while the map rendered satellite. See the store
+  // in basemaps.ts.
+  const basemap = useSyncExternalStore(
+    subscribeBasemap,
+    getBasemapSnapshot,
+    getBasemapServerSnapshot,
+  );
+  const chooseBasemap = setStoredBasemap;
 
   // Guards against a slow early request landing after a faster later one and
   // repainting the map with stale filters.
@@ -340,7 +361,28 @@ export default function StockMapClient({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Map */}
         <div className="lg:col-span-2">
-          <div className="h-[560px] bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="h-[560px] bg-white border border-gray-200 rounded-xl overflow-hidden relative">
+            {/* Basemap switcher. Floats over the map rather than sitting in the
+                filter bar, because it changes what you're looking at, not what
+                is shown. z-[1000] clears Leaflet's own panes (max z-index 800). */}
+            <div className="absolute top-3 right-3 z-[1000] flex rounded-lg overflow-hidden shadow-md border border-gray-300 bg-white">
+              {BASEMAP_ORDER.map((id) => (
+                <button
+                  key={id}
+                  onClick={() => chooseBasemap(id)}
+                  aria-pressed={basemap === id}
+                  className={`px-3 py-1.5 text-xs font-medium transition whitespace-nowrap ${
+                    basemap === id
+                      ? "text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  style={basemap === id ? { backgroundColor: TEAL } : undefined}
+                >
+                  {BASEMAPS[id].label}
+                </button>
+              ))}
+            </div>
+
             {data && data.clusters.length === 0 && !loading ? (
               <div className="h-full grid place-items-center text-center px-6">
                 <div>
@@ -357,6 +399,7 @@ export default function StockMapClient({
                 clusters={data?.clusters ?? []}
                 selectedKey={selected?.key ?? null}
                 onSelect={setSelectedKey}
+                basemap={basemap}
               />
             )}
           </div>
@@ -400,35 +443,65 @@ export default function StockMapClient({
                   {selected.builders.length} builder
                   {selected.builders.length === 1 ? "" : "s"}
                 </p>
+                {/* Labelled "centre" on purpose: we hold no coordinates for the
+                    individual properties, so this drops you in the middle of
+                    the suburb, not at a lot. Saying so beats implying we are
+                    showing the property itself. */}
+                <a
+                  href={streetViewUrl(selected.lat, selected.lng)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-xs px-2 py-1 rounded-md border border-gray-300 hover:bg-gray-50"
+                >
+                  Street View · suburb centre ↗
+                </a>
               </div>
               <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
                 {selected.items.map((it) => (
-                  <Link
-                    key={it.id}
-                    href={`/properties/${it.id}`}
-                    className="block p-3 hover:bg-gray-50"
-                  >
-                    <div className="flex justify-between gap-2">
-                      <span className="font-medium text-sm truncate">
-                        {it.address || it.estate || it.builder || "Property"}
-                        {it.lot ? ` · Lot ${it.lot}` : ""}
-                      </span>
-                      <span className="text-sm font-semibold whitespace-nowrap">
-                        {moneyShort(it.price)}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5 truncate">
-                      {[
-                        it.builder,
-                        it.type,
-                        it.beds ? `${it.beds} bed` : null,
-                        it.landSize ? `${it.landSize}m²` : null,
-                        it.titled ? "Titled" : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </div>
-                  </Link>
+                  /* A div, not a Link, because the row carries a second link:
+                     nesting <a> inside <a> is invalid HTML and browsers break
+                     the inner one. */
+                  <div key={it.id} className="p-3 hover:bg-gray-50">
+                    <Link href={`/properties/${it.id}`} className="block">
+                      <div className="flex justify-between gap-2">
+                        <span className="font-medium text-sm truncate">
+                          {it.address || it.estate || it.builder || "Property"}
+                          {it.lot ? ` · Lot ${it.lot}` : ""}
+                        </span>
+                        <span className="text-sm font-semibold whitespace-nowrap">
+                          {moneyShort(it.price)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5 truncate">
+                        {[
+                          it.builder,
+                          it.type,
+                          it.beds ? `${it.beds} bed` : null,
+                          it.landSize ? `${it.landSize}m²` : null,
+                          it.titled ? "Titled" : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </div>
+                    </Link>
+                    {/* Only offered where the row records a real street
+                        address (about 4% of stock). For the rest we hold
+                        nothing finer than the suburb, and a link that silently
+                        dropped the user on the suburb centroid would look like
+                        the property and be a road that has nothing to do with
+                        it — the suburb-centre link in the header above is
+                        where that belongs, labelled as such. */}
+                    {it.address && (
+                      <a
+                        href={addressMapsUrl(it.address, selected.suburb, selected.state)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-1.5 text-xs text-gray-500 hover:text-gray-900 underline decoration-dotted"
+                      >
+                        Street View ↗
+                      </a>
+                    )}
+                  </div>
                 ))}
               </div>
             </>
