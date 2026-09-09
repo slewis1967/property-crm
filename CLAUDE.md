@@ -190,6 +190,23 @@ Every Australian home-loan lender's published lending policy, versioned with a s
 - Migration `migrations/20260729_lender_policies.sql` — `lender_policies`, `lender_policy_versions`, `lender_policy_field_reviews`, `lender_policy_research_runs`. Named `lender_policies` **not** `lenders` for the `fact_finds` reason (a generic name risks silently no-opping against a pre-existing table), with explicit `add column if not exists` top-ups as a second belt. `lenderPoliciesTableMissing()` matches the table-level codes only (`42P01`/`PGRST205`), like `factFindsTableMissing()`.
 - **Compliance boundary.** `MATCH_DISCLAIMER` is rendered on the library, the detail page and every match run: internal research aid for licensed brokers, **not** a credit assessment, pre-approval or credit advice, and not to be shown to a client. `POST /api/lenders/match` is deliberately **stateless** — the scenario carries income and credit-history PII, and the Fact Find is the record, not the shortlist.
 
+### Stock Map (`app/properties/map/` + `utils/geo/` + `app/api/properties/map/`)
+Geographic view of the aggregator feed — "where is the stock we have?". Sidebar link **Stock Map** under Stock, plus a *Map view* button on the feed header.
+
+**The unit is the SUBURB, not the property, and the data forces that.** `global_stock_pool` has no lat/lng columns at all, and only ~61 of ~1,481 active rows carry a `street_address` — a pin-per-property map would plot 4% of the stock. Every row does have `suburb` + `state`, and those collapse to ~170 places. So the map draws one bubble per suburb: **area** proportional to property count (sqrt-scaled radius — a linear radius makes a 120-lot suburb look ~36x a 20-lot one instead of 6x), **colour** = median package price in fixed **absolute** bands, not quantiles of the current filter, so a bubble doesn't change colour just because you ticked "4 bed".
+- `utils/geo/suburbs.ts` — the `stock_geocodes` cache + `geocodeSuburb()`. **Two tiers.** Structured (`city`/`state`/`country`) first, because it pins the state. Freeform second, because Nominatim's `city=` only matches place types it calls a city/suburb, so real localities fall through it ("Canberra City", "Chevron Island"). Freeform is safe **only** because `countrycodes=au` is pinned — that is what stops "Springfield, QLD" returning Springfield, Missouri; never drop it. The freeform tier is additionally filtered by `isPlace()` (class=place, or boundary/administrative) and scans the candidate list, because the real suburb is often outranked by a road or reserve of the same name — unfiltered it matched *Big Jiliby Road* and the *Coombabah Lakelands Conservation Area*. Rate limit is a hard **1 req/sec** (Nominatim policy; exceeding it gets the CRM's IP blocked).
+- `utils/geo/clusters.ts` — pure, vitest-tested grouping + min/max/median price. Suburbs that can't be placed come back in `unlocated` **with a reason** (`not-geocoded` / `geocode-failed` / `no-suburb`) and are shown in the UI. A map that silently drops stock is worse than one that admits what it couldn't place.
+- `app/properties/map/bands.ts` — price bands + radius scaling, deliberately **separate from `StockMapCanvas.tsx` because that file imports Leaflet**. A plain `import { PRICE_LEGEND } from "./StockMapCanvas"` is a static import: it pulls Leaflet into the server bundle, defeats `next/dynamic({ssr:false})`, and crashes SSR with "window is not defined" — while the route still answers 200, so only the dev-server log shows it. `bands.test.ts` guards the boundary at source level.
+- `app/api/properties/map/route.ts` — filters mirror `/api/properties/list` exactly, so map and feed always describe the same stock.
+- `app/api/properties/map/geocode/route.ts` — POST, batches of 12 (12 x 1.1s ≈ 13s, inside Netlify's ~26s ceiling); the client loops.
+- `scripts/geocode-stock-suburbs.mjs` — bulk backfill, resumable, `--dry-run` / `--retry-failed` / `--limit`. It **duplicates** the geocoding logic (plain .mjs vs the TS util); both carry a comment saying they must move together.
+
+**Geocode cache** `stock_geocodes` (`migrations/20260909_stock_geocodes.sql`, applied). A suburb is geocoded once, ever; **misses are cached too** (`failed=true`) so a junk suburb value doesn't re-query on every page load — clear the row (or `--retry-failed`) after fixing the source data. The whole path degrades gracefully if the table is absent: the API returns `tableMissing:true` and the page shows a "run the migration" banner rather than erroring.
+
+**PostgREST 1000-row trap.** Supabase caps ANY single response at max-rows (1,000) regardless of `.limit()`. The map route pages with `.range()` **plus a stable `.order("id")`** — without the explicit order, page boundaries shift between requests and rows are both duplicated and missed. An unpaged `.limit(5000)` silently returned 1,000 of 1,481 rows.
+
+**Leaflet + raster tiles, not MapLibre.** The CSP in `next.config.ts` allows `img-src https:` but restricts `connect-src` to self + Supabase. Raster tiles are plain `<img>` requests and pass; a vector renderer's style/tile `fetch()` calls would be blocked with no visible error.
+
 ### Feedback AI pipeline (`app/feedback/` + `app/api/feedback/` + `utils/feedback*.ts`)
 User-filed bugs / ideas that a triage AI + an autonomous cloud agent act on. Sidebar link **💡 Feedback & issues**.
 - **Table `feedback`** — base cols in `migrations/20260714_feedback.sql`; the AI/agent cols in `migrations/20260714_feedback_ai.sql` (`ai_kind/ai_genuine/ai_severity/ai_risk_class/ai_summary/ai_analysis/ai_confidence`, `agent_stage`, `pr_url`, `plan`, `signoff*`, `agent_error`, `triaged_at/processed_at`). All routes tolerate the AI migration being absent (fall back to `FEEDBACK_COLUMNS_BASE` via `feedbackAiColumnsMissing`), so the feature keeps working before it's applied.
@@ -237,6 +254,8 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 
 ### API routes (`app/api/`)
 - `properties/delete` — DELETE from Supabase by ID array
+- `properties/map` — active stock rolled up to one cluster per suburb (Stock Map)
+- `properties/map/geocode` — fills the `stock_geocodes` suburb-centroid cache, 12 at a time
 - `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot. Not a GHL proxy.
 - `opportunities/`, `pipelines/` — proxy to the **NEXUS API** (`utils/nexus-api.ts` → Flask app on `localhost:8765` / `api.nextkey.com.au`, DuckDB-backed) at `/api/leads` + `/api/pipelines`. "GHL" here is legacy naming only — GoHighLevel was decommissioned; this is NextKey's own nexus-api. (There is no separate `app/api/duckdb/` route; the DuckDB backend is reached through these proxies and the suburbs/appointments pages.)
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
@@ -305,6 +324,8 @@ Appointments — are live tools and stay in CRM.
 |-------|-------------|
 | `/properties` | Aggregator Feed — main listing grid (PropertyGrid) |
 | `/properties/[id]` | Property detail |
+| `/properties/map` | Stock Map — active stock plotted by suburb (bubble per suburb, sized by count) |
+| `/properties/map` | Stock Map — active stock plotted by suburb (bubble per suburb, sized by count) |
 | `/aggregator/review` | Review queue — sidebar shows count badge from `property_review_queue` where `status='pending'` |
 | `/aggregator/runs` | Ingestion runs log |
 | `/aggregator/builders` | Builders list — sidebar shows count badge for `builders` where `draft=true AND active=true` (each blocks future ingestion runs from that sender) |
@@ -328,6 +349,12 @@ Appointments — are live tools and stay in CRM.
 - `utils/compliance-review.ts` — Claude Haiku AU-compliance reviewer used by `/broadcast`
 - `app/properties/page.tsx` — fetches global_stock_pool, normalises fields
 - `app/properties/PropertyGrid.tsx` — card grid, War Room panel, PDF export, delete
+- `app/properties/map/StockMapClient.tsx` — Stock Map shell: filters, suburb drill-down, geocode-fill button
+- `app/properties/map/StockMapCanvas.tsx` — Leaflet bubble map (client-only; never statically import it from the shell)
+- `utils/geo/` — suburb geocode cache + cluster aggregation for the Stock Map
+- `app/properties/map/StockMapClient.tsx` — Stock Map shell: filters, suburb drill-down, geocode-fill button
+- `app/properties/map/StockMapCanvas.tsx` — Leaflet bubble map (client-only)
+- `utils/geo/` — suburb geocode cache + cluster aggregation for the Stock Map
 - `app/broadcast/page.tsx` — broadcast audience snapshot server page
 - `app/broadcast/BroadcastClient.tsx` — compose form, audience picker, violations workflow
 - `app/api/broadcast/route.ts` — two-phase compliance-review-then-send handler
