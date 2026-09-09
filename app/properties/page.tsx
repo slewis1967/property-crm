@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { log, errInfo } from "../../utils/logger";
 import PropertyGrid from "./PropertyGrid";
 import { DEFAULT_PAGE_SIZE, coercePropertiesPageSize } from "../../utils/pagination";
 import { interleaveByBuilder } from "../../utils/feed-order";
+import type { PropertyGridItem } from "./types";
 
 // Upper bound on rows pulled for the first-page interleave (mirrors the API
 // route). The active feed is a few hundred rows; this bounds the work.
@@ -16,6 +18,17 @@ export const dynamic = "force-dynamic";
 
 // Default property type list — used as a fallback when the
 // app_settings row is missing. Mirrors the API route's defaults.
+type PropertyType = { name: string; icon?: string | null };
+
+/**
+ * A normalised feed row. PropertyGridItem's index signature alone isn't enough
+ * to satisfy interleaveByBuilder's `{ builder_name?: ... }` constraint —
+ * TypeScript's weak-type check needs at least one declared property in common,
+ * and an index signature doesn't count. Naming builder_name here says out loud
+ * that the feed's builder round-robin depends on it.
+ */
+type NormalisedRow = PropertyGridItem & { builder_name?: string | null };
+
 const DEFAULT_PROPERTY_TYPES = [
   { name: "House & Land", icon: "🏡" },
   { name: "House",        icon: "🏠" },
@@ -49,14 +62,15 @@ async function pageSizeFromCookies(): Promise<number> {
   return DEFAULT_PAGE_SIZE;
 }
 
-async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string | null }>> {
+async function getPropertyTypes(): Promise<PropertyType[]> {
   try {
     const { data } = await supabase
       .from("app_settings")
       .select("value")
       .eq("key", "property_types")
       .maybeSingle();
-    const list = (data?.value as any)?.types;
+    const value = data?.value as { types?: PropertyType[] } | null | undefined;
+    const list = value?.types;
     if (Array.isArray(list) && list.length > 0) return list;
   } catch {
     // fall through to defaults
@@ -109,7 +123,8 @@ export default async function PropertiesPage() {
 
   // Normalise field names so PropertyGrid's `??` fallbacks line up
   // with the snake_case columns Supabase returns.
-  const allNormalised = (firstPage ?? []).map((p: any) => ({
+  const rows = (firstPage ?? []) as unknown as NormalisedRow[];
+  const allNormalised: NormalisedRow[] = rows.map((p) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,
@@ -130,11 +145,19 @@ export default async function PropertiesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-3">
         <h1 className="text-3xl font-bold">Aggregator Feed</h1>
-        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
-          Live Connection Active
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/properties/map"
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
+          >
+            🗺️ Map view
+          </Link>
+          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
+            Live Connection Active
+          </span>
+        </div>
       </div>
 
       {/* We pass the first page + total to the client component. The
