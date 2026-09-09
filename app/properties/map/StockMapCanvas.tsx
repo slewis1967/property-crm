@@ -17,44 +17,13 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { SuburbCluster } from "../../../utils/geo/clusters";
+// Styling constants live in a Leaflet-free module so StockMapClient can
+// import the legend without dragging Leaflet into the server bundle.
+import { bandFor, radiusFor } from "./bands";
 
 // Whole-of-Australia starting view — the stock spans QLD to WA.
 const AU_CENTER: [number, number] = [-27.5, 133.5];
 const AU_ZOOM = 4;
-
-/**
- * Price bands for bubble colour. Deliberately coarse and absolute (not
- * quantiles of the current filter) so a suburb keeps the same colour as you
- * filter — a bubble that changes colour when you tick "4 bed" reads as a data
- * change rather than a rescale.
- */
-const BANDS: Array<{ max: number; color: string; label: string }> = [
-  { max: 600_000, color: "#0d9488", label: "under $600k" },
-  { max: 750_000, color: "#0ea5e9", label: "$600k–750k" },
-  { max: 900_000, color: "#6366f1", label: "$750k–900k" },
-  { max: Infinity, color: "#c026d3", label: "$900k+" },
-];
-const NO_PRICE_COLOR = "#94a3b8";
-
-export function bandFor(price: number | null): { color: string; label: string } {
-  if (price == null) return { color: NO_PRICE_COLOR, label: "no price" };
-  return BANDS.find((b) => price < b.max) ?? BANDS[BANDS.length - 1];
-}
-
-export const PRICE_LEGEND = [
-  ...BANDS.map((b) => ({ color: b.color, label: b.label })),
-  { color: NO_PRICE_COLOR, label: "no price" },
-];
-
-/**
- * Bubble radius in pixels. Square-root scaling so AREA is proportional to the
- * count — a linear radius would make Tarneit's ~200 lots look overwhelmingly
- * bigger than a 20-lot suburb rather than 10x. Clamped so a single property is
- * still clickable and a huge suburb doesn't swallow its neighbours.
- */
-export function radiusFor(count: number): number {
-  return Math.max(7, Math.min(34, 5 + Math.sqrt(count) * 3.2));
-}
 
 function money(n: number | null): string {
   if (n == null) return "—";

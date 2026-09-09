@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { SuburbCluster, UnlocatedSuburb } from "../../../utils/geo/clusters";
-import { PRICE_LEGEND } from "./StockMapCanvas";
+import { PRICE_LEGEND } from "./bands";
 
 const StockMapCanvas = dynamic(() => import("./StockMapCanvas"), {
   ssr: false,
