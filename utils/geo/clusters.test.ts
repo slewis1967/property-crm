@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildClusters, distinctKeys, median, rowPrice, type StockRow } from "./clusters";
-import { suburbKey, splitKey, type SuburbPoint } from "./suburbs";
+import { suburbKey, splitKey, isPlace, type SuburbPoint } from "./suburbs";
 
 const point = (key: string, lat: number, lng: number): SuburbPoint => {
   const { suburb, state } = splitKey(key);
@@ -154,5 +154,32 @@ describe("distinctKeys", () => {
       row({ suburb: "Ripley", state: "QLD" }),
     ]);
     expect(keys).toEqual(["TARNEIT|VIC", "RIPLEY|QLD"]);
+  });
+});
+
+describe("isPlace", () => {
+  // These are the exact Nominatim shapes observed against the live stock:
+  // the freeform fallback matched a road for "Jiliby, NSW" and a wetland for
+  // "Lakelands, QLD". Both look like a successful geocode and are confidently
+  // wrong, so the filter is the only thing keeping stock out of a nature
+  // reserve. Locking the real payloads in so a future tweak can't loosen it.
+  it("accepts populated places and gazetted suburb boundaries", () => {
+    expect(isPlace({ class: "place", type: "city" })).toBe(true); // Canberra
+    expect(isPlace({ class: "place", type: "suburb" })).toBe(true);
+    expect(isPlace({ class: "place", type: "town" })).toBe(true);
+    expect(isPlace({ class: "place", type: "islet" })).toBe(true); // Chevron Island
+    expect(isPlace({ class: "boundary", type: "administrative" })).toBe(true); // Warragul
+  });
+
+  it("rejects roads, reserves and stations that merely share the name", () => {
+    expect(isPlace({ class: "highway", type: "track" })).toBe(false); // Big Jiliby Road
+    expect(isPlace({ class: "natural", type: "wetland" })).toBe(false); // Coombabah Lakelands
+    expect(isPlace({ class: "leisure", type: "nature_reserve" })).toBe(false);
+    expect(isPlace({ class: "railway", type: "station" })).toBe(false);
+  });
+
+  it("rejects a non-administrative boundary and an absent class", () => {
+    expect(isPlace({ class: "boundary", type: "protected_area" })).toBe(false);
+    expect(isPlace({})).toBe(false);
   });
 });

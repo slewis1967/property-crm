@@ -65,34 +65,82 @@ function suburbKey(suburb, state) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Accept only populated places, not any feature sharing the name.
+ *
+ * MUST stay in step with isPlace() in utils/geo/suburbs.ts. The freeform tier
+ * below will otherwise match a road ("Big Jiliby Road" for Jiliby, NSW) or a
+ * wetland ("Coombabah Lakelands Conservation Area" for Lakelands, QLD) and
+ * place stock somewhere confidently wrong.
+ */
+function isPlace(hit) {
+  if (hit.class === "place") return true;
+  return hit.class === "boundary" && hit.type === "administrative";
+}
+
+async function nominatim(params, placeOnly) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      headers: { "User-Agent": "NextKey-CRM-StockMap/1.0 (sean.l@nextkey.com.au)" },
+    });
+    if (!res.ok) return null;
+    const arr = await res.json();
+    // Scan candidates: the place-type match is often ranked below a road or
+    // reserve of the same name.
+    const hit = (arr || []).find((h) => h?.lat && h?.lon && (!placeOnly || isPlace(h)));
+    if (!hit) return null;
+    const lat = parseFloat(hit.lat);
+    const lng = parseFloat(hit.lon);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    if (lat < AU_BOUNDS.minLat || lat > AU_BOUNDS.maxLat) return null;
+    if (lng < AU_BOUNDS.minLng || lng > AU_BOUNDS.maxLng) return null;
+    return { lat, lng, display: hit.display_name };
+  } catch (e) {
+    console.warn(`  ! network error: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Structured query first (state-pinned, precise), freeform as a fallback for
+ * localities Nominatim's `city=` won't match — e.g. "Canberra City" and
+ * "Chevron Island". Freeform is only safe because countrycodes=au is pinned:
+ * that is what stops "Springfield, QLD" returning Springfield, Missouri.
+ *
+ * Mirrors geocodeSuburb() in utils/geo/suburbs.ts. The logic is duplicated
+ * because that module is TypeScript and imports the Supabase client; if you
+ * change one, change the other.
+ */
 async function geocodeSuburb(suburb, state) {
-  const params = new URLSearchParams({
+  const full = state ? STATE_FULL[state.toUpperCase()] : null;
+
+  const structured = new URLSearchParams({
     city: suburb,
     country: "Australia",
     format: "json",
     limit: "1",
     countrycodes: "au",
   });
-  const full = state ? STATE_FULL[state.toUpperCase()] : null;
-  if (full) params.set("state", full);
+  if (full) structured.set("state", full);
 
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-      headers: { "User-Agent": "NextKey-CRM-StockMap/1.0 (sean.l@nextkey.com.au)" },
-    });
-    if (!res.ok) return null;
-    const hit = (await res.json())?.[0];
-    if (!hit?.lat || !hit?.lon) return null;
-    const lat = parseFloat(hit.lat);
-    const lng = parseFloat(hit.lon);
-    if (!isFinite(lat) || !isFinite(lng)) return null;
-    if (lat < AU_BOUNDS.minLat || lat > AU_BOUNDS.maxLat) return null;
-    if (lng < AU_BOUNDS.minLng || lng > AU_BOUNDS.maxLng) return null;
-    return { lat, lng, display: hit.display_name ?? `${suburb}, ${state ?? "AU"}` };
-  } catch (e) {
-    console.warn(`  ! network error: ${e.message}`);
-    return null;
-  }
+  const hit = await nominatim(structured, false);
+  if (hit) return hit;
+
+  await sleep(1100); // Nominatim: 1 req/sec.
+
+  const freeform = new URLSearchParams({
+    q: full ? `${suburb}, ${full}, Australia` : `${suburb}, Australia`,
+    format: "json",
+    limit: "5",
+    countrycodes: "au",
+    addressdetails: "1",
+  });
+  const loose = await nominatim(freeform, true);
+  if (!loose) return null;
+
+  // A looser query must still land in the state we asked for.
+  if (full && !loose.display.toLowerCase().includes(full.toLowerCase())) return null;
+  return loose;
 }
 
 // ---------- 1. every suburb we hold active stock in ----------

@@ -127,31 +127,40 @@ export async function readCache(keys: SuburbKey[]): Promise<{
   return { points, failed, tableMissing: false };
 }
 
+type GeoHit = { lat: number; lng: number; display: string };
+
 /**
- * Geocode one suburb via Nominatim's structured query.
+ * Does this Nominatim result describe a populated place, rather than some other
+ * feature that merely shares the name?
  *
- * Structured (city/state/country) rather than freeform: a freeform search for
- * "Springfield, QLD" happily returns Springfield, Missouri. The result is
- * additionally rejected if it lands outside the Australian bounding box.
+ * Freeform search will happily return a road, a wetland or a railway station:
+ * "Jiliby, NSW" matches *Big Jiliby Road* and "Lakelands, QLD" matches the
+ * *Coombabah Lakelands Conservation Area*. Both are confidently wrong, which is
+ * worse than no answer — the map would show stock sitting in a nature reserve.
+ * `class=place` covers suburb/town/city/locality/islet; an administrative
+ * boundary is how Nominatim returns most gazetted AU suburbs.
  */
-export async function geocodeSuburb(
-  suburb: string,
-  state: string | null,
-  timeoutMs = 8000,
-): Promise<{ lat: number; lng: number; display: string } | null> {
+export function isPlace(hit: { class?: string; type?: string }): boolean {
+  if (hit.class === "place") return true;
+  return hit.class === "boundary" && hit.type === "administrative";
+}
+
+/**
+ * One Nominatim call. Returns null for anything that isn't a usable AU point.
+ *
+ * `placeOnly` applies the feature-class filter. It's off for the structured
+ * query (whose `city=` parameter already constrains to place types) and on for
+ * the freeform fallback, which has no such constraint.
+ */
+async function nominatim(
+  params: URLSearchParams,
+  label: string,
+  timeoutMs: number,
+  placeOnly = false,
+): Promise<GeoHit | null> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const params = new URLSearchParams({
-      city: suburb,
-      country: "Australia",
-      format: "json",
-      limit: "1",
-      countrycodes: "au",
-    });
-    const full = state ? STATE_FULL[state.toUpperCase()] : null;
-    if (full) params.set("state", full);
-
     const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
       signal: ctrl.signal,
       headers: { "User-Agent": "NextKey-CRM-StockMap/1.0 (sean.l@nextkey.com.au)" },
@@ -162,23 +171,92 @@ export async function geocodeSuburb(
       lat?: string;
       lon?: string;
       display_name?: string;
+      class?: string;
+      type?: string;
     }>;
-    const hit = arr?.[0];
+    // Scan the returned candidates rather than only the top one: the best
+    // place-type match is often ranked below a road or reserve of the same name.
+    const hit = (arr ?? []).find((h) => h?.lat && h?.lon && (!placeOnly || isPlace(h)));
     if (!hit?.lat || !hit?.lon) return null;
 
     const lat = parseFloat(hit.lat);
     const lng = parseFloat(hit.lon);
     if (!isFinite(lat) || !isFinite(lng)) return null;
+    // Belt and braces on top of countrycodes=au — a point outside Australia is
+    // always wrong here, whatever the geocoder thinks it matched.
     if (lat < AU_BOUNDS.minLat || lat > AU_BOUNDS.maxLat) return null;
     if (lng < AU_BOUNDS.minLng || lng > AU_BOUNDS.maxLng) return null;
 
-    return { lat, lng, display: hit.display_name ?? `${suburb}, ${state ?? "AU"}` };
+    return { lat, lng, display: hit.display_name ?? label };
   } catch {
     // Abort / network / parse — all "no result"; the caller records the attempt.
     return null;
   } finally {
     clearTimeout(t);
   }
+}
+
+/**
+ * Geocode one suburb, structured query first and freeform as a fallback.
+ *
+ * The structured form (city/state/country) is tried first because it is the
+ * precise one — it pins the state, so "Richmond" resolves to the Richmond in
+ * the state we hold stock in rather than whichever ranks highest.
+ *
+ * But Nominatim's `city=` only matches place types it considers a city or
+ * suburb, so genuine localities fall straight through it: "Canberra City" and
+ * "Chevron Island" are both real and both return nothing structured. Hence
+ * freeform fallback.
+ *
+ * Freeform is safe *here* only because `countrycodes=au` is pinned — that is
+ * what stops the classic "Springfield, QLD" → Springfield, Missouri failure.
+ * Never drop that parameter. The state is still verified against the returned
+ * display name when we have one, so a fallback can't silently place Richmond
+ * VIC stock in Richmond NSW.
+ */
+export async function geocodeSuburb(
+  suburb: string,
+  state: string | null,
+  timeoutMs = 8000,
+): Promise<GeoHit | null> {
+  const label = `${suburb}, ${state ?? "AU"}`;
+  const full = state ? STATE_FULL[state.toUpperCase()] : null;
+
+  // Tier 1 — structured, state-pinned.
+  const structured = new URLSearchParams({
+    city: suburb,
+    country: "Australia",
+    format: "json",
+    limit: "1",
+    countrycodes: "au",
+  });
+  if (full) structured.set("state", full);
+
+  const hit = await nominatim(structured, label, timeoutMs);
+  if (hit) return hit;
+
+  // Tier 2 — freeform, for localities `city=` won't match.
+  await new Promise((r) => setTimeout(r, 1100)); // Nominatim: 1 req/sec.
+
+  const freeform = new URLSearchParams({
+    // limit=5, not 1: the place-type match is often outranked by a road or
+    // reserve sharing the name, so we need candidates to filter through.
+    q: full ? `${suburb}, ${full}, Australia` : `${suburb}, Australia`,
+    format: "json",
+    limit: "5",
+    countrycodes: "au",
+    addressdetails: "1",
+  });
+
+  const loose = await nominatim(freeform, label, timeoutMs, true);
+  if (!loose) return null;
+
+  // Guard the looser query: if we asked for a state, the match must actually
+  // be in it. Without this, freeform will cheerfully return the same-named
+  // suburb in another state.
+  if (full && !loose.display.toLowerCase().includes(full.toLowerCase())) return null;
+
+  return loose;
 }
 
 /** Upsert one cache row (hit or miss). Never throws. */
