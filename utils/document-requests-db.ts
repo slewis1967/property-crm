@@ -17,9 +17,12 @@ export function docTableMissing(error: { code?: string; message?: string } | nul
   return error.code === "42P01" || /relation .* does not exist/i.test(error.message ?? "");
 }
 
-/** Columns safe to return to the rep UI. Never the token_hash. */
+/** Columns safe to return to the rep UI. Never the token_hash.
+ * verified_at / verification_issues come from the same migration
+ * (20260722_yla_verification.sql) as verification_status, so they add no new
+ * migration dependency. */
 export const REQUEST_LIST_COLUMNS =
-  "id,client_ref,application_id,applicant_name,applicant_email,applicant_phone,opportunity_id,status,drive_folder_url,submitted_at,created_by,expires_at,created_at,verification_status,yla_submitted_at";
+  "id,client_ref,application_id,applicant_name,applicant_email,applicant_phone,opportunity_id,status,drive_folder_url,submitted_at,created_by,expires_at,created_at,verification_status,verified_at,verification_issues,yla_submitted_at";
 
 /**
  * The list columns PLUS the training-video release state and the PA-received
