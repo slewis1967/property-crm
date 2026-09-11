@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { NextRequest } from "next/server";
 
 /**
  * Middleware header behaviour tests
@@ -19,7 +20,6 @@ describe("proxy header sanitation: x-public-route", () => {
   });
 
   it("overwrites a forged client x-public-route=1 on a STAFF path with 0", async () => {
-    const { NextRequest } = await import("next/server");
     const { proxy } = await import("./proxy");
     const req = new NextRequest("http://localhost/properties", {
       headers: {
@@ -42,7 +42,6 @@ describe("proxy header sanitation: x-public-route", () => {
   });
 
   it("sets x-public-route=1 for a TRUSTED public path", async () => {
-    const { NextRequest } = await import("next/server");
     const { proxy } = await import("./proxy");
     const req = new NextRequest("http://localhost/portal/abc123", {
       headers: {
@@ -59,7 +58,6 @@ describe("proxy header sanitation: x-public-route", () => {
   });
 
   it("sets x-public-route=0 for a STAFF path", async () => {
-    const { NextRequest } = await import("next/server");
     const { proxy } = await import("./proxy");
     const req = new NextRequest("http://localhost/contacts", {
       headers: {
