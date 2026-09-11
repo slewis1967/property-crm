@@ -3,7 +3,7 @@ import { supabase } from "../../../utils/supabase";
 import { requireAuth } from "../../../utils/cf-access";
 import { log, errInfo } from "../../../utils/logger";
 import { errMessage } from "../../../utils/errors";
-import { getStockStats, springboardPitchRef } from "../../../utils/channel-partners-server";
+import { getStockStats, smsfPitchRef, springboardPitchRef } from "../../../utils/channel-partners-server";
 import {
   channelPartnersTableMissing,
   coercePartnerBody,
@@ -40,6 +40,7 @@ export async function GET(req: Request) {
       partners: (data ?? []) as ChannelPartner[],
       stats,
       springboardRef: springboardPitchRef(),
+      smsfRef: smsfPitchRef(),
       migrationNeeded: false,
     });
   } catch (e) {

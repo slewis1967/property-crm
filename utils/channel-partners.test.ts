@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  SMSF_YLA_PARAGRAPH,
+  SMSF_YLA_SCRIPT_LINE,
   SPRINGBOARD_PARAGRAPH,
   buildCallScript,
   buildPitchEmail,
@@ -108,6 +110,38 @@ describe("buildPitchEmail", () => {
     const e = buildPitchEmail(p, stats, { springboardRef: "SBH-CP-TEST" });
     expect(e.includesSpringboard).toBe(false);
     expect(e.text).not.toContain("Community Funding");
+  });
+
+  it("gives SMSF firms the LRBA-ban paragraph only under its OWN clause 7 reference", () => {
+    const p = partner({ nextkey_stream_fit: "SMSF", channel_type: "SMSF specialist" });
+    const held = buildPitchEmail(p, stats, { springboardRef: "SBH-CP-TEST" }); // Springboard approval is not enough
+    expect(held.includesSmsfYla).toBe(false);
+    expect(held.text).not.toContain(SMSF_YLA_PARAGRAPH);
+    expect(held.notes.join(" ")).toMatch(/its own clause 7 approval/);
+
+    const approved = buildPitchEmail(p, stats, { smsfRef: "SBH-CP-SMSF-TEST" });
+    expect(approved.includesSmsfYla).toBe(true);
+    expect(approved.text).toContain(SMSF_YLA_PARAGRAPH);
+    expect(approved.text).not.toContain(SPRINGBOARD_PARAGRAPH);
+  });
+
+  it("never offers the LRBA-ban paragraph to a firm that isn't SMSF-stream", () => {
+    const e = buildPitchEmail(partner({ nextkey_stream_fit: "Core investor" }), stats, { smsfRef: "X" });
+    expect(e.includesSmsfYla).toBe(false);
+  });
+
+  it("the LRBA-ban wording keeps its guard rails", () => {
+    for (const s of [SMSF_YLA_PARAGRAPH, SMSF_YLA_SCRIPT_LINE]) {
+      expect(s).toMatch(/own name/);
+      expect(s).toMatch(/personal purchase, not an SMSF/);
+      expect(s).toMatch(/separate deposit loan/);
+      expect(s).toMatch(/fees apply/);
+      // Denial-only framing was the half-truth the review flagged; "still want to buy" sells it as a replacement.
+      expect(s).not.toMatch(/still want to buy|no interest in the property/i);
+      expect(s).not.toMatch(/workaround|loophole|get around|invest(s|ed|ment)? (into|in) the|lend(s|ing)? (to|money)|return|%/i);
+    }
+    expect(SMSF_YLA_PARAGRAPH).toContain("raised by Australians helping Australians buy property");
+    expect(SMSF_YLA_PARAGRAPH).toContain("Eligibility depends on a number of factors");
   });
 
   it("the approved Springboard wording never mentions super or a referral fee", () => {

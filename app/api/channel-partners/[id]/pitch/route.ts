@@ -5,7 +5,7 @@ import { log, errInfo } from "../../../../../utils/logger";
 import { errMessage } from "../../../../../utils/errors";
 import { unsubscribedEmails } from "../../../../../utils/brevo";
 import { reviewBroadcastCopy } from "../../../../../utils/compliance-review";
-import { getStockStats, springboardPitchRef } from "../../../../../utils/channel-partners-server";
+import { getStockStats, smsfPitchRef, springboardPitchRef } from "../../../../../utils/channel-partners-server";
 import {
   buildCallScript,
   buildPitchEmail,
@@ -43,7 +43,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
     if (b.action === "build") {
       const stats = await getStockStats();
-      const opts = { springboardRef: springboardPitchRef() };
+      const opts = { springboardRef: springboardPitchRef(), smsfRef: smsfPitchRef() };
       const email = buildPitchEmail(partner, stats, opts);
       const unsubscribed = partner.email ? (await unsubscribedEmails([partner.email])).size > 0 : false;
       return NextResponse.json({

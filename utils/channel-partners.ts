@@ -317,6 +317,30 @@ const SUBJECT: Record<Exclude<StreamKey, "springboard">, (company: string) => st
 export const SPRINGBOARD_PARAGRAPH =
   "For clients looking at completed homes who haven't saved a full deposit: the Community Funding Program, offered through Your Loan Assist, may be able to help eligible buyers purchase a completed home, with the deposit raised by Australians helping Australians buy property. It covers completed homes only, not house-and-land construction contracts. Eligibility depends on a number of factors and is assessed by Your Loan Assist (CRE8 Finance Pty Ltd, Australian Credit Licence 477483). Accredited Springboard Homes introducers can refer those clients to Springboard Homes.";
 
+/**
+ * The LRBA-ban angle for SMSF-specialist FIRMS (Sean's direction, 2026-09-11):
+ * since 10 Aug 2026 an SMSF can't enter a new residential LRBA; separately, the
+ * Community Funding Program is a different structure. A separate clause 7
+ * piece with its OWN reference (`smsfRef`) — approving the home-buyer
+ * paragraph does not approve this one (7.5).
+ *
+ * This is "Option B" from the compliance review of 2026-09-11, the default
+ * until YLA chooses: it says what the purchase IS (personal, own name, home
+ * loan + separate deposit loan) rather than listing what the SMSF does not do
+ * — a denial-only sentence to SMSF specialists was flagged as a half-truth
+ * (ASIC Act s12DA/12DB). "Separately" and the absence of "your clients will
+ * still want to buy" keep it from reading as a replacement for an LRBA. It
+ * never explains the super mechanic (that is YLA's and the licensed adviser's
+ * to explain) and never calls it a workaround. If YLA approves Option A, add
+ * their approved sentence about super's relevance to eligibility here.
+ */
+export const SMSF_YLA_PARAGRAPH =
+  "One more, given the change on 10 August. An SMSF can no longer enter a new LRBA to buy residential property. Separately, the Community Funding Program offered through Your Loan Assist is a different structure. It is a personal purchase, not an SMSF purchase: the client buys in their own name with a home loan and a separate deposit loan, the deposit being raised by Australians helping Australians buy property. Eligibility depends on a number of factors, fees apply, and not every client will qualify. Eligibility is assessed by Your Loan Assist (CRE8 Finance Pty Ltd, Australian Credit Licence 477483). Any advice about a client's super comes from a separately licensed financial adviser, who charges for it, not from NextKey. If it's relevant, we can arrange a walk-through with Your Loan Assist.";
+
+/** Read word for word; any follow-up question about the SMSF's role goes to Your Loan Assist. */
+export const SMSF_YLA_SCRIPT_LINE =
+  "Since the LRBA ban, something separate worth knowing about is the Community Funding Program through Your Loan Assist. It's a personal purchase, not an SMSF one: the client buys in their own name with a home loan and a separate deposit loan. Your Loan Assist explains how it works and assesses eligibility, fees apply, and any advice about super comes from a separately licensed adviser, not me. Would a walk-through help?";
+
 export const PITCH_FOOTER =
   "General information only. NextKey sources and researches property; it does not provide financial, credit, tax, superannuation or NDIS advice. If you'd rather not hear from us, reply \"unsubscribe\" and we won't contact you again.";
 
@@ -326,6 +350,7 @@ export type PitchEmail = {
   html: string;
   streams: StreamKey[];
   includesSpringboard: boolean;
+  includesSmsfYla: boolean;
   /** Things the operator should know before sending. Not blockers on their own. */
   notes: string[];
 };
@@ -333,6 +358,8 @@ export type PitchEmail = {
 export type PitchOptions = {
   /** The clause 7 approval reference for the Springboard partner pitch. Null = not approved. */
   springboardRef?: string | null;
+  /** The clause 7 reference for the SMSF-firm (LRBA-ban) paragraph — a separate piece. Null = not approved. */
+  smsfRef?: string | null;
 };
 
 /**
@@ -353,7 +380,9 @@ export function buildPitchEmail(
   const nextkeyStreams = all.filter((s): s is Exclude<StreamKey, "springboard"> => s !== "springboard");
   const wantsSpringboard = all.includes("springboard");
 
-  // Springboard never shares an email with SMSF — see the file header.
+  // The generic Springboard home-buyer paragraph never shares an email with
+  // SMSF copy — see the file header. SMSF firms get their own, separately
+  // approved paragraph instead.
   let includesSpringboard = wantsSpringboard && !!opts.springboardRef;
   if (includesSpringboard && nextkeyStreams.includes("smsf")) {
     includesSpringboard = false;
@@ -361,6 +390,11 @@ export function buildPitchEmail(
   }
   if (wantsSpringboard && !opts.springboardRef) {
     notes.push("Springboard paragraph held back: the partner pitch has no clause 7 approval reference yet.");
+  }
+  const isSmsf = nextkeyStreams.includes("smsf");
+  const includesSmsfYla = isSmsf && !!opts.smsfRef;
+  if (isSmsf && !opts.smsfRef) {
+    notes.push("LRBA-ban / Community Funding paragraph held back: it needs its own clause 7 approval from Your Loan Assist.");
   }
 
   // A Springboard-only partner still gets the NextKey core offer as the lead —
@@ -397,6 +431,7 @@ export function buildPitchEmail(
     `What that means for ${company}:\n${benefitLines.map((b) => `• ${b}`).join("\n")}`,
     aiParagraph,
     ...(includesSpringboard ? [SPRINGBOARD_PARAGRAPH] : []),
+    ...(includesSmsfYla ? [SMSF_YLA_PARAGRAPH] : []),
     cta,
     PITCH_FOOTER,
   ].join("\n\n");
@@ -409,6 +444,7 @@ export function buildPitchEmail(
     html,
     streams: all,
     includesSpringboard,
+    includesSmsfYla,
     notes,
   };
 }
@@ -495,6 +531,11 @@ export function buildCallScript(
   if (all.includes("springboard") && opts.springboardRef && !nk.includes("smsf")) {
     lines.push(
       `Springboard (only if they raise clients without a full deposit): "For completed homes, the Community Funding Program offered through Your Loan Assist may be able to help eligible buyers. Eligibility depends on a number of factors and Your Loan Assist assesses it. Accredited Springboard Homes introducers can refer those clients."`,
+    );
+  }
+  if (nk.includes("smsf") && opts.smsfRef) {
+    lines.push(
+      `LRBA ban (only if they raise it; read it word for word and send any question about the SMSF to Your Loan Assist): "${SMSF_YLA_SCRIPT_LINE}"`,
     );
   }
   lines.push(`Ask: "Could we book 15 minutes next week? I'll send a sample of current stock in your area first. What's the best email for that?"`);

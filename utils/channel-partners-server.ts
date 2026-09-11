@@ -81,6 +81,17 @@ export function springboardPitchRef(): string | null {
   return v || null;
 }
 
+/**
+ * Clause 7 reference for the SMSF-firm LRBA-ban paragraph. A separate piece
+ * from the Springboard one, so a separate variable: YLA approving one must not
+ * switch on the other. Same rule for setting it — only once the written
+ * approval of that exact text is filed.
+ */
+export function smsfPitchRef(): string | null {
+  const v = (process.env.CHANNEL_PITCH_SMSF_REF ?? "").trim();
+  return v || null;
+}
+
 // ── Contact check ───────────────────────────────────────────────────────────
 
 const PAGE_TIMEOUT_MS = 6000;
