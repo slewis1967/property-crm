@@ -10,10 +10,13 @@
  * there. Trailing slash matters — "/introducers" is a staff path.
  */
 import { usePathname } from "next/navigation";
+import { isPartnerPortalPath } from "../../utils/partner";
 
 export default function PublicRouteGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   if (pathname === "/sign" || pathname?.startsWith("/sign/")) return null;
   if (pathname === "/introducer" || pathname?.startsWith("/introducer/")) return null;
+  // Channel-partner portal, same reason. "/partners" is not a match.
+  if (isPartnerPortalPath(pathname)) return null;
   return <>{children}</>;
 }
