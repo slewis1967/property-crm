@@ -9,6 +9,7 @@
  * page lives at /portal/<token>; this is the internal side.
  */
 import { useCallback, useEffect, useState } from "react";
+import YlaCheckFailed, { issuesForApplicant, type VerificationIssue } from "../components/YlaCheckFailed";
 
 const AMBER = "#B45309";
 
@@ -24,6 +25,8 @@ type RequestRow = {
   created_by: string | null;
   created_at: string;
   verification_status: string | null;
+  verified_at?: string | null;
+  verification_issues?: VerificationIssue[] | null;
   yla_submitted_at: string | null;
   /** Optional: absent until the 20260727 migration runs, so the UI must cope. */
   training_video_released_at?: string | null;
@@ -38,6 +41,12 @@ type RequestRow = {
  */
 function isHeldForRelease(r: RequestRow): boolean {
   return r.verification_status === "passed" && !r.yla_submitted_at && !!r.drive_folder_url;
+}
+
+/** FAILED = the sweep checked the complete set and rejected it; the client has
+ * been asked to replace files and nothing has gone to YLA. */
+function failedCheck(r: RequestRow): boolean {
+  return r.verification_status === "failed" && !r.yla_submitted_at && r.status !== "submitted" && r.status !== "cancelled";
 }
 
 type WeeklyEntry = {
@@ -559,6 +568,11 @@ export default function DocumentRequestsClient() {
                       {r.applicant_email || "no email"} · {new Date(r.created_at).toLocaleDateString()}
                     </p>
                   </button>
+                  {failedCheck(r) && (
+                    <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                      failed YLA check
+                    </span>
+                  )}
                   <StatusPill status={r.status} />
                   {r.status !== "cancelled" && r.status !== "submitted" && (
                     <button
@@ -578,8 +592,18 @@ export default function DocumentRequestsClient() {
                       <>
                         <p className="mb-3 text-sm font-medium text-gray-700">
                           {detail.received} of {detail.total} received
-                          {detail.complete && <span className="ml-2 text-green-700">— ready to submit</span>}
+                          {detail.complete && !failedCheck(r) && <span className="ml-2 text-green-700">— ready to submit</span>}
                         </p>
+                        {failedCheck(r) && (
+                          <div className="mb-3">
+                            <YlaCheckFailed
+                              // Every row shows the application-level blockers here:
+                              // this list has no "primary" row to hang them on.
+                              issues={issuesForApplicant(r.verification_issues, r.applicant_name, true)}
+                              verifiedAt={r.verified_at ?? null}
+                            />
+                          </div>
+                        )}
                         <ul className="space-y-1 text-sm">
                           {detail.slots.map((s, i) => (
                             <li key={i} className="flex items-center gap-2">

@@ -91,6 +91,11 @@ export type VisualVerdict = {
   rotated: boolean;
   /** ATO statements only: the financial year printed on it, e.g. "2025-26". */
   financialYear?: string | null;
+  /** When it is NOT the expected document, what it actually is ("a
+   * superannuation statement"). "Doesn't look like the expected document" on
+   * its own left a client guessing which upload was wrong and why; naming what
+   * they sent instead is what gets the right file back first time. */
+  actualDocument?: string | null;
   note?: string;
 };
 
@@ -104,6 +109,7 @@ export function visualCheckPrompt(docKey: string, slot?: number): string {
     jsonShape(docKey),
     "- legible: is the text clearly readable (not blurry, dark, cut off)?",
     `- correctType: does it genuinely appear to be ${expected}?`,
+    '- actualDocument: if correctType is false, what the document actually is in a few plain words (e.g. "a superannuation statement", "a bank statement"); otherwise an empty string.',
     "- isScreenshot: is it a photo or screenshot of a phone/computer screen (status bar, app chrome) rather than an original document?",
     "- rotated: is it sideways or upside down?",
   ];
@@ -119,6 +125,7 @@ function jsonShape(docKey: string): string {
   const fields = [
     '"legible": true/false',
     '"correctType": true/false',
+    '"actualDocument": "<what it actually is, or empty>"',
     '"isScreenshot": true/false',
     '"rotated": true/false',
   ];
@@ -144,6 +151,7 @@ export function parseVisualVerdict(raw: string): VisualVerdict {
     isScreenshot: bool(obj.isScreenshot, true),
     rotated: bool(obj.rotated, true),
     financialYear: normaliseFinancialYear(obj.financialYear),
+    actualDocument: typeof obj.actualDocument === "string" ? obj.actualDocument.trim().slice(0, 80) || null : null,
     note: typeof obj.note === "string" ? obj.note.slice(0, 200) : undefined,
   };
 }
@@ -231,7 +239,13 @@ export function atoYearCoverageIssues(
 export function visualIssues(v: VisualVerdict): string[] {
   const issues: string[] = [];
   if (!v.legible) issues.push("not clearly legible");
-  if (!v.correctType) issues.push("doesn't look like the expected document");
+  if (!v.correctType) {
+    // Strip a trailing full stop: the issue is joined into sentences downstream.
+    const actual = v.actualDocument?.replace(/[.\s]+$/, "");
+    issues.push(
+      actual ? `doesn't look like the expected document — it appears to be ${actual}` : "doesn't look like the expected document",
+    );
+  }
   if (v.isScreenshot) issues.push("looks like a phone/screen screenshot");
   if (v.rotated) issues.push("rotated / not upright");
   return issues;
