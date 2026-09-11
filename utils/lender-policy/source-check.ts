@@ -72,9 +72,10 @@ const MAX_CONCURRENCY = 6;
  * Hosts that must never be fetched. This runs on server-side URLs supplied by
  * a language model, so it is an SSRF surface: without this, a hallucinated
  * "source" of `http://169.254.169.254/latest/meta-data/` would be dutifully
- * requested by our own infrastructure.
+ * requested by our own infrastructure. Also used by the channel-partner
+ * contact check (utils/channel-partner-contacts.ts) — same threat, same guard.
  */
-function isPubliclyRoutable(url: URL): boolean {
+export function isPubliclyRoutable(url: URL): boolean {
   if (url.protocol !== "http:" && url.protocol !== "https:") return false;
   const host = url.hostname.toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) return false;

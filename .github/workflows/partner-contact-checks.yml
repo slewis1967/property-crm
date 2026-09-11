@@ -1,0 +1,66 @@
+name: Channel partner contact checks (daily)
+
+# Keeps /channel-partners contact details current. Each call re-checks ONE
+# partner whose details are unverified or older than 90 days: it reads the
+# firm's own website (plus an AI web lookup for names/roles) and stores what it
+# found for review in the panel. It changes no contact detail — the only thing
+# it may stamp by itself is "verified", and only when every detail we hold is
+# still published, unchanged, on the firm's own site.
+#
+# Separate from crm-sweeps.yml, like paid-account-alerts.yml: one check is an
+# outbound job of up to ~20s, which would eat the shared endpoint timeout the
+# client sweeps depend on. Three sequential calls a day refresh a ~24-firm list
+# within about a week of it going stale, and a firm is never re-checked more
+# than weekly while a previous result is waiting to be looked at.
+#
+# The endpoint (/api/cron/run) is secret-authed (Authorization: Bearer
+# CRON_SECRET, a repo secret) and hit on the Netlify origin, which bypasses
+# Cloudflare Access — the proxy.ts cron exemption lets it through and the secret
+# is the real auth.
+
+on:
+  schedule:
+    # 20:30 UTC = 06:30 Australia/Brisbane (AEST, no DST): results are waiting
+    # in the panel at the start of the day.
+    - cron: "30 20 * * *"
+  workflow_dispatch: {} # manual run from the Actions tab
+
+concurrency:
+  group: partner-contact-checks
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Re-check stale partner contacts
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repo secret is not set"; exit 1
+          fi
+          for i in 1 2 3; do
+            echo "Firing /api/cron/run?job=partners (call $i) …"
+            code=$(curl -sS -m 60 -o /tmp/resp -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              "https://crmnex.netlify.app/api/cron/run?job=partners" || echo "000")
+            echo "HTTP $code"
+            head -c 800 /tmp/resp 2>/dev/null || true
+            echo
+            if [ "$code" = "000" ]; then
+              echo "::error::could not reach the CRM cron endpoint"; exit 1
+            fi
+            if [ "$code" = "401" ]; then
+              echo "::error::unauthorised — CRON_SECRET mismatch"; exit 1
+            fi
+            # A slow third-party site can push one call past the function
+            # timeout; that partner is simply picked up again tomorrow, so only
+            # warn rather than failing the run.
+            if [ "$code" -ge 500 ]; then
+              echo "::warning::CRM returned HTTP $code on call $i"
+            fi
+            # Nothing left to check → stop early.
+            if grep -q '"checked":0' /tmp/resp 2>/dev/null; then break; fi
+          done

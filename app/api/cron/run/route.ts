@@ -17,7 +17,8 @@
  * triggering the cron never sends anything that wasn't already enabled — it only
  * makes the schedule fire.
  *
- * Body/query: ?job=yla|reminders|accounts|income|all (default all). ?dry_run=1 forces dry.
+ * Body/query: ?job=yla|reminders|accounts|income|partners|all (default all). ?dry_run=1 forces dry.
+ * `partners` (channel-partner contact re-check) is NOT part of `all` — see below.
  *
  * `accounts` (the paid-accounts payment-due digest) is in `all`, but it also has
  * its OWN daily schedule (.github/workflows/paid-account-alerts.yml): it must
@@ -30,6 +31,7 @@ import { runYlaAutoSubmit } from "../../../../utils/yla-auto-submit";
 import { runDocumentReminders } from "../../../../utils/document-reminders";
 import { runPaidServiceAlerts } from "../../../../utils/paid-service-alerts";
 import { runIncomeSweep } from "../../../../utils/income-reconciliation-sweep";
+import { runPartnerContactSweep } from "../../../../utils/channel-partners-server";
 import { log, errInfo } from "../../../../utils/logger";
 
 export const runtime = "nodejs";
@@ -102,9 +104,24 @@ export async function POST(req: Request) {
     }
   }
 
+  // Deliberately NOT in `all`: one contact check is an outbound job of up to
+  // ~20s and would starve the jobs above of this endpoint's timeout. It has its
+  // own schedule (.github/workflows/partner-contact-checks.yml), one partner
+  // per call. Changes no contact detail — see runPartnerContactSweep.
+  if (job === "partners") {
+    try {
+      result.partners = await runPartnerContactSweep({ limit: 1 });
+      ran.push("partners");
+    } catch (e) {
+      log.error("cron.partners_failed", { ...errInfo(e) });
+      result.partners = { ok: false, error: e instanceof Error ? e.message : "failed" };
+      ran.push("partners");
+    }
+  }
+
   if (ran.length === 0) {
     return NextResponse.json(
-      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|all)` },
+      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|partners|all)` },
       { status: 400 },
     );
   }
