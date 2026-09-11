@@ -32,7 +32,7 @@ describe("proxy header sanitation: x-public-route", () => {
         "cf-access-jwt-assertion": "fake.jwt.token",
       },
     });
-    const res = await proxy(req as any);
+    const res = await proxy(req);
     // Next encodes request-override headers onto the response for downstream handling.
     const overridden = res.headers.get("x-middleware-override-headers") || "";
     expect(overridden.split(",").map((s) => s.trim().toLowerCase())).toContain("x-public-route");
@@ -49,7 +49,7 @@ describe("proxy header sanitation: x-public-route", () => {
         "x-public-route": "0",
       },
     });
-    const res = await proxy(req as any);
+    const res = await proxy(req);
     const overridden = res.headers.get("x-middleware-override-headers") || "";
     expect(overridden.split(",").map((s) => s.trim().toLowerCase())).toContain("x-public-route");
     expect(res.headers.get("x-middleware-request-x-public-route")).toBe("1");
@@ -65,7 +65,7 @@ describe("proxy header sanitation: x-public-route", () => {
         "cf-access-jwt-assertion": "fake.jwt.token",
       },
     });
-    const res = await proxy(req as any);
+    const res = await proxy(req);
     const overridden = res.headers.get("x-middleware-override-headers") || "";
     expect(overridden.split(",").map((s) => s.trim().toLowerCase())).toContain("x-public-route");
     expect(res.headers.get("x-middleware-request-x-public-route")).toBe("0");
