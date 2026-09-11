@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 /**
  * Middleware header behaviour tests
@@ -9,21 +9,13 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
  *  - public path => 1
  */
 describe("proxy header sanitation: x-public-route", () => {
-  let savedAuthMode: string | undefined;
-  let savedNodeEnv: string | undefined;
-
   beforeEach(() => {
-    savedAuthMode = process.env.AUTH_MODE;
-    savedNodeEnv = process.env.NODE_ENV;
-    // Force tunnel mode so public/staff branches run even in tests.
-    process.env.AUTH_MODE = "tunnel";
-    process.env.NODE_ENV = "test";
+    // Force tunnel mode so public/staff branches run even in tests. Vitest already
+    // sets NODE_ENV to "test"; avoid mutating it directly to satisfy tsc.
+    vi.stubEnv("AUTH_MODE", "tunnel");
   });
   afterEach(() => {
-    if (savedAuthMode !== undefined) process.env.AUTH_MODE = savedAuthMode;
-    else delete process.env.AUTH_MODE;
-    if (savedNodeEnv !== undefined) process.env.NODE_ENV = savedNodeEnv;
-    else delete process.env.NODE_ENV;
+    vi.unstubAllEnvs();
   });
 
   it("overwrites a forged client x-public-route=1 on a STAFF path with 0", async () => {
