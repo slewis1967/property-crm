@@ -36,8 +36,9 @@ import { springboardSenderEmail, springboardSenderName, springboardReplyTo } fro
 import { driveFolderIdFromUrl, shareFolderWithReader } from "./google-drive";
 import { submitApplicationToBroker } from "./broker-submit";
 import { sendBrevoEmail } from "./brevo";
-import { sendClientDocFixups, clientDocFixupEnabled } from "./yla-remediation-email";
+import { sendClientDocFixups, clientDocFixupEnabled, loadApplicationSiblings } from "./yla-remediation-email";
 import { notifyYlaSubmissionHeld } from "./yla-hold-notify";
+import { reportVerificationFailure, closeFailTasks } from "./yla-fail-alert";
 
 /**
  * Hold the last step: package the application to Drive, then wait for a human
@@ -63,6 +64,7 @@ type Candidate = {
   applicant_name: string;
   client_ref: string | null;
   contact_id: string | null;
+  opportunity_id: string | null;
   verification_status: string | null;
   verified_at: string | null;
   drive_folder_url: string | null;
@@ -116,7 +118,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   const { data: cands, error: candErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .select(
-      "id,application_id,applicant_name,client_ref,contact_id,verification_status,verified_at,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
+      "id,application_id,applicant_name,client_ref,contact_id,opportunity_id,verification_status,verified_at,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
     )
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
@@ -169,6 +171,9 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
 
     let primaryApplicant = rep.applicant_name;
     let clientRef = rep.client_ref;
+    // Applicant 2's request carries no contact_id, so take whichever sibling has one.
+    const contactId = sibs.find((s) => s.contact_id)?.contact_id ?? null;
+    const opportunityId = sibs.find((s) => s.opportunity_id)?.opportunity_id ?? null;
 
     // STAGE 1 — verify. Skipped entirely when a previous invocation already
     // recorded a pass, which is what makes the two stages add up to less than
@@ -203,12 +208,29 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         // told to re-upload while the application still looked unchecked — so
         // the next sweep paid for the whole AI pass again and re-sent the same
         // email. Whatever else happens, the verdict is now durable.
+        //
+        // Each issue carries the applicant's NAME as well as the verdict's
+        // "Applicant N" label, so the CRM can show it against the right person
+        // without re-deriving the numbering.
+        const siblings = await loadApplicationSiblings(rep.application_id, rep.id);
+        const nameFor = (label: string): string | null => {
+          const m = /^Applicant (\d+)$/.exec(label);
+          if (!m) return siblings.length === 1 ? siblings[0]!.applicant_name : label;
+          return siblings[Number(m[1]) - 1]?.applicant_name ?? null;
+        };
         await supabase
           .from(DOCUMENT_REQUESTS_TABLE)
           .update({
             verification_status: "failed",
             verified_at: now.toISOString(),
-            verification_issues: run.result.docs.filter((d) => !d.pass).map((d) => ({ filename: d.filename, applicant: d.applicant, issues: d.issues })),
+            verification_issues: [
+              ...run.result.docs
+                .filter((d) => !d.pass)
+                .map((d) => ({ filename: d.filename, applicant: d.applicant, name: nameFor(d.applicant), issues: d.issues })),
+              // Blockers that aren't a client file (an unsigned Needs Analysis /
+              // Credit Authorisation) — ours to fix, and invisible until now.
+              ...run.result.missing.map((m) => ({ filename: null, applicant: null, name: null, issues: [m] })),
+            ],
             updated_at: now.toISOString(),
           })
           .in("id", ids);
@@ -224,6 +246,18 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         const emailedClients = fixups
           .filter((f) => f.action === "emailed" || f.action === "would_email")
           .map((f) => `${f.applicant}${f.action === "would_email" ? " (dry)" : ""}`);
+        // Tell US: urgent email to Sean + Glenn, and a task on the contact so it
+        // shows on the opportunity page. Never throws.
+        await reportVerificationFailure({
+          siblings,
+          contactId,
+          opportunityId,
+          clientRef,
+          docs: run.result.docs,
+          missing: run.result.missing,
+          fixups,
+          now,
+        });
         actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "flagged", issues, emailedClients });
         continue;
       }
@@ -246,6 +280,8 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         .from(DOCUMENT_REQUESTS_TABLE)
         .update({ verification_status: "passed", verified_at: now.toISOString(), verification_issues: null, updated_at: now.toISOString() })
         .in("id", ids);
+      // A set that failed before and passes now has resolved its task.
+      await closeFailTasks(contactId, now);
     } else if (dryRun) {
       actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "would_submit" });
       continue;

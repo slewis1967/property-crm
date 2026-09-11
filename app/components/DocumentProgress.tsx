@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { errMessage } from "../../utils/errors";
+import YlaCheckFailed, { issuesForApplicant, type VerificationIssue } from "./YlaCheckFailed";
 
 /**
  * Document-collection progress for a record (opportunity or contact).
@@ -36,6 +37,10 @@ type ListRow = {
   applicant_name: string;
   status: string;
   drive_folder_url: string | null;
+  verification_status?: string | null;
+  verified_at?: string | null;
+  verification_issues?: VerificationIssue[] | null;
+  yla_submitted_at?: string | null;
 };
 
 type Slot = {
@@ -208,21 +213,26 @@ export default function DocumentProgress({
 
       {rows && (rows.length > 0 || pending.length > 0) && (
         <ul className="space-y-3">
-          {rows.map((r) => {
+          {rows.map((r, idx) => {
             const d = r.detail;
             const received = d?.received ?? 0;
             const total = d?.total ?? 0;
             const pct = total > 0 ? Math.round((received / total) * 100) : 0;
             const complete = d?.complete ?? false;
             const submitted = r.status === "submitted";
+            // A complete set that FAILED the sweep's check is not "ready" — it
+            // used to say so, and nobody knew it was stuck.
+            const failed = r.verification_status === "failed" && !r.yla_submitted_at && !submitted;
             const outstanding = (d?.slots || []).filter((s) => !s.document);
             const barColor = submitted
               ? "bg-green-600"
-              : complete
-                ? "bg-green-500"
-                : received > 0
-                  ? "bg-amber-500"
-                  : "bg-gray-300";
+              : failed
+                ? "bg-red-500"
+                : complete
+                  ? "bg-green-500"
+                  : received > 0
+                    ? "bg-amber-500"
+                    : "bg-gray-300";
             return (
               <li key={r.id}>
                 <div className="flex items-center justify-between gap-2">
@@ -246,10 +256,10 @@ export default function DocumentProgress({
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <span
                     className={`text-[11px] font-medium ${
-                      submitted ? "text-green-700" : complete ? "text-green-600" : "text-amber-700"
+                      submitted ? "text-green-700" : failed ? "text-red-700" : complete ? "text-green-600" : "text-amber-700"
                     }`}
                   >
-                    {submitted ? "Sent to Drive" : complete ? "Ready to submit" : "Awaiting client"}
+                    {submitted ? "Sent to Drive" : failed ? "Failed YLA check" : complete ? "Ready to submit" : "Awaiting client"}
                   </span>
                   {submitted && r.drive_folder_url && (
                     <a
@@ -267,6 +277,15 @@ export default function DocumentProgress({
                   <p className="mt-1 text-[11px] text-gray-400 leading-snug">
                     Outstanding: {outstanding.map((s) => slotLabel(s)).join(", ")}
                   </p>
+                )}
+
+                {failed && (
+                  <YlaCheckFailed
+                    compact
+                    // Application-level blockers (unsigned NA etc.) once, on the primary.
+                    issues={issuesForApplicant(r.verification_issues, r.applicant_name, idx === 0)}
+                    verifiedAt={r.verified_at ?? null}
+                  />
                 )}
 
                 {r.detailError && (
