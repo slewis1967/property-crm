@@ -138,6 +138,16 @@ describe("buildPitchEmail", () => {
       expect(s).toMatch(/fees apply/);
       // Denial-only framing was the half-truth the review flagged; "still want to buy" sells it as a replacement.
       expect(s).not.toMatch(/still want to buy|no interest in the property/i);
+      // Sean, 2026-09-12: "super may be relevant to eligibility cannot be said" — the copy must never
+      // tie a client's super to qualifying, however YLA words it. Saying WHO advises on super is fine
+      // ("any advice about super comes from a licensed adviser"); linking it to eligibility is not.
+      for (const banned of [
+        /super(annuation)?[^.]{0,60}\brelevan[ct][^.]{0,30}eligib/i,
+        /super(annuation)?[^.]{0,60}\b(qualif|unlock|enabl)/i,
+        /\b(qualif|eligib)[^.]{0,60}\b(their|your|a client's|the client's)\s+super/i,
+      ]) {
+        expect(s).not.toMatch(banned);
+      }
       expect(s).not.toMatch(/workaround|loophole|get around|invest(s|ed|ment)? (into|in) the|lend(s|ing)? (to|money)|return|%/i);
     }
     expect(SMSF_YLA_PARAGRAPH).toContain("raised by Australians helping Australians buy property");

@@ -324,15 +324,20 @@ export const SPRINGBOARD_PARAGRAPH =
  * piece with its OWN reference (`smsfRef`) — approving the home-buyer
  * paragraph does not approve this one (7.5).
  *
- * This is "Option B" from the compliance review of 2026-09-11, the default
- * until YLA chooses: it says what the purchase IS (personal, own name, home
- * loan + separate deposit loan) rather than listing what the SMSF does not do
- * — a denial-only sentence to SMSF specialists was flagged as a half-truth
- * (ASIC Act s12DA/12DB). "Separately" and the absence of "your clients will
- * still want to buy" keep it from reading as a replacement for an LRBA. It
- * never explains the super mechanic (that is YLA's and the licensed adviser's
- * to explain) and never calls it a workaround. If YLA approves Option A, add
- * their approved sentence about super's relevance to eligibility here.
+ * This is "Option B" from the compliance review of 2026-09-11: it says what the
+ * purchase IS (personal, own name, home loan + separate deposit loan) rather
+ * than listing what the SMSF does not do — a denial-only sentence to SMSF
+ * specialists was flagged as a half-truth (ASIC Act s12DA/12DB). "Separately"
+ * and the absence of "your clients will still want to buy" keep it from reading
+ * as a replacement for an LRBA. It never explains the super mechanic (that is
+ * YLA's and the licensed adviser's to explain) and never calls it a workaround.
+ *
+ * ⛔ The review's "Option A" — a sentence saying a client's super may be
+ * relevant to eligibility — is RULED OUT by Sean (2026-09-12): "super may be
+ * relevant to eligibility cannot be said". Do not add it even if YLA offers it;
+ * a test pins this. Tying super to qualifying is the one thing this paragraph
+ * may never do, so the silence about the mechanic is permanent, not a gap
+ * waiting to be filled.
  */
 export const SMSF_YLA_PARAGRAPH =
   "One more, given the change on 10 August. An SMSF can no longer enter a new LRBA to buy residential property. Separately, the Community Funding Program offered through Your Loan Assist is a different structure. It is a personal purchase, not an SMSF purchase: the client buys in their own name with a home loan and a separate deposit loan, the deposit being raised by Australians helping Australians buy property. Eligibility depends on a number of factors, fees apply, and not every client will qualify. Eligibility is assessed by Your Loan Assist (CRE8 Finance Pty Ltd, Australian Credit Licence 477483). Any advice about a client's super comes from a separately licensed financial adviser, who charges for it, not from NextKey. If it's relevant, we can arrange a walk-through with Your Loan Assist.";
