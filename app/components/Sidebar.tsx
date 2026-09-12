@@ -61,6 +61,8 @@ const GROUPS: Group[] = [
       // /introducers — the public portal owns the /introducer/* subtree and it
       // is exempt from the Cloudflare Access gate.
       { href: "/admin/introducers", icon: "🤝", label: "Introducers" },
+      // Staff side of the channel-partner portal; the public portal owns /partner/*.
+      { href: "/admin/partners", icon: "🏘️", label: "Partners" },
       { href: "/eoi", icon: "📝", label: "Expressions of Interest" },
       { href: "/fact-find", icon: "📋", label: "Fact Find" },
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },

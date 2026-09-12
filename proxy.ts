@@ -275,6 +275,23 @@ export function isPublicIntroducerRoute(pathname: string): boolean {
   return false;
 }
 
+// Public channel-partner portal routes. Same reasoning, and the same shape, as
+// the introducer carve-out above: partners are external firms selling our stock,
+// must never hold a Cloudflare Access identity, and carry their own session
+// (utils/partner-auth.ts). Must mirror the CF Access bypass app
+// (crm.nextkey.com.au/partner + /api/partner) EXACTLY.
+//
+// Trailing slash load-bearing again: `"/partners".startsWith("/partner")` is
+// true. The staff side lives at /admin/partners and /api/admin/partners, and
+// the recruitment list at /channel-partners — neither can match here. Every
+// route under /api/partner/* resolves the session through requirePartner() and
+// filters on the partner id from that session, never from the request.
+export function isPublicPartnerRoute(pathname: string): boolean {
+  if (pathname === "/partner" || pathname.startsWith("/partner/")) return true;
+  if (pathname.startsWith("/api/partner/")) return true;
+  return false;
+}
+
 // External-cron trigger route. Netlify's scheduled functions stopped executing,
 // so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
 // machine caller with no Cloudflare Access identity. Exempt from the CF Access
@@ -360,6 +377,7 @@ export async function proxy(req: NextRequest) {
     isPublicBookingRoute(pathname) ||
     isPublicPortalRoute(pathname) ||
     isPublicIntroducerRoute(pathname) ||
+    isPublicPartnerRoute(pathname) ||
     isCronRoute(pathname);
 
   if (isPublic) {
