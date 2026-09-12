@@ -57,6 +57,29 @@ describe("proxy header sanitation: x-public-route", () => {
     expect(res.headers.get("x-user-email")).toBeNull();
   });
 
+  it("sets x-public-route=1 for the channel-partner portal", async () => {
+    const { proxy } = await import("./proxy");
+    const req = new NextRequest("http://localhost/partner/stock", { headers: { "x-public-route": "0" } });
+    const res = await proxy(req);
+    expect(res.headers.get("x-middleware-request-x-public-route")).toBe("1");
+    expect(res.headers.get("x-user-email")).toBeNull();
+  });
+
+  it("sets x-public-route=0 for the STAFF partner console — /admin/partners is not the portal", async () => {
+    // "/partners".startsWith("/partner") is true, so a bare prefix test here
+    // would hand the staff console a public tag (and drop its sidebar).
+    const { proxy } = await import("./proxy");
+    const req = new NextRequest("http://localhost/admin/partners", {
+      headers: {
+        "cf-access-authenticated-user-email": "bob@example.com",
+        "cf-access-jwt-assertion": "fake.jwt.token",
+      },
+    });
+    const res = await proxy(req);
+    expect(res.headers.get("x-middleware-request-x-public-route")).toBe("0");
+    expect(res.headers.get("x-user-email")).toBe("bob@example.com");
+  });
+
   it("sets x-public-route=0 for a STAFF path", async () => {
     const { proxy } = await import("./proxy");
     const req = new NextRequest("http://localhost/contacts", {

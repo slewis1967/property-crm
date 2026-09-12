@@ -9,6 +9,7 @@ Public route patterns (must match the proxy carve-outs exactly):
 - Self-booking: `/book`, `/book/*`, `/api/book/*`
 - Client document portal: `/portal`, `/portal/*`, `/api/portal/*`
 - Introducer portal (public-facing): `/introducer`, `/introducer/*`, `/api/introducer/*`
+- Channel-partner portal (public-facing): `/partner`, `/partner/*`, `/api/partner/*` — note `"/partners".startsWith("/partner")` is true, so the carve-out matches `/partner` exactly plus `/partner/`; the staff side at `/admin/partners` must never match
 
 How the signal works (non-forgeable):
 

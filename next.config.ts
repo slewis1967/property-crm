@@ -29,6 +29,18 @@ import path from "path";
  * Tighten further once we know we never load third-party widgets — the
  * 'unsafe-inline' on style-src is the only place we'd want to revisit.
  */
+/**
+ * React's DEV build calls eval() to reconstruct server callstacks, so `next dev`
+ * logs a console error on every page load without it. Production never uses
+ * eval ("React will never use eval() in production mode"), so allowing it in
+ * development costs the deployed CRM nothing: Netlify builds with
+ * NODE_ENV=production and this resolves to "".
+ *
+ * Deliberately derived from NODE_ENV rather than a flag anyone can set: there
+ * must be no switch that turns eval() on for the live site.
+ */
+const DEV_EVAL = process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'";
+
 const SECURITY_HEADERS = [
   {
     key: "Content-Security-Policy",
@@ -36,7 +48,7 @@ const SECURITY_HEADERS = [
       "default-src 'self'",
       // Supabase REST/Auth/Realtime + Cloudflare Access team domain + LiveKit SFU
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev https://cdn.jsdelivr.net https://storage.googleapis.com",
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://*.brevo.com https://cdn.jsdelivr.net https://storage.googleapis.com",
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${DEV_EVAL} blob: https://*.brevo.com https://cdn.jsdelivr.net https://storage.googleapis.com`,
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",

@@ -17,6 +17,7 @@
  */
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { isPartnerPortalPath } from "../../utils/partner";
 
 export default function AppShell({
   sidebar,
@@ -58,7 +59,10 @@ export default function AppShell({
     pathname === "/sign" || pathname?.startsWith("/sign/") ||
     pathname === "/book" || pathname?.startsWith("/book/") ||
     pathname === "/portal" || pathname?.startsWith("/portal/") ||
-    pathname === "/introducer" || pathname?.startsWith("/introducer/");
+    pathname === "/introducer" || pathname?.startsWith("/introducer/") ||
+    // Channel-partner portal — the same boundary as the introducer portal; see
+    // isPartnerPortalPath for why "/partners" must not match.
+    isPartnerPortalPath(pathname);
   if (isStandalone) {
     return (
       <div data-appshell-root className="h-screen overflow-y-auto bg-gray-50">
