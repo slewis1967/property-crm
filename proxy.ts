@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { log } from "./utils/logger";
-import { PUBLIC_SURFACE_HEADER, PUBLIC_SURFACE_VALUE } from "./utils/public-surface";
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
@@ -328,32 +327,12 @@ function originAllowed(origin: string | null): boolean {
   }
 }
 
-/**
- * Pages seen by people outside the business. The root layout renders these
- * without the staff sidebar (see utils/public-surface.ts). Narrower than the
- * auth carve-outs: webhooks and cron are public to the gate but render nothing.
- */
-export function isPublicSurface(pathname: string): boolean {
-  return (
-    isPublicSignRoute(pathname) ||
-    isPublicGuestRoute(pathname) ||
-    isPublicBookingRoute(pathname) ||
-    isPublicPortalRoute(pathname) ||
-    isPublicIntroducerRoute(pathname) ||
-    isPublicPartnerRoute(pathname)
-  );
-}
-
-/** Pass the request on with the surface header set by US, never by the client. */
-function passThrough(req: NextRequest): NextResponse {
-  const headers = new Headers(req.headers);
-  headers.delete(PUBLIC_SURFACE_HEADER);
-  if (isPublicSurface(req.nextUrl.pathname)) headers.set(PUBLIC_SURFACE_HEADER, PUBLIC_SURFACE_VALUE);
-  return NextResponse.next({ request: { headers } });
-}
-
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Prepare request headers for downstream with sanitisation of any client-forgeable flags.
+  const requestHeaders = new Headers(req.headers);
+  // NEVER trust client-supplied public-route flags — strip before we decide.
+  requestHeaders.delete("x-public-route");
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
   // a Cloudflare Access redirect_url concatenation can produce URLs like
@@ -385,10 +364,12 @@ export async function proxy(req: NextRequest) {
     ? "tunnel"
     : (process.env.AUTH_MODE ?? "local").toLowerCase();
   if (mode !== "tunnel") {
-    return passThrough(req);
+    // Local/dev passthrough — still tag the request explicitly as NOT public.
+    requestHeaders.set("x-public-route", "0");
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (
+  const isPublic =
     PUBLIC_PATHS.has(pathname) ||
     isPublicSignRoute(pathname) ||
     isPublicGuestRoute(pathname) ||
@@ -397,9 +378,12 @@ export async function proxy(req: NextRequest) {
     isPublicPortalRoute(pathname) ||
     isPublicIntroducerRoute(pathname) ||
     isPublicPartnerRoute(pathname) ||
-    isCronRoute(pathname)
-  ) {
-    return passThrough(req);
+    isCronRoute(pathname);
+
+  if (isPublic) {
+    // Tag trusted public routes for downstream server components/layouts.
+    requestHeaders.set("x-public-route", "1");
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const email = req.headers.get("cf-access-authenticated-user-email");
@@ -420,8 +404,10 @@ export async function proxy(req: NextRequest) {
     );
   }
 
-  // Pass-through with the user email exposed for downstream server components.
-  const res = passThrough(req);
+  // Pass-through with explicit "NOT public" tag for downstream.
+  requestHeaders.set("x-public-route", "0");
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  // Expose user email to API routes that read it directly (dev-only override honoured downstream).
   res.headers.set("x-user-email", email);
   return res;
 }

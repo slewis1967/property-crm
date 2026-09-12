@@ -6,8 +6,7 @@ import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 import PublicRouteGate from "./components/PublicRouteGate";
 import Sidebar from "./components/Sidebar";
-import { headers } from "next/headers";
-import { PUBLIC_SURFACE_HEADER, PUBLIC_SURFACE_VALUE } from "../utils/public-surface";
+import { headers as nextHeaders } from "next/headers";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -116,12 +115,13 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Public pages (/partner, /introducer, /sign, /book, /portal, /join) get no
-  // staff sidebar AT ALL — not merely a hidden one. A hidden server-rendered
-  // prop is still serialised into the page, which handed outsiders our queue
-  // counts and the staff route list. See utils/public-surface.ts.
-  const isPublicSurface = (await headers()).get(PUBLIC_SURFACE_HEADER) === PUBLIC_SURFACE_VALUE;
-  const counts = isPublicSurface ? null : await getSidebarCounts();
+  // Trusted public-route signal from the edge proxy (see proxy.ts). This header is
+  // set by the proxy AFTER stripping any client-supplied value, so it is not forgeable.
+  const h = await nextHeaders();
+  const isPublic = h.get("x-public-route") === "1";
+  // Only fetch sidebar counts for authenticated/staff routes. Public routes render
+  // chromeless and must not execute sidebar DB queries or serialize staff routes.
+  const counts = isPublic ? null : await getSidebarCounts();
   return (
     <html lang="en">
       <head>
@@ -133,7 +133,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
       </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell sidebar={counts ? <Sidebar counts={counts} /> : null}>
+        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />}>
           {children}
         </AppShell>
         <PublicRouteGate>

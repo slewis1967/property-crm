@@ -22,7 +22,7 @@ import {
   toPartnerLot,
   type StockRow,
 } from "./partner";
-import { isPublicPartnerRoute, isPublicSurface } from "../proxy";
+import { isPublicPartnerRoute } from "../proxy";
 
 /**
  * The partner portal's promises, pinned as tests:
@@ -304,19 +304,6 @@ describe("the public carve-out covers /partner and nothing else", () => {
     }
     expect(isPartnerPortalPath("/partners")).toBe(false);
     expect(isPartnerPortalPath("/admin/partners")).toBe(false);
-  });
-});
-
-describe("isPublicSurface — pages that must not carry the staff sidebar", () => {
-  it("covers every page an outsider opens", () => {
-    for (const p of ["/partner", "/partner/stock", "/introducer/clients", "/sign/tok", "/book/glenn", "/portal/tok", "/join/tok"]) {
-      expect(isPublicSurface(p)).toBe(true);
-    }
-  });
-  it("never covers a staff page", () => {
-    for (const p of ["/", "/admin/partners", "/admin/introducers", "/contacts", "/partners", "/channel-partners", "/properties"]) {
-      expect(isPublicSurface(p)).toBe(false);
-    }
   });
 });
 
