@@ -185,6 +185,7 @@ export default function ContactDetail({
   const [savingNote, setSavingNote] = useState(false);
   const [showOpportunityModal, setShowOpportunityModal] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleKind, setScheduleKind] = useState<"video" | "phone">("video");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -317,9 +318,16 @@ export default function ContactDetail({
           {/* Sits next to Call on purpose: the common case is booking the next
               meeting while still on the phone, from the page you dialled from. */}
           <button
-            onClick={() => setShowSchedule(true)}
+            onClick={() => { setScheduleKind("video"); setShowSchedule(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
             📅 Schedule meeting
+          </button>
+          {/* The other common case: called this contact back and want to send
+              a confirmation email rather than a video-meeting link. */}
+          <button
+            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
+            📞 Phone call
           </button>
           <GuestLinkButton
             contactId={contact.id}
@@ -399,6 +407,7 @@ export default function ContactDetail({
           }}
           hosts={SCHEDULING_HOSTS}
           contactId={contact.id}
+          defaultKind={scheduleKind}
           onClose={() => setShowSchedule(false)}
           onCreated={() => router.refresh()}
         />
