@@ -53,6 +53,10 @@ export default function BuildersClient() {
 
   useEffect(() => {
     queueMicrotask(() => load());
+    // A prospect onboarded in the section above adds a builder here.
+    const onChange = () => load();
+    window.addEventListener("builders:changed", onChange);
+    return () => window.removeEventListener("builders:changed", onChange);
   }, []);
 
   const startEdit = (b: Builder) => {
