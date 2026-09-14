@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
+import { accessibleOwners } from "../../../../utils/shared-mailboxes";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(
     .from("email_log")
     .select("*")
     .eq("id", id)
-    .eq("owner_user_email", owner)
+    .in("owner_user_email", accessibleOwners(owner))
     .maybeSingle();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ ok: false, error: "Email not found" }, { status: 404 });
@@ -56,7 +57,7 @@ export async function PATCH(
       .from("email_log")
       .select("labels")
       .eq("id", id)
-      .eq("owner_user_email", owner)
+      .in("owner_user_email", accessibleOwners(owner))
       .maybeSingle();
     if (readErr) return NextResponse.json({ ok: false, error: readErr.message }, { status: 500 });
     if (!row) return NextResponse.json({ ok: false, error: "Email not found" }, { status: 404 });
@@ -74,7 +75,7 @@ export async function PATCH(
     .from("email_log")
     .update(writePatch)
     .eq("id", id)
-    .eq("owner_user_email", owner)
+    .in("owner_user_email", accessibleOwners(owner))
     .select("id,is_read,is_starred,is_archived,is_trashed,is_spam,folder_id,labels")
     .single();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
