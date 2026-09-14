@@ -359,7 +359,7 @@ Appointments — are live tools and stay in CRM.
 | `/properties/map` | Stock Map — active stock plotted by suburb (bubble per suburb, sized by count) |
 | `/aggregator/review` | Review queue — sidebar shows count badge from `property_review_queue` where `status='pending'` |
 | `/aggregator/runs` | Ingestion runs log |
-| `/aggregator/builders` | Builders list — sidebar shows count badge for `builders` where `draft=true AND active=true` (each blocks future ingestion runs from that sender) |
+| `/aggregator/builders` | Builders list — sidebar shows count badge for `builders` where `draft=true AND active=true` (each blocks future ingestion runs from that sender). Top section **Prospect builders** (`prospect_builders`, `migrations/20260914b_prospect_builders.sql`): suppliers we want a marketing agreement with, stepped prospect → agreement requested → agreement signed → onboarded via `POST /api/aggregator/prospect-builders/[id]` (status-conditional writes, 409 on a race). **Onboard** upserts an active non-draft `builders` row (match by `canonical_name`, then `sender_domains` overlap) carrying `stockDomainsFor()` — contact *email* domains, website only when no email, never personal mailboxes — so the aggregator attributes that firm's stocklists. Rules in `utils/prospect-builders.ts` |
 | `/suburbs` | Suburb Intelligence |
 
 **System**
