@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { jsPDF } from "jspdf";
 import type { PropertyGridItem } from "./types";
+import SendShortlistModal from "../components/SendShortlistModal";
 import { propertyPageSizeOptions } from "../../utils/pagination";
 
 // Deterministic gradient palette so cards from the same builder share a
@@ -89,6 +90,7 @@ export default function PropertyGrid({
   // use-before-declaration.
   const [selectedProperty, setSelectedProperty] = useState<PropertyGridItem | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [shortlistOpen, setShortlistOpen] = useState(false);
   // Tiles whose image failed to load. A stored brochure_url can die after
   // ingestion (expired Dropbox share, builder site redesign) or never have
   // been an image at all; without this the card shows the browser's
@@ -800,6 +802,39 @@ export default function PropertyGrid({
           </label>
         </div>
         <div className="flex items-center gap-2">
+          {checkedIds.size > 0 && (
+            <button
+              onClick={() => setShortlistOpen(true)}
+              title="Send the ticked properties to a client as a private link with reports"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#1b1f44] text-white rounded-lg hover:bg-[#2a2f5e] transition"
+            >
+              📨 Send to client ({checkedIds.size})
+            </button>
+          )}
+          {shortlistOpen && (
+            <SendShortlistModal
+              picks={Array.from(checkedIds).map((id) => {
+                const p = properties.find((x) => x.id === id);
+                const label = p
+                  ? [
+                      p.bedrooms ? `${p.bedrooms} bed` : null,
+                      p.property_type,
+                      p.suburb,
+                      p.builder_name || p.estate_name ? `(${[p.builder_name, p.estate_name].filter(Boolean).join(" · ")})` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  : "Property";
+                return {
+                  id,
+                  label,
+                  price: Number(p?.total_package_price || p?.house_price) || null,
+                  rentWeekly: Number(p?.expected_rent_weekly) || null,
+                };
+              })}
+              onClose={() => setShortlistOpen(false)}
+            />
+          )}
           {checkedIds.size >= 2 && (
             <button
               onClick={() => {

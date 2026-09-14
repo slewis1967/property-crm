@@ -11,6 +11,7 @@
  */
 import { usePathname } from "next/navigation";
 import { isPartnerPortalPath } from "../../utils/partner";
+import { isShortlistPortalPath } from "../../utils/shortlist-path";
 
 export default function PublicRouteGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,5 +19,7 @@ export default function PublicRouteGate({ children }: { children: React.ReactNod
   if (pathname === "/introducer" || pathname?.startsWith("/introducer/")) return null;
   // Channel-partner portal, same reason. "/partners" is not a match.
   if (isPartnerPortalPath(pathname)) return null;
+  // Client property shortlist, same reason. "/shortlists" is not a match.
+  if (isShortlistPortalPath(pathname)) return null;
   return <>{children}</>;
 }
