@@ -20,6 +20,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
+import { accessibleOwners } from "../../../../utils/shared-mailboxes";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export async function PATCH(req: Request) {
       .from("email_log")
       .update(writePatch)
       .in("id", cleanIds)
-      .eq("owner_user_email", owner)
+      .in("owner_user_email", accessibleOwners(owner))
       .select("id");
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     updated += data?.length ?? 0;
@@ -87,7 +88,7 @@ export async function PATCH(req: Request) {
       .from("email_log")
       .select("id,labels")
       .in("id", cleanIds)
-      .eq("owner_user_email", owner);
+      .in("owner_user_email", accessibleOwners(owner));
     if (readErr) return NextResponse.json({ ok: false, error: readErr.message }, { status: 500 });
 
     for (const r of rows ?? []) {
@@ -98,7 +99,7 @@ export async function PATCH(req: Request) {
         .from("email_log")
         .update({ labels: Array.from(current) })
         .eq("id", r.id)
-        .eq("owner_user_email", owner);
+        .in("owner_user_email", accessibleOwners(owner));
       if (!upErr) updated += 1;
     }
   }

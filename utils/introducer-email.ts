@@ -133,7 +133,8 @@ export async function sendIntroducerLoginEmail(opts: {
   code: string;
   expiresAt: Date;
 }) {
-  const url = `${portalBaseUrl()}/api/introducer/verify?t=${encodeURIComponent(opts.linkToken)}`;
+  // Lands on a confirm page, not the redeeming API — see app/api/introducer/verify.
+  const url = `${portalBaseUrl()}/introducer/verify?t=${encodeURIComponent(opts.linkToken)}`;
   const minutes = Math.max(1, Math.round((opts.expiresAt.getTime() - Date.now()) / 60_000));
   const greeting = opts.name ? `Hi ${opts.name.split(" ")[0]},` : "Hi,";
 
@@ -144,7 +145,7 @@ export async function sendIntroducerLoginEmail(opts: {
     html: shell(
       "Sign in to the Introducer Portal",
       `<p>${greeting}</p>
-       <p>Use the button below to sign in. It expires in ${minutes} minutes and can only be used once.</p>
+       <p>Use the button below, then press <strong>Sign in</strong> on the page it opens. It expires in ${minutes} minutes and can only be used once.</p>
        ${button(url, "Sign in")}
        <p>Or enter this code on the sign-in page:</p>
        <p style="font-size:30px;letter-spacing:7px;font-weight:700;color:${NAVY};margin:8px 0 20px;">${opts.code}</p>
