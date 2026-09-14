@@ -10,6 +10,7 @@ Public route patterns (must match the proxy carve-outs exactly):
 - Client document portal: `/portal`, `/portal/*`, `/api/portal/*`
 - Introducer portal (public-facing): `/introducer`, `/introducer/*`, `/api/introducer/*`
 - Channel-partner portal (public-facing): `/partner`, `/partner/*`, `/api/partner/*` — note `"/partners".startsWith("/partner")` is true, so the carve-out matches `/partner` exactly plus `/partner/`; the staff side at `/admin/partners` must never match
+- Client property shortlist: `/shortlist`, `/shortlist/*`, `/api/shortlist/*` (token-scoped only) — `"/shortlists".startsWith("/shortlist")` is true, so it matches `/shortlist` exactly plus `/shortlist/`; the staff side at `/property-shortlists` + `/api/property-shortlists` must never match
 
 How the signal works (non-forgeable):
 

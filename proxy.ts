@@ -292,6 +292,21 @@ export function isPublicPartnerRoute(pathname: string): boolean {
   return false;
 }
 
+// Public client property-shortlist routes. A client opens the properties a
+// consultant picked for them WITHOUT a Cloudflare Access identity — same model
+// as the document portal: the 256-bit token in the path is the credential, only
+// its SHA-256 is stored, and every handler re-resolves it. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/shortlist/* + /api/shortlist/*) EXACTLY.
+//
+// Trailing slash load-bearing: "/shortlists".startsWith("/shortlist") is true.
+// The staff side lives at /property-shortlists and /api/property-shortlists — a
+// different subtree, so it keeps its CF Access auth header.
+export function isPublicShortlistRoute(pathname: string): boolean {
+  if (pathname === "/shortlist" || pathname.startsWith("/shortlist/")) return true;
+  if (pathname.startsWith("/api/shortlist/")) return true;
+  return false;
+}
+
 // External-cron trigger route. Netlify's scheduled functions stopped executing,
 // so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
 // machine caller with no Cloudflare Access identity. Exempt from the CF Access
@@ -378,6 +393,7 @@ export async function proxy(req: NextRequest) {
     isPublicPortalRoute(pathname) ||
     isPublicIntroducerRoute(pathname) ||
     isPublicPartnerRoute(pathname) ||
+    isPublicShortlistRoute(pathname) ||
     isCronRoute(pathname);
 
   if (isPublic) {

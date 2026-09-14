@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { isPartnerPortalPath } from "../../utils/partner";
+import { isShortlistPortalPath } from "../../utils/shortlist-path";
 
 export default function AppShell({
   sidebar,
@@ -62,7 +63,9 @@ export default function AppShell({
     pathname === "/introducer" || pathname?.startsWith("/introducer/") ||
     // Channel-partner portal — the same boundary as the introducer portal; see
     // isPartnerPortalPath for why "/partners" must not match.
-    isPartnerPortalPath(pathname);
+    isPartnerPortalPath(pathname) ||
+    // Client property shortlist — opened by a client, never a CRM user.
+    isShortlistPortalPath(pathname);
   if (isStandalone) {
     return (
       <div data-appshell-root className="h-screen overflow-y-auto bg-gray-50">
