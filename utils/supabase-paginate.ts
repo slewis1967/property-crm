@@ -35,3 +35,28 @@ export async function fetchAllRows<T>(
   }
   return { data: all, error: null };
 }
+
+/**
+ * Rows [from, from + count) of an ordered query, in batches small enough to
+ * get past the 1,000-row response cap. For a page that may itself be larger
+ * than 1,000 rows (the Aggregator Feed's "All" option). Never requests an
+ * empty or reversed range — PostgREST rejects `range(10, 9)`.
+ */
+export async function fetchRowWindow<T>(
+  page: (from: number, to: number) => PromiseLike<PageResult<T>>,
+  from: number,
+  count: number,
+  batchSize = 1000,
+): Promise<{ data: T[]; error: string | null }> {
+  const all: T[] = [];
+  const end = from + Math.max(0, Math.floor(count)); // exclusive
+  for (let start = Math.max(0, from); start < end; start += batchSize) {
+    const stop = Math.min(start + batchSize, end) - 1;
+    const { data, error } = await page(start, stop);
+    if (error) return { data: all, error: error.message };
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < stop - start + 1) break;
+  }
+  return { data: all, error: null };
+}

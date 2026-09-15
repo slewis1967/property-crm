@@ -66,8 +66,13 @@ describe("propertyPageSizeOptions", () => {
     expect(propertyPageSizeOptions(150)).toEqual([50, 100, 150]);
   });
 
+  it("offers a single 'All' option past 1,000 rows (PostgREST's per-request cap is not a page-size cap)", () => {
+    const opts = propertyPageSizeOptions(1186);
+    expect(opts[opts.length - 1]).toBe(1186);
+  });
+
   it("caps at MAX_PROPERTIES_PAGE_SIZE", () => {
-    const opts = propertyPageSizeOptions(5000);
+    const opts = propertyPageSizeOptions(MAX_PROPERTIES_PAGE_SIZE * 10);
     expect(opts[opts.length - 1]).toBe(MAX_PROPERTIES_PAGE_SIZE);
     expect(opts.every((n) => n <= MAX_PROPERTIES_PAGE_SIZE)).toBe(true);
   });
