@@ -32,10 +32,16 @@ export function coercePageSize(raw: unknown): PageSize {
  *
  * Increment is 50, and the final option is the exact total so the user
  * can load every active row in one go. A cap keeps a runaway stock pool
- * from generating an absurd dropdown / hammering Supabase in one range.
+ * from generating an absurd dropdown.
+ *
+ * This is a page-size limit, NOT a fetch limit: the feed pages through
+ * Supabase in 1,000-row batches (utils/supabase-paginate.ts), because
+ * PostgREST silently returns at most 1,000 rows per request whatever
+ * .limit()/.range() asks for. It was 1,000 until 2026-09-15, when the feed
+ * passed 1,000 rows and the oldest ones became unreachable.
  */
 export const PROPERTIES_PAGE_SIZE_STEP = 50;
-export const MAX_PROPERTIES_PAGE_SIZE = 1000;
+export const MAX_PROPERTIES_PAGE_SIZE = 5000;
 
 /**
  * Build the dropdown options for the properties feed: 50, 100, 150 … up
