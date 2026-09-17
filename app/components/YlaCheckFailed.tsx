@@ -7,15 +7,11 @@
  * applicant they belong to.
  */
 
-/** One entry of document_requests.verification_issues. `name` is written by the
- * sweep from Sept 2026; older rows only have the "Applicant N" label. A null
- * filename is an application-level blocker (unsigned Needs Analysis etc.). */
-export type VerificationIssue = {
-  filename: string | null;
-  applicant: string | null;
-  name?: string | null;
-  issues: string[];
-};
+import type { VerificationIssue } from "../../utils/yla-overrides";
+
+/** Re-exported so the screens that render a verdict and the code that recomputes
+ * one after an override can never drift into two shapes. */
+export type { VerificationIssue };
 
 const norm = (s: string | null | undefined) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -42,10 +38,16 @@ export default function YlaCheckFailed({
   issues,
   verifiedAt,
   compact = false,
+  onDismiss,
+  dismissing = false,
 }: {
   issues: VerificationIssue[];
   verifiedAt: string | null;
   compact?: boolean;
+  /** Offered only where the rep can act — the dashboard, not the read-only
+   * progress panels. An application-level blocker is never dismissible. */
+  onDismiss?: (issue: VerificationIssue) => void;
+  dismissing?: boolean;
 }) {
   const when = verifiedAt
     ? new Date(verifiedAt).toLocaleString("en-AU", {
@@ -70,6 +72,17 @@ export default function YlaCheckFailed({
                 <>
                   <span className="font-medium">{slotName(i.filename)}</span>
                   {!i.name && i.applicant && <span className="text-red-700"> ({i.applicant})</span>} — {i.issues.join("; ")}
+                  {onDismiss && (
+                    <button
+                      type="button"
+                      disabled={dismissing}
+                      onClick={() => onDismiss(i)}
+                      title="The check is wrong about this file — clear this objection"
+                      className="ml-2 rounded border border-red-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-red-800 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Dismiss
+                    </button>
+                  )}
                 </>
               ) : (
                 <>

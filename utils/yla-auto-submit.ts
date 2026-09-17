@@ -91,8 +91,10 @@ export type SweepResult = {
   actions: SweepAction[];
 };
 
-/** Cheap completeness (no byte fetch): every applicant has YLA's required counts. */
-async function applicationState(requestIds: string[]): Promise<{ complete: boolean; latestUpload: string | null }> {
+/** Cheap completeness (no byte fetch): every applicant has YLA's required counts.
+ * Exported because an override has to ask the same question after it changes the
+ * document set — and must get the same answer the sweep would. */
+export async function applicationState(requestIds: string[]): Promise<{ complete: boolean; latestUpload: string | null }> {
   const { data: docs, error } = await supabase
     .from("client_documents")
     .select("request_id,doc_type,uploaded_at,status")
