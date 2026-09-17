@@ -91,6 +91,9 @@ export type VisualVerdict = {
   rotated: boolean;
   /** ATO statements only: the financial year printed on it, e.g. "2025-26". */
   financialYear?: string | null;
+  /** Is the client's Tax File Number printed on the document? Not a fault in
+   * the document — a fault in sending it on. See tfnBlocker(). */
+  showsTfn?: boolean;
   /** When it is NOT the expected document, what it actually is ("a
    * superannuation statement"). "Doesn't look like the expected document" on
    * its own left a client guessing which upload was wrong and why; naming what
@@ -112,6 +115,9 @@ export function visualCheckPrompt(docKey: string, slot?: number): string {
     '- actualDocument: if correctType is false, what the document actually is in a few plain words (e.g. "a superannuation statement", "a bank statement"); otherwise an empty string.',
     "- isScreenshot: is it a photo or screenshot of a phone/computer screen (status bar, app chrome) rather than an original document?",
     "- rotated: is it sideways or upside down?",
+    "- showsTfn: is an Australian Tax File Number printed anywhere on it? It is a 9-digit number, " +
+      'usually shown beside the person\'s name and labelled "TFN" or "Tax file number". ' +
+      "An ABN (11 digits), a member or employee number, a BSB or an account number is NOT a TFN.",
   ];
   if (docKey === "ato_income") {
     lines.push(
@@ -128,6 +134,7 @@ function jsonShape(docKey: string): string {
     '"actualDocument": "<what it actually is, or empty>"',
     '"isScreenshot": true/false',
     '"rotated": true/false',
+    '"showsTfn": true/false',
   ];
   if (docKey === "ato_income") fields.push('"financialYear": "<YYYY-YY or null>"');
   fields.push('"note": "<short reason for any problem, else empty>"');
@@ -150,6 +157,12 @@ export function parseVisualVerdict(raw: string): VisualVerdict {
     correctType: bool(obj.correctType, false),
     isScreenshot: bool(obj.isScreenshot, true),
     rotated: bool(obj.rotated, true),
+    // Deliberately NOT defaulted to the "problem" value like the fields above.
+    // An unreadable reply already fails the document on legible/correctType; a
+    // phantom TFN on top of that raises a blocker NOBODY can clear — it is not
+    // a client fixup and, until redaction ships, not a rep one either. Guessing
+    // "yes" here would wedge an application on a garbled reply.
+    showsTfn: bool(obj.showsTfn, false),
     financialYear: normaliseFinancialYear(obj.financialYear),
     actualDocument: typeof obj.actualDocument === "string" ? obj.actualDocument.trim().slice(0, 80) || null : null,
     note: typeof obj.note === "string" ? obj.note.slice(0, 200) : undefined,
@@ -317,4 +330,50 @@ export function buildResult(args: {
   }
 
   return { complete, pass, received: args.received, total, missing: args.missing, docs: args.docs, summary };
+}
+
+/**
+ * A Tax File Number must not leave this business.
+ *
+ * Marcia Libman's myGov income statements (NK-10017, Sept 2026) carried hers in
+ * the header, and the whole household was two hours from being emailed to a
+ * third party with it on board. The ATO print includes it and the client cannot
+ * turn it off, so this is not something to ask them to fix — which is exactly
+ * why it is an APPLICATION-level blocker rather than a per-document issue: it
+ * holds the submission, it is never emailed to the client as a re-upload
+ * request, and it cannot be dismissed by a rep.
+ *
+ * Disclosing a TFN is restricted under the Privacy (Tax File Number) Rule 2015,
+ * and an assessor needs none of it to read an income statement.
+ */
+export const TFN_BLOCKER = "shows a Tax File Number";
+
+export function tfnBlocker(applicant: string, filename: string): string {
+  return `${applicant}: "${filename}" ${TFN_BLOCKER} — it must be redacted before this application can be sent.`;
+}
+
+/** Does a stored verdict carry a TFN blocker? The gate at the export boundary
+ *  asks this, so a forced export cannot push one out anyway. */
+export function hasTfnBlocker(
+  issues: readonly { filename?: string | null; issues?: string[] }[] | null | undefined,
+): boolean {
+  return (issues ?? []).some((i) => (i.issues ?? []).some((t) => t.includes(TFN_BLOCKER)));
+}
+
+/**
+ * When the TFN rule started being asked.
+ *
+ * A set that passed before this was never asked the question, and the sweep
+ * skips re-verifying anything already marked "passed" — so without this, every
+ * application already cleared would sail past the gate on its way to YLA. That
+ * is not hypothetical: NK-10017 passed at 11:32 on 17 Sept and was two hours
+ * from being sent with a Tax File Number in it. Each pre-rule set is re-checked
+ * exactly once; afterwards its verdict carries the answer and this stops
+ * applying.
+ */
+export const TFN_RULE_SINCE = "2026-09-17T02:00:00.000Z";
+
+/** Was this verdict reached before anyone was asking about TFNs? */
+export function predatesTfnRule(verifiedAt: string | null | undefined): boolean {
+  return !verifiedAt || verifiedAt < TFN_RULE_SINCE;
 }

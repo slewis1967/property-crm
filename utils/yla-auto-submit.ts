@@ -30,6 +30,7 @@ import { supabase } from "./supabase";
 import { YLA_DOCUMENTS } from "./yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
+import { predatesTfnRule } from "./yla-verification";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
 import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
@@ -167,8 +168,12 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     // "passed" WITHOUT a Drive folder is a different thing — a run that
     // verified and was then cut short before it could package (see below). That
     // one resumes at the export rather than paying for the AI pass again.
+    // A pass reached before the TFN rule existed answered a question that did
+    // not include "does this show a Tax File Number?". Re-check it once rather
+    // than packaging on the strength of it.
+    const preTfnRule = rep.verification_status === "passed" && predatesTfnRule(rep.verified_at);
     const packaged = sibs.some((s) => !!s.drive_folder_url);
-    if (rep.verification_status === "passed" && packaged) continue;
+    if (rep.verification_status === "passed" && packaged && !preTfnRule) continue;
     processed++;
 
     let primaryApplicant = rep.applicant_name;
@@ -180,7 +185,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     // STAGE 1 — verify. Skipped entirely when a previous invocation already
     // recorded a pass, which is what makes the two stages add up to less than
     // one serverless request each.
-    if (rep.verification_status !== "passed") {
+    if (rep.verification_status !== "passed" || preTfnRule) {
       const run = await runApplicationVerification(rep.id, { visual: true });
       if (!run.ok) {
         actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: run.error });
