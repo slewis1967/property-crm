@@ -65,19 +65,49 @@ describe("hydration is tolerant", () => {
   });
 });
 
-describe("the builder-commission share", () => {
+/**
+ * NO BUILDER-COMMISSION SHARE (Sean, 17 Sep 2026, briefing item 2026-09-15-b).
+ * Pack Document 2 v3.2 governs: Springboard pays the introducer nothing, and the
+ * paid variant adds only a Referral Fee. Two introducers signed a 90% share and
+ * "credit representative reference COMP-8317" on 21 Aug; neither may come back.
+ */
+describe("no builder-commission share", () => {
   const sched = (over: Record<string, unknown> = {}) => ({
     ...complete(),
     doc_type: "introducer_schedule" as const,
     ...over,
   });
 
-  it("refuses a money-bearing document with no share", () => {
+  it("issues a money-bearing document with no share", () => {
     for (const t of ["introducer_agreement", "introducer_schedule"] as const) {
       const r = readyToIssue({ ...complete(), doc_type: t, builder_share_pct: null });
-      expect(r.ok, t).toBe(false);
-      if (!r.ok) expect(r.reason, t).toMatch(/builder-commission share/);
+      expect(r.ok, t).toBe(true);
     }
+  });
+
+  it("prints no share and no percentage of any commission, even from legacy data", async () => {
+    for (const variant of ["standard", "paid"] as const) {
+      for (const t of ["introducer_agreement", "introducer_schedule"] as const) {
+        const html = (
+          await renderIntroducerAgreementHtml(sched({ doc_type: t, variant, fee_per_settlement: "$5,000" }))
+        ).replace(/\s+/g, " ");
+        const k = `${variant} ${t}`;
+        expect(html, k).not.toMatch(/% of the commission/);
+        expect(html, k).not.toContain("90%");
+        expect(html, k).not.toMatch(/Your share of the commission/);
+        expect(html, k).not.toContain("[share not set]");
+        expect(html, k).toMatch(/not share with you any commission/);
+      }
+    }
+  });
+
+  it("never calls COMP-8317 a credit representative reference", async () => {
+    const html = (await renderIntroducerAgreementHtml(sched({ doc_type: "introducer_agreement" }))).replace(/\s+/g, " ");
+    expect(html).not.toMatch(/credit representative reference/i);
+    // Document 2 recital (a) and clause 4, instead.
+    expect(html).toMatch(/holds Introducer reference COMP-8317 with CRE8 Finance Pty Ltd t\/a Your Loan Assist/);
+    expect(html).toMatch(/is not an ASIC licence or registration/);
+    expect(html).toMatch(/Australian Credit Licence 477483 is held by CRE8 Finance Pty Ltd, not by Springboard and not by you/);
   });
 
   it("exempts the NDA, which is signed before any of this is settled", () => {
@@ -123,18 +153,24 @@ describe("the builder-commission share", () => {
     }
   });
 
-  it("states the panel-only obligation and the off-panel pathway", async () => {
-    const html = (await renderIntroducerAgreementHtml(sched())).replace(/\s+/g, " ");
-    expect(html).toMatch(/Panel stock only/);
-    expect(html).toMatch(/settled on stock from anywhere else, or on a property not yet complete, earns nothing/);
-    // Sean's rule: they introduce the builder, and only then does it count.
-    expect(html).toMatch(/introduce us to that builder/);
-    expect(html).toMatch(/their completed stock becomes panel stock/);
+  /* D1 option B: a client may buy any completed lender-approved home; a Referral
+   * Fee is payable only on Springboard stock; the introducer's own listings stay
+   * out of the programme (Document 2 cl 9.5(b)/(c)). */
+  it("lets the client buy any approved completed home, and fees follow Springboard stock", async () => {
+    const html = (await renderIntroducerAgreementHtml(sched({ doc_type: "introducer_agreement" }))).replace(/\s+/g, " ");
+    expect(html).toMatch(/may use the programme to buy any <strong>completed home, ready to move into<\/strong>, that the lender approves/);
+    expect(html).toMatch(/Referral Fee under this agreement is payable only on a purchase of a property sourced by Springboard/);
+    expect(html).toMatch(/must not use the programme, or any indication that a client may qualify for it, to secure or advance the sale of a property you or a related entity hold, list or represent/);
+    expect(html).toMatch(/must tell Springboard before proceeding/);
+    expect(html).not.toMatch(/builder panel/);
+    // Off-panel builders: they may introduce one, but promise nothing.
+    expect(html).toMatch(/may introduce that builder to Springboard/);
   });
 
-  it("pays the share only once the builder has actually paid us", async () => {
-    const html = (await renderIntroducerAgreementHtml(sched())).replace(/\s+/g, " ");
-    expect(html).toMatch(/after Springboard has received the corresponding commission from the builder in cleared funds/);
+  it("the paid schedule pays only on Springboard stock", async () => {
+    const html = (await renderIntroducerAgreementHtml(sched({ variant: "paid", fee_per_settlement: "$5,000" }))).replace(/\s+/g, " ");
+    expect(html).toMatch(/purchase of Springboard stock reaches settlement/);
+    expect(html).toMatch(/Apart from that Referral Fee, Springboard pays you nothing/);
   });
 
   it("says the client's own fee is shared with no one", async () => {
@@ -144,14 +180,6 @@ describe("the builder-commission share", () => {
     expect(html).toMatch(/not shared with you/);
   });
 
-  it("renders a missing share visibly rather than inventing one", async () => {
-    // Unreachable through readyToIssue, and that is exactly why it must not
-    // quietly print a plausible number if it ever happens.
-    const html = await renderIntroducerAgreementHtml(sched({ builder_share_pct: null }));
-    expect(html).toContain("[share not set]");
-    expect(html).not.toContain("75%");
-    expect(html).not.toContain("90%");
-  });
 });
 
 describe("the fee rule follows the commercial variant", () => {
@@ -263,17 +291,13 @@ describe("the two variants say opposite things about money", () => {
     fee_per_settlement: fee,
   });
 
-  it("a standard schedule owes no Referral Fee, but still shows the builder share", async () => {
+  it("a standard schedule pays nothing and owes no Referral Fee", async () => {
     const html = await renderIntroducerAgreementHtml(sched("standard"));
-    // "Referral Fee" is a DEFINED TERM — the separate payment out of the
-    // Program Fee — so saying it is not payable stays true and stays useful.
+    // "Referral Fee" is a DEFINED TERM — the separate payment by invitation —
+    // so saying it is not payable stays true and stays useful.
+    expect(html).toMatch(/Springboard pays you nothing/);
     expect(html).toMatch(/No Referral Fee is payable/);
     expect(html).not.toMatch(/Referral fee, per settled matter/);
-    // But it must never again deny payment altogether. A standard introducer
-    // IS paid: 75% or 90% of the builder commission on settled panel stock.
-    // The old wording told them to deny that to clients.
-    expect(html).not.toMatch(/does not pay you a fee, commission or other consideration/);
-    expect(html).toContain("90%");
   });
 
   it("a paid schedule states the amount", async () => {
@@ -283,17 +307,17 @@ describe("the two variants say opposite things about money", () => {
     expect(html).not.toMatch(/No referral fee is payable/);
   });
 
-  it("the fees clause matches the variant, and both are paid the share", async () => {
-    const standard = await renderIntroducerAgreementHtml({ ...complete(), variant: "standard" });
-    expect(standard).toMatch(/will pay you 90% of the commission it/);
-    expect(standard).toMatch(/No Referral Fee is payable/);
-    // The sentence that became false the moment the panel split existed.
-    expect(standard).not.toMatch(/pays you no fee, commission or other consideration/);
+  it("the fees clause matches the variant, and neither is paid a share", async () => {
+    const standard = (await renderIntroducerAgreementHtml({ ...complete(), variant: "standard" })).replace(/\s+/g, " ");
+    expect(standard).toMatch(/7\. Fees\.<\/strong> Springboard pays you nothing/);
+    expect(standard).toMatch(/you are not on it/);
+    expect(standard).not.toMatch(/will pay you/);
 
-    const paid = await renderIntroducerAgreementHtml({ ...complete(), variant: "paid" });
-    expect(paid).toMatch(/will pay you 90% of the commission it/);
-    expect(paid).toMatch(/also pay you a Referral Fee/);
-    expect(paid).toMatch(/cumulative/);
+    const paid = (await renderIntroducerAgreementHtml({ ...complete(), variant: "paid" })).replace(/\s+/g, " ");
+    expect(paid).toMatch(/will pay you the Referral Fee set out in the Commission Schedule/);
+    expect(paid).toMatch(/Apart from that Referral Fee, Springboard pays you nothing/);
+    expect(paid).not.toMatch(/cumulative/);
+    for (const html of [standard, paid]) expect(html).not.toMatch(/% of the commission/);
   });
 
   it("marks a paid document on its face, so the two cannot be confused", async () => {

@@ -404,63 +404,47 @@ describe("the paid schedule tracks the Referral Fee Addendum", () => {
     expect(html).toMatch(/Accreditation must be current/);
   });
 
-  it("owes a standard introducer no Referral Fee, without denying they are paid", async () => {
+  it("tells a standard introducer Springboard pays them nothing", async () => {
     const html = await renderIntroducerAgreementHtml(
       introducerDocDataFor(app(), "introducer_schedule", NOW.toISOString()),
       [],
     );
-    // The defined term, still refused.
+    // Pack Document 2 v3.2 cl 9.2, and the defined term, still refused.
+    expect(html).toMatch(/Springboard pays you nothing/);
     expect(html).toMatch(/No Referral Fee is payable/);
-    // But the builder share IS payable, and this document must say so. The
-    // old wording told a standard introducer that Springboard "does not pay
-    // you a fee, commission or other consideration" and that they must not
-    // represent otherwise — which their own contract now contradicts.
-    expect(html).not.toMatch(/does not pay you a fee, commission or other consideration/);
-    expect(html).toContain("90%");
+    expect(html).not.toMatch(/% of the commission/);
   });
 });
 
-describe("tier sets the builder-commission share", () => {
-  it("gives Tier 1 75% and Tier 2 90%", () => {
-    const t1 = introducerDocDataFor(app({ tier: "t1" }), "introducer_agreement", NOW.toISOString());
-    const t2 = introducerDocDataFor(app({ tier: "t2" }), "introducer_agreement", NOW.toISOString());
-    expect(t1.builder_share_pct).toBe(75);
-    expect(t2.builder_share_pct).toBe(90);
+/**
+ * NO BUILDER SHARE IS SNAPSHOTTED (Sean, 17 Sep 2026, briefing item
+ * 2026-09-15-b). Pack Document 2 v3.2 governs. Neither the tier nor a
+ * per-application override puts a share into a new document any more.
+ */
+describe("no builder-commission share on a new document", () => {
+  it("snapshots no share for either tier, on any document", () => {
+    for (const tier of ["t1", "t2"] as const) {
+      for (const t of ["introducer_nda", "introducer_agreement", "introducer_schedule"] as const) {
+        const d = introducerDocDataFor(app({ tier }), t, NOW.toISOString());
+        expect(d.builder_share_pct, `${tier} ${t}`).toBeNull();
+      }
+    }
   });
 
-  it("lets a negotiated share on the application win", () => {
+  it("ignores a share left on the application", () => {
     const d = introducerDocDataFor(
       app({ tier: "t1", builder_share_pct: 82.5 }),
       "introducer_schedule",
       NOW.toISOString(),
     );
-    expect(d.builder_share_pct).toBe(82.5);
-  });
-
-  it("ignores a nonsensical override rather than contracting on it", () => {
-    const d = introducerDocDataFor(
-      app({ tier: "t2", builder_share_pct: 0 }),
-      "introducer_schedule",
-      NOW.toISOString(),
-    );
-    expect(d.builder_share_pct).toBe(90);
-  });
-
-  it("leaves the NDA out of it — signed long before the tier means money", () => {
-    const d = introducerDocDataFor(app(), "introducer_nda", NOW.toISOString());
     expect(d.builder_share_pct).toBeNull();
+    expect(readyToIssue(d).ok).toBe(true);
   });
 
-  /**
-   * SNAPSHOTTED, NOT DERIVED. Someone promoted from Tier 1 to Tier 2 after
-   * signing keeps the 75% they agreed to until a new schedule is issued and
-   * signed. Re-deriving from the live tier would silently rewrite an executed
-   * contract.
-   */
-  it("keeps the share the document was issued with", async () => {
-    const d = introducerDocDataFor(app({ tier: "t1" }), "introducer_schedule", NOW.toISOString());
+  it("prints no percentage for a Tier 2 introducer", async () => {
+    const d = introducerDocDataFor(app({ tier: "t2" }), "introducer_schedule", NOW.toISOString());
     const html = await renderIntroducerAgreementHtml({ ...d }, []);
-    expect(html).toContain("75%");
+    expect(html).not.toContain("75%");
     expect(html).not.toContain("90%");
   });
 });

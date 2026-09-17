@@ -32,17 +32,14 @@ export const INTRODUCER_DOC_TERMINAL_STATUS = "Signed";
 /**
  * Which commercial terms this introducer is on.
  *
- *   standard — Document 2. The builder-commission share only.
- *   paid     — Documents 2A + 2B. The builder-commission share AND a Referral
- *              Fee per settled matter out of the Program Fee, by invitation.
+ *   standard — Document 2. Springboard pays the introducer nothing (cl 9.2).
+ *   paid     — Documents 2A + 2B. A Referral Fee per settled matter on
+ *              Springboard stock, by invitation, and nothing else.
  *
- * WHAT THIS NO LONGER MEANS. It used to be the line between paid and unpaid,
- * and the standard schedule said in terms that Springboard pays nothing at all.
- * That stopped being true when the builder-commission share became the primary
- * arrangement: every accredited introducer is now paid on settled panel stock,
- * and a standard introducer telling a client they are not paid would be denying
- * their own contract. The variant is now the line between one income stream and
- * two.
+ * There is NO builder-commission share on either variant. A 75/90% share was
+ * printed into these documents for a while and two introducers signed it; Sean
+ * ruled on 17 Sep 2026 (briefing item 2026-09-15-b) that pack Document 2 v3.2
+ * governs, and the share came out of the text.
  *
  * Still not cosmetic: the wrong one issues an agreement that contradicts what
  * the person was actually offered.
@@ -55,10 +52,13 @@ export const INTRODUCER_DOC_TERMINAL_STATUS = "Signed";
 export type IntroducerTierRef = "t1" | "t2";
 
 /**
- * What share of the builder's commission each tier earns on a settled matter.
+ * LEGACY — no longer printed in any introducer document, and no longer
+ * snapshotted onto a new one (see the variant note above). Kept only because
+ * the staff accreditation card still reads it and documents signed before the
+ * change carry a share in their data. Do not reintroduce it into the text
+ * without a change to pack Document 2.
  *
- * THIS IS THE PRIMARY WAY AN INTRODUCER IS PAID, and it applies to every
- * accreditation regardless of variant. Both tiers must source their stock from
+ * What share of the builder's commission each tier was to earn. Both tiers must source their stock from
  * the Springboard builder panel; what differs is the split of what the builder
  * pays us.
  *
@@ -262,19 +262,8 @@ export function readyToIssue(d: IntroducerAgreementData): { ok: true } | { ok: f
   if (!d.legal_name.trim()) return { ok: false, reason: "the applicant's legal name is missing" };
   if (!d.email.trim()) return { ok: false, reason: "the applicant's email is missing" };
 
-  /* THE BUILDER SHARE IS THE ARRANGEMENT, so both money-bearing documents
-   * refuse without it. The agreement states it in clause 6 and the schedule
-   * sets it out in full; either going out with the split unstated would leave
-   * the introducer signing up to panel-only sourcing with no figure against
-   * what they get for it. The NDA is exempt — it is signed before the exam,
-   * long before any of this is decided. */
-  if (d.doc_type !== "introducer_nda" && !isValidSharePct(d.builder_share_pct)) {
-    return {
-      ok: false,
-      reason:
-        "the builder-commission share has not been set. It defaults from the tier — 75% for Tier 1, 90% for Tier 2 — so this means the tier is missing or the share was cleared by hand",
-    };
-  }
+  /* No builder share is required, or printed: pack Document 2 v3.2 pays the
+   * introducer nothing on the standard variant (see the variant note above). */
 
   if (d.doc_type === "introducer_schedule") {
     if (d.variant === "paid" && !d.fee_per_settlement.trim()) {

@@ -12,12 +12,7 @@
  */
 
 import type { SignatureMark } from "../signatures";
-import {
-  INTRODUCER_DOC_LABEL,
-  formatSharePct,
-  isValidSharePct,
-  type IntroducerAgreementData,
-} from "../introducer-agreement";
+import { INTRODUCER_DOC_LABEL, type IntroducerAgreementData } from "../introducer-agreement";
 
 const NAVY = "#020e40";
 const AMBER = "#c7894e";
@@ -48,19 +43,6 @@ function identifiers(d: IntroducerAgreementData): string {
   return parts.length ? ` (${parts.join(", ")})` : "";
 }
 
-/**
- * The builder-commission split, as it appears in the prose.
- *
- * `readyToIssue` refuses both money-bearing documents without it, so a blank
- * here should be unreachable. It still renders as a visible gap rather than a
- * plausible-looking default: a wrong percentage in a signed contract is far
- * worse than an obvious hole in a draft.
- */
-function sharePhrase(d: IntroducerAgreementData): string {
-  return isValidSharePct(d.builder_share_pct)
-    ? esc(formatSharePct(d.builder_share_pct))
-    : `<span style="background:#fff3cd;color:#8a6d3b;padding:0 4px;">[share not set]</span>`;
-}
 
 /**
  * The banner on an amended document.
@@ -125,66 +107,42 @@ function clauses(d: IntroducerAgreementData): string {
       <p>This schedule forms part of the Introducer Referral Agreement between ${field(d.licensor_name)}
         and ${field(d.firm_name || d.legal_name)}, accreditation ${field(d.accreditation_no)}.</p>`;
 
-    /* THE BUILDER-COMMISSION SHARE OPENS EVERY SCHEDULE, on both variants.
-     *
-     * It is the primary arrangement and the one every accredited introducer is
-     * on. The standard schedule used to open by saying Springboard "does not
-     * pay you a fee, commission or other consideration for introducing a
-     * client, and you must not represent to any person that it does" — which
-     * became flatly untrue the moment the panel split existed, and told the
-     * introducer to deny their own contract to clients. It is gone. */
-    const builderShare = `
-      <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;">
-        <tr>
-          <td style="padding:10px 12px;border:1px solid #e1e4ec;background:#f7f8fb;width:55%;">
-            Your share of the commission Springboard receives from the builder,
-            per settled matter you introduce
-          </td>
-          <td style="padding:10px 12px;border:1px solid #e1e4ec;font-weight:600;">
-            ${sharePhrase(d)}
-          </td>
-        </tr>
-      </table>
-      <p><strong>Panel stock only, and completed homes only.</strong> That share is payable on a matter
-        settled on stock sourced from the Springboard builder panel, and only where the property is a
-        <strong>completed home, ready to move into</strong>. The programme does not include
-        house-and-land packages, off-the-plan, or any property still to be built. A matter settled on
-        stock from anywhere else, or on a property not yet complete, earns nothing under this
-        schedule.</p>
-      <p><strong>When it is payable.</strong> The share is earned when the matter settles, and is payable
-        only after Springboard has received the corresponding commission from the builder in cleared
-        funds. It is then paid within 14 days of your invoice. This is routinely several months after the
-        introduction is made: it is not near-term income and must never be presented to anyone as if it
-        were. Nothing is payable on a matter that does not settle, whatever the reason.</p>
-      <p><strong>If it unwinds.</strong> The share is repayable on demand if the settlement is later
-        rescinded or unwound, or if the builder&rsquo;s commission is refunded or clawed back.</p>
+    /* NO BUILDER-COMMISSION SHARE, on either variant (Sean, 17 Sep 2026,
+     * briefing item 2026-09-15-b). Pack Document 2 v3.2 governs the fee model:
+     * Springboard pays the introducer nothing (cl 9.2), and the paid variant
+     * adds only the Referral Fee (Document 2A). The 75/90% builder share this
+     * schedule used to open with was never in the pack, and two introducers
+     * signed it. These paragraphs are common to both variants. */
+    const noShare = `
+      <p><strong>Completed homes only.</strong> The programme covers a <strong>completed home, ready to
+        move into</strong>. It does not include house-and-land packages, off-the-plan, or any property
+        still to be built.</p>
+      <p><strong>No share of any builder&rsquo;s commission.</strong> Springboard does not share with
+        you any commission, marketing fee or other amount it receives from a builder, developer or
+        vendor, and you must not represent to any person that it does.</p>
       <p><strong>What the client pays Springboard is not shared.</strong> Any fee a client pays
         Springboard is consideration for Springboard&rsquo;s own work. It is not shared with you and
         forms no part of what you are paid under this schedule, whatever the client is charged and
         whether or not the matter settles.</p>
-      <p><strong>A builder who is not on the panel.</strong> If your client wants to buy through someone
-        Springboard has no agreement with, introduce us to that builder. If Springboard reaches an
-        agreement with them, their completed stock becomes panel stock and your client&rsquo;s matter
-        earns the share above on the same terms as any other. Until that agreement is in place there is
-        no builder commission for you to have a share of, and you must not tell your client or the
-        builder that a fee is payable, that an agreement will be reached, or that any particular outcome
-        is assured.</p>`;
+      <p><strong>A builder Springboard has no agreement with.</strong> If your client wants to buy
+        through someone Springboard has no agreement with, you may introduce us to that builder. You
+        must not tell your client or the builder that a fee is payable, that an agreement will be
+        reached, or that any particular outcome is assured.</p>`;
 
-    /* The standard arrangement is the builder share and nothing else. The
-     * phrase below is a DEFINED TERM, not a blanket denial: "Referral Fee"
-     * means the separate per-matter payment out of the Program Fee, which is
-     * offered by invitation. Saying it plainly matters — an introducer who
-     * hears about someone else's Referral Fee needs their own document to
-     * answer the question. */
+    /* The standard arrangement pays nothing. "Referral Fee" below is a DEFINED
+     * TERM: the separate per-matter payment offered by invitation. Saying it
+     * plainly matters — an introducer who hears about someone else's Referral
+     * Fee needs their own document to answer the question. */
     if (d.variant === "standard") {
       return `${head}
-      ${builderShare}
+      <p><strong>Springboard pays you nothing.</strong> No referral fee, commission, retainer, salary,
+        allowance, reimbursement or other payment is payable by Springboard to you under or in
+        connection with the Introducer Referral Agreement.</p>
+      ${noShare}
       ${d.fee_notes.trim() ? `<p>${esc(d.fee_notes)}</p>` : ""}
       <p><strong>No Referral Fee is payable.</strong> A Referral Fee is a separate per-matter payment
-        that Springboard makes to some introducers out of its Program Fee, by invitation and under a
-        separate addendum. You are not on that arrangement and must not represent to any person that you
-        are. It does not affect your share of the builder&rsquo;s commission above, which is payable in
-        the ordinary way.</p>
+        that Springboard makes to some introducers, by invitation and under a separate document. You are
+        not on that arrangement and must not represent to any person that you are.</p>
       <p><strong>What you may charge your own client.</strong> Nothing under this agreement. Any fee you
         charge your client for your own services is a matter between you and them, is not a Springboard
         fee, and must not be described as one.</p>
@@ -208,11 +166,9 @@ function clauses(d: IntroducerAgreementData): string {
     const network = d.recruits_introducers;
 
     return `${head}
-      ${builderShare}
-      <p style="margin-top:22px;"><strong>And a Referral Fee as well.</strong> Separately from the share
-        above, and paid from a different place &mdash; Springboard&rsquo;s Program Fee rather than the
-        builder&rsquo;s commission &mdash; you are also paid the following. The two are cumulative: being
-        paid one does not reduce or replace the other.</p>
+      <p><strong>The Referral Fee.</strong> Springboard pays you the Referral Fee below for each referred
+        client whose purchase of Springboard stock reaches settlement, on the conditions in this
+        schedule. Apart from that Referral Fee, Springboard pays you nothing.</p>
       <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;">
         <tr>
           <td style="padding:10px 12px;border:1px solid #e1e4ec;background:#f7f8fb;width:55%;">
@@ -256,6 +212,7 @@ function clauses(d: IntroducerAgreementData): string {
               anything their own agreement with Springboard forbids.</p>`
           : ""
       }
+      ${noShare}
       <p><strong>What it is not.</strong> This fee is consideration for an introduction only. It is not
         payable for, and must not be represented as payment for, credit assistance, financial advice, or
         any service requiring a licence you do not hold.</p>
@@ -264,23 +221,32 @@ function clauses(d: IntroducerAgreementData): string {
   }
 
   return `
-    <p>This agreement is between ${field(d.licensor_name)} (ABN ${field(d.licensor_abn)}),
-      operating under credit representative reference ${field(d.licence_ref)} ("Springboard"), and
+    <p>This agreement is between ${field(d.licensor_name)} (ABN ${field(d.licensor_abn)}), trading
+      as Springboard Homes ("Springboard"), and
       ${field(d.firm_name || d.legal_name)}${identifiers(d)}${
         d.registered_address.trim() ? ` of ${esc(d.registered_address)}` : ""
       } ("you"), accreditation ${field(d.accreditation_no)}.</p>
+    <p>Springboard holds Introducer reference ${field(d.licence_ref)} with CRE8 Finance Pty Ltd t/a Your
+      Loan Assist (ABN 69 605 092 377), the holder of Australian Credit Licence 477483, in respect of the
+      Community Funding Program. ${field(d.licence_ref)} is an internal introducer reference issued by Your
+      Loan Assist and is not an ASIC licence or registration. Australian Credit Licence 477483 is held by
+      CRE8 Finance Pty Ltd, not by Springboard and not by you, and you must not misdescribe either.</p>
     <p><strong>1. What you may do.</strong> You may introduce a person who has consented to the
       introduction to Springboard, by submitting their details through the Springboard introducer portal.
       That is the whole of your role.</p>
-    <p><strong>2. Panel stock.</strong> You must source the stock you introduce from the Springboard
-      builder panel, and it must be a <strong>completed home, ready to move into</strong>. The programme
-      does not include house-and-land packages, off-the-plan, or any property still to be built, and you
-      must not present one to a client as though it were part of it. If your client wants to buy through
-      a builder who is not on the panel, you may introduce that builder to Springboard so that an
-      agreement can be arranged with them; if one is reached, their completed stock becomes panel stock.
-      You must not commit Springboard to any arrangement with a builder, negotiate terms on its behalf,
-      or tell a client or a builder that an agreement will be reached or that a fee is payable before one
-      is in place.</p>
+    <p><strong>2. Program stock.</strong> A client you introduce may use the programme to buy any
+      <strong>completed home, ready to move into</strong>, that the lender approves. The programme does
+      not include house-and-land packages, off-the-plan, or any property still to be built, and you must
+      not present one to a client as though it were part of it. Any Referral Fee under this agreement is
+      payable only on a purchase of a property sourced by Springboard under a marketing, sales or agency
+      agreement between Springboard and the builder, developer or vendor ("Springboard stock"). You must
+      not use the programme, or any indication that a client may qualify for it, to secure or advance the
+      sale of a property you or a related entity hold, list or represent outside those arrangements, and
+      if a client you introduced wishes to buy such a property you must tell Springboard before
+      proceeding. If your client wants to buy through a builder Springboard has no agreement with, you
+      may introduce that builder to Springboard. You must not commit Springboard to any arrangement with
+      a builder, negotiate terms on its behalf, or tell a client or a builder that an agreement will be
+      reached or that a fee is payable before one is in place.</p>
     <p><strong>3. What you must not do.</strong> You must not provide credit assistance, suggest or
       assist a person to apply for a particular credit product, advise on the suitability of any product,
       or say anything about a product's terms beyond the approved language issued to you. If you are
@@ -295,16 +261,19 @@ function clauses(d: IntroducerAgreementData): string {
     <p><strong>6. Accreditation.</strong> Your accreditation is personal to you, is not transferable, and
       may be suspended or withdrawn by us at any time. You must tell us promptly if you become bankrupt,
       are banned or disqualified by ASIC, or are convicted of an offence involving dishonesty.</p>
-    <p><strong>7. Fees.</strong> Springboard will pay you ${sharePhrase(d)} of the commission it
-      receives from the builder on each matter you introduce that settles on panel stock, payable once
-      Springboard has been paid that commission in cleared funds.${
+    <p><strong>7. Fees.</strong> ${
         d.variant === "paid"
-          ? ` Springboard will also pay you a Referral Fee for each settled matter, out of its Program ` +
-            `Fee. The two are cumulative and are paid from different sources.`
-          : ` No Referral Fee is payable — that is a separate arrangement offered by invitation.`
-      } Any fee a client pays Springboard is for Springboard&rsquo;s own work and is not shared with you.
-      Both the share and any Referral Fee are set out in the Commission Schedule, which forms part of
-      this agreement. No other fee is payable.</p>
+          ? `Springboard will pay you the Referral Fee set out in the Commission Schedule for each ` +
+            `client you introduce whose purchase of Springboard stock reaches settlement, on the ` +
+            `conditions in that schedule. Apart from that Referral Fee, Springboard pays you nothing.`
+          : `Springboard pays you nothing. No referral fee, commission, retainer, salary, allowance, ` +
+            `reimbursement or other payment is payable by Springboard to you under or in connection ` +
+            `with this agreement. A Referral Fee is a separate arrangement offered by invitation, and ` +
+            `you are not on it.`
+      } Springboard does not share with you any commission or other amount it receives from a builder,
+      developer or vendor. Any fee a client pays Springboard is for Springboard&rsquo;s own work and is
+      not shared with you. The Commission Schedule forms part of this agreement. No other fee is
+      payable.</p>
     <p><strong>8. Relationship.</strong> You are an independent contractor. Nothing here makes you our
       employee, partner, agent or authorised representative, and you must not hold yourself out as any of
       those.</p>
