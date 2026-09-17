@@ -169,6 +169,19 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
       // re-paid for, on every sweep forever.
       const cleaned = await redactApplicationTfns(ids);
       if (cleaned.length === 0) continue;
+      // Bank it. The documents have CHANGED, so the recorded verdict is now
+      // about files that no longer exist — and the re-verification below is the
+      // slow part, easily lost to the serverless ceiling. Losing it used to
+      // strand the application for good: the next sweep would find nothing left
+      // to clean, take the `continue` above, and never re-check a set that was
+      // already clean. Clearing the verdict first means a run cut short here
+      // resumes as an ordinary unverified set. (Same reasoning as the verdicts
+      // banked before packaging below.)
+      await supabase
+        .from(DOCUMENT_REQUESTS_TABLE)
+        .update({ verification_status: null, verification_issues: null, verified_at: null, updated_at: now.toISOString() })
+        .in("id", ids);
+      rep.verification_status = null;
     }
     // Skip a set already PACKAGED and waiting on a human: it passed, its Drive
     // folder exists, and yla_submitted_at is null only because nobody has
