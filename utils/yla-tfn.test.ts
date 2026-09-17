@@ -23,6 +23,14 @@ describe("the model is asked about a TFN", () => {
     expect(p).toContain("9-digit");
   });
 
+  // A redacted document must PASS, or nothing the redactor produces could ever
+  // clear the gate — the first hand-redacted file was held on exactly this.
+  it("tells the model a blacked-out number is not a readable one", () => {
+    const p = visualCheckPrompt("super_statement");
+    expect(p).toContain("blacked out");
+    expect(p.toLowerCase()).toContain("legible");
+  });
+
   it("includes showsTfn in the JSON shape it demands", () => {
     expect(visualCheckPrompt("payslip")).toContain('"showsTfn": true/false');
   });

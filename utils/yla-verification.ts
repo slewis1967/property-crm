@@ -115,9 +115,12 @@ export function visualCheckPrompt(docKey: string, slot?: number): string {
     '- actualDocument: if correctType is false, what the document actually is in a few plain words (e.g. "a superannuation statement", "a bank statement"); otherwise an empty string.',
     "- isScreenshot: is it a photo or screenshot of a phone/computer screen (status bar, app chrome) rather than an original document?",
     "- rotated: is it sideways or upside down?",
-    "- showsTfn: is an Australian Tax File Number printed anywhere on it? It is a 9-digit number, " +
+    "- showsTfn: can you READ an Australian Tax File Number on it? It is a 9-digit number, " +
       'usually shown beside the person\'s name and labelled "TFN" or "Tax file number". ' +
-      "An ABN (11 digits), a member or employee number, a BSB or an account number is NOT a TFN.",
+      "An ABN (11 digits), a member or employee number, a BSB or an account number is NOT a TFN. " +
+      "Answer FALSE if the digits have been removed or blacked out: a redaction box, or a " +
+      "\"TFN\" label with nothing after it, means there is no number left to protect. The " +
+      "question is whether the digits are legible, not whether the document has a TFN field.",
   ];
   if (docKey === "ato_income") {
     lines.push(
