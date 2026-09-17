@@ -30,7 +30,8 @@ import { supabase } from "./supabase";
 import { YLA_DOCUMENTS } from "./yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
-import { predatesTfnRule } from "./yla-verification";
+import { predatesTfnRule, hasTfnBlocker } from "./yla-verification";
+import { redactApplicationTfns } from "./tfn-redact-store";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
 import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
@@ -68,6 +69,7 @@ type Candidate = {
   opportunity_id: string | null;
   verification_status: string | null;
   verified_at: string | null;
+  verification_issues: { filename?: string | null; issues?: string[] }[] | null;
   drive_folder_url: string | null;
   submit_target: string | null;
   broker_name: string | null;
@@ -121,7 +123,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   const { data: cands, error: candErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .select(
-      "id,application_id,applicant_name,client_ref,contact_id,opportunity_id,verification_status,verified_at,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
+      "id,application_id,applicant_name,client_ref,contact_id,opportunity_id,verification_status,verified_at,verification_issues,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
     )
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
@@ -156,9 +158,17 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     if (!complete) continue;
     completeCount++;
 
-    // Skip a static previously-failed set (no new uploads since it was checked).
+    // Skip a static previously-failed set (no new uploads since it was checked)
+    // — UNLESS what is holding it is a Tax File Number, which is the one fault
+    // we can fix ourselves without the client touching anything.
     if (rep.verification_status === "failed" && rep.verified_at && latestUpload && latestUpload <= rep.verified_at) {
-      continue;
+      if (!hasTfnBlocker(rep.verification_issues)) continue;
+      // Redact FIRST and re-verify only if something actually came out.
+      // Otherwise a number that lives in pixels — a photographed statement,
+      // where there is no text layer to search — would be re-checked, and
+      // re-paid for, on every sweep forever.
+      const cleaned = await redactApplicationTfns(ids);
+      if (cleaned.length === 0) continue;
     }
     // Skip a set already PACKAGED and waiting on a human: it passed, its Drive
     // folder exists, and yla_submitted_at is null only because nobody has
