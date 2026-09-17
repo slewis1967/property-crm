@@ -21,6 +21,7 @@ import {
   docVerdict,
   buildResult,
   atoYearCoverageIssues,
+  tfnBlocker,
   type DocVerdict,
   type VerificationResult,
 } from "./yla-verification";
@@ -187,6 +188,8 @@ export async function runApplicationVerification(
   const verdicts: DocVerdict[] = new Array(matched.length);
   /** Per-document facts only the cross-document checks below can act on. */
   const financialYears: (string | null)[] = new Array(matched.length).fill(null);
+  /** Per-document: did the model see a Tax File Number on it? */
+  const tfnSeen: boolean[] = new Array(matched.length).fill(false);
   let next = 0;
   async function worker() {
     while (next < matched.length) {
@@ -226,6 +229,7 @@ export async function runApplicationVerification(
           const text = response.choices?.[0]?.message?.content;
           const verdict = parseVisualVerdict(typeof text === "string" ? text : "");
           financialYears[i] = verdict.financialYear ?? null;
+          tfnSeen[i] = verdict.showsTfn === true;
           visual.push(...visualIssues(verdict));
         }
       } catch (e) {
@@ -258,6 +262,16 @@ export async function runApplicationVerification(
     if (!verdict) continue;
     verdict.issues.push(issue);
     verdict.pass = false;
+  }
+
+  // A Tax File Number on ANY document, in any slot — payslips and super
+  // statements carry them too. Raised against the application rather than the
+  // document on purpose: the client cannot remove it from an ATO print, so
+  // telling them to re-upload would be a loop, and a rep cannot wave it through.
+  for (let i = 0; i < matched.length; i++) {
+    if (!tfnSeen[i]) continue;
+    const m = matched[i]!;
+    missing.push(tfnBlocker(m.applicant, m.filename));
   }
 
   // The two documents the client never uploads. They belong in `missing` (a

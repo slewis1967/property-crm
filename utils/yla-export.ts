@@ -10,12 +10,13 @@
 import { supabase } from "./supabase";
 import { requiredSlots, surnameOf, allowsExtra, ylaFilename } from "./yla-documents";
 import { exportToDrive } from "./google-drive";
+import { hasTfnBlocker } from "./yla-verification";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import { buildYlaPackageDocs } from "./yla-package";
 
 const BUCKET = "client-documents";
 const SELECT =
-  "id,client_ref,application_id,applicant_name,contact_id,status,drive_folder_url,created_at";
+  "id,client_ref,application_id,applicant_name,contact_id,status,drive_folder_url,created_at,verification_issues";
 const DL_CONCURRENCY = 6;
 
 export type ExportRunResult =
@@ -71,6 +72,23 @@ export async function exportApplicationToDrive(id: string, opts?: { force?: bool
       .neq("status", "cancelled")
       .order("created_at", { ascending: true });
     if (sibs && sibs.length) siblings = sibs;
+  }
+
+  // THE ONE THING force DOES NOT OVERRIDE. Everything else here is a judgement
+  // about completeness that a human may reasonably overrule; a Tax File Number
+  // leaving the business is not. Checked before a single byte is downloaded, and
+  // read from the stored verdict so it holds even when nothing re-runs the AI
+  // pass (the sweep goes straight to packaging once a set reads "passed").
+  const tfnHeld = siblings.find((sib) =>
+    hasTfnBlocker((sib as { verification_issues?: { issues?: string[] }[] | null }).verification_issues),
+  );
+  if (tfnHeld) {
+    return {
+      ok: false,
+      status: 409,
+      error:
+        "Held: a document in this application shows a Tax File Number. It must be redacted before the application can be packaged or sent.",
+    };
   }
 
   const already = siblings.find((s) => s.status === "submitted" && s.drive_folder_url);
