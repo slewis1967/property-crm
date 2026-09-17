@@ -172,9 +172,16 @@ export default function ReviewQueueClient() {
 
     setBulkBusy(true);
     const ids = Array.from(selected);
-    let ok = 0, fail = 0;
+    let ok = 0;
+    // Keep each failure's reason — the route explains itself (e.g. the no-price
+    // guard's 422), and a bare "2 failed" leaves the reviewer guessing.
+    const failures: string[] = [];
     await Promise.all(
       ids.map(async (id) => {
+        const item = items?.find((i) => i.id === id);
+        const label = item
+          ? `${item.builder_name ?? "(no builder)"} · Lot ${item.lot_number ?? "?"}`
+          : id;
         try {
           const res = await fetch(`/api/aggregator/review-queue/${id}`, {
             method: "POST",
@@ -186,13 +193,15 @@ export default function ReviewQueueClient() {
           const json = await res.json();
           if (!json.ok) throw new Error(json.error);
           ok++;
-        } catch {
-          fail++;
+        } catch (e) {
+          failures.push(`• ${label}: ${errMessage(e)}`);
         }
       }),
     );
     setBulkBusy(false);
-    if (fail > 0) alert(`${ok} ${word}d · ${fail} failed`);
+    if (failures.length > 0) {
+      alert(`${ok} ${word}d · ${failures.length} failed\n\n${failures.join("\n\n")}`);
+    }
     await load();
   };
 
