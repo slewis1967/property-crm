@@ -28,7 +28,7 @@ import {
   paginate,
   type PageSize,
 } from "../../../../utils/pagination";
-import { loadMergedContacts } from "../../../../utils/contacts-list";
+import { loadContactsPage } from "../../../../utils/contacts-list";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +42,9 @@ async function handler(req: Request) {
   const page = coercePage(url.searchParams.get("page"));
   const pageSize = coercePageSize(url.searchParams.get("pageSize")) as PageSize;
 
-  const merged = await loadMergedContacts();
+  const { rows, total } = await loadContactsPage(page, pageSize);
 
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize;
-  const slice = merged.slice(from, to);
-
-  return NextResponse.json(paginate(slice, page, pageSize, merged.length));
+  return NextResponse.json(paginate(rows, page, pageSize, total));
 }
 
 export const GET = withObservability("GET /api/contacts/list", handler);
