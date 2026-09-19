@@ -2,6 +2,7 @@ import { nexusApi } from "@/utils/nexus-api";
 import { errMessage } from "@/utils/errors";
 import { DEFAULT_STAGES, normaliseStage } from "@/utils/pipeline-stage";
 import type { LiveTask } from "@/utils/tasks";
+import { getCachedLeads, getCachedPipelines } from "@/utils/nexus-leads-cache";
 
 /** Server-side loaders for the phone view. Leads + pipelines live in NEXUS; everything else is Supabase. */
 
@@ -26,17 +27,22 @@ export type PhoneLead = {
 
 export type Pipeline = { id: string; name: string; stages: string[] };
 
-export async function loadLeads(): Promise<{ leads: PhoneLead[]; error: string | null }> {
-  try {
-    const res = await nexusApi("/api/leads", { cache: "no-store" });
-    if (!res.ok) return { leads: [], error: `NEXUS API responded ${res.status}` };
-    return { leads: (await res.json()).leads || [], error: null };
-  } catch (e) {
-    return { leads: [], error: errMessage(e, "Couldn't reach NEXUS API") };
-  }
+/** The lead list, from the short-lived cache (see utils/nexus-leads-cache.ts). */
+export function loadLeads(): Promise<{ leads: PhoneLead[]; error: string | null }> {
+  return getCachedLeads<PhoneLead>();
 }
 
+/**
+ * A single lead. Served from the cached list when it's there: NEXUS takes
+ * 2-14s for one lead (measured 19 Sep 2026), and every stage change or note
+ * made through the CRM expires that cache, so the cached row is current for
+ * anything done here or on the desktop. Falls back to NEXUS for a lead the
+ * cache hasn't seen yet, or if the list rows ever stop carrying notes.
+ */
 export async function loadLead(id: string): Promise<{ lead: PhoneLead | null; error: string | null }> {
+  const { leads } = await getCachedLeads<PhoneLead>();
+  const cached = leads.find((l) => l.lead_id === id);
+  if (cached && "notes" in cached) return { lead: cached, error: null };
   try {
     const res = await nexusApi(`/api/leads/${encodeURIComponent(id)}`, { cache: "no-store" });
     if (res.status === 404) return { lead: null, error: null };
@@ -47,14 +53,8 @@ export async function loadLead(id: string): Promise<{ lead: PhoneLead | null; er
   }
 }
 
-export async function loadPipelines(): Promise<Pipeline[]> {
-  try {
-    const res = await nexusApi("/api/pipelines", { cache: "no-store" });
-    if (!res.ok) return [];
-    return (await res.json()).pipelines || [];
-  } catch {
-    return [];
-  }
+export function loadPipelines(): Promise<Pipeline[]> {
+  return getCachedPipelines<Pipeline>();
 }
 
 /**

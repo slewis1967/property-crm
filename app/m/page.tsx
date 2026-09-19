@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { supabase } from "../../utils/supabase";
 import { formatAgendaDateTime } from "../../utils/datetime";
 import { Header, Section, List, Empty, LoadError } from "./ui";
@@ -25,7 +26,7 @@ export default async function PhoneToday() {
   const now = new Date();
   const weekOut = new Date(now.getTime() + 7 * 86400_000).toISOString();
 
-  const [tasksRes, apptsRes, leadsRes, pipelines] = await Promise.all([
+  const [tasksRes, apptsRes] = await Promise.all([
     supabase
       .from("tasks")
       .select(OPEN_TASKS_SELECT)
@@ -40,15 +41,10 @@ export default async function PhoneToday() {
       .neq("status", "cancelled")
       .order("start_time", { ascending: true })
       .limit(20),
-    loadLeads(),
-    loadPipelines(),
   ]);
 
   const tasks = toLiveTasks((tasksRes.data ?? []) as RawTask[]);
   const appts = (apptsRes.data ?? []) as Appt[];
-  const newest = [...leadsRes.leads]
-    .sort((a, b) => Date.parse(b.created_at || "") - Date.parse(a.created_at || ""))
-    .slice(0, NEW_LEADS);
 
   return (
     <>
@@ -98,27 +94,38 @@ export default async function PhoneToday() {
         title="Newest leads"
         action={<Link href="/m/leads" className="text-xs text-[#0F4C5C]">All leads</Link>}
       >
-        {leadsRes.error ? (
-          <LoadError>Couldn&apos;t load leads: {leadsRes.error}</LoadError>
-        ) : newest.length === 0 ? (
-          <Empty>No leads yet.</Empty>
-        ) : (
-          <List>
-            {newest.map((l) => (
-              <li key={l.lead_id}>
-                <Link href={`/m/leads/${l.lead_id}`} className="flex items-center gap-3 px-4 py-3 active:bg-gray-50">
-                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tempDot[l.temperature ?? ""] ?? "bg-gray-300"}`} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium">{l.full_name || l.email || "(no name)"}</p>
-                    <p className="truncate text-xs text-gray-500">{stageOf(l, pipelines)}{l.state ? ` · ${l.state}` : ""}</p>
-                  </div>
-                  <span className="text-gray-300">›</span>
-                </Link>
-              </li>
-            ))}
-          </List>
-        )}
+        {/* NEXUS is slow; tasks and appointments show first, leads stream in. */}
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-white shadow-sm" />}>
+          <NewestLeads />
+        </Suspense>
       </Section>
     </>
+  );
+}
+
+async function NewestLeads() {
+  const [leadsRes, pipelines] = await Promise.all([loadLeads(), loadPipelines()]);
+  if (leadsRes.error) return <LoadError>Couldn&apos;t load leads: {leadsRes.error}</LoadError>;
+
+  const newest = [...leadsRes.leads]
+    .sort((a, b) => Date.parse(b.created_at || "") - Date.parse(a.created_at || ""))
+    .slice(0, NEW_LEADS);
+  if (newest.length === 0) return <Empty>No leads yet.</Empty>;
+
+  return (
+    <List>
+      {newest.map((l) => (
+        <li key={l.lead_id}>
+          <Link href={`/m/leads/${l.lead_id}`} className="flex items-center gap-3 px-4 py-3 active:bg-gray-50">
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tempDot[l.temperature ?? ""] ?? "bg-gray-300"}`} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-medium">{l.full_name || l.email || "(no name)"}</p>
+              <p className="truncate text-xs text-gray-500">{stageOf(l, pipelines)}{l.state ? ` · ${l.state}` : ""}</p>
+            </div>
+            <span className="text-gray-300">›</span>
+          </Link>
+        </li>
+      ))}
+    </List>
   );
 }
