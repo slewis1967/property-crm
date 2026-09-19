@@ -1,4 +1,5 @@
 import { nexusApi } from "@/utils/nexus-api";
+import { invalidatePipelineCache } from "@/utils/nexus-leads-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { errMessage } from "@/utils/errors";
 
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
     });
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
+    invalidatePipelineCache();
     return NextResponse.json(data, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: errMessage(e) }, { status: 503 });

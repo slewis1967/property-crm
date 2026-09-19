@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { nexusApi } from "@/utils/nexus-api";
 import { requireAuth } from "@/utils/cf-access";
 import { errMessage } from "@/utils/errors";
+import { invalidateLeadCache } from "@/utils/nexus-leads-cache";
 
 /**
  * Add one note to an opportunity — used by the phone view (/m/leads/[id]).
@@ -63,6 +64,7 @@ export async function POST(
       const data = await res.json().catch(() => ({}));
       return NextResponse.json({ error: data.error || `Save failed (${res.status})` }, { status: res.status });
     }
+    invalidateLeadCache();
     return NextResponse.json({ ok: true, notes });
   } catch (e) {
     return NextResponse.json({ error: errMessage(e) }, { status: 503 });

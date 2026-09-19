@@ -1,4 +1,5 @@
 import { nexusApi } from "@/utils/nexus-api";
+import { invalidatePipelineCache } from "@/utils/nexus-leads-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { errMessage } from "@/utils/errors";
 
@@ -13,6 +14,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
+    invalidatePipelineCache();
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: errMessage(e) }, { status: 503 });
@@ -25,6 +27,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const res = await nexusApi(`/api/pipelines/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) return NextResponse.json(data, { status: res.status });
+    invalidatePipelineCache();
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: errMessage(e) }, { status: 503 });
