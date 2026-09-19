@@ -2,12 +2,15 @@
  * Live + GHL-archive contact list, shared by the contacts page (first page)
  * and GET /api/contacts/list ("Load more").
  *
- * Both used to drain each table 1,000 rows at a time, one request after the
- * next — ~14 sequential Supabase round trips for ~14k rows. The functions run
- * in us-east-2 and the database is in Seoul, so every trip crosses the Pacific
- * and the contacts page took 6-7s on a warm function. Now each table is two
- * stages: the first page with an exact count, then every remaining page at
- * once.
+ * The merge (every live contact, then archive contacts with no live twin by
+ * email or GHL id) lives in the `contacts_list_v` view
+ * (migrations/20260919_contacts_list_view.sql), so a page is one request for
+ * pageSize rows plus an exact count. Before the view, both tables were read in
+ * full (~14k rows) on every render to show 50 of them.
+ *
+ * Until that migration is applied, loadContactsPage falls back to the old
+ * in-memory merge below, so this code is safe to deploy first. Once the view
+ * is live in every environment, the fallback can go.
  */
 import { supabase } from "./supabase";
 import { log, errInfo } from "./logger";
@@ -155,12 +158,43 @@ function mergeLiveAndArchive(live: Contact[], archive: ArchiveRow[]): Contact[] 
   return [...dedupedLive, ...archiveOnly];
 }
 
-/**
- * Every live contact (most recently updated first) followed by the archive
- * contacts that have no live counterpart by email or GHL id. Throws if the
- * live table can't be read; a failed archive read degrades to live-only.
- */
-export async function loadMergedContacts(): Promise<Contact[]> {
+async function loadMergedContacts(): Promise<Contact[]> {
   const [live, archive] = await Promise.all([loadLive(), loadArchive()]);
   return mergeLiveAndArchive(live, archive);
+}
+
+// Table-level "doesn't exist" codes only, like factFindsTableMissing(): a
+// column error must surface, not quietly fall back to the slow path.
+function viewMissing(e: { code?: string } | null): boolean {
+  return e?.code === "42P01" || e?.code === "PGRST205";
+}
+
+/**
+ * One page of the list (1-based) and the total across all pages: every live
+ * contact (most recently updated first) followed by the archive contacts that
+ * have no live counterpart by email or GHL id. Throws if it can't be read.
+ */
+export async function loadContactsPage(
+  page: number,
+  pageSize: number,
+): Promise<{ rows: Contact[]; total: number }> {
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await supabase
+    .from("contacts_list_v")
+    .select(LIVE_COLUMNS, { count: "exact" })
+    .order("list_group", { ascending: true })
+    .order("null_rank", { ascending: true })
+    .order("sort_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(from, from + pageSize - 1)
+    .overrideTypes<Contact[], { merge: false }>();
+
+  if (!error) return { rows: data ?? [], total: count ?? 0 };
+  if (!viewMissing(error)) throw error;
+
+  log.warn("contacts.list_view_missing", {
+    detail: "contacts_list_v not found — apply migrations/20260919_contacts_list_view.sql; using the full in-memory merge",
+  });
+  const merged = await loadMergedContacts();
+  return { rows: merged.slice(from, from + pageSize), total: merged.length };
 }

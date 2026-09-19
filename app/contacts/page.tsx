@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { log, errInfo } from "../../utils/logger";
-import { loadMergedContacts } from "../../utils/contacts-list";
+import { loadContactsPage } from "../../utils/contacts-list";
 import ContactsClient, { type Contact } from "./ContactsClient";
 import { ALLOWED_PAGE_SIZES, DEFAULT_PAGE_SIZE, type PageSize } from "../../utils/pagination";
 
@@ -28,17 +28,15 @@ async function pageSizeFromCookies(): Promise<PageSize> {
 export default async function ContactsPage() {
   const pageSize = await pageSizeFromCookies();
 
-  let merged: Contact[];
+  let firstPage: Contact[];
+  let total: number;
   try {
-    merged = await loadMergedContacts();
+    ({ rows: firstPage, total } = await loadContactsPage(1, pageSize));
   } catch (e) {
     log.error("contacts.page_load_failed", errInfo(e));
     const message = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
     return <div className="text-red-600 p-4">Error loading contacts: {message}</div>;
   }
-
-  const total = merged.length;
-  const firstPage = merged.slice(0, pageSize);
 
   return (
     <ContactsClient

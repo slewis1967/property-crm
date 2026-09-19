@@ -285,7 +285,7 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 - `properties/delete` — DELETE from Supabase by ID array
 - `properties/map` — active stock rolled up to one cluster per suburb (Stock Map)
 - `properties/map/geocode` — fills the `stock_geocodes` suburb-centroid cache, 12 at a time
-- `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot. Not a GHL proxy.
+- `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot — the merge is the `contacts_list_v` view (`migrations/20260919_contacts_list_view.sql`, `security_invoker`), paged in `utils/contacts-list.ts`; never read both tables in full to show one page. Not a GHL proxy.
 - `opportunities/`, `pipelines/` — proxy to the **NEXUS API** (`utils/nexus-api.ts` → Flask app on `localhost:8765` / `api.nextkey.com.au`, DuckDB-backed) at `/api/leads` + `/api/pipelines`. "GHL" here is legacy naming only — GoHighLevel was decommissioned; this is NextKey's own nexus-api. (There is no separate `app/api/duckdb/` route; the DuckDB backend is reached through these proxies and the suburbs/appointments pages.)
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
 - `broadcast` — two-phase bulk-email send: Phase 1 compliance review (Haiku), Phase 2 sequence + enrolment writes (see *Broadcast* above)
