@@ -16,6 +16,7 @@
  * Firefox — no Web Speech API; the button is hidden if neither is available.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 // Minimal subset of SpeechRecognition types we touch (the W3C spec ships with
 // many properties, no point reproducing the full Type definition file).
@@ -45,6 +46,10 @@ function getRecognitionCtor(): RecognitionCtor | null {
 }
 
 export default function VoiceAssistant() {
+  // The phone view (/m) has a bottom tab bar; sit above it there. Every other
+  // page keeps the original bottom-6 position.
+  const pathname = usePathname() ?? "";
+  const bottom = pathname === "/m" || pathname.startsWith("/m/") ? "bottom-24" : "bottom-6";
   const [supported, setSupported] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -200,7 +205,7 @@ export default function VoiceAssistant() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#0F4C5C] text-white shadow-lg hover:bg-[#0B3D4A] flex items-center justify-center text-2xl z-40 transition"
+          className={`fixed ${bottom} right-6 w-14 h-14 rounded-full bg-[#0F4C5C] text-white shadow-lg hover:bg-[#0B3D4A] flex items-center justify-center text-2xl z-40 transition`}
           title="Open voice assistant"
           aria-label="Open voice assistant"
         >
@@ -209,7 +214,7 @@ export default function VoiceAssistant() {
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 w-[360px] max-h-[70vh] bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col z-40">
+        <div className={`fixed ${bottom} right-6 w-[360px] max-w-[calc(100vw-3rem)] max-h-[70vh] bg-white border border-gray-200 rounded-xl shadow-xl flex flex-col z-40`}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-[#0F4C5C] text-white rounded-t-xl">
             <div>
               <p className="text-sm font-semibold">Voice assistant</p>
