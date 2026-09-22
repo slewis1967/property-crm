@@ -23,7 +23,7 @@ import urllib.error
 from pathlib import Path
 
 VCF_PATH = Path(__file__).parent / "glenn_getahome.vcf"
-SUPABASE_URL = "https://jzivferpxlbegrxghqpr.supabase.co"
+SUPABASE_URL = "https://gsbjuynbdhwnxygaaetz.supabase.co"
 SERVICE_KEY = os.environ["SB_SERVICE_KEY"]
 TAGS = ["getahome"]
 SOURCE = "icloud_glenn"

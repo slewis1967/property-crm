@@ -11,8 +11,8 @@ Reference values for NextKey:
 |-------|-------|
 | SFU (Fly app) | `nextkey-livekit` → `wss://nextkey-livekit.fly.dev` |
 | LiveKit API key id | `APIb5199261ab47` (the secret is a Fly secret on the SFU) |
-| Supabase project ref | `jzivferpxlbegrxghqpr` |
-| Supabase S3 endpoint | `https://jzivferpxlbegrxghqpr.storage.supabase.co/storage/v1/s3` |
+| Supabase project ref | `gsbjuynbdhwnxygaaetz` |
+| Supabase S3 endpoint | `https://gsbjuynbdhwnxygaaetz.storage.supabase.co/storage/v1/s3` |
 
 See also `deploy/livekit/README.md` (SFU) and `deploy/livekit-egress/README.md`.
 
@@ -53,7 +53,7 @@ cp egress.yaml.example egress.yaml
 #   redis:      same host/password as step 2
 #   s3:         access_key/secret from step 1, bucket "recordings",
 #               region ap-southeast-2,
-#               endpoint https://jzivferpxlbegrxghqpr.storage.supabase.co/storage/v1/s3
+#               endpoint https://gsbjuynbdhwnxygaaetz.storage.supabase.co/storage/v1/s3
 #               force_path_style: true
 
 fly launch --no-deploy --copy-config --name nextkey-livekit-egress
