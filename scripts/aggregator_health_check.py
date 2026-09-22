@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 
 SUPABASE_URL = os.environ.get(
     "SUPABASE_URL",
-    os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://jzivferpxlbegrxghqpr.supabase.co"),
+    os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "https://gsbjuynbdhwnxygaaetz.supabase.co"),
 )
 SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 if not SERVICE_KEY:
