@@ -217,7 +217,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
     start: startISO,
     end: endISO,
     joinUrl: videoLink,
-    uid: `appt-${apptId}@nextkey.com.au`,
+    // The .ics UID is visible in some calendar apps — keep it on-brand.
+    uid: `appt-${apptId}@${host.brand === "springboard" ? "springboardhomes.com.au" : "nextkey.com.au"}`,
     tz: body.timeZone,
   });
 

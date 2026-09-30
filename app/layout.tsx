@@ -17,6 +17,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  // Without a base, relative og:image URLs render as http://localhost:3000/…
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://crm.nextkey.com.au"),
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
   // NOTE: the PWA manifest link is emitted manually in <head> below with
