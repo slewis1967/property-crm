@@ -11,8 +11,8 @@
  *
  * THE WORDING IS SNAPSHOTTED, NOT REFERENCED. `consent_statement` is copied into
  * the blob when the form is issued and rendered from the blob thereafter.
- * CONSENT_STATEMENT names the whole disclosure chain — Springboard Homes, G.B.
- * Mayes Holdings, Your Loan Assist under its credit licence, a licensed adviser,
+ * CONSENT_STATEMENT names the whole disclosure chain — Springboard Homes (NextKey
+ * Pty Ltd), G.B. Mayes Holdings, Your Loan Assist under its credit licence, a licensed adviser,
  * lenders — and if that chain ever changes, someone who signed the old wording
  * consented to the old chain. A document that re-rendered from today's constant
  * would silently restate what they had agreed to, which is the one thing a
