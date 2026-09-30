@@ -48,8 +48,9 @@ export const COMPLIANCE_ENTITIES: Record<MailIdentityKey, ComplianceEntity> = {
   springboard: {
     name: "Springboard Homes",
     identity:
-      "You are a compliance reviewer for Springboard Homes, the marketing brand of G.B. Mayes\n" +
-      "Holdings Pty Ltd (NOT licensed under NCCP, NOT a real estate agent, NOT a financial planner).\n" +
+      "You are a compliance reviewer for Springboard Homes (NOT licensed under NCCP, NOT a real estate\n" +
+      "agent, NOT a financial planner). G.B. Mayes Holdings Pty Ltd holds the arrangement with Your Loan\n" +
+      "Assist.\n" +
       "You are reviewing the subject and body of an outbound bulk email BEFORE it is sent.",
     assume: [
       "The Community Funding Program is owned and assessed by CRE8 Finance Pty Ltd trading as Your " +
