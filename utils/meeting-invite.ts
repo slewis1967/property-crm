@@ -45,6 +45,12 @@ export interface MeetingInviteOpts {
   /** IANA tz used to render the human-readable time. Defaults AU/Brisbane. */
   tz?: string;
   /**
+   * "phone" drops the meeting-invite framing in favour of a callback
+   * confirmation — there's no join link to promote, so the copy shouldn't
+   * imply one is coming. Defaults to "video" for backward compatibility.
+   */
+  kind?: "video" | "phone";
+  /**
    * Everyone invited, for the .ics ATTENDEE lines — so each recipient's
    * calendar shows the full participant list rather than just themselves.
    * `to` is still the one person THIS email goes to; send once per attendee
@@ -82,6 +88,8 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   const tz = opts.tz ?? "Australia/Brisbane";
   const when = fmtRange(opts.start, opts.end, tz);
   const greetingName = opts.to.name ? ` ${escapeHtml(opts.to.name.split(" ")[0])}` : "";
+  const isPhone = opts.kind === "phone";
+  const subtitle = isPhone ? "Confirming our call" : "You've been invited to a meeting";
   const joinBtn = opts.joinUrl
     ? `<tr><td style="padding:8px 0 20px;">
          <a href="${escapeHtml(opts.joinUrl)}" style="display:inline-block;background:${BRAND_TEAL};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
@@ -100,7 +108,7 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
     <h2 style="color:${BRAND_TEAL};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
-    <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">You've been invited to a meeting</p>
+    <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">${escapeHtml(subtitle)}</p>
     <p style="margin:0 0 14px;">Hi${greetingName},</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;">
       <tr><td style="padding:2px 0;color:#374151;"><strong>When:</strong> ${escapeHtml(when)}</td></tr>
@@ -142,7 +150,7 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
 
   return sendBrevoEmail({
     to: [{ email: opts.to.email, name: opts.to.name }],
-    subject: `Invitation: ${opts.title}`,
+    subject: `${opts.kind === "phone" ? "Confirming" : "Invitation"}: ${opts.title}`,
     html,
     fromEmail: sender.email,
     fromName: sender.name,
