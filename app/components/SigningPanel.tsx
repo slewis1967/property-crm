@@ -12,7 +12,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { SIGN_STATUS_LABEL, type SignStatus } from "../../utils/signatures";
+import { SIGN_STATUS_LABEL, displaySignStatus, type SignStatus } from "../../utils/signatures";
+import { suggestEmailCorrection, tidyEmail } from "../../utils/email-typo";
 
 const TEAL = "#0F4C5C";
 
@@ -27,8 +28,19 @@ type RequestRow = {
   sent_at: string | null;
   viewed_at: string | null;
   signed_at: string | null;
+  expires_at: string | null;
   signed_pdf_path: string | null;
 };
+
+/**
+ * Stamp each row with the status to show. Done when the rows arrive rather than
+ * during render (which must stay pure): a lapsed link keeps its stored
+ * "sent"/"viewed", and shown raw it reads as a client who is ignoring you.
+ */
+function withDisplayStatus(rows: RequestRow[]): RequestRow[] {
+  const now = Date.now();
+  return rows.map((r) => ({ ...r, status: displaySignStatus(r.status, r.expires_at, now) }));
+}
 
 function fmt(iso: string | null): string {
   if (!iso) return "";
@@ -65,7 +77,7 @@ export default function SigningPanel({
       const res = await fetch(`/api/signature-requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "Could not load signing status");
-      setRows((json.requests ?? []) as RequestRow[]);
+      setRows(withDisplayStatus((json.requests ?? []) as RequestRow[]));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load signing status");
     } finally {
@@ -80,7 +92,7 @@ export default function SigningPanel({
         const res = await fetch(`/api/signature-requests?doc_type=${docType}&doc_id=${encodeURIComponent(docId)}`);
         const json = await res.json();
         if (cancelled) return;
-        if (json.ok) setRows((json.requests ?? []) as RequestRow[]);
+        if (json.ok) setRows(withDisplayStatus((json.requests ?? []) as RequestRow[]));
         else setError(json.error || "Could not load signing status");
       } catch {
         if (!cancelled) setError("Could not load signing status");
@@ -120,7 +132,7 @@ export default function SigningPanel({
           <ul className="divide-y divide-gray-100">
             {rows.map((r) => {
               const label = SIGN_STATUS_LABEL[r.status as SignStatus] ?? r.status;
-              const when = r.signed_at || r.viewed_at || r.sent_at;
+              const when = r.status === "expired" ? r.expires_at : r.signed_at || r.viewed_at || r.sent_at;
               return (
                 <li key={r.id} className="py-2 flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0">
@@ -180,7 +192,7 @@ function SendModal({
 }) {
   const initial =
     proposedSigners.length > 0
-      ? proposedSigners.slice(0, 2).map((s) => ({ name: s.name, email: s.email }))
+      ? proposedSigners.slice(0, 2).map((s) => ({ name: s.name, email: tidyEmail(s.email) }))
       : [{ name: "", email: "" }];
   const [signers, setSigners] = useState<ProposedSigner[]>(initial);
   const [message, setMessage] = useState("");
@@ -192,7 +204,7 @@ function SendModal({
   };
 
   const send = useCallback(async () => {
-    const cleaned = signers.map((s) => ({ name: s.name.trim(), email: s.email.trim() })).filter((s) => s.email);
+    const cleaned = signers.map((s) => ({ name: s.name.trim(), email: tidyEmail(s.email) })).filter((s) => s.email);
     if (cleaned.length === 0) {
       setError("Add at least one signer email.");
       return;
@@ -231,23 +243,40 @@ function SendModal({
         </div>
 
         <div className="space-y-3">
-          {signers.map((s, i) => (
-            <div key={i} className="grid grid-cols-2 gap-2">
-              <input
-                value={s.name}
-                onChange={(e) => setSigner(i, "name", e.target.value)}
-                placeholder={`Signer ${i + 1} name`}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md"
-              />
-              <input
-                value={s.email}
-                onChange={(e) => setSigner(i, "email", e.target.value)}
-                placeholder="Email"
-                type="email"
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md"
-              />
-            </div>
-          ))}
+          {signers.map((s, i) => {
+            const suggestion = suggestEmailCorrection(s.email);
+            return (
+              <div key={i} className="grid grid-cols-2 gap-2">
+                <input
+                  value={s.name}
+                  onChange={(e) => setSigner(i, "name", e.target.value)}
+                  placeholder={`Signer ${i + 1} name`}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-md"
+                />
+                <input
+                  value={s.email}
+                  onChange={(e) => setSigner(i, "email", e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-md"
+                />
+                {/* A typo'd provider domain accepts mail and never bounces, so
+                    this is the only point the mistake can be caught. */}
+                {suggestion && (
+                  <p className="col-span-2 text-xs text-amber-700">
+                    Did you mean <strong>{suggestion}</strong>?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setSigner(i, "email", suggestion)}
+                      className="font-semibold underline"
+                    >
+                      Use this
+                    </button>
+                  </p>
+                )}
+              </div>
+            );
+          })}
           {signers.length < 2 && (
             <button
               onClick={() => setSigners((p) => [...p, { name: "", email: "" }])}
