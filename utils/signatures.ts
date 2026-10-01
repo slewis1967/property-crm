@@ -91,6 +91,22 @@ export function isExpired(expiresAt: string | null | undefined, now: number): bo
 }
 
 /**
+ * The status to SHOW for a request. Nothing ever writes "expired" to a row — the
+ * signing routes just refuse a link past its `expires_at` — so a lapsed request
+ * keeps its stored "sent"/"viewed" forever. Shown raw, a dead link reads as a
+ * client who is ignoring you, and nobody resends. Signed and declined are final
+ * and are never overridden by the date.
+ */
+export function displaySignStatus(
+  status: string,
+  expiresAt: string | null | undefined,
+  now: number,
+): string {
+  if ((status === "sent" || status === "viewed") && isExpired(expiresAt, now)) return "expired";
+  return status;
+}
+
+/**
  * True when every signer request for a document has been signed — the trigger to
  * lock the underlying document and record the `sign` audit. An empty list is not
  * "all signed" (nothing was ever requested).

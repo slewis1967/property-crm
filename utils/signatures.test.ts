@@ -3,6 +3,7 @@ import {
   isSignDocType,
   isTerminalStatus,
   isExpired,
+  displaySignStatus,
   allSigned,
   buildSignaturesArray,
   formatSignedDate,
@@ -99,5 +100,25 @@ describe("formatSignedDate", () => {
   });
   it("passes through unparseable input", () => {
     expect(formatSignedDate("nope")).toBe("nope");
+  });
+});
+
+describe("displaySignStatus", () => {
+  const now = Date.parse("2026-10-01T00:00:00Z");
+  const past = "2026-09-24T04:54:36Z";
+  const future = "2026-10-15T05:00:00Z";
+
+  it("shows an unsigned request past its expiry as expired", () => {
+    expect(displaySignStatus("sent", past, now)).toBe("expired");
+    expect(displaySignStatus("viewed", past, now)).toBe("expired");
+  });
+  it("leaves a live request as stored", () => {
+    expect(displaySignStatus("sent", future, now)).toBe("sent");
+    expect(displaySignStatus("viewed", future, now)).toBe("viewed");
+    expect(displaySignStatus("sent", null, now)).toBe("sent");
+  });
+  it("never overrides a final status with the date", () => {
+    expect(displaySignStatus("signed", past, now)).toBe("signed");
+    expect(displaySignStatus("declined", past, now)).toBe("declined");
   });
 });
