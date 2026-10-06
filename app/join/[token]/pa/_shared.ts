@@ -68,16 +68,18 @@ const LINK_CEILING_FACTOR = 5;
 /**
  * Two limits. Returns a 429 to send back, or null to carry on.
  *
- * PER CALLER ON A LINK (`max`): the applicants on one call share a link, so a
- * limit on the link alone would let one of them, by hammering it, lock the
- * others out of the document mid-presentation. Each caller gets their own
- * budget, keyed on CF-Connecting-IP. That header is set by Cloudflare, and
- * proxy.ts refuses anything that did not arrive through the tunnel, so unlike
- * X-Forwarded-For the caller cannot write it to mint themselves a fresh bucket.
+ * PER LINK (`max` x LINK_CEILING_FACTOR) IS THE GUARANTEE. It is keyed on the
+ * link and nothing else, so no header the caller sends can raise it.
  *
- * PER LINK (`max` x LINK_CEILING_FACTOR): a backstop that does not depend on
- * any header at all, for the case where the caller identity is missing or
- * shared (off the tunnel in development, or many applicants behind one NAT).
+ * PER CALLER ON A LINK (`max`) IS A COURTESY, NOT A CONTROL. The applicants on
+ * one call share a link, so with the link limit alone one of them reloading
+ * hard could lock the others out mid-presentation. Splitting the budget by
+ * CF-Connecting-IP stops that happening by accident. It is NOT tamper-proof:
+ * these paths are exempt from the tunnel gate (a guest has no Cloudflare Access
+ * identity), so a caller who goes to the Netlify origin directly can write that
+ * header and take a fresh per-caller bucket. All that buys them is the link
+ * ceiling, and only for a link they already hold. Do not lean on the per-caller
+ * figure for anything that matters.
  *
  * Both are keyed on the bare path: enforceRateLimit folds the full URL into
  * its key, so a different query string per request would otherwise open a new
