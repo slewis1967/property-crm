@@ -53,9 +53,12 @@ export async function GET(
     const doc = await loadDoc(row.doc_type, row.doc_id);
     if (!doc) return notAvailable();
 
-    const html = await doc.renderHtml(); // no signatures — the unsigned preview
-    const pdf = await htmlToPdf(html);
-    const body = new Uint8Array(pdf);
+    // No signatures — the unsigned preview. A document that already IS a PDF
+    // (the Preliminary Assessment) hands its own bytes over; everything else is
+    // rendered from its data as HTML and printed.
+    const body = new Uint8Array(
+      doc.renderPdf ? await doc.renderPdf() : await htmlToPdf(await doc.renderHtml()),
+    );
     return new NextResponse(body, {
       status: 200,
       headers: {

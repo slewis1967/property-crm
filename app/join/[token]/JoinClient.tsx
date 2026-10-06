@@ -72,6 +72,9 @@ export default function JoinClient({ guestToken }: { guestToken: string }) {
       <VideoRoom
         token={state.token}
         serverUrl={state.url}
+        // Lets the call show a Preliminary Assessment when the rep presents
+        // one: the same signed token is the applicant's pass to that document.
+        guestToken={guestToken}
         onLeave={() => setState({ phase: "left" })}
         // Guests get their room blurred, not our office wall behind them —
         // a client shouldn't look like they work here.

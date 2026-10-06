@@ -23,6 +23,7 @@ import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
 import ContactVideoCalls from "../../components/ContactVideoCalls";
+import ContactPreliminaryAssessment from "../../components/ContactPreliminaryAssessment";
 import ContactShortlists from "../../components/ContactShortlists";
 
 type Contact = {
@@ -645,6 +646,9 @@ export default function ContactDetail({
 
                 {/* AI matchmaker — properties that fit this contact */}
                 <AIContactMatches contactId={contact.id} />
+
+                {/* The PA back from YLA + the call it is presented on (only renders once one exists) */}
+                <ContactPreliminaryAssessment contactId={contact.id} />
 
                 {/* Video-call history (only renders once calls exist) */}
                 <ContactVideoCalls contactId={contact.id} />
