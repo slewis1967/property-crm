@@ -30,6 +30,7 @@ import { CREDIT_AUTHORISATION_TERMINAL_STATUS } from "./creditAuthorisation";
 import { AML_CASE_TERMINAL_STATUS } from "./aml";
 import { EOI_TERMINAL_STATUS } from "./eoi";
 import { INTRODUCER_DOC_TERMINAL_STATUS } from "./introducer-agreement";
+import { PA_TERMINAL_STATUS } from "./preliminary-assessments";
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -51,7 +52,11 @@ export type ComplianceDocType =
   | "introducer_schedule"
   // The CLIENT's Referral Consent and Privacy Form — the lawful basis for
   // holding their record at all. See utils/introducer-consent.ts.
-  | "referral_consent";
+  | "referral_consent"
+  // Your Loan Assist's Preliminary Assessment. Unlike every other type it is a
+  // PDF we were GIVEN rather than one rendered from `data`, so the signed copy
+  // is YLA's original with the signatures stamped on (utils/pa-signed-pdf.ts).
+  | "preliminary_assessment";
 export type ComplianceAuditAction = "create" | "update" | "sign" | "reopen" | "delete";
 
 /** The status at which each document is signed/complete and becomes read-only. */
@@ -68,6 +73,7 @@ export const LOCKED_STATUS: Record<ComplianceDocType, string> = {
   // point at which the consent form becomes immutable, and the database trigger
   // in migrations/20260821 enforces it independently.
   referral_consent: "Signed",
+  preliminary_assessment: PA_TERMINAL_STATUS,
 };
 
 /** User-facing refusal messages (kept here so route wording stays consistent). */

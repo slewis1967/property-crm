@@ -68,6 +68,7 @@ const GROUPS: Group[] = [
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },
       { href: "/credit-authorisation", icon: "🔏", label: "Credit Authorisation" },
       { href: "/document-requests", icon: "📎", label: "Client Documents" },
+      { href: "/preliminary-assessments", icon: "📄", label: "Preliminary Assessments" },
       { href: "/shared-folder", icon: "📂", label: "Shared Folder" },
       { href: "/contacts", icon: "👥", label: "Contacts" },
       { href: "/calendar", icon: "📅", label: "Calendar" },

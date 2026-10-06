@@ -98,6 +98,10 @@ describe("formatSignedDate", () => {
   it("formats an ISO date to a short en-AU form", () => {
     expect(formatSignedDate("2026-07-13T02:00:00Z")).toMatch(/2026/);
   });
+  it("dates a signature by the Brisbane day, not the server's", () => {
+    // 23:30 UTC on the 12th is 9:30am on the 13th in Brisbane.
+    expect(formatSignedDate("2026-07-12T23:30:00Z")).toMatch(/^13 Jul[a-z]* 2026$/);
+  });
   it("passes through unparseable input", () => {
     expect(formatSignedDate("nope")).toBe("nope");
   });

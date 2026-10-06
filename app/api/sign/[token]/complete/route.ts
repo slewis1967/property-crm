@@ -47,7 +47,6 @@ const BUCKET = "signed-documents";
 const PNG_PREFIX = "data:image/png;base64,";
 const MAX_SIGNATURE_BYTES = 3 * 1024 * 1024; // 3MB of base64 — a signature PNG is tiny
 const SIGNED_URL_TTL = 60 * 60; // 1 hour — long enough for Brevo to fetch on send
-const TEAL = "#0F4C5C";
 
 /** True for a well-formed, size-bounded base64 PNG data URI. */
 function isPngDataUri(v: unknown): v is string {
@@ -141,14 +140,41 @@ export async function POST(
       return NextResponse.json({ ok: true, warning: "Signed, but the document copy could not be generated." });
     }
 
-    const html = await doc.renderHtml(signatures);
-    const pdf = new Uint8Array(await htmlToPdf(html));
+    // A document we were GIVEN as a PDF (the Preliminary Assessment) stamps the
+    // signatures onto the original; every other type re-renders from its data.
+    // Either way the bytes are produced here, never accepted from the client.
+    //
+    // The stamped path has failure modes the rendered one does not — the stored
+    // PDF unreadable, or one pdf-lib can't parse — and by this point the
+    // signature is already saved. Letting that throw would skip the lock below
+    // and answer 500; the retry then gets "already signed", so the document
+    // would sit unlocked forever with every signature on it. So a failed stamp
+    // is logged and the signing still completes, without a copy.
+    let pdf: Uint8Array | null;
+    if (doc.renderPdf) {
+      try {
+        pdf = await doc.renderPdf(signatures);
+      } catch (e) {
+        pdf = null;
+        log.error("sign.complete_render_pdf_failed", {
+          docType: row.doc_type,
+          docId: row.doc_id,
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+    } else {
+      pdf = new Uint8Array(await htmlToPdf(await doc.renderHtml(signatures)));
+    }
 
     const path = `signed/${row.doc_type}/${row.doc_id}/${row.id}.pdf`;
-    const { error: upErr } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, pdf, { contentType: "application/pdf", upsert: true });
-    if (upErr) {
+    const { error: upErr } = pdf
+      ? await supabase.storage
+          .from(BUCKET)
+          .upload(path, pdf, { contentType: "application/pdf", upsert: true })
+      : { error: null };
+    if (!pdf) {
+      // Already logged above; nothing to upload or point the row at.
+    } else if (upErr) {
       log.error("sign.complete_upload_failed", { message: upErr.message, path });
     } else {
       await supabase
@@ -199,6 +225,12 @@ export async function POST(
       }
     }
 
+    // No copy was produced (stamping failed, logged above). Don't send an email
+    // that says "a copy is attached" with nothing attached.
+    if (!pdf) {
+      return NextResponse.json({ ok: true, warning: "Signed, but the document copy could not be generated." });
+    }
+
     // Email the signed copy to the signer and the advisor (best-effort).
     await emailSignedCopy(
       row.doc_type,
@@ -242,7 +274,7 @@ async function emailSignedCopy(
   }
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px;margin:0 auto">
-    <div style="background:${TEAL};color:#fff;padding:16px 20px;font-weight:bold">NextKey Property Strategists</div>
+    <div style="background:${brandStyle.colour};color:#fff;padding:16px 20px;font-weight:bold">${brandStyle.name}</div>
     <div style="border:1px solid #e5e7eb;border-top:none;padding:20px">
       <p>Your <strong>${label}</strong> has been signed electronically. A copy is attached for your records.</p>
       <p style="font-size:12px;color:#888">Signed under the Electronic Transactions Act 1999.</p>

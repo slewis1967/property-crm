@@ -25,6 +25,7 @@
     "next": "^16.2.6",
     "openai": "^6.44.0",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "5.4.624",
     "puppeteer-core": "^24.43.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
