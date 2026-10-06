@@ -62,24 +62,43 @@ export function notFound(): NextResponse {
   );
 }
 
+/** How many callers' worth of traffic one link may carry before it is cut off. */
+const LINK_CEILING_FACTOR = 5;
+
 /**
- * Per-LINK limit. Returns a 429 to send back, or null to carry on.
+ * Two limits. Returns a 429 to send back, or null to carry on.
  *
- * Keyed on the link alone, and on the bare path. Both choices close a way
- * round the limit: the caller's IP here would come from X-Forwarded-For, which
- * the caller writes, and enforceRateLimit folds the full URL into its key, so
- * a different query string on each request would otherwise open a fresh bucket
- * every time. The applicants on one call share the budget, which is why the
- * ceilings are per minute for the whole room.
+ * PER CALLER ON A LINK (`max`): the applicants on one call share a link, so a
+ * limit on the link alone would let one of them, by hammering it, lock the
+ * others out of the document mid-presentation. Each caller gets their own
+ * budget, keyed on CF-Connecting-IP. That header is set by Cloudflare, and
+ * proxy.ts refuses anything that did not arrive through the tunnel, so unlike
+ * X-Forwarded-For the caller cannot write it to mint themselves a fresh bucket.
+ *
+ * PER LINK (`max` x LINK_CEILING_FACTOR): a backstop that does not depend on
+ * any header at all, for the case where the caller identity is missing or
+ * shared (off the tunnel in development, or many applicants behind one NAT).
+ *
+ * Both are keyed on the bare path: enforceRateLimit folds the full URL into
+ * its key, so a different query string per request would otherwise open a new
+ * bucket every time.
  */
 export function limitGuest(req: Request, token: string, max: number): NextResponse | null {
   const url = new URL(req.url);
   const bare = new Request(`${url.origin}${url.pathname}`, { method: req.method });
-  return enforceRateLimit(bare, {
-    windowMs: 60_000,
-    max,
-    keyFn: () => guestRateKey("link", token),
-  });
+  const caller = (req.headers.get("cf-connecting-ip") || "").trim() || "unknown";
+  return (
+    enforceRateLimit(bare, {
+      windowMs: 60_000,
+      max,
+      keyFn: () => guestRateKey(`ip:${caller}`, token),
+    }) ??
+    enforceRateLimit(bare, {
+      windowMs: 60_000,
+      max: max * LINK_CEILING_FACTOR,
+      keyFn: () => guestRateKey("link", token),
+    })
+  );
 }
 
 const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
