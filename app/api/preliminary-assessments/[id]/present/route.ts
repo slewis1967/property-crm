@@ -110,7 +110,7 @@ export async function POST(
     if (action === "start") {
       const { error } = await supabase
         .from(PRELIMINARY_ASSESSMENTS_TABLE)
-        .update({ presentation_room: room, updated_at: now })
+        .update({ presentation_room: room, presentation_started_at: now, updated_at: now })
         .eq("id", id);
       if (error) throw new Error(error.message);
       log.info("pa.present_started", { paId: id, rep });
@@ -120,7 +120,11 @@ export async function POST(
       // First-finish stamps are kept. Presenting the same PA again (a second
       // applicant who missed the first call) must not move the record of when
       // it was first presented, or of who presented it.
-      const patch: Record<string, unknown> = { presentation_room: room, updated_at: now };
+      const patch: Record<string, unknown> = {
+        presentation_room: room,
+        presentation_started_at: now,
+        updated_at: now,
+      };
       if (!row.presented_at) {
         patch.presented_at = now;
         patch.presented_by = rep;

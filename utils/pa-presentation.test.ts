@@ -170,3 +170,19 @@ describe("pdf.js stays out of the server bundle", () => {
     expect(src).toMatch(/pdfjs-dist\/legacy\/build\/pdf\.worker\.min\.mjs/);
   });
 });
+
+describe("guestWindowOpen", () => {
+  const now = Date.parse("2026-10-06T04:00:00Z");
+  it("is shut when the rep has never pressed Present", async () => {
+    const { guestWindowOpen } = await import("./pa-presentation");
+    expect(guestWindowOpen(null, now)).toBe(false);
+    expect(guestWindowOpen("not a date", now)).toBe(false);
+  });
+  it("is open during the call and shut three hours after it started", async () => {
+    const { guestWindowOpen } = await import("./pa-presentation");
+    expect(guestWindowOpen("2026-10-06T03:30:00Z", now)).toBe(true);
+    expect(guestWindowOpen("2026-10-06T01:00:01Z", now)).toBe(true);
+    expect(guestWindowOpen("2026-10-06T01:00:00Z", now)).toBe(false);
+    expect(guestWindowOpen("2026-10-05T03:30:00Z", now)).toBe(false);
+  });
+});

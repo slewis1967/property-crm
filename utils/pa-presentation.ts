@@ -102,3 +102,21 @@ export function sentForSigningLabel(count: number, alreadySent = false): string 
   const base = count > 0 ? `Sent for signing to ${who}` : "Sent for signing";
   return alreadySent ? `${base} (already sent earlier)` : base;
 }
+
+/**
+ * How long a call link can reach the PA after the rep presses Present.
+ *
+ * A guest link is not a one-off: the same link sits in the client's calendar
+ * invite and stays valid for the life of the meeting booking. Without a clock,
+ * anyone the invite was forwarded to could fetch a credit proposal for as long
+ * as the PA stayed unsigned. Three hours covers a long presentation plus the
+ * video step; pressing Present again restarts it.
+ */
+export const GUEST_PA_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+/** True while the presentation that opened guest access is still recent. */
+export function guestWindowOpen(startedAt: string | null | undefined, now: number): boolean {
+  if (!startedAt) return false;
+  const t = Date.parse(startedAt);
+  return Number.isFinite(t) && t <= now + 60_000 && now - t < GUEST_PA_WINDOW_MS;
+}

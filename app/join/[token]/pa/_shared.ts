@@ -16,9 +16,10 @@
  * does not already hold the token has nothing a browser would attach for it.
  *
  * THE ONE ACCESS RULE, in one place: token -> room -> contact -> the newest
- * live PA whose `presentation_room` is that room. `presentation_room` is only
- * written when a rep presses Present, so a guest link on its own never exposes
- * a PA the rep has not chosen to show. Every failure looks the same from
+ * live PA whose `presentation_room` is that room AND whose presentation started
+ * within GUEST_PA_WINDOW_MS. Both are only written when a rep presses Present,
+ * so a guest link on its own never exposes a PA the rep has not chosen to show,
+ * and stops exposing it a few hours after the call. Every failure looks the same from
  * outside (null here, a generic 404 from the caller).
  */
 import { NextResponse } from "next/server";
@@ -30,7 +31,11 @@ import {
   PRELIMINARY_ASSESSMENTS_TABLE,
   isLivePa,
 } from "../../../../utils/preliminary-assessments";
-import { contactIdFromRoom, guestRateKey } from "../../../../utils/pa-presentation";
+import {
+  contactIdFromRoom,
+  guestRateKey,
+  guestWindowOpen,
+} from "../../../../utils/pa-presentation";
 
 /** A guest token is a compact JWT. Anything far outside that shape is not one. */
 const MAX_TOKEN_LENGTH = 2048;
@@ -57,18 +62,23 @@ export function notFound(): NextResponse {
   );
 }
 
-function clientIp(req: Request): string {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "unknown";
-}
-
-/** Per-link, per-IP limit. Returns a 429 to send back, or null to carry on. */
+/**
+ * Per-LINK limit. Returns a 429 to send back, or null to carry on.
+ *
+ * Keyed on the link alone, and on the bare path. Both choices close a way
+ * round the limit: the caller's IP here would come from X-Forwarded-For, which
+ * the caller writes, and enforceRateLimit folds the full URL into its key, so
+ * a different query string on each request would otherwise open a fresh bucket
+ * every time. The applicants on one call share the budget, which is why the
+ * ceilings are per minute for the whole room.
+ */
 export function limitGuest(req: Request, token: string, max: number): NextResponse | null {
-  return enforceRateLimit(req, {
+  const url = new URL(req.url);
+  const bare = new Request(`${url.origin}${url.pathname}`, { method: req.method });
+  return enforceRateLimit(bare, {
     windowMs: 60_000,
     max,
-    keyFn: () => guestRateKey(clientIp(req), token),
+    keyFn: () => guestRateKey("link", token),
   });
 }
 
@@ -96,7 +106,9 @@ export async function resolveGuestPa(token: string): Promise<GuestPa | null> {
 
   const { data, error } = await supabase
     .from(PRELIMINARY_ASSESSMENTS_TABLE)
-    .select("id,pdf_path,video_url,presented_by,video_shown_at,video_confirmed_at,signing_sent_at")
+    .select(
+      "id,pdf_path,video_url,presented_by,video_shown_at,video_confirmed_at,signing_sent_at,presentation_started_at",
+    )
     .eq("contact_id", contactId)
     .eq("presentation_room", claims.room)
     .in("status", LIVE_STATUSES)
@@ -105,6 +117,9 @@ export async function resolveGuestPa(token: string): Promise<GuestPa | null> {
   if (error || !data || data.length === 0) return null;
 
   const row = data[0] as Record<string, unknown>;
+  // The link outlives the call (it is in the calendar invite), so access is
+  // tied to a recent Present, not just to one having happened once.
+  if (!guestWindowOpen(str(row.presentation_started_at), Date.now())) return null;
   const id = str(row.id);
   const pdfPath = str(row.pdf_path);
   if (!id || !pdfPath) return null;
