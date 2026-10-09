@@ -23,6 +23,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { isPartnerPortalPath } from "../../utils/partner";
 import { isShortlistPortalPath } from "../../utils/shortlist-path";
+import HelpButton from "./HelpButton";
 
 export default function AppShell({
   sidebar,
@@ -134,6 +135,10 @@ export default function AppShell({
       <main data-appshell-main className="flex-1 overflow-y-auto p-4 lg:p-8 min-w-0">
         {children}
       </main>
+
+      {/* "How do I do this?" — staff pages only; the standalone branch above
+          returns before this, so clients and partners never see staff help. */}
+      <HelpButton />
     </div>
   );
 }
