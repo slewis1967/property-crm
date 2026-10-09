@@ -6,6 +6,7 @@ import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 import PublicRouteGate from "./components/PublicRouteGate";
 import Sidebar from "./components/Sidebar";
+import HelpButton from "./components/HelpButton";
 import { headers as nextHeaders } from "next/headers";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
@@ -137,7 +138,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
       </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />}>
+        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />} help={isPublic ? null : <HelpButton />}>
           {children}
         </AppShell>
         <PublicRouteGate>
