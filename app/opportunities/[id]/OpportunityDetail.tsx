@@ -136,6 +136,7 @@ export default function OpportunityDetail({
   const [lead, setLead] = useState(initialLead);
   const [showEdit, setShowEdit] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleKind, setScheduleKind] = useState<"video" | "phone">("video");
   const [showAddTask, setShowAddTask] = useState(false);
   const [showBookingLinks, setShowBookingLinks] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
@@ -411,10 +412,19 @@ export default function OpportunityDetail({
             ✏️ Edit
           </button>
           <button
-            onClick={() => setShowSchedule(true)}
+            onClick={() => { setScheduleKind("video"); setShowSchedule(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
           >
             📅 Schedule meeting
+          </button>
+          {/* Sits next to Schedule meeting — the common case Glenn described is
+              calling a client back and wanting a confirmation email rather than
+              a video-meeting link. */}
+          <button
+            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📞 Phone call
           </button>
           <button
             onClick={() => setShowAddTask(true)}
@@ -561,6 +571,7 @@ export default function OpportunityDetail({
           lead={lead}
           hosts={SCHEDULING_HOSTS}
           contactId={lead.primary_contact_id}
+          defaultKind={scheduleKind}
           onClose={() => setShowSchedule(false)}
           onCreated={() => router.refresh()}
         />
