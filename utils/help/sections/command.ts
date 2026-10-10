@@ -7,6 +7,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/"],
     about:
       "The home page: today's brief from Elvis, the headline numbers, open tasks, the newest leads and contacts, and six quick calculators.",
+    overview: {
+      id: "overview-war-room",
+      title: "Overview of War Room",
+      summary:
+        "What the home page of the CRM shows, from today's brief down to the quick calculators.",
+      steps: [
+        {
+          title: "Elvis · Today's brief",
+          detail: "A short list of the most urgent things to do today, written fresh each time you open the page.",
+        },
+        {
+          title: "The four number cards",
+          detail: "Live counts of Total Leads, Contacts, Stock Pool and Hot Leads, each with a link to the full page.",
+        },
+        {
+          title: "Open Tasks",
+          detail: "Tasks set on opportunities, soonest due first, with overdue ones in red. Tick one to mark it done.",
+        },
+        {
+          title: "Recent Leads and Hot Contacts",
+          detail: "The newest enquiries from Lead Intake and your hottest contacts, side by side.",
+        },
+        {
+          title: "Recent Contacts",
+          detail: "A table of the latest people added to Contacts, with their type, state, temperature and score.",
+        },
+        {
+          title: "Quick calculators",
+          detail: "Six calculators for use during a call: rental yield, stamp duty, borrowing capacity, capital growth, First Home Guarantee and loan repayments. Nothing in them is saved.",
+        },
+      ],
+    },
     guides: [
       {
         id: "war-room-start-your-day",
@@ -123,6 +155,42 @@ export const commandSections: HelpSection[] = [
     paths: ["/revenue"],
     about:
       "Tracks the commission owed on each deal, what goes to referrers, what has been banked and when the rest is due.",
+    overview: {
+      id: "overview-revenue",
+      title: "Overview of Revenue",
+      summary:
+        "What the Revenue page is for: tracking the commission on each deal, what has been banked and when the rest is due.",
+      steps: [
+        {
+          title: "Forecast and Add deal",
+          detail: "The two buttons at the top right. Forecast opens a printable profit forecast, and Add deal records a new deal.",
+        },
+        {
+          title: "The five totals",
+          detail: "Net, gross remuneration, the share going to referrers, what is banked and what is still outstanding.",
+        },
+        {
+          title: "Cash in by month",
+          detail: "A bar for each month. Green is money already banked and dark is money still due.",
+        },
+        {
+          title: "The search box",
+          detail: "Type a supplier, lot or purchaser to narrow the table.",
+        },
+        {
+          title: "The deals table",
+          detail: "One row per deal with its supplier, purchaser, amounts, payments and stage. Lost deals are not shown.",
+        },
+        {
+          title: "Payments, Edit and Delete",
+          detail: "Each payment is a small button you click to mark it paid. Edit and Delete sit at the end of the row.",
+        },
+        {
+          title: "The Forecast page",
+          detail: "Your monthly operating costs at the top, and under them a forecast document set out for printing.",
+        },
+      ],
+    },
     guides: [
       {
         id: "revenue-add-deal",
@@ -247,6 +315,42 @@ export const commandSections: HelpSection[] = [
     paths: ["/advisor"],
     about:
       "A weekly list of suggested improvements to the CRM, for you to accept, park or reject.",
+    overview: {
+      id: "overview-advisor",
+      title: "Overview of Advisor",
+      summary:
+        "What the Advisor page is for: a weekly list of suggested improvements for you to accept, park or reject.",
+      steps: [
+        {
+          title: "The filter buttons",
+          detail: "Pending, In progress, Deferred to me, Applied, Dismissed and All history. Pending is where new suggestions wait.",
+        },
+        {
+          title: "The item count",
+          detail: "Beside the buttons, the number of recommendations in the list you are looking at.",
+        },
+        {
+          title: "A recommendation",
+          detail: "Each card has a title and a one line description of what was noticed.",
+        },
+        {
+          title: "The coloured labels",
+          detail: "Impact, the kind of change, how confident the advisor is, and whether the senior advisor has approved it.",
+        },
+        {
+          title: "Inside a recommendation",
+          detail: "Click a card to read Why, the Suggested action and the senior advisor's verdict.",
+        },
+        {
+          title: "The action buttons",
+          detail: "Start, Mark applied, Dismiss and Snooze appear at the bottom of an open card.",
+        },
+        {
+          title: "Where the numbers go",
+          detail: "The count of pending recommendations also shows on Analytics under Advisor Activity.",
+        },
+      ],
+    },
     guides: [
       {
         id: "advisor-review-recommendation",
@@ -335,6 +439,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/brain"],
     about:
       "The CRM's long-term memory: facts and lessons the AI features draw on, which you can add to, correct or retire.",
+    overview: {
+      id: "overview-brain",
+      title: "Overview of Brain",
+      summary:
+        "What the Brain is for: the facts and lessons the AI features in the CRM draw on, which you can read, add to and correct.",
+      steps: [
+        {
+          title: "The type buttons",
+          detail: "All, Knowledge, Learnings, Contacts, Deals and Playbooks narrow the list to one kind of memory.",
+        },
+        {
+          title: "Search and New memory",
+          detail: "Search looks through the memories for a word or phrase. New memory opens a form to add one.",
+        },
+        {
+          title: "A memory card",
+          detail: "The title is the fact in one line, with the full explanation underneath.",
+        },
+        {
+          title: "The line under the title",
+          detail: "The kind of memory, where it came from, how many times it has been used and its score.",
+        },
+        {
+          title: "Tags",
+          detail: "Small labels at the bottom of a card that group related memories.",
+        },
+        {
+          title: "Thumbs, Edit and Archive",
+          detail: "Rate a memory up or down, correct it, or stop it being used.",
+        },
+      ],
+    },
     guides: [
       {
         id: "brain-add-memory",
@@ -421,6 +557,34 @@ export const commandSections: HelpSection[] = [
     label: "Smart Search",
     paths: ["/search"],
     about: "Find contacts by describing who you are looking for in plain English.",
+    overview: {
+      id: "overview-smart-search",
+      title: "Overview of Smart Search",
+      summary:
+        "What Smart Search is for: finding contacts by describing them in plain English instead of setting filters.",
+      steps: [
+        {
+          title: "The search box",
+          detail: "Type who you are looking for in your own words, then click Search.",
+        },
+        {
+          title: "The example searches",
+          detail: "Ready made ideas under the box. Clicking one fills in the box for you.",
+        },
+        {
+          title: "The match count",
+          detail: "After a search, a line shows how many contacts matched out of those considered.",
+        },
+        {
+          title: "The small labels",
+          detail: "These show how your words were understood, such as the state, buyer type and budget.",
+        },
+        {
+          title: "The results",
+          detail: "Each result is a contact's name with a sentence on why they matched. Clicking a name opens that person in Contacts.",
+        },
+      ],
+    },
     guides: [
       {
         id: "smart-search-find-contacts",
@@ -461,6 +625,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/analytics"],
     about:
       "A read-only dashboard of lead numbers, new stock coming in, SMS and follow-up activity, and advisor recommendations.",
+    overview: {
+      id: "overview-analytics",
+      title: "Overview of Analytics",
+      summary:
+        "What the Analytics page shows: a read-only summary of leads, new stock, messaging and advisor activity. Nothing here can be changed.",
+      steps: [
+        {
+          title: "Lead Intelligence",
+          detail: "Total leads, the share matched to a property, the average score and the number of hot leads.",
+        },
+        {
+          title: "Leads by State and Leads by Buyer Type",
+          detail: "The top five of each, with their share of all leads.",
+        },
+        {
+          title: "Aggregator Pipeline",
+          detail: "The last seven days of stock coming in: live properties, runs, properties added, cost and how many are waiting for review.",
+        },
+        {
+          title: "Recent Ingestion Runs",
+          detail: "A table of the latest stock lists processed, by builder, with a status for each.",
+        },
+        {
+          title: "Outreach",
+          detail: "Texts sent in the last 30 days, their cost, opt outs, and how many contacts are in a sequence.",
+        },
+        {
+          title: "Advisor Activity",
+          detail: "How many recommendations are pending, applied or dismissed. These come from the Advisor page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "analytics-read-lead-numbers",
@@ -524,6 +720,34 @@ export const commandSections: HelpSection[] = [
     paths: ["/activity"],
     about:
       "A read-only log of what Elvis has done: content approved or rejected, and each automated run.",
+    overview: {
+      id: "overview-activity-feed",
+      title: "Overview of Activity Feed",
+      summary:
+        "What the Activity Feed shows: a read-only record of what Elvis has done with content and its automated runs.",
+      steps: [
+        {
+          title: "Content Approvals",
+          detail: "The main list on the left. Each entry is a piece of content and the decision made on it.",
+        },
+        {
+          title: "One entry",
+          detail: "The decision, the type of content, a short preview, the date and a reference number.",
+        },
+        {
+          title: "The colours",
+          detail: "Green is approved, yellow is a revision request, red is rejected and orange is a failure.",
+        },
+        {
+          title: "Pipeline Runs",
+          detail: "The panel on the right. One card for each automated run, marked ok or errors.",
+        },
+        {
+          title: "The four counts",
+          detail: "Each run shows how many listings were scraped, pieces of content written, research jobs done and items posted.",
+        },
+      ],
+    },
     guides: [
       {
         id: "activity-feed-check-elvis",
@@ -560,6 +784,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/pia"],
     about:
       "Models an investment property year by year: cash flow, tax, equity and total return over the holding period.",
+    overview: {
+      id: "overview-pia-modeller",
+      title: "Overview of PIA Modeller",
+      summary:
+        "What the PIA Modeller is for: working out, year by year, how an investment property is likely to perform for a client.",
+      steps: [
+        {
+          title: "The advice notice",
+          detail: "A reminder at the top that the figures are general information, not personal financial advice.",
+        },
+        {
+          title: "The bar of buttons",
+          detail: "Pick property, Save report, Print and Email. On the left it shows what the report is linked to.",
+        },
+        {
+          title: "The input boxes",
+          detail: "Down the left side: Property, Operating costs, Acquisition costs, Finance, Tax and depreciation, and Horizon.",
+        },
+        {
+          title: "The result tiles",
+          detail: "On the right: yield, cash needed at the start, equity at the end, tax on sale and total return. They update as you type.",
+        },
+        {
+          title: "The three tabs",
+          detail: "Plain-English summary, Annual schedule and Equity chart show the same result in words, as a table and as a chart.",
+        },
+        {
+          title: "Where the properties come from",
+          detail: "Pick property lists active stock from the Aggregator Feed.",
+        },
+      ],
+    },
     guides: [
       {
         id: "pia-model-a-property",
@@ -656,6 +912,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/feasibility"],
     about:
       "Produces a preliminary planning report for any Australian address, covering subdivision, duplex and extra dwelling potential.",
+    overview: {
+      id: "overview-planning-feasibility",
+      title: "Overview of Planning Feasibility",
+      summary:
+        "What Planning Feasibility is for: a first look at what could be built or subdivided on any Australian block, written up as a client-ready report.",
+      steps: [
+        {
+          title: "Property address",
+          detail: "The block you want assessed.",
+        },
+        {
+          title: "What do you want to assess?",
+          detail: "Your question in your own words, with anything you already know about the block.",
+        },
+        {
+          title: "Start assessment",
+          detail: "Begins the assessment. A few questions follow, then the report is written.",
+        },
+        {
+          title: "Saved reports",
+          detail: "Under the form, every report saved to the CRM, with Open and Delete beside each.",
+        },
+        {
+          title: "An open report",
+          detail: "Set out on the NextKey letterhead with key figures at the top, then a summary, the planning controls and next steps.",
+        },
+        {
+          title: "The bar above a report",
+          detail: "Export PDF, Save to CRM and New assessment.",
+        },
+      ],
+    },
     guides: [
       {
         id: "feasibility-run-assessment",
@@ -744,6 +1032,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/lenders"],
     about:
       "A library of published home loan lending policy for Australian lenders, with the source and date behind every figure.",
+    overview: {
+      id: "overview-lender-policy",
+      title: "Overview of Lender Policy",
+      summary:
+        "What Lender Policy is for: a reference library of what Australian home loan lenders publish about their lending rules. It is a research aid, not credit advice.",
+      steps: [
+        {
+          title: "Match a client scenario",
+          detail: "The button at the top opens Lender Match, which scores a client against this library.",
+        },
+        {
+          title: "The amber notice",
+          detail: "A reminder that this is an internal research aid and that policy changes without notice.",
+        },
+        {
+          title: "Search and the two dropdowns",
+          detail: "Find a lender by name, narrow by lender type, or show only lenders that hold a certain figure.",
+        },
+        {
+          title: "The totals line",
+          detail: "How many lenders are shown, and how many of their facts are verified, unverified or recorded as gaps.",
+        },
+        {
+          title: "The lender list",
+          detail: "Grouped by type. Each row has a bar for how much of the record is verified, its gaps and the date it was researched.",
+        },
+        {
+          title: "Opening a lender",
+          detail: "Shows what the record does not establish, then every figure by topic with its label, source link and date.",
+        },
+      ],
+    },
     guides: [
       {
         id: "lenders-find-policy",
@@ -844,6 +1164,38 @@ export const commandSections: HelpSection[] = [
     paths: ["/lenders/match"],
     about:
       "Scores a client's situation against every lender on file and ranks them, with the reason behind each result.",
+    overview: {
+      id: "overview-lender-match",
+      title: "Overview of Lender Match",
+      summary:
+        "What Lender Match is for: scoring one client's situation against every lender in Lender Policy to get a ranked shortlist. It is a research aid, not credit advice.",
+      steps: [
+        {
+          title: "The amber notice",
+          detail: "A reminder that the shortlist is for internal use only and is not for the client.",
+        },
+        {
+          title: "The Scenario panel",
+          detail: "On the left. Enter the loan, incomes, expenses, deposit, the applicant, the property and the credit file.",
+        },
+        {
+          title: "Match lenders",
+          detail: "The button at the bottom of the panel runs the match. Nothing is saved.",
+        },
+        {
+          title: "The four totals",
+          detail: "Above the results: lenders that fit policy, need an exception, lack policy data, or are ruled out.",
+        },
+        {
+          title: "A lender in the list",
+          detail: "Its name and type, a label for the outcome, and an estimated maximum loan.",
+        },
+        {
+          title: "Inside a lender",
+          detail: "Click one to see every check with a tick or cross, a source link, and a link to its full record in Lender Policy.",
+        },
+      ],
+    },
     guides: [
       {
         id: "lender-match-run-scenario",

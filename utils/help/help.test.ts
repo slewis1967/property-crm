@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { HELP_SECTIONS, searchGuides, sectionForPath } from "./index";
+import { HELP_SECTIONS, guidesOf, searchGuides, sectionForPath } from "./index";
 
 describe("help guides", () => {
-  const guides = HELP_SECTIONS.flatMap((s) => s.guides);
+  const guides = HELP_SECTIONS.flatMap(guidesOf);
 
   it("gives every guide a unique kebab-case id", () => {
     const ids = guides.map((g) => g.id);
@@ -15,6 +15,12 @@ describe("help guides", () => {
       expect(g.title.trim(), g.id).not.toBe("");
       expect(g.summary.trim(), g.id).not.toBe("");
       expect(g.steps.length, g.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("names every overview after its section", () => {
+    for (const s of HELP_SECTIONS) {
+      if (s.overview) expect(s.overview.id, s.label).toMatch(/^overview-/);
     }
   });
 

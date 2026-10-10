@@ -33,5 +33,11 @@ export type HelpSection = {
   paths: string[];
   /** One line on what this part of the CRM is for. */
   about: string;
+  /**
+   * A tour of the page, shown first in the list. Its id is "overview-" plus
+   * the section name. Its steps are the parts of the page, top to bottom,
+   * instead of things to do in order.
+   */
+  overview?: HelpGuide;
   guides: HelpGuide[];
 };

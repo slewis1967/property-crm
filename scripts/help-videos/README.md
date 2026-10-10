@@ -15,6 +15,17 @@ the same steps written underneath.
 A guide with no video still works: the panel shows the written steps and says
 the video is not recorded yet.
 
+## Overviews and requested guides
+
+- Each section can have an `overview`: a tour of the page, shown first in the
+  panel. Its id is `overview-<section>` and its video is recorded like any
+  other. `OVERVIEW-BRIEF.md` has the rules for writing and recording one.
+- Staff can ask for a guide that is missing. Requests are screened, drafted from
+  the existing guides, checked against the rules in `utils/help/requests.ts`,
+  and only shown to other staff once a super admin approves them at
+  `/help-requests`. An approved request has written steps and no video; to give
+  it one, add it to a section file here as a normal guide and record it.
+
 ## Recording
 
 Videos are not filmed by hand. A scenario lists the steps; for each step the

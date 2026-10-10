@@ -15,6 +15,21 @@ export const crmBSections: HelpSection[] = [
     paths: ["/shared-folder"],
     about:
       "A shared file library that everyone who can sign in to the CRM can view, add to and tidy up.",
+    overview: {
+      id: "overview-shared-folder",
+      title: "Overview of Shared Folder",
+      summary:
+        "What the Shared Folder is for and what each part of the page does. Everyone who can sign in to the CRM sees the same files here.",
+      steps: [
+        { title: "The heading and item count", detail: "Shows where you are and how many files and folders are in the folder that is open." },
+        { title: "Upload files and New folder", detail: "The two buttons for adding things to the folder you are in." },
+        { title: "Search all folders", detail: "Finds a file by name wherever it is filed." },
+        { title: "Trash", detail: "Opens the list of deleted items, where anyone can restore them." },
+        { title: "The trail above the list", detail: "Shows which folder you are in. Click a name in it to go back up." },
+        { title: "The list", detail: "Folders first, then files, with the size, when each was last changed and who added it." },
+        { title: "View, Download, Rename, Move and Delete", detail: "The actions on each row. View only shows for files the browser can display." },
+      ],
+    },
     guides: [
       {
         id: "shared-folder-upload-files",
@@ -127,6 +142,21 @@ export const crmBSections: HelpSection[] = [
     paths: ["/contacts"],
     about:
       "Every person in the CRM, with their details, notes, emails, meetings and the opportunities they belong to.",
+    overview: {
+      id: "overview-contacts",
+      title: "Overview of Contacts",
+      summary:
+        "What the Contacts page is for and what each part of it does. It is the list of every person in the CRM, and the way in to each person's own page.",
+      steps: [
+        { title: "Contact Types", detail: "The list on the left counts people by type. Click a type to see only those contacts." },
+        { title: "The counters at the top", detail: "Hot, warm and matched totals and the average lead score for the contacts loaded." },
+        { title: "Export CSV, Bulk Upload and New Contact", detail: "The buttons for saving the list as a spreadsheet, importing a file of people, and adding one person." },
+        { title: "Search and the dropdowns", detail: "Narrow the list by name, email, phone or tag, by temperature, status or tag, and change the order." },
+        { title: "The list", detail: "One row per person with their type, budget, state, lead score, status and tags. Tick boxes to act on several at once." },
+        { title: "Opening a contact", detail: "Click a row for that person's page: buttons along the top, their details on the left, and tabs for Overview, Activity, Notes and Matched Properties." },
+        { title: "Pipelines & opportunities", detail: "On a contact's page, this shows the deals they are part of. Those deals are managed on Opportunities." },
+      ],
+    },
     guides: [
       {
         id: "contacts-add-new",
@@ -263,6 +293,20 @@ export const crmBSections: HelpSection[] = [
     label: "Calendar",
     paths: ["/calendar"],
     about: "A month or week view of every meeting booked in the CRM.",
+    overview: {
+      id: "overview-calendar",
+      title: "Overview of Calendar",
+      summary:
+        "What the Calendar is for and how to read it. It shows every meeting booked in the CRM, by month or by week.",
+      steps: [
+        { title: "The arrows and Today", detail: "Move back and forward a month or a week at a time. Today brings you back to now." },
+        { title: "Month and Week", detail: "Month shows the whole month as a grid. Week lists each day's meetings in order." },
+        { title: "The grid", detail: "Each day shows its meetings with the start time. Today has a teal circle around the date." },
+        { title: "Meeting colours", detail: "Teal is coming up, grey has passed, and red with a line through it is cancelled. A small camera means a video meeting." },
+        { title: "Meeting details", detail: "Click a meeting to see the time, the client, the host, any notes and the Join video meeting button." },
+        { title: "Where meetings come from", detail: "Meetings are booked with Schedule meeting on a contact or opportunity. The same meetings are listed on Appointments." },
+      ],
+    },
     guides: [
       {
         id: "calendar-view-meetings",
@@ -341,6 +385,20 @@ export const crmBSections: HelpSection[] = [
     paths: ["/appointments"],
     about:
       "A list of upcoming, recent and cancelled meetings, plus the old booking history kept for reference.",
+    overview: {
+      id: "overview-appointments",
+      title: "Overview of Appointments",
+      summary:
+        "What the Appointments page is for and what each part shows. It lists the same meetings as the Calendar, sorted into upcoming, past and cancelled.",
+      steps: [
+        { title: "The four boxes", detail: "Counts of upcoming meetings, meetings in the past 30 days, cancellations in the past 30 days, and old archive bookings." },
+        { title: "Upcoming", detail: "The meetings still to come, soonest first, each with the client, the host and the time." },
+        { title: "Join meeting and Brief", detail: "On each upcoming meeting. Join meeting opens a video call, and Brief writes a short summary of the client." },
+        { title: "Past 30 days", detail: "Meetings that have already happened, newest first." },
+        { title: "Cancelled", detail: "Meetings that were called off, with the reason if one was given." },
+        { title: "Client names", detail: "Each name is a link to that person's page in Contacts, where new meetings are booked." },
+      ],
+    },
     guides: [
       {
         id: "appointments-review-upcoming",
@@ -399,6 +457,21 @@ export const crmBSections: HelpSection[] = [
     label: "Inbox",
     paths: ["/inbox"],
     about: "Your CRM email: read and reply to client emails, write new ones and file them away.",
+    overview: {
+      id: "overview-inbox",
+      title: "Overview of Inbox",
+      summary:
+        "What the Inbox is for and what each part of it does. It is your CRM email: what clients have sent you, what you have sent, and your drafts.",
+      steps: [
+        { title: "Compose", detail: "Starts a new email." },
+        { title: "The Mail list", detail: "Inbox, Starred, Sent, Drafts, Archive, Spam and Trash. The numbers show unread mail and saved drafts." },
+        { title: "Folders", detail: "Your own folders for filing mail. The + New link adds one." },
+        { title: "Search mail", detail: "Finds emails by their wording in the list you are looking at." },
+        { title: "The conversation list", detail: "One row per conversation with its subject, who it is from, the matching contact, how many messages and when the latest arrived." },
+        { title: "Opening a conversation", detail: "Click a row to read the messages underneath, with a Reply button and a link to the contact's page in Contacts." },
+        { title: "Signed in as", detail: "Shows whose mail you are looking at." },
+      ],
+    },
     guides: [
       {
         id: "inbox-read-and-reply",
@@ -531,6 +604,20 @@ export const crmBSections: HelpSection[] = [
     label: "Broadcast",
     paths: ["/broadcast"],
     about: "Send one email to all your contacts, or to everyone with a particular tag.",
+    overview: {
+      id: "overview-broadcast",
+      title: "Overview of Broadcast",
+      summary:
+        "What the Broadcast page is for and what each part of it does. It sends one email to many contacts at once, and shows how past sends went.",
+      steps: [
+        { title: "Audience", detail: "Choose which business the email comes from and who receives it: all contacts, or everyone with one tag from Contacts." },
+        { title: "The opted out line", detail: "Counts people who have unsubscribed. They are always left out." },
+        { title: "Subject and HTML body", detail: "Where the email itself is written. The unsubscribe footer is added for you." },
+        { title: "Review & send", detail: "Checks the wording first, then queues the emails. The number on the button is how many people will get it." },
+        { title: "Broadcast history", detail: "Every past broadcast with its date and number of recipients." },
+        { title: "Sent, pending and failed", detail: "The counts on each past broadcast, with a bar that fills as emails go out. Refresh updates them." },
+      ],
+    },
     guides: [
       {
         id: "broadcast-send-email",
@@ -602,6 +689,21 @@ export const crmBSections: HelpSection[] = [
     label: "Tasks",
     paths: ["/tasks"],
     about: "Your to-do list: what needs doing, what is overdue and what is finished.",
+    overview: {
+      id: "overview-tasks",
+      title: "Overview of Tasks",
+      summary:
+        "What the Tasks page is for and what each part of it does. It is the to-do list for the team, with the most overdue work at the top.",
+      steps: [
+        { title: "+ Add task", detail: "Opens a small form for a new task and its due date." },
+        { title: "Open, Overdue, Completed and All", detail: "Buttons that choose which tasks are listed. The number on each is how many it holds." },
+        { title: "Search tasks or contacts", detail: "Finds a task by its wording or by the contact's name." },
+        { title: "The list", detail: "One row per task. The square box ticks it off, and the cross at the right deletes it." },
+        { title: "Due labels", detail: "Red is overdue, amber is due today or tomorrow, and grey is further away." },
+        { title: "Contact names", detail: "A task linked to a person shows their name, which opens their page in Contacts." },
+        { title: "Tasks archive", detail: "The link in the heading opens the old task history, which is kept for reading only." },
+      ],
+    },
     guides: [
       {
         id: "tasks-add-task",
@@ -679,6 +781,20 @@ export const crmBSections: HelpSection[] = [
     label: "Feedback & issues",
     paths: ["/feedback"],
     about: "Tell the team when something in the CRM is broken, or suggest an improvement.",
+    overview: {
+      id: "overview-feedback-issues",
+      title: "Overview of Feedback & issues",
+      summary:
+        "What the Feedback & issues page is for and what each part of it does. Anyone can use it to report a problem with the CRM or suggest an improvement.",
+      steps: [
+        { title: "The gold button", detail: "Feedback & issues sits at the top of the menu on every page." },
+        { title: "What's this about?", detail: "Three choices: something is broken, an idea or request, or anything else." },
+        { title: "The rest of the form", detail: "A short title, room to explain, which page it was on, how urgent it is, and Submit feedback." },
+        { title: "Logged so far", detail: "Everything that has been reported, newest first. Open shows what is still in progress and All shows everything." },
+        { title: "The label on each item", detail: "Shows where it is up to, such as Queued, Agent working or Needs your sign-off." },
+        { title: "Plans and sign-off", detail: "An idea can come back with a proposed plan to read, and Approve and Reject buttons." },
+      ],
+    },
     guides: [
       {
         id: "feedback-report-issue",
@@ -741,6 +857,20 @@ export const crmBSections: HelpSection[] = [
     label: "Video calls",
     paths: ["/video"],
     about: "Built-in video calls with clients, started from the client's contact page or from a booked meeting.",
+    overview: {
+      id: "overview-video-calls",
+      title: "Overview of Video calls",
+      summary:
+        "Where video calls live in the CRM. There is no Video calls page in the menu: calls are started from a contact and joined from a booked meeting.",
+      steps: [
+        { title: "Video call on a contact's page", detail: "Opens a call with that client in a new tab." },
+        { title: "Guest link", detail: "Next to it. Copies a joining link you can send to the client, so they can join without logging in." },
+        { title: "Schedule meeting", detail: "Books a meeting for later and emails the client an invite with a video link." },
+        { title: "Join video meeting on the Calendar", detail: "Click a booked video meeting, marked with a small camera, to find the button." },
+        { title: "Join meeting on Appointments", detail: "The same call can be opened from the Upcoming list." },
+        { title: "The call screen", detail: "Opens in its own tab with your camera and microphone. It needs a live call, so it is not shown in the video." },
+      ],
+    },
     guides: [
       {
         id: "video-start-call",

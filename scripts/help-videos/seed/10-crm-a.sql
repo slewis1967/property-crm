@@ -280,3 +280,7 @@ join (values
 
 -- ── Opportunities: clear the meeting a recording books for Olivia Bennett ────
 delete from appointments where contact_id = 'd0000000-0000-4000-8000-000000000001' and event_title like 'Meeting%Olivia Bennett%';
+
+-- ── Introducers: one accreditation in progress, so the Accreditations tab is not empty ──
+insert into introducer_applications (id, legal_name, email, firm_name, phone, tier, agreement_variant, state, token_hash, token_expires_at, created_by, created_at) values
+('e2400000-0000-4000-8000-000000000001','Robin Sample','robin@demo-introducer.example.com','Sample Lending Advisers','0491 570 133','t1','standard','invited','demo-token-hash-crm-a-app-0001', now() + interval '14 days','demo@example.com', now() - interval '2 days');
