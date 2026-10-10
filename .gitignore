@@ -56,3 +56,7 @@ __pycache__/
 # Voice test recordings (PII risk)
 output.wav
 *.wav
+
+# How do I do this? video recorder: its own deps and working files
+/scripts/help-videos/node_modules
+/scripts/help-videos/.work

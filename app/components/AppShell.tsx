@@ -26,9 +26,12 @@ import { isShortlistPortalPath } from "../../utils/shortlist-path";
 
 export default function AppShell({
   sidebar,
+  help,
   children,
 }: {
   sidebar: React.ReactNode;
+  /** The staff "How do I do this?" button; null on public routes. */
+  help?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -134,6 +137,12 @@ export default function AppShell({
       <main data-appshell-main className="flex-1 overflow-y-auto p-4 lg:p-8 min-w-0">
         {children}
       </main>
+
+      {/* "How do I do this?" is passed in by the layout, which only builds it
+          for signed-in staff routes (the proxy's trusted public-route signal).
+          Importing it here instead would ship every staff guide in the bundle
+          that public pages load. The standalone branch above never shows it. */}
+      {help}
     </div>
   );
 }

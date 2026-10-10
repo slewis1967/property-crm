@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "help:record": "node scripts/help-videos/record.mjs",
+    "help:manifest": "node scripts/help-videos/manifest.mjs"
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.23",
