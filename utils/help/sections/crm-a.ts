@@ -6,6 +6,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/opportunities"],
     about:
       "The working pipeline board, where every active buyer sits in a column for the stage they are up to.",
+    overview: {
+      id: "overview-opportunities",
+      title: "Overview of Opportunities",
+      summary:
+        "The working pipeline board. Sales staff use it every day to see every active buyer and the stage each one is up to.",
+      steps: [
+        {
+          title: "Pipeline tabs",
+          detail:
+            "Each pipeline has its own tab with a count of the buyers in it, and New Pipeline adds another.",
+        },
+        {
+          title: "The toolbar",
+          detail:
+            "Shows how many opportunities are on the board and their total value, with tag filters, the DNQ button for hidden leads and New Opportunity.",
+        },
+        {
+          title: "Stage columns",
+          detail:
+            "One column for each stage of the pipeline, with a count at the top and Add stage at the far right.",
+        },
+        {
+          title: "Opportunity cards",
+          detail:
+            "Each card is one buyer, showing their name, how warm they are, buyer type, state, budget and any matched property.",
+        },
+        {
+          title: "Opening a card",
+          detail:
+            "Opens the buyer's own page, with buttons for meetings, tasks and paperwork, their stage, tags, documents and notes.",
+        },
+        {
+          title: "Where the cards come from",
+          detail:
+            "Leads you promote on Lead Intake appear here as new cards.",
+        },
+      ],
+    },
     guides: [
       {
         id: "opportunities-add-new",
@@ -140,6 +178,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/deal-analyser"],
     about:
       "Turns a builder's property package into investment reports and a comparison you can send to a client.",
+    overview: {
+      id: "overview-deal-analyser",
+      title: "Overview of Deal Analyser",
+      summary:
+        "Turns a builder's property package into investment reports for a client. Staff use it when a builder sends through properties to compare.",
+      steps: [
+        {
+          title: "The list of deal packets",
+          detail:
+            "One row for each package a builder has sent, named by its suburbs, with the number of properties and the date it was read in.",
+        },
+        {
+          title: "Status tags",
+          detail:
+            "Needs rent, Ready or Reports generated tell you what each packet is waiting on.",
+        },
+        {
+          title: "Opening a packet: Opportunity",
+          detail:
+            "The top box links the packet to a client's opportunity, so the reports sit with their record on Opportunities.",
+        },
+        {
+          title: "Changes or extra information",
+          detail:
+            "A box where you describe a change in plain words and preview it before it is applied.",
+        },
+        {
+          title: "Property cards",
+          detail:
+            "One card for each property with its price, rent, loan and cost figures, plus a Research button and an Advanced section.",
+        },
+        {
+          title: "Current reports and the generate button",
+          detail:
+            "At the bottom are the finished reports to view, and the button that builds or rebuilds them.",
+        },
+      ],
+    },
     guides: [
       {
         id: "deal-analyser-generate-reports",
@@ -269,6 +345,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/leads"],
     about:
       "The inbox of new enquiries, where you decide which leads go into the working pipeline.",
+    overview: {
+      id: "overview-lead-intake",
+      title: "Overview of Lead Intake",
+      summary:
+        "The inbox for new enquiries. Staff check it to decide which leads move into the working pipeline.",
+      steps: [
+        {
+          title: "Working pipeline button",
+          detail:
+            "Top right, it takes you to the Opportunities board.",
+        },
+        {
+          title: "The three counters",
+          detail:
+            "To triage, Matched and Promoted show how many leads are waiting, how many have a property match and how many are already in the pipeline.",
+        },
+        {
+          title: "To triage and All leads",
+          detail:
+            "Switch between only the leads still waiting and every lead received.",
+        },
+        {
+          title: "Promote into",
+          detail:
+            "Chooses which pipeline a promoted lead goes to.",
+        },
+        {
+          title: "The table",
+          detail:
+            "One row for each enquiry with name, email, type, state, budget, score, match, top match, source and date.",
+        },
+        {
+          title: "The end of each row",
+          detail:
+            "Promote sends the lead to Opportunities, and In pipeline shows it has already gone.",
+        },
+      ],
+    },
     guides: [
       {
         id: "leads-promote-to-pipeline",
@@ -326,6 +440,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/admin/introducers"],
     about:
       "Manages the outside firms who refer clients to us, and the referrals they send in.",
+    overview: {
+      id: "overview-introducers",
+      title: "Overview of Introducers",
+      summary:
+        "Manages the outside firms who refer clients to us and the referrals they send. Used by whoever reviews referrals and looks after the introducer firms.",
+      steps: [
+        {
+          title: "The three tabs",
+          detail:
+            "Review queue, Accreditations and Introducer firms.",
+        },
+        {
+          title: "Review queue",
+          detail:
+            "Referrals are grouped under With us and Waiting on the introducer, with Awaiting review and All referrals above them.",
+        },
+        {
+          title: "Opening a referral",
+          detail:
+            "Shows the client's details on the left, and on the right boxes to update progress, ask for more, and accept or decline.",
+        },
+        {
+          title: "Accreditations",
+          detail:
+            "Lists new introducers working through their sign-up steps, and where each one is up to.",
+        },
+        {
+          title: "Introducer firms",
+          detail:
+            "Each firm with its contact, its referral count and its logins, plus buttons to start an accreditation or suspend a firm.",
+        },
+        {
+          title: "Where accepted referrals go",
+          detail:
+            "A referral you accept becomes a card on Opportunities.",
+        },
+      ],
+    },
     guides: [
       {
         id: "introducers-review-referral",
@@ -448,6 +600,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/admin/partners"],
     about:
       "Manages the channel partners who sell our stock, and the holds and deals they request.",
+    overview: {
+      id: "overview-partners",
+      title: "Overview of Partners",
+      summary:
+        "Manages the channel partners who sell our stock, and the holds and deals they ask for. Used by staff who answer hold requests and look after partner firms.",
+      steps: [
+        {
+          title: "The note at the top",
+          detail:
+            "Explains what partners can and cannot see in their portal and how their referral fee is worked out.",
+        },
+        {
+          title: "The two tabs",
+          detail:
+            "Hold requests & deals, and Partner firms.",
+        },
+        {
+          title: "Show",
+          detail:
+            "Filters the deals to Open, Requests only, Settled or All.",
+        },
+        {
+          title: "Deal cards",
+          detail:
+            "Each card shows the lot, the supplier, the partner and their client, the price and the partner fee, with the stage at the top right.",
+        },
+        {
+          title: "Buttons on a deal",
+          detail:
+            "What you can do next, such as Grant hold, Decline, Release lot details, Message partner and Internal notes.",
+        },
+        {
+          title: "Partner firms",
+          detail:
+            "Each firm with its plan, client and deal counts and logins, plus Onboard a partner and Plan & branding.",
+        },
+      ],
+    },
     guides: [
       {
         id: "partners-grant-hold",
@@ -570,6 +760,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/eoi"],
     about:
       "Prepares the Expression of Interest a buyer signs to put their name on a property.",
+    overview: {
+      id: "overview-expressions-of-interest",
+      title: "Overview of Expressions of Interest",
+      summary:
+        "Where staff prepare the Expression of Interest a buyer signs to put their name on a property.",
+      steps: [
+        {
+          title: "New EOI button",
+          detail:
+            "Top right, it starts a blank Expression of Interest.",
+        },
+        {
+          title: "Status filters",
+          detail:
+            "All, Draft, Sent and Signed, each with a count.",
+        },
+        {
+          title: "The table",
+          detail:
+            "One row for each EOI with the buyer and property, status, price, whether a licence is attached, whether an identity check is linked, and the date.",
+        },
+        {
+          title: "Opening an EOI: the form",
+          detail:
+            "Sections for the buyers, solicitor, property, deposit, finance and notes, with an amber note listing what is still to complete.",
+        },
+        {
+          title: "Electronic signature",
+          detail:
+            "Near the bottom, where you send the EOI for signing and see each signer's status.",
+        },
+        {
+          title: "The bar at the bottom",
+          detail:
+            "The status dropdown and the Save button. Start CDD at the top right begins the buyer's identity check.",
+        },
+      ],
+    },
     guides: [
       {
         id: "eoi-create-new",
@@ -678,6 +906,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/fact-find"],
     about:
       "Records a borrower's full financial position, ready for signing and for the broker.",
+    overview: {
+      id: "overview-fact-find",
+      title: "Overview of Fact Find",
+      summary:
+        "Records a borrower's full financial position. Staff fill it in with the client before a loan is assessed.",
+      steps: [
+        {
+          title: "From a contact and New fact find",
+          detail:
+            "Two ways to start one, with a client's details filled in or blank.",
+        },
+        {
+          title: "Status filters",
+          detail:
+            "All, Draft, In review and Complete, each with a count.",
+        },
+        {
+          title: "The table",
+          detail:
+            "One row for each fact find with the applicants, status, loan sought, who referred them and the date.",
+        },
+        {
+          title: "Opening a fact find: the toolbar",
+          detail:
+            "Holds the status, Save, the PDF buttons, and buttons that carry the details into a Needs Analysis or Credit Authorisation.",
+        },
+        {
+          title: "Change history and Electronic signature",
+          detail:
+            "Who changed what, and where you send it for signing.",
+        },
+        {
+          title: "The form",
+          detail:
+            "Works down from the applicants to the loan, the security property, the financial statements, disclosures and declarations.",
+        },
+      ],
+    },
     guides: [
       {
         id: "fact-find-start-from-contact",
@@ -792,6 +1058,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/needs-analysis"],
     about:
       "Records what the client needs from their loan and their income, assets and debts.",
+    overview: {
+      id: "overview-needs-analysis",
+      title: "Overview of Needs Analysis",
+      summary:
+        "Records what the client needs from their loan, along with their income, assets and debts. Staff complete it with the client during the interview.",
+      steps: [
+        {
+          title: "New needs analysis button",
+          detail:
+            "Top right, it starts a blank one. You can also create one from a Fact Find.",
+        },
+        {
+          title: "Status filters",
+          detail:
+            "All, Draft, In review and Complete, each with a count.",
+        },
+        {
+          title: "The table",
+          detail:
+            "One row for each Needs Analysis with the applicants, status, loan sought and the date.",
+        },
+        {
+          title: "Opening one: the toolbar",
+          detail:
+            "Holds the status, Create Credit Authorisation, the PDF buttons and Save.",
+        },
+        {
+          title: "Change history and Electronic signature",
+          detail:
+            "Who changed what, and where you send it for signing.",
+        },
+        {
+          title: "The form",
+          detail:
+            "Starts with the interview, needs and objectives and loan basics, then the applicants, other income, assets and liabilities.",
+        },
+      ],
+    },
     guides: [
       {
         id: "needs-analysis-start-new",
@@ -888,6 +1192,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/credit-authorisation"],
     about:
       "Holds the form a client signs to let us check their credit file.",
+    overview: {
+      id: "overview-credit-authorisation",
+      title: "Overview of Credit Authorisation",
+      summary:
+        "Holds the form a client signs to let us check their credit file. Staff prepare it once the client is ready to apply.",
+      steps: [
+        {
+          title: "New authorisation button",
+          detail:
+            "Top right, it starts a blank one. You can also create one from a Fact Find or a Needs Analysis.",
+        },
+        {
+          title: "Status filters",
+          detail:
+            "All, Draft and Signed, each with a count.",
+        },
+        {
+          title: "The table",
+          detail:
+            "One row for each authorisation with the applicants, status and the date.",
+        },
+        {
+          title: "Opening one: the toolbar",
+          detail:
+            "Holds the status, Print to sign, Download PDF and Save.",
+        },
+        {
+          title: "Electronic signature",
+          detail:
+            "Where you email the client a signing link and see whether they have signed.",
+        },
+        {
+          title: "The form",
+          detail:
+            "The client's name and address at the top, then the standard wording they agree to and the signature blocks.",
+        },
+      ],
+    },
     guides: [
       {
         id: "credit-authorisation-start-new",
@@ -967,6 +1309,44 @@ export const crmASections: HelpSection[] = [
     paths: ["/document-requests"],
     about:
       "Sends clients a secure link to upload their loan documents and tracks what has come in.",
+    overview: {
+      id: "overview-client-documents",
+      title: "Overview of Client Documents",
+      summary:
+        "Sends clients a secure link to upload their loan documents and tracks what has come in. Staff use it from the first request until the set goes to Your Loan Assist.",
+      steps: [
+        {
+          title: "New request",
+          detail:
+            "The form at the top, where you enter the client's name, email and phone and create their upload link.",
+        },
+        {
+          title: "The list of requests",
+          detail:
+            "One row for each client with their reference, email and date, and a status of open, submitted or cancelled.",
+        },
+        {
+          title: "Opening a row",
+          detail:
+            "Shows how many documents are in and a tick beside each one received.",
+        },
+        {
+          title: "Send to Drive",
+          detail:
+            "Sends the collected set to the Drive folder.",
+        },
+        {
+          title: "Ready for YLA",
+          detail:
+            "An amber box that appears once a set is checked and waiting for you to send it.",
+        },
+        {
+          title: "Preliminary Assessment from YLA",
+          detail:
+            "Where you mark the assessment as received. The assessments themselves are listed on Preliminary Assessments.",
+        },
+      ],
+    },
     guides: [
       {
         id: "document-requests-new-request",
@@ -1078,6 +1458,39 @@ export const crmASections: HelpSection[] = [
     paths: ["/preliminary-assessments"],
     about:
       "Lists the assessments Your Loan Assist sends back, ready to match to a client and present.",
+    overview: {
+      id: "overview-preliminary-assessments",
+      title: "Overview of Preliminary Assessments",
+      summary:
+        "Lists the assessments Your Loan Assist sends back. Staff match each one to its client, then present it on a call.",
+      steps: [
+        {
+          title: "The amber note",
+          detail:
+            "Tells you how many assessments are not yet matched to a contact.",
+        },
+        {
+          title: "YLA ref, Applicants and Property",
+          detail:
+            "Identify each assessment and who and what it is for.",
+        },
+        {
+          title: "Received and Status",
+          detail:
+            "When it arrived and where it is up to, from Received through to Signed.",
+        },
+        {
+          title: "Contact",
+          detail:
+            "The client it is matched to and how it was matched, or a Match to a contact button.",
+        },
+        {
+          title: "Buttons at the end of the row",
+          detail:
+            "View PDF opens the assessment, Open call opens the client's video room, and Resend signing links shows while signatures are outstanding.",
+        },
+      ],
+    },
     guides: [
       {
         id: "preliminary-assessments-match-contact",

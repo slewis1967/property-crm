@@ -13,6 +13,42 @@ export const systemSections: HelpSection[] = [
     paths: ["/paid-services"],
     about:
       "A list of every paid service the business runs on, what each one costs, when it renews, and which ones need attention today.",
+    overview: {
+      id: "overview-paid-accounts",
+      title: "Overview of Paid Accounts",
+      summary:
+        "Paid Accounts is the list of every paid service the business runs on. Use it to see what each one costs, when it renews, and which ones need attention today.",
+      steps: [
+        {
+          title: "The four tiles at the top",
+          detail: "How many accounts need attention, the committed spend each month and year, how many accounts are active, and how many have no budget figure.",
+        },
+        {
+          title: "The \"Daily check\" bar",
+          detail: "When the automatic check last ran and whether its email is switched on, with buttons to refresh balances or send the digest now.",
+        },
+        {
+          title: "The accounts that need attention",
+          detail: "One coloured box per account, marked \"Action now\" or \"Coming up\", with the reason and buttons to deal with it.",
+        },
+        {
+          title: "\"The register\"",
+          detail: "The full table of accounts, with the cost, next due date, how it is paid and its status.",
+        },
+        {
+          title: "The filter buttons above the register",
+          detail: "\"Flagged\" shows only accounts with something to fix, \"All\" shows everything, and the rest narrow the table to one category.",
+        },
+        {
+          title: "\"billing\", \"edit\" and \"remove\" on each row",
+          detail: "Open the supplier's billing page, change the details, or take the account off the list.",
+        },
+        {
+          title: "\"+ Add account\"",
+          detail: "At the top right. Opens a form for a new paid service.",
+        },
+      ],
+    },
     guides: [
       {
         id: "paid-services-mark-paid",
@@ -143,6 +179,34 @@ export const systemSections: HelpSection[] = [
     paths: ["/settings"],
     about:
       "Settings that apply across the whole CRM: email signatures, the brokers a Fact Find can be sent to, property types, and extra instructions for the voice assistant.",
+    overview: {
+      id: "overview-settings",
+      title: "Overview of Settings",
+      summary:
+        "Settings holds the choices that apply across the whole CRM. Come here to change an email signature, the brokers list, the property types, or how the voice assistant behaves.",
+      steps: [
+        {
+          title: "\"AI instructions\"",
+          detail: "A text box for extra instructions to the voice assistant, such as tone and preferred callback times.",
+        },
+        {
+          title: "\"Email signature\"",
+          detail: "One signature per person, with a preview on the right of what people will receive.",
+        },
+        {
+          title: "\"Calendar & meetings\"",
+          detail: "A short note on how meetings are booked. There is nothing to set here. Meetings themselves are on the Calendar page.",
+        },
+        {
+          title: "\"Brokers\"",
+          detail: "The brokers a completed Fact Find can be sent to. Brokers added here appear in the list on the Fact Find page.",
+        },
+        {
+          title: "\"Property types\"",
+          detail: "The categories used to sort stock. Types added here appear in the filter on the Aggregator Feed.",
+        },
+      ],
+    },
     guides: [
       {
         id: "settings-edit-signature",
@@ -260,6 +324,34 @@ export const systemSections: HelpSection[] = [
     paths: ["/approvals"],
     about:
       "Shows the content Elvis has prepared that is waiting for a yes or no, and a history of what has been approved or rejected.",
+    overview: {
+      id: "overview-approval-queue",
+      title: "Overview of Approval Queue",
+      summary:
+        "Approval Queue shows the content Elvis has prepared that is waiting for a yes or no, and what was decided before. The page is for viewing. Decisions are made in Telegram.",
+      steps: [
+        {
+          title: "The line under the heading",
+          detail: "A reminder that items are approved, rejected or sent back for changes by tapping in Telegram.",
+        },
+        {
+          title: "The pending count at the top right",
+          detail: "How many items are waiting. It only shows when something is waiting.",
+        },
+        {
+          title: "\"Pending Approval\"",
+          detail: "One orange card per item marked \"Awaiting\", with the type of content and the start of its wording.",
+        },
+        {
+          title: "\"Approval History\"",
+          detail: "The last 50 decisions, newest first, coloured green for approved, red for rejected and yellow for a revision request.",
+        },
+        {
+          title: "The date on each history row",
+          detail: "When the decision was made. Posts that were approved then show on Social History.",
+        },
+      ],
+    },
     guides: [
       {
         id: "approvals-check-pending",
@@ -318,6 +410,38 @@ export const systemSections: HelpSection[] = [
     label: "Social History",
     paths: ["/social"],
     about: "A record of the Facebook and Instagram posts Elvis has published, what is scheduled next, and how the posts performed.",
+    overview: {
+      id: "overview-social-history",
+      title: "Overview of Social History",
+      summary:
+        "Social History is a record of the Facebook and Instagram posts Elvis has published, what is lined up next, and how the posts performed. It is for viewing only.",
+      steps: [
+        {
+          title: "The top row of tiles",
+          detail: "Posts published, posts waiting for approval, when the last post went out, and how many are scheduled.",
+        },
+        {
+          title: "The second row of tiles",
+          detail: "Total reach, likes and comments for the most recent posts. It only shows when there are figures.",
+        },
+        {
+          title: "\"Recent Facebook listings\"",
+          detail: "Each listing that was put forward for Facebook, marked Posted, Pending approval or Expired.",
+        },
+        {
+          title: "\"Upcoming scheduled\"",
+          detail: "Posts waiting to go out, with the date, where they will be posted and the start of the wording.",
+        },
+        {
+          title: "\"Approval activity\"",
+          detail: "The most recent decisions made in Telegram. The full list is on Approval Queue.",
+        },
+        {
+          title: "\"Combined platform log\"",
+          detail: "Facebook and Instagram side by side, with a tick or a cross for each post and a note when one failed.",
+        },
+      ],
+    },
     guides: [
       {
         id: "social-check-posts",
@@ -375,6 +499,38 @@ export const systemSections: HelpSection[] = [
     paths: ["/sequences"],
     about:
       "Shows the automatic email and SMS follow up series, who is in each one, what is due to send next, and what has just been sent.",
+    overview: {
+      id: "overview-sequences",
+      title: "Overview of Sequences",
+      summary:
+        "Sequences shows the automatic email and text message follow up series: who is in each one, what is due to send next, and what was sent. The page heading reads \"Outbound Sequences\" and it is for viewing only.",
+      steps: [
+        {
+          title: "\"Registered sequences\"",
+          detail: "One card per follow up series, with a label showing whether it sends email, text messages or both.",
+        },
+        {
+          title: "The numbers on each card",
+          detail: "How many people are Active, Paused, Done or Failed in that series.",
+        },
+        {
+          title: "The bottom of each card",
+          detail: "Whether the series is switched on, and the tag that adds people to it automatically, if it has one.",
+        },
+        {
+          title: "\"Next 20 due steps\"",
+          detail: "Who gets a message next, from which series, and when. A name opens that person on Contacts.",
+        },
+        {
+          title: "\"Recent step activity\"",
+          detail: "The last 30 messages the system tried to send, marked sent, failed or skipped.",
+        },
+        {
+          title: "\"Compliance\"",
+          detail: "A note at the bottom on the opt out wording added to every email and text message.",
+        },
+      ],
+    },
     guides: [
       {
         id: "sequences-check-sequence",
@@ -433,6 +589,38 @@ export const systemSections: HelpSection[] = [
     label: "Conversations",
     paths: ["/conversations"],
     about: "A view only record of old email and SMS conversations kept from the previous CRM.",
+    overview: {
+      id: "overview-conversations",
+      title: "Overview of Conversations",
+      summary:
+        "Conversations is a view only record of old email and text message conversations kept from the previous CRM. Use it to look up what was last said to someone before the move.",
+      steps: [
+        {
+          title: "The heading and record count",
+          detail: "How many old conversations are held, or how many match your search.",
+        },
+        {
+          title: "The search box",
+          detail: "Finds conversations by a word in the last message. It does not search by name.",
+        },
+        {
+          title: "The \"Contact\" column",
+          detail: "The person's name and email. The name opens their record on Contacts.",
+        },
+        {
+          title: "\"Type\" and \"Last message\"",
+          detail: "Whether it was an email, a text message or a call, and the start of the last message.",
+        },
+        {
+          title: "\"When\" and \"Unread\"",
+          detail: "The date of the last message, and a red number if messages were left unread.",
+        },
+        {
+          title: "The page count at the bottom",
+          detail: "Which page you are on, with buttons to move on when there is more than one page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "conversations-find-old-message",
@@ -471,6 +659,34 @@ export const systemSections: HelpSection[] = [
     label: "Notes",
     paths: ["/notes"],
     about: "A view only record of the notes written against contacts in the previous CRM.",
+    overview: {
+      id: "overview-notes",
+      title: "Overview of Notes",
+      summary:
+        "Notes is a view only record of the notes written against contacts in the previous CRM. Use it to look up what was recorded about someone before the move. New notes are written on the contact's own record.",
+      steps: [
+        {
+          title: "The heading and record count",
+          detail: "How many old notes are held, or how many match your search.",
+        },
+        {
+          title: "The search box",
+          detail: "Finds notes by a word in the note. It does not search by name.",
+        },
+        {
+          title: "The top line of each card",
+          detail: "The contact's name and email, a pinned label if the note was pinned, and the date it was last edited. The name opens their record on Contacts.",
+        },
+        {
+          title: "The entries inside a card",
+          detail: "One card can hold several entries. Each shows what was written, the date, and who wrote it.",
+        },
+        {
+          title: "The page count at the bottom",
+          detail: "Which page you are on, with buttons to move on when there is more than one page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "notes-find-old-note",
@@ -508,6 +724,34 @@ export const systemSections: HelpSection[] = [
     label: "Tasks (archive)",
     paths: ["/tasks/archive"],
     about: "A view only record of the tasks logged against contacts in the previous CRM.",
+    overview: {
+      id: "overview-tasks-archive",
+      title: "Overview of Tasks (archive)",
+      summary:
+        "This page is a view only record of the tasks logged against contacts in the previous CRM. It is the \"Tasks\" link under Archive in the sidebar. Current tasks are on the other Tasks page, under CRM.",
+      steps: [
+        {
+          title: "The heading and record count",
+          detail: "How many old tasks are held, or how many match your filter or search.",
+        },
+        {
+          title: "\"All\", \"Open\" and \"Completed\"",
+          detail: "Narrow the list to tasks that were never finished, or to tasks that were done.",
+        },
+        {
+          title: "The search box",
+          detail: "Finds tasks by a word in the title or the description.",
+        },
+        {
+          title: "\"Title\" and \"Contact\"",
+          detail: "What the task was and who it was for. The name opens that person on Contacts.",
+        },
+        {
+          title: "\"Due\", \"Status\" and \"Added\"",
+          detail: "When it was due, whether it was done or left open, and when it was created.",
+        },
+      ],
+    },
     guides: [
       {
         id: "tasks-archive-find-old-task",
@@ -543,6 +787,38 @@ export const systemSections: HelpSection[] = [
     label: "Media Library",
     paths: ["/media"],
     about: "A view only list of the files that were uploaded to the previous CRM, such as contracts, ID documents and marketing material.",
+    overview: {
+      id: "overview-media-library",
+      title: "Overview of Media Library",
+      summary:
+        "Media Library is a view only list of the files that were uploaded to the previous CRM, such as contracts, ID documents and marketing material. Use it to check whether an old file was saved and what it was called.",
+      steps: [
+        {
+          title: "The four tiles at the top",
+          detail: "How many files were saved, how many failed, how many were skipped, and the total size saved.",
+        },
+        {
+          title: "\"All\", \"ok\", \"failed\" and \"skipped\"",
+          detail: "Narrow the list to files with that result.",
+        },
+        {
+          title: "The search box",
+          detail: "Finds files by part of the file name.",
+        },
+        {
+          title: "\"Name\" and \"Size\"",
+          detail: "What the file was called and how big it is.",
+        },
+        {
+          title: "\"Status\"",
+          detail: "Whether the file was saved. A failed file shows the reason in red underneath.",
+        },
+        {
+          title: "\"Local path\" and \"Saved\"",
+          detail: "Where the saved copy is kept and the date it was saved. Files cannot be opened from this page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "media-find-file",
@@ -599,6 +875,42 @@ export const systemSections: HelpSection[] = [
     paths: [],
     about:
       "The round microphone button at the bottom right of every page lets you talk to the CRM to find contacts, log calls, set reminders and draft messages.",
+    overview: {
+      id: "overview-voice-assistant",
+      title: "Overview of Voice assistant",
+      summary:
+        "The voice assistant lets you talk to the CRM from any page. Use it to find a contact, log a call, set a reminder or draft a message without typing.",
+      steps: [
+        {
+          title: "The round microphone button",
+          detail: "At the bottom right of every page. Click it to open the panel. It does not show in browsers that cannot listen.",
+        },
+        {
+          title: "The top bar of the panel",
+          detail: "Shows what the assistant is doing: waiting, \"Listening…\" or \"Thinking…\".",
+        },
+        {
+          title: "\"Reset\"",
+          detail: "Clears the conversation so you can start again.",
+        },
+        {
+          title: "The \"×\" button",
+          detail: "Closes the panel and stops the assistant speaking.",
+        },
+        {
+          title: "The conversation area",
+          detail: "What you said appears on the right and the reply on the left. Before you start it suggests things to try.",
+        },
+        {
+          title: "The tick line under a reply",
+          detail: "Confirms what was done, such as a note logged on a contact, a task created, or a message drafted.",
+        },
+        {
+          title: "The large microphone button",
+          detail: "Hold it down while you speak and let go when you finish. Holding the spacebar does the same.",
+        },
+      ],
+    },
     guides: [
       {
         id: "voice-assistant-ask",
@@ -701,6 +1013,111 @@ export const systemSections: HelpSection[] = [
           {
             title: "Press and hold the large microphone button and start again",
             detail: "Notes, tasks and messages already saved or sent are not undone by Reset.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Help requests",
+    paths: ["/help-requests"],
+    about:
+      'Guides that staff have asked for from the "How do I do this?" button, waiting for a super admin to approve them.',
+    overview: {
+      id: "overview-help-requests",
+      title: "Overview of Help requests",
+      summary:
+        "Where a super admin reviews guides that staff have asked for. Nothing a person asks for reaches other staff until it is approved here.",
+      steps: [
+        {
+          title: "What a guide must never do",
+          detail: "Click this line to read the rules every request is checked against before you see it.",
+        },
+        {
+          title: "Waiting for you",
+          detail: "One card for each request that has not been decided, newest first.",
+        },
+        {
+          title: "The label at the top right of a card",
+          detail:
+            '"Draft ready" has a draft to read. "Needs writing by hand" could not be written from the existing guides. "Flagged by the checks" may break a rule. "Not prepared yet" has no draft.',
+        },
+        {
+          title: "What the checks found",
+          detail: "The grey box gives the reason for the label, and lists any concerns in red.",
+        },
+        {
+          title: "Guide title, What it achieves and Steps",
+          detail: "The draft, which you can change before approving. Steps go one per line.",
+        },
+        {
+          title: "Already decided",
+          detail: 'Published and declined requests. A published guide has a "Take down" button.',
+        },
+      ],
+    },
+    guides: [
+      {
+        id: "help-ask-for-guide",
+        title: "Ask for a guide that is not listed",
+        summary: "Use this when the help panel has no guide for what you are trying to do.",
+        steps: [
+          {
+            title: 'Click "How do I do this?"',
+            detail:
+              "The amber button at the bottom right of any page. Search first, in case the guide exists under another page.",
+          },
+          {
+            title: 'Click "Can\'t find it? Ask for a guide"',
+            detail: "It is at the bottom of the panel, under the list of guides.",
+          },
+          {
+            title: "Type what you are trying to do",
+            detail:
+              "Describe the task, not the client. A request with an email address, a phone number or another long number in it is not accepted.",
+          },
+          {
+            title: 'Click "Send request"',
+            detail: "A green line confirms it was sent for review.",
+          },
+          {
+            title: 'Check back under "Your requests"',
+            detail:
+              'It is at the bottom of the panel. "Being reviewed" becomes "Added" once the guide is approved, or "Not added" with the reason.',
+          },
+        ],
+      },
+      {
+        id: "help-review-request",
+        title: "Approve or decline a requested guide",
+        summary:
+          "For super admins: read what a person asked for, fix the draft, then publish it to all staff or turn it down.",
+        steps: [
+          {
+            title: "Open Help requests",
+            detail:
+              'Click "How do I do this?" and then "Review help requests" at the bottom of the panel. The link shows how many are waiting.',
+          },
+          {
+            title: "Read the question and what the checks found",
+            detail: 'A card labelled "Flagged by the checks" lists its concerns in red. Read them before going further.',
+          },
+          {
+            title: "Correct the draft",
+            detail:
+              "Change the title, the line on what it achieves, and the steps. Put one step on each line, and add extra detail after a | sign.",
+          },
+          {
+            title: 'Click "Approve and publish"',
+            detail: "The guide now shows in the help panel for everyone, under the page it was asked from.",
+          },
+          {
+            title: 'Or type a reason and click "Decline"',
+            detail: "The person who asked sees your reason in the help panel.",
+          },
+          {
+            title: 'Use "Take down" to withdraw a published guide',
+            detail: "It moves back to Waiting for you so you can correct it and publish again.",
           },
         ],
       },

@@ -200,6 +200,12 @@
   "feedback-track-progress": {
     "seconds": 32
   },
+  "help-ask-for-guide": {
+    "seconds": 44
+  },
+  "help-review-request": {
+    "seconds": 48
+  },
   "inbox-compose-new": {
     "seconds": 54
   },
@@ -277,6 +283,159 @@
   },
   "opportunities-schedule-meeting": {
     "seconds": 41
+  },
+  "overview-activity-feed": {
+    "seconds": 54
+  },
+  "overview-advisor": {
+    "seconds": 56
+  },
+  "overview-aggregator-feed": {
+    "seconds": 59
+  },
+  "overview-analytics": {
+    "seconds": 60
+  },
+  "overview-appointments": {
+    "seconds": 52
+  },
+  "overview-approval-queue": {
+    "seconds": 47
+  },
+  "overview-austrac-reports": {
+    "seconds": 51
+  },
+  "overview-brain": {
+    "seconds": 51
+  },
+  "overview-broadcast": {
+    "seconds": 58
+  },
+  "overview-builders": {
+    "seconds": 58
+  },
+  "overview-calendar": {
+    "seconds": 53
+  },
+  "overview-cdd-cases": {
+    "seconds": 51
+  },
+  "overview-client-documents": {
+    "seconds": 51
+  },
+  "overview-contacts": {
+    "seconds": 59
+  },
+  "overview-conversations": {
+    "seconds": 51
+  },
+  "overview-credit-authorisation": {
+    "seconds": 49
+  },
+  "overview-deal-analyser": {
+    "seconds": 57
+  },
+  "overview-expressions-of-interest": {
+    "seconds": 57
+  },
+  "overview-fact-find": {
+    "seconds": 57
+  },
+  "overview-feedback-issues": {
+    "seconds": 57
+  },
+  "overview-help-requests": {
+    "seconds": 53
+  },
+  "overview-inbox": {
+    "seconds": 54
+  },
+  "overview-ingestion-runs": {
+    "seconds": 56
+  },
+  "overview-introducers": {
+    "seconds": 49
+  },
+  "overview-lead-intake": {
+    "seconds": 49
+  },
+  "overview-lender-match": {
+    "seconds": 59
+  },
+  "overview-lender-policy": {
+    "seconds": 58
+  },
+  "overview-media-library": {
+    "seconds": 49
+  },
+  "overview-needs-analysis": {
+    "seconds": 53
+  },
+  "overview-notes": {
+    "seconds": 47
+  },
+  "overview-opportunities": {
+    "seconds": 54
+  },
+  "overview-paid-accounts": {
+    "seconds": 55
+  },
+  "overview-partners": {
+    "seconds": 54
+  },
+  "overview-pia-modeller": {
+    "seconds": 58
+  },
+  "overview-planning-feasibility": {
+    "seconds": 54
+  },
+  "overview-preliminary-assessments": {
+    "seconds": 46
+  },
+  "overview-program-and-enrolment": {
+    "seconds": 59
+  },
+  "overview-revenue": {
+    "seconds": 59
+  },
+  "overview-review-queue": {
+    "seconds": 54
+  },
+  "overview-sequences": {
+    "seconds": 59
+  },
+  "overview-settings": {
+    "seconds": 51
+  },
+  "overview-shared-folder": {
+    "seconds": 52
+  },
+  "overview-smart-search": {
+    "seconds": 51
+  },
+  "overview-social-history": {
+    "seconds": 55
+  },
+  "overview-stock-map": {
+    "seconds": 54
+  },
+  "overview-suburb-intelligence": {
+    "seconds": 44
+  },
+  "overview-tasks-archive": {
+    "seconds": 50
+  },
+  "overview-tasks": {
+    "seconds": 56
+  },
+  "overview-video-calls": {
+    "seconds": 56
+  },
+  "overview-voice-assistant": {
+    "seconds": 52
+  },
+  "overview-war-room": {
+    "seconds": 58
   },
   "paid-services-add-account": {
     "seconds": 43

@@ -132,6 +132,11 @@ function overlayScript() {
     const NEEDS_MASK = /0477|sean\.l@|Justino|Ketkii|Hamish/i;
     const maskNode = (n) => {
       const before = n.nodeValue;
+      // The sidebar's development-only footer is not on the live site.
+      if (before && before.startsWith("NEXUS API:") && n.parentElement?.parentElement) {
+        n.parentElement.parentElement.style.display = "none";
+        return;
+      }
       if (!before || !NEEDS_MASK.test(before)) return;
       let after = before;
       for (const [re, to] of MASKS) after = after.replace(re, to);

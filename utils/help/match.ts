@@ -28,13 +28,18 @@ export function sectionForPath(
   return best;
 }
 
+/** Everything a section offers: its overview first, then its tasks. */
+export function guidesOf(section: HelpSection) {
+  return section.overview ? [section.overview, ...section.guides] : section.guides;
+}
+
 /** Guides whose title, summary or steps mention every word of the query. */
 export function searchGuides(sections: HelpSection[], query: string) {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 0) return [];
   const hits: { section: HelpSection; guideId: string }[] = [];
   for (const section of sections) {
-    for (const g of section.guides) {
+    for (const g of guidesOf(section)) {
       const hay = [section.label, g.title, g.summary, ...g.steps.map((s) => s.title)]
         .join(" ")
         .toLowerCase();

@@ -14,6 +14,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aml"],
     about:
       "Keep a Customer Due Diligence record for each buyer and seller, including their identity, source of funds, risk and screening results.",
+    overview: {
+      id: "overview-cdd-cases",
+      title: "Overview of CDD Cases",
+      summary:
+        "What the CDD Cases page is for and what each part of it shows. Staff use it whenever a buyer or seller needs a Customer Due Diligence record.",
+      steps: [
+        {
+          title: "The buttons at the top right",
+          detail:
+            "Program & enrolment and Reports open the other two compliance pages.",
+        },
+        {
+          title: "The three status boxes",
+          detail:
+            "AUSTRAC enrolment, Compliance officer and Officer notified to AUSTRAC show where the business stands. They are filled in on the Program & Enrolment page.",
+        },
+        {
+          title: "New CDD case",
+          detail:
+            "Pick the party type and start a new case from here.",
+        },
+        {
+          title: "The status buttons",
+          detail:
+            "All, Draft, In Progress, Screening, Enhanced DD, Cleared and Blocked narrow the list, and each shows a count.",
+        },
+        {
+          title: "The case list",
+          detail:
+            "One row for each party, with their type, role, risk, screening result, status and when the case was last updated. A review due tag marks cases that need another look.",
+        },
+        {
+          title: "Opening a case",
+          detail:
+            "Click a party name to open the full record: identity, source of funds, risk assessment, screening, notes and the audit trail, with Save in the bar at the bottom.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aml-start-cdd-case",
@@ -152,6 +190,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aml/reports"],
     about:
       "Keep a register of the SMR, TTR and IFTI reports the business has to lodge with AUSTRAC, with their due dates and lodgement references.",
+    overview: {
+      id: "overview-austrac-reports",
+      title: "Overview of AUSTRAC Reports",
+      summary:
+        "What the AUSTRAC Reports page is for and what each part of it shows. It is the register of reports the business has to lodge with AUSTRAC, with their due dates.",
+      steps: [
+        {
+          title: "The yellow Tipping-off box",
+          detail:
+            "A standing reminder that a client must never be told about a Suspicious Matter Report, and who is allowed to see one.",
+        },
+        {
+          title: "New report",
+          detail:
+            "Choose the type, the subject and the trigger date to add a report to the register.",
+        },
+        {
+          title: "The due date line",
+          detail:
+            "Under the form, it shows the statutory deadline for the type and trigger date you have chosen.",
+        },
+        {
+          title: "The report list",
+          detail:
+            "One row for each report, with its type, subject, trigger date, due date and status. Overdue reports show in red.",
+        },
+        {
+          title: "Mark lodged and Delete",
+          detail:
+            "These sit at the end of each row until a report is lodged. A lodged report shows its AUSTRAC reference instead.",
+        },
+        {
+          title: "Who sees what",
+          detail:
+            "Suspicious Matter Reports are hidden from anyone not on the access list, which is kept on the Program & Enrolment page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aml-reports-create-report",
@@ -232,6 +308,49 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aml/program"],
     about:
       "Keep the record of the AML/CTF program itself: AUSTRAC enrolment, the compliance officer, approvals, the risk assessment and staff training.",
+    overview: {
+      id: "overview-program-and-enrolment",
+      title: "Overview of Program & Enrolment",
+      summary:
+        "What the Program & Enrolment page is for and what each section of it holds. The compliance officer uses it to keep the record of the AML/CTF program up to date.",
+      steps: [
+        {
+          title: "Outstanding program obligations",
+          detail:
+            "A yellow box near the top that lists anything still to be done. It disappears when nothing is outstanding.",
+        },
+        {
+          title: "AUSTRAC enrolment and Compliance officer",
+          detail:
+            "The enrolment status, reference and dates, and who the compliance officer is. These feed the status boxes on the CDD Cases page.",
+        },
+        {
+          title: "Program approval and Independent evaluation",
+          detail:
+            "Who approved the program and when, when it is next due for review, and the record of the last independent evaluation.",
+        },
+        {
+          title: "AUSTRAC compliance report",
+          detail:
+            "The period, due date and lodgement details for the regular report about the business itself.",
+        },
+        {
+          title: "Suspicious Matter Report access",
+          detail:
+            "The list of extra people who may see Suspicious Matter Reports on the AUSTRAC Reports page.",
+        },
+        {
+          title: "Enterprise risk assessment and Staff training register",
+          detail:
+            "The four risk ratings with notes, and a log of who has completed which training.",
+        },
+        {
+          title: "Key dates and Save program",
+          detail:
+            "A reference list of deadlines at the bottom, and the Save program button that keeps your changes.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aml-program-update-enrolment",
@@ -347,6 +466,49 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/properties", "/compare"],
     about:
       "Browse all the stock we currently hold from builders, find properties that suit a client, and send or compare them.",
+    overview: {
+      id: "overview-aggregator-feed",
+      title: "Overview of Aggregator Feed",
+      summary:
+        "What the Aggregator Feed is for and what each part of it does. It is the list of all the stock we currently hold from builders, and the place to pick properties for a client.",
+      steps: [
+        {
+          title: "Map view",
+          detail:
+            "The button at the top right opens the same stock on the Stock Map.",
+        },
+        {
+          title: "The search box and the count",
+          detail:
+            "Search by suburb, builder, estate, address or lot. The count on the right shows how many are showing and the total in the feed.",
+        },
+        {
+          title: "The filters",
+          detail:
+            "Price range, State, Builder / estate, Property type, Bedrooms, Bathrooms, Car spaces, Contract, Status and Titled.",
+        },
+        {
+          title: "Select all and the tick boxes",
+          detail:
+            "Ticking properties brings up Send to client, Compare and Delete above the cards.",
+        },
+        {
+          title: "The property cards",
+          detail:
+            "Each card shows the builder, suburb, status, property type, price and bedrooms, bathrooms and car spaces.",
+        },
+        {
+          title: "Detail and Open War Room",
+          detail:
+            "Detail opens the full page for a property, with its price breakdown, brochure and the contacts it suits. Open War Room opens a side panel with a quick cashflow estimate.",
+        },
+        {
+          title: "Load more",
+          detail:
+            "At the bottom, it brings in the rest of the feed. New stock arrives here from builder stocklists and from the Review Queue.",
+        },
+      ],
+    },
     guides: [
       {
         id: "properties-find-stock",
@@ -493,6 +655,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/properties/map"],
     about:
       "See where our stock is on a map, with one bubble per suburb sized by how many properties we hold there.",
+    overview: {
+      id: "overview-stock-map",
+      title: "Overview of Stock Map",
+      summary:
+        "What the Stock Map is for and what each part of it shows. It puts the stock from the Aggregator Feed on a map, one bubble per suburb.",
+      steps: [
+        {
+          title: "The filter bar",
+          detail:
+            "Search, state, builder, type, bedrooms and price. They work the same way as the filters on the Aggregator Feed.",
+        },
+        {
+          title: "The counts",
+          detail:
+            "How many properties are mapped, how many suburbs, and how many could not be placed. A Locate suburbs button shows here when suburbs still need looking up.",
+        },
+        {
+          title: "The map",
+          detail:
+            "Each bubble is a suburb. Bigger bubbles hold more properties, and the buttons at the top right switch between Streets, Satellite and Satellite + labels.",
+        },
+        {
+          title: "Median package price",
+          detail:
+            "The key under the map explains the bubble colours.",
+        },
+        {
+          title: "Suburbs by volume",
+          detail:
+            "The list on the right ranks suburbs by how many properties we hold, with the median price and number of builders.",
+        },
+        {
+          title: "Opening a suburb",
+          detail:
+            "Click a bubble or a row to see the properties in that suburb, with Street View links. Click a property to open its detail page.",
+        },
+      ],
+    },
     guides: [
       {
         id: "properties-map-find-stock-in-area",
@@ -578,6 +778,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aggregator/review"],
     about:
       "Check properties the system was not confident it read correctly from a builder's stocklist, then publish or discard them.",
+    overview: {
+      id: "overview-review-queue",
+      title: "Overview of Review Queue",
+      summary:
+        "What the Review Queue is for and what each part of it does. It holds properties the system was not confident it read correctly from a builder's stocklist, waiting for a person to check them.",
+      steps: [
+        {
+          title: "The Pending, Approved and Rejected tabs",
+          detail:
+            "Pending is the work to do. The other two show past decisions.",
+        },
+        {
+          title: "Sort",
+          detail:
+            "Orders the list by confidence or by date.",
+        },
+        {
+          title: "The bar above the list",
+          detail:
+            "Shows how many items there are. Tick items and it offers Approve, Reject and Clear for the ones you ticked.",
+        },
+        {
+          title: "Each item",
+          detail:
+            "Shows the confidence score, the builder, lot and estate, the reasons it was flagged, and the email it came from.",
+        },
+        {
+          title: "Opening an item",
+          detail:
+            "Click an item to see every field that was read, with the empty ones highlighted, and the Approve & publish and Reject buttons.",
+        },
+        {
+          title: "Where items go",
+          detail:
+            "Approved properties appear on the Aggregator Feed. The number beside Review Queue in the sidebar shows how many are still pending.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aggregator-review-approve-item",
@@ -675,6 +913,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aggregator/runs"],
     about:
       "See a log of every builder stocklist the system has processed, what it added or changed, and which sources have gone quiet.",
+    overview: {
+      id: "overview-ingestion-runs",
+      title: "Overview of Ingestion Runs",
+      summary:
+        "What the Ingestion Runs page is for and how to read it. It is a log of every builder stocklist the system has processed. Nothing on this page can be changed.",
+      steps: [
+        {
+          title: "The four totals",
+          detail:
+            "Runs, Properties added, Properties updated and Total AI cost for the runs listed.",
+        },
+        {
+          title: "Source health",
+          detail:
+            "One row for each builder, showing the last run, the last time the source was read OK and the last time it changed. Red and amber mark builders that have gone quiet.",
+        },
+        {
+          title: "The run list",
+          detail:
+            "One row for each stocklist processed, newest first, with the time, builder and email subject.",
+        },
+        {
+          title: "Status",
+          detail:
+            "Shows whether a run completed, partly completed or failed. A failed run shows the reason in red under the subject.",
+        },
+        {
+          title: "The number columns",
+          detail:
+            "Properties added, updated, withdrawn and sent for review, then the cost and how long the run took.",
+        },
+        {
+          title: "Where the results go",
+          detail:
+            "New and updated properties appear on the Aggregator Feed. Anything sent for review waits in the Review Queue.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aggregator-runs-check-stocklist",
@@ -729,6 +1005,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/aggregator/builders"],
     about:
       "Track builders we are signing up, and manage the builders we already receive stock from.",
+    overview: {
+      id: "overview-builders",
+      title: "Overview of Builders",
+      summary:
+        "What the Builders page is for and what its two halves do. The top half tracks builders we are signing up. The bottom half manages the builders we already receive stock from.",
+      steps: [
+        {
+          title: "Prospect builders",
+          detail:
+            "Builders we are still signing an agreement with. The heading shows how many are in progress.",
+        },
+        {
+          title: "The stage buttons",
+          detail:
+            "In progress, Prospect, Agreement requested, Agreement signed and Onboarded narrow the cards.",
+        },
+        {
+          title: "A prospect card",
+          detail:
+            "Shows the company, its contacts, website, the stock it offers and its terms, with a button to move it to the next stage.",
+        },
+        {
+          title: "Stock builders",
+          detail:
+            "Builders we receive stocklists from. An onboarded prospect appears here, and so does any builder the system picks up from an incoming email.",
+        },
+        {
+          title: "A builder card",
+          detail:
+            "Shows sender domains, aliases, contact details, when the last stocklist arrived and whether auto-outreach is on. A draft card has an amber border and needs checking.",
+        },
+        {
+          title: "Edit, Deactivate and Pause auto-emails",
+          detail:
+            "The three buttons on each builder card. The number beside Builders in the sidebar shows how many drafts are waiting.",
+        },
+      ],
+    },
     guides: [
       {
         id: "aggregator-builders-move-prospect",
@@ -847,6 +1161,44 @@ export const complianceStockSections: HelpSection[] = [
     paths: ["/suburbs"],
     about:
       "Look up the median price, growth, population and key infrastructure for the suburbs we track.",
+    overview: {
+      id: "overview-suburb-intelligence",
+      title: "Overview of Suburb Intelligence",
+      summary:
+        "What the Suburb Intelligence page is for and how to read a suburb card. Use it to look up a suburb before you talk to a client about it. Nothing on this page can be changed.",
+      steps: [
+        {
+          title: "The suburb count",
+          detail:
+            "The badge at the top right shows how many suburbs are on the page.",
+        },
+        {
+          title: "The suburb cards",
+          detail:
+            "One card for each suburb, with its name and state.",
+        },
+        {
+          title: "The percentage",
+          detail:
+            "Price growth for the suburb. Green is up and red is down.",
+        },
+        {
+          title: "Median Price, Population and Last Updated",
+          detail:
+            "The headline figures, and when they were last refreshed.",
+        },
+        {
+          title: "Infrastructure",
+          detail:
+            "Up to three local projects or features worth mentioning.",
+        },
+        {
+          title: "Elvis brief",
+          detail:
+            "The button at the bottom of each card opens a short written summary of the suburb.",
+        },
+      ],
+    },
     guides: [
       {
         id: "suburbs-read-suburb-card",

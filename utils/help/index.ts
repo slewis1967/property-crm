@@ -12,7 +12,7 @@ import { systemSections } from "./sections/system";
 import videos from "./videos.json";
 
 export type { HelpGuide, HelpSection, HelpStep } from "./types";
-export { sectionForPath, searchGuides } from "./match";
+export { guidesOf, sectionForPath, searchGuides } from "./match";
 
 export const HELP_SECTIONS: HelpSection[] = [
   ...commandSections,
