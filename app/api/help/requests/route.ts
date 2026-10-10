@@ -145,26 +145,6 @@ export async function POST(req: Request) {
   const refused = screenQuestion(question);
   if (refused) return NextResponse.json({ ok: false, error: refused }, { status: 400 });
 
-  // A daily cap counted from the table, so it holds across server instances
-  // and restarts where the in-memory limiter above does not.
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const recent = await supabase
-    .from("help_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("requested_by", auth)
-    .gte("created_at", since);
-  if (recent.error) {
-    const message = tableMissing(recent.error)
-      ? "Asking for a guide is not switched on yet."
-      : errMessage(recent.error, "Could not save your request");
-    return NextResponse.json({ ok: false, error: message }, { status: tableMissing(recent.error) ? 503 : 500 });
-  }
-  if ((recent.count ?? 0) >= HELP_REQUESTS_PER_DAY) {
-    return NextResponse.json(
-      { ok: false, error: `You can ask for ${HELP_REQUESTS_PER_DAY} guides a day. Try again tomorrow.` },
-      { status: 429 },
-    );
-  }
   const pagePath =
     typeof body.page_path === "string" && body.page_path.startsWith("/") ? body.page_path.slice(0, 200) : null;
   const section = sectionForPath(HELP_SECTIONS, pagePath);
@@ -182,6 +162,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: message }, { status: tableMissing(insertError) ? 503 : 500 });
   }
   const row = saved as unknown as HelpRequestRow;
+
+  // Daily cap, checked AFTER the insert by this row's place among the person's
+  // requests in the last day. Counting before inserting would let requests sent
+  // at the same moment all pass; a place in an ordered list cannot be shared.
+  // It is counted from the table, so it holds across server instances.
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const today = await supabase
+    .from("help_requests")
+    .select("id")
+    .eq("requested_by", auth)
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(HELP_REQUESTS_PER_DAY + 50);
+  const place = (today.data ?? []).findIndex((r) => r.id === row.id);
+  // Fails closed: if the place cannot be read, the request is not prepared.
+  if (today.error || place < 0 || place >= HELP_REQUESTS_PER_DAY) {
+    await supabase.from("help_requests").delete().eq("id", row.id);
+    return NextResponse.json(
+      { ok: false, error: `You can ask for ${HELP_REQUESTS_PER_DAY} guides a day. Try again tomorrow.` },
+      { status: 429 },
+    );
+  }
 
   try {
     const prepared = await prepare(question, pagePath);

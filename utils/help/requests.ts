@@ -75,17 +75,36 @@ export function normaliseQuestion(question: string): string {
   return question.normalize("NFKC").replace(ZERO_WIDTH, "").replace(/\s+/g, " ").trim();
 }
 
-const EMAIL = /[\w.+-]+\s*(?:@|\(at\)|\[at\]|\sat\s)\s*[\w-]+\s*(?:\.|\(dot\)|\[dot\]|\sdot\s)\s*[a-z]{2,}/i;
-// Eight or more digits, however they are spaced or punctuated.
-const LONG_NUMBER = /\d(?:[^\da-z]{0,3}\d){7,}/i;
-const DIGIT_WORD = /\b(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/gi;
+const DIGIT_WORD = /\b(?:zero|oh|nought|one|two|three|four|five|six|seven|eight|nine|double|triple)\b/gi;
+// "@" in any form, or a spelled-out address: "jane at example dot com", "jane[at]example[.]com".
+const EMAIL_SIGN = /@|[([{]\s*at\s*[)\]}]/i;
+const SPELLED_EMAIL = /\bat\b[^.!?]{1,60}(?:\bdot\b|[([{]\s*(?:dot|\.)\s*[)\]}])/i;
 
-/** A message when the text carries contact details or a long number, else null. */
+/** How many digits the text holds in all, counting digits written as words. */
+function digitCount(text: string): number {
+  return (text.match(/\d/g)?.length ?? 0) + (text.match(DIGIT_WORD)?.length ?? 0);
+}
+
+/** A whole request may hold this many digits. A phone number or TFN has more. */
+export const HELP_MAX_DIGITS = 7;
+
+/**
+ * A message when the text carries contact details or enough digits to be a
+ * phone number, TFN or account number; else null.
+ *
+ * It counts digits across the whole text instead of looking for a number's
+ * shape, because a shape can always be broken up ("0491x570x101"). The cost is
+ * that a request quoting two prices is refused too; the person is told to
+ * leave numbers out. This is a net, not a guarantee: it cannot recognise a
+ * name. The drafting rules and the reviewer are the other two layers.
+ */
 export function findPersonalDetails(text: string): string | null {
   const t = normaliseQuestion(text);
-  if (EMAIL.test(t)) return "Leave out email addresses. Describe the task, not the client.";
-  if (LONG_NUMBER.test(t) || (t.match(DIGIT_WORD)?.length ?? 0) >= 6) {
-    return "Leave out phone numbers, tax file numbers and other long numbers. Describe the task, not the client.";
+  if (EMAIL_SIGN.test(t) || SPELLED_EMAIL.test(t)) {
+    return "Leave out email addresses. Describe the task, not the client.";
+  }
+  if (digitCount(t) > HELP_MAX_DIGITS) {
+    return "Leave out phone numbers, tax file numbers and other numbers. Describe the task, not the client.";
   }
   return null;
 }
@@ -110,11 +129,12 @@ export function draftPersonalDetails(draft: HelpDraft): string | null {
 }
 
 /**
- * Wraps the staff member's words for a prompt. The tag names are stripped from
- * the text first, so nothing typed can close the block and pose as instructions.
+ * Wraps untrusted text for a prompt. Every angle bracket in the text is
+ * replaced first, so nothing in it can form a tag at all, however it is
+ * nested or split, and the block can only be closed by the line added here.
  */
 export function quoteForPrompt(tag: string, text: string): string {
-  const safe = text.replace(new RegExp(`</?\\s*${tag}[^>]*>`, "gi"), "");
+  const safe = text.replace(/</g, "\u2039").replace(/>/g, "\u203A");
   return `<${tag}>\n${safe}\n</${tag}>`;
 }
 
