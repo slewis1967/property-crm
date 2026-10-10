@@ -118,6 +118,38 @@ function overlayScript() {
       cap.textContent = text;
       cap.style.opacity = "1";
     }
+
+    // A few screens print a real staff mobile and email from the app's own
+    // code (letterheads, footers). Swap them for demo values as they appear.
+    const MASKS = [
+      [/0477\s?007\s?785/g, "0491 570 100"],
+      [/sean\.l@nextkey\.com\.au/gi, "demo@example.com"],
+      // First names used as examples in the voice assistant's hint line.
+      [/Justino/g, "Olivia"],
+      [/Ketkii/g, "Liam"],
+      [/Hamish/g, "Noah"],
+    ];
+    const NEEDS_MASK = /0477|sean\.l@|Justino|Ketkii|Hamish/i;
+    const maskNode = (n) => {
+      const before = n.nodeValue;
+      if (!before || !NEEDS_MASK.test(before)) return;
+      let after = before;
+      for (const [re, to] of MASKS) after = after.replace(re, to);
+      if (after !== before) n.nodeValue = after;
+    };
+    const maskTree = (root) => {
+      if (root.nodeType === 3) return maskNode(root);
+      if (root.nodeType !== 1) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) maskNode(walker.currentNode);
+    };
+    maskTree(document.body);
+    new MutationObserver((records) => {
+      for (const r of records) {
+        if (r.type === "characterData") maskNode(r.target);
+        else r.addedNodes.forEach(maskTree);
+      }
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
   };
   window.__helpCaption = (text) => {
     sessionStorage.setItem("__help_caption", text || "");
@@ -302,8 +334,9 @@ async function recordOne(id) {
   console.log(`  ${id}: ${total.toFixed(0)}s, ${kb} KB`);
 }
 
-const argv = process.argv.slice(2);
-const ids = argv.includes("--all")
+const flags = process.argv.slice(2).filter((a) => a.startsWith("--"));
+const argv = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const ids = flags.includes("--all")
   ? fs.readdirSync(path.join(HERE, "scenarios")).filter((f) => f.endsWith(".mjs")).map((f) => f.slice(0, -4))
   : argv;
 if (ids.length === 0) fail("Name a guide id, or pass --all.");
@@ -317,5 +350,7 @@ for (const id of ids) {
     console.error(`  ${id}: FAILED: ${e.message}`);
   }
 }
-run("node", [path.join(HERE, "manifest.mjs")], { stdio: "inherit" });
+// --no-manifest: for several recorders running at once, so they do not all
+// rewrite utils/help/videos.json; run manifest.mjs once at the end instead.
+if (!flags.includes("--no-manifest")) run("node", [path.join(HERE, "manifest.mjs")], { stdio: "inherit" });
 process.exit(failed ? 1 : 0);

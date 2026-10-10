@@ -153,7 +153,8 @@ export const crmASections: HelpSection[] = [
           },
           {
             title: 'Type the rent into "Weekly rent" for each property',
-            detail: 'For a co-living property the box is called "Rent per room".',
+            detail:
+              'The box may already show an estimate. Type over it with the real figure. For a co-living property the box is called "Rent per room".',
           },
           {
             title: 'Click "Research" on a property',

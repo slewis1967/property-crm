@@ -343,7 +343,7 @@ export const commandSections: HelpSection[] = [
         steps: [
           {
             title: 'Click "+ New memory"',
-            detail: "It is at the top right. A form opens below the buttons.",
+            detail: "It is next to the Search button. A form opens underneath.",
           },
           {
             title: "Choose the type from the dropdown on the left of the form",
@@ -633,8 +633,8 @@ export const commandSections: HelpSection[] = [
             detail: "The report is saved first if you have not already saved it.",
           },
           {
-            title: 'Check the address in "To"',
-            detail: "It is filled in when the report is linked to a contact.",
+            title: "Type the client's email address in the To box",
+            detail: "The box starts empty, even when the report is linked to a contact.",
           },
           {
             title: 'Check the "Subject"',

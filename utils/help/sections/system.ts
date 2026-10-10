@@ -75,7 +75,7 @@ export const systemSections: HelpSection[] = [
           },
           {
             title: 'Click "Save"',
-            detail: "The new account appears in the register lower down the page.",
+            detail: 'To see the new account, scroll down to the register and click "All".',
           },
         ],
       },

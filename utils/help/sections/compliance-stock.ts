@@ -299,9 +299,9 @@ export const complianceStockSections: HelpSection[] = [
             title: 'Scroll to "Suspicious Matter Report access"',
           },
           {
-            title: 'Type one email address per line in "Additional people who may view SMRs (one email per line)"',
+            title: 'Type the email address in "Additional people who may view SMRs (one email per line)"',
             detail:
-              "The compliance officer and the person who created a report can always see it.",
+              "To add several at once, paste them in with one email on each line. The compliance officer and the person who created a report can always see it.",
           },
           {
             title: "Delete a line to take that person off the list",
@@ -374,13 +374,13 @@ export const complianceStockSections: HelpSection[] = [
             detail: "These three only filter the properties already loaded on the page.",
           },
           {
-            title: 'Click "Load more" at the bottom',
-            detail:
-              'This brings in the next batch. You can also change how many load at a time in the "Show" dropdown.',
-          },
-          {
             title: 'Click "Clear all" to start again',
             detail: "It appears next to the Filters button when a filter is on.",
+          },
+          {
+            title: 'Click "Load more" at the bottom',
+            detail:
+              'This brings in the rest of the feed. You can also change how many load at a time in the "Show" dropdown.',
           },
         ],
       },
@@ -595,6 +595,8 @@ export const complianceStockSections: HelpSection[] = [
           },
           {
             title: "Type the correct value into any field that is wrong or empty",
+            detail:
+              'Put the price in "House price", or "House price" and "Land price". An item cannot be approved without one, and "Total package" on its own is not enough.',
           },
           {
             title: 'Click "Approve & publish"',
@@ -637,7 +639,7 @@ export const complianceStockSections: HelpSection[] = [
           {
             title: "Click OK to confirm",
             detail:
-              "Items approved this way are published exactly as they were read. Any edits you typed are not applied. Rejecting also asks for an optional reason.",
+              "Items approved this way are published exactly as they were read. Any edits you typed are not applied, and an item with no price is skipped. Rejecting also asks for an optional reason.",
           },
           {
             title: 'Click "Clear" to untick everything',

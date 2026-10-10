@@ -45,6 +45,28 @@ real buttons (some send email). So:
 - The one exception is a scenario marked `noClientData: true`: it only reads a
   page that shows no client records (for example Lender Policy).
 
+### The demo environment
+
+The videos are recorded against a local Supabase that holds the CRM's table
+structure and no real data, filled from `seed/`:
+
+- `seed/00-core.sql` is the shared cast of twelve made-up contacts.
+- `seed/10-<group>.sql` adds what each group of screens needs. Each file is
+  safe to re-run and removes what its own scenarios create.
+  `seed/gen-compliance-stock.mjs` writes the stock one; edit the generator.
+- `mock-nexus.mjs` stands in for the NEXUS API (`NEXUS_API_BASE=http://127.0.0.1:8799`),
+  with routes in `mock-nexus/`.
+
+The demo CRM runs with `AUTH_MODE=local` and no email, SMS or AI keys, so
+nothing recorded can send anything. Where a screen needs one of those services,
+the scenario answers the browser's `/api` call itself with a made-up reply and
+says so in its header comment.
+
+The recorder also swaps the real staff mobile and email that a few screens
+print from app code (letterheads, footers) for demo values.
+
+`RECORDING-BRIEF.md` has the full rules used when the set was recorded.
+
 ## Writing a scenario
 
 ```js

@@ -230,12 +230,16 @@ export const crmBSections: HelpSection[] = [
             detail: "It is at the top right, next to New Contact.",
           },
           {
-            title: 'Click "Choose File" and pick your file',
-            detail: "It accepts .csv, .xlsx, .xls and .vcf files. Click “Download Template” if you need a sample layout.",
+            title: 'Check the "Tag every imported contact with" box',
+            detail: "It starts with a tag already typed in. Every person in the file gets these tags, so change or clear it.",
           },
           {
             title: 'Pick a type under "Assign Contact Type" if every person in the file is the same type',
             detail: "This is optional.",
+          },
+          {
+            title: 'Click "Choose File" and pick your file',
+            detail: "It accepts .csv, .xlsx, .xls and .vcf files. Click “Download Template” if you need a sample layout.",
           },
           {
             title: 'Check the "Maps To" column and fix any that are wrong',
@@ -247,11 +251,7 @@ export const crmBSections: HelpSection[] = [
           },
           {
             title: 'Click the "Import … Contacts" button',
-            detail: "A progress bar shows while the contacts are added.",
-          },
-          {
-            title: 'Click "Close"',
-            detail: "The page reloads with the new contacts in the list.",
+            detail: "A progress bar shows. When it finishes, the window closes and the page reloads with the new contacts in the list.",
           },
         ],
       },
@@ -407,11 +407,11 @@ export const crmBSections: HelpSection[] = [
         steps: [
           {
             title: 'Click "Inbox" in the sidebar',
-            detail: "Conversations with new messages show a blue “new” badge.",
+            detail: "A blue “new” badge marks a message that is waiting for a reply.",
           },
           {
             title: "Click a conversation to open it",
-            detail: "All the messages in it open underneath and it is marked as read.",
+            detail: "All the messages in it open underneath.",
           },
           {
             title: 'Click "Reply" on the message you are answering',
@@ -487,11 +487,12 @@ export const crmBSections: HelpSection[] = [
             detail: "Trash and Spam are emptied for good after 30 days.",
           },
           {
-            title: 'To make a folder, click "+ New" beside "Folders" on the left, type a name and press Enter',
+            title: 'To make a folder, click "+ New" beside "Folders" on the left and type a name',
+            detail: "Click anywhere outside the box to save it.",
           },
           {
             title: 'Click "Move to…" in the dark bar and pick the folder',
-            detail: "The ticked conversations are filed in that folder.",
+            detail: "The ticked conversations are filed in that folder. They also stay in the inbox until you archive them.",
           },
         ],
       },
@@ -699,8 +700,8 @@ export const crmBSections: HelpSection[] = [
             detail: "For a problem, say what you did, what happened and what you expected.",
           },
           {
-            title: 'Check "Which page?" and choose "How urgent?"',
-            detail: "The page you were just on is filled in for you.",
+            title: 'Fill in "Which page?" if you know it, and choose "How urgent?"',
+            detail: "Type the page name or the last part of its web address, such as /contacts.",
           },
           {
             title: 'Click "Submit feedback"',

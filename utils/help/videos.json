@@ -1,5 +1,443 @@
 {
+  "activity-feed-check-elvis": {
+    "seconds": 44
+  },
+  "advisor-dismiss-or-snooze": {
+    "seconds": 38
+  },
+  "advisor-review-recommendation": {
+    "seconds": 41
+  },
+  "advisor-track-in-progress": {
+    "seconds": 37
+  },
+  "aggregator-builders-confirm-draft": {
+    "seconds": 39
+  },
+  "aggregator-builders-extraction-hints": {
+    "seconds": 35
+  },
+  "aggregator-builders-move-prospect": {
+    "seconds": 40
+  },
+  "aggregator-builders-pause-or-deactivate": {
+    "seconds": 36
+  },
+  "aggregator-review-approve-item": {
+    "seconds": 36
+  },
+  "aggregator-review-bulk": {
+    "seconds": 34
+  },
+  "aggregator-review-history": {
+    "seconds": 32
+  },
+  "aggregator-review-reject-item": {
+    "seconds": 33
+  },
+  "aggregator-runs-check-stocklist": {
+    "seconds": 34
+  },
+  "aggregator-runs-stale-sources": {
+    "seconds": 37
+  },
+  "aml-clear-case": {
+    "seconds": 38
+  },
+  "aml-find-or-delete-case": {
+    "seconds": 34
+  },
+  "aml-program-add-training": {
+    "seconds": 37
+  },
+  "aml-program-check-outstanding": {
+    "seconds": 35
+  },
+  "aml-program-smr-access": {
+    "seconds": 34
+  },
+  "aml-program-update-enrolment": {
+    "seconds": 38
+  },
+  "aml-record-screening": {
+    "seconds": 39
+  },
+  "aml-reports-create-report": {
+    "seconds": 40
+  },
+  "aml-reports-delete-report": {
+    "seconds": 33
+  },
+  "aml-reports-mark-lodged": {
+    "seconds": 32
+  },
+  "aml-start-cdd-case": {
+    "seconds": 53
+  },
+  "analytics-read-lead-numbers": {
+    "seconds": 37
+  },
+  "analytics-read-stock-and-outreach": {
+    "seconds": 39
+  },
+  "appointments-pre-meeting-brief": {
+    "seconds": 22
+  },
+  "appointments-review-upcoming": {
+    "seconds": 42
+  },
+  "approvals-check-pending": {
+    "seconds": 43
+  },
+  "approvals-review-history": {
+    "seconds": 35
+  },
+  "brain-add-memory": {
+    "seconds": 42
+  },
+  "brain-correct-or-archive-memory": {
+    "seconds": 39
+  },
+  "brain-find-memory": {
+    "seconds": 33
+  },
+  "broadcast-check-history": {
+    "seconds": 35
+  },
+  "broadcast-send-email": {
+    "seconds": 59
+  },
+  "calendar-schedule-meeting": {
+    "seconds": 54
+  },
+  "calendar-view-meetings": {
+    "seconds": 39
+  },
+  "contacts-add-new": {
+    "seconds": 43
+  },
+  "contacts-bulk-upload": {
+    "seconds": 54
+  },
+  "contacts-find-filter-export": {
+    "seconds": 46
+  },
+  "contacts-update-and-email": {
+    "seconds": 44
+  },
+  "conversations-find-old-message": {
+    "seconds": 40
+  },
+  "credit-authorisation-print-to-sign": {
+    "seconds": 27
+  },
+  "credit-authorisation-send-for-signature": {
+    "seconds": 35
+  },
+  "credit-authorisation-start-new": {
+    "seconds": 35
+  },
+  "deal-analyser-add-property": {
+    "seconds": 46
+  },
+  "deal-analyser-attach-opportunity": {
+    "seconds": 30
+  },
+  "deal-analyser-email-report": {
+    "seconds": 37
+  },
+  "deal-analyser-generate-reports": {
+    "seconds": 41
+  },
+  "document-requests-cancel": {
+    "seconds": 24
+  },
+  "document-requests-check-and-send-to-drive": {
+    "seconds": 43
+  },
+  "document-requests-new-request": {
+    "seconds": 40
+  },
+  "document-requests-send-to-yla": {
+    "seconds": 33
+  },
+  "eoi-create-new": {
+    "seconds": 42
+  },
+  "eoi-find-and-delete": {
+    "seconds": 30
+  },
+  "eoi-send-for-signature": {
+    "seconds": 45
+  },
+  "eoi-start-cdd": {
+    "seconds": 29
+  },
+  "fact-find-complete-and-download": {
+    "seconds": 34
+  },
+  "fact-find-create-needs-analysis": {
+    "seconds": 29
+  },
+  "fact-find-send-for-signature": {
+    "seconds": 41
+  },
+  "fact-find-start-from-contact": {
+    "seconds": 40
+  },
+  "feasibility-open-saved-report": {
+    "seconds": 38
+  },
+  "feasibility-run-assessment": {
+    "seconds": 44
+  },
+  "feasibility-save-and-export": {
+    "seconds": 39
+  },
+  "feedback-report-issue": {
+    "seconds": 39
+  },
+  "feedback-track-progress": {
+    "seconds": 32
+  },
+  "inbox-compose-new": {
+    "seconds": 54
+  },
+  "inbox-organise": {
+    "seconds": 52
+  },
+  "inbox-read-and-reply": {
+    "seconds": 41
+  },
+  "inbox-search-and-drafts": {
+    "seconds": 35
+  },
+  "introducers-ask-for-more": {
+    "seconds": 33
+  },
+  "introducers-review-referral": {
+    "seconds": 41
+  },
+  "introducers-start-accreditation": {
+    "seconds": 39
+  },
+  "introducers-suspend-firm": {
+    "seconds": 31
+  },
+  "leads-promote-to-pipeline": {
+    "seconds": 37
+  },
+  "leads-review-all": {
+    "seconds": 29
+  },
+  "lender-match-read-results": {
+    "seconds": 54
+  },
+  "lender-match-run-scenario": {
+    "seconds": 49
+  },
+  "lenders-confirm-or-correct-figure": {
+    "seconds": 42
+  },
   "lenders-find-policy": {
     "seconds": 41
+  },
+  "lenders-refresh-research": {
+    "seconds": 39
+  },
+  "media-check-saved-files": {
+    "seconds": 31
+  },
+  "media-find-file": {
+    "seconds": 36
+  },
+  "needs-analysis-complete-and-download": {
+    "seconds": 23
+  },
+  "needs-analysis-create-credit-authorisation": {
+    "seconds": 26
+  },
+  "needs-analysis-send-for-signature": {
+    "seconds": 41
+  },
+  "needs-analysis-start-new": {
+    "seconds": 40
+  },
+  "notes-find-old-note": {
+    "seconds": 34
+  },
+  "opportunities-add-new": {
+    "seconds": 46
+  },
+  "opportunities-hide-or-delete": {
+    "seconds": 45
+  },
+  "opportunities-move-stage": {
+    "seconds": 32
+  },
+  "opportunities-schedule-meeting": {
+    "seconds": 41
+  },
+  "paid-services-add-account": {
+    "seconds": 43
+  },
+  "paid-services-edit-account": {
+    "seconds": 40
+  },
+  "paid-services-mark-paid": {
+    "seconds": 45
+  },
+  "paid-services-send-digest": {
+    "seconds": 42
+  },
+  "partners-add-login": {
+    "seconds": 31
+  },
+  "partners-grant-hold": {
+    "seconds": 44
+  },
+  "partners-onboard-firm": {
+    "seconds": 34
+  },
+  "partners-release-lot-details": {
+    "seconds": 32
+  },
+  "pia-email-report": {
+    "seconds": 38
+  },
+  "pia-model-a-property": {
+    "seconds": 49
+  },
+  "pia-save-or-print-report": {
+    "seconds": 35
+  },
+  "preliminary-assessments-match-contact": {
+    "seconds": 31
+  },
+  "preliminary-assessments-present": {
+    "seconds": 31
+  },
+  "preliminary-assessments-resend-signing": {
+    "seconds": 25
+  },
+  "properties-compare": {
+    "seconds": 40
+  },
+  "properties-find-stock": {
+    "seconds": 51
+  },
+  "properties-map-find-stock-in-area": {
+    "seconds": 41
+  },
+  "properties-map-read-and-locate": {
+    "seconds": 36
+  },
+  "properties-map-street-view": {
+    "seconds": 35
+  },
+  "properties-send-to-client": {
+    "seconds": 48
+  },
+  "properties-view-detail": {
+    "seconds": 45
+  },
+  "revenue-add-deal": {
+    "seconds": 42
+  },
+  "revenue-edit-or-delete-deal": {
+    "seconds": 37
+  },
+  "revenue-forecast-pdf": {
+    "seconds": 45
+  },
+  "revenue-mark-payment-paid": {
+    "seconds": 35
+  },
+  "sequences-check-due-and-sent": {
+    "seconds": 43
+  },
+  "sequences-check-sequence": {
+    "seconds": 36
+  },
+  "settings-add-broker": {
+    "seconds": 41
+  },
+  "settings-add-property-type": {
+    "seconds": 34
+  },
+  "settings-ai-instructions": {
+    "seconds": 38
+  },
+  "settings-edit-signature": {
+    "seconds": 41
+  },
+  "shared-folder-find-open": {
+    "seconds": 37
+  },
+  "shared-folder-new-folder": {
+    "seconds": 28
+  },
+  "shared-folder-tidy-up": {
+    "seconds": 49
+  },
+  "shared-folder-upload-files": {
+    "seconds": 36
+  },
+  "smart-search-find-contacts": {
+    "seconds": 37
+  },
+  "social-check-posts": {
+    "seconds": 40
+  },
+  "social-check-scheduled": {
+    "seconds": 33
+  },
+  "suburbs-elvis-brief": {
+    "seconds": 32
+  },
+  "suburbs-read-suburb-card": {
+    "seconds": 34
+  },
+  "tasks-add-task": {
+    "seconds": 24
+  },
+  "tasks-archive-find-old-task": {
+    "seconds": 36
+  },
+  "tasks-complete-and-review": {
+    "seconds": 39
+  },
+  "tasks-delete-task": {
+    "seconds": 25
+  },
+  "video-join-booked-meeting": {
+    "seconds": 30
+  },
+  "video-start-call": {
+    "seconds": 38
+  },
+  "voice-assistant-ask": {
+    "seconds": 43
+  },
+  "voice-assistant-log-call-or-reminder": {
+    "seconds": 36
+  },
+  "voice-assistant-send-message": {
+    "seconds": 41
+  },
+  "voice-assistant-start-over": {
+    "seconds": 37
+  },
+  "war-room-borrowing-capacity": {
+    "seconds": 45
+  },
+  "war-room-complete-task": {
+    "seconds": 32
+  },
+  "war-room-stamp-duty": {
+    "seconds": 35
+  },
+  "war-room-start-your-day": {
+    "seconds": 43
   }
 }
