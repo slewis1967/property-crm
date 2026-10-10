@@ -78,15 +78,22 @@ export function normaliseQuestion(question: string): string {
 const DIGIT_WORD = /\b(?:zero|oh|nought|one|two|three|four|five|six|seven|eight|nine|double|triple)\b/gi;
 // "@" in any form, or a spelled-out address: "jane at example dot com", "jane[at]example[.]com".
 const EMAIL_SIGN = /@|[([{]\s*at\s*[)\]}]/i;
-const SPELLED_EMAIL = /\bat\b[^.!?]{1,60}(?:\bdot\b|[([{]\s*(?:dot|\.)\s*[)\]}])/i;
+const SPELLED_EMAIL = /\bat\b[^!?]{1,60}(?:\bdot\b|[([{]\s*(?:dot|\.)\s*[)\]}])/i;
+// Anything shaped like a web or mail domain ("example.com", "example . com . au").
+// A question about using the CRM never needs one.
+const DOMAIN = /[a-z0-9-]{2,}\s*\.\s*(?:com|net|org|edu|gov|au|nz|uk|us|io|co|info|biz|me|app|dev|email)\b/i;
 
 /** How many digits the text holds in all, counting digits written as words. */
 function digitCount(text: string): number {
   return (text.match(/\d/g)?.length ?? 0) + (text.match(DIGIT_WORD)?.length ?? 0);
 }
 
-/** A whole request may hold this many digits. A phone number or TFN has more. */
-export const HELP_MAX_DIGITS = 7;
+/**
+ * A whole request may hold this many digits, counting digits written as words.
+ * Enough for "compare 3 properties" or a postcode; too few for a phone number,
+ * a TFN, a BSB, a licence number or a date of birth.
+ */
+export const HELP_MAX_DIGITS = 5;
 
 /**
  * A message when the text carries contact details or enough digits to be a
@@ -94,13 +101,13 @@ export const HELP_MAX_DIGITS = 7;
  *
  * It counts digits across the whole text instead of looking for a number's
  * shape, because a shape can always be broken up ("0491x570x101"). The cost is
- * that a request quoting two prices is refused too; the person is told to
- * leave numbers out. This is a net, not a guarantee: it cannot recognise a
+ * that a request quoting a price is refused too; the person is told to leave
+ * numbers out. This is a net, not a guarantee: it cannot recognise a
  * name. The drafting rules and the reviewer are the other two layers.
  */
 export function findPersonalDetails(text: string): string | null {
   const t = normaliseQuestion(text);
-  if (EMAIL_SIGN.test(t) || SPELLED_EMAIL.test(t)) {
+  if (EMAIL_SIGN.test(t) || SPELLED_EMAIL.test(t) || DOMAIN.test(t)) {
     return "Leave out email addresses. Describe the task, not the client.";
   }
   if (digitCount(t) > HELP_MAX_DIGITS) {

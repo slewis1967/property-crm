@@ -39,6 +39,12 @@ describe("screenQuestion", () => {
     expect(screenQuestion(normaliseQuestion(raw))).toBeNull();
   });
 
+  it("refuses numbers shorter than a phone number too", () => {
+    expect(screenQuestion("Date of birth 010190, where does it go?")).toMatch(/numbers/i);
+    expect(screenQuestion("The BSB is 062-000, where do I record it?")).toMatch(/numbers/i);
+    expect(screenQuestion("It is one two three four five six, where does it go?")).toMatch(/numbers/i);
+  });
+
   it("counts digits however they are broken up", () => {
     expect(screenQuestion("Client is on 0491x570x101 how do I log a call?")).toMatch(/numbers/i);
     expect(screenQuestion("Number is 04 then some words 91 570 and later 101, log it")).toMatch(/numbers/i);
@@ -50,12 +56,15 @@ describe("screenQuestion", () => {
     expect(screenQuestion("Send it to jane[at]example[.]com please")).toMatch(/email/i);
     expect(screenQuestion("Send it to jane {at} example {dot} com please")).toMatch(/email/i);
     expect(screenQuestion("How do I tag @someone in a note?")).toMatch(/email/i);
+    expect(screenQuestion("Send it to jane at example.com please")).toMatch(/email/i);
+    expect(screenQuestion("Send it to jane at example . com . au please")).toMatch(/email/i);
+    expect(screenQuestion("Their site is example.com.au, where do I put it?")).toMatch(/email/i);
   });
 
   it("still allows ordinary numbers and the word at", () => {
     expect(screenQuestion("How do I look at 3 properties side by side?")).toBeNull();
-    expect(screenQuestion("How do I set a budget of $650,000 on a contact?")).toBeNull();
-    expect(screenQuestion("How do I look at one contact's notes?")).toBeNull();
+    expect(screenQuestion("How do I list contacts in postcode 4032?")).toBeNull();
+    expect(screenQuestion("How do I look at one contact's notes? It ends in a full stop. Then more.")).toBeNull();
   });
 
   it("refuses too little or too much", () => {
