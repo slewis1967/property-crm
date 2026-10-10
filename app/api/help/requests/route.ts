@@ -20,9 +20,13 @@ import {
   CHECK_SYSTEM,
   DRAFT_SYSTEM,
   HELP_REQUEST_COLUMNS,
+  HELP_REQUESTS_PER_DAY,
   corpusFor,
+  draftPersonalDetails,
+  normaliseQuestion,
   parseCheckReply,
   parseDraftReply,
+  quoteForPrompt,
   screenQuestion,
   statusAfterPreparing,
   type HelpRequestRow,
@@ -97,17 +101,24 @@ async function prepare(question: string, pagePath: string | null) {
   const section = sectionForPath(HELP_SECTIONS, pagePath);
   const reply = await aiCall({
     system: DRAFT_SYSTEM,
-    user: `${corpusFor(HELP_SECTIONS, section)}\n\n## The staff member's question\n${question}`,
+    user: `${corpusFor(HELP_SECTIONS, section)}\n\n## The staff member's question\n${quoteForPrompt("staff_question", question)}`,
     maxTokens: 1400,
     thinking: false,
   });
   const { screen, draft } = parseDraftReply(reply);
   if (!draft) return { screen, draft, status: statusAfterPreparing(screen, false) };
 
+  // A draft must not carry contact details either, whatever the model was told.
+  const leaked = draftPersonalDetails(draft);
+  if (leaked) {
+    const flagged: HelpScreen = { ...screen, concerns: ["The draft contained an email address or a long number, so it was discarded."] };
+    return { screen: flagged, draft: null, status: "blocked" as const };
+  }
+
   const checked = parseCheckReply(
     await aiCall({
       system: CHECK_SYSTEM,
-      user: `## Question\n${question}\n\n## Draft guide\n${JSON.stringify(draft, null, 2)}`,
+      user: `## Question\n${quoteForPrompt("staff_question", question)}\n\n## Draft guide\n${quoteForPrompt("draft_guide", JSON.stringify(draft, null, 2))}`,
       maxTokens: 600,
       thinking: false,
     }),
@@ -119,7 +130,8 @@ async function prepare(question: string, pagePath: string | null) {
 export async function POST(req: Request) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
-  const limited = applyAiRateLimit(req, aiExpensive);
+  // Keyed on the verified identity, not on a request header the caller controls.
+  const limited = applyAiRateLimit(req, { ...aiExpensive, keyFn: () => `help-request:${auth}` });
   if (limited) return limited;
 
   let body: { question?: unknown; page_path?: unknown };
@@ -128,9 +140,31 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
   }
-  const question = typeof body.question === "string" ? body.question.trim() : "";
+  // Normalised once here; this exact string is what is screened, stored and sent on.
+  const question = typeof body.question === "string" ? normaliseQuestion(body.question) : "";
   const refused = screenQuestion(question);
   if (refused) return NextResponse.json({ ok: false, error: refused }, { status: 400 });
+
+  // A daily cap counted from the table, so it holds across server instances
+  // and restarts where the in-memory limiter above does not.
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const recent = await supabase
+    .from("help_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("requested_by", auth)
+    .gte("created_at", since);
+  if (recent.error) {
+    const message = tableMissing(recent.error)
+      ? "Asking for a guide is not switched on yet."
+      : errMessage(recent.error, "Could not save your request");
+    return NextResponse.json({ ok: false, error: message }, { status: tableMissing(recent.error) ? 503 : 500 });
+  }
+  if ((recent.count ?? 0) >= HELP_REQUESTS_PER_DAY) {
+    return NextResponse.json(
+      { ok: false, error: `You can ask for ${HELP_REQUESTS_PER_DAY} guides a day. Try again tomorrow.` },
+      { status: 429 },
+    );
+  }
   const pagePath =
     typeof body.page_path === "string" && body.page_path.startsWith("/") ? body.page_path.slice(0, 200) : null;
   const section = sectionForPath(HELP_SECTIONS, pagePath);

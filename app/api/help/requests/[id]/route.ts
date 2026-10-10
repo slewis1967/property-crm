@@ -12,7 +12,7 @@ import { supabase } from "../../../../../utils/supabase";
 import { requireAuth } from "../../../../../utils/cf-access";
 import { isSuperAdmin } from "../../../../../utils/super-admin";
 import { errMessage } from "../../../../../utils/errors";
-import { HELP_REQUEST_COLUMNS, parseDraft } from "../../../../../utils/help/requests";
+import { HELP_REQUEST_COLUMNS, draftPersonalDetails, parseDraft } from "../../../../../utils/help/requests";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +41,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { status: 400 },
       );
     }
+    const leaked = draftPersonalDetails(draft);
+    if (leaked) return NextResponse.json({ ok: false, error: leaked }, { status: 400 });
     patch = { status: "published", draft, decline_reason: null, reviewed_by: auth, reviewed_at: now, updated_at: now };
   } else if (body.action === "decline") {
     const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 300) : "";
