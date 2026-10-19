@@ -25,6 +25,13 @@ export type SchedulingHost = {
    * twice was stood up twice before anyone noticed (Aug 2026).
    */
   notify?: string[];
+  /**
+   * Where the public self-book page sends the lead once the booking is saved.
+   * Set for brands whose funnel continues on their own website (Springboard's
+   * /booked/ page carries the "what to expect" + reschedule etiquette copy);
+   * omit to stay on the CRM's own "You're booked in" panel.
+   */
+  postBookingUrl?: string;
 };
 
 export const BRAND_LABEL: Record<Brand, string> = {
@@ -58,6 +65,9 @@ export const SCHEDULING_HOSTS: SchedulingHost[] = [
     // Glenn takes Springboard meetings; Sean backstops. Nobody lives in the
     // bookings@ mailbox, so a booking notified only there is a missed meeting.
     notify: ["glenn.m@nextkey.com.au", "sean.l@nextkey.com.au"],
+    // The Springboard funnel continues on springboardhomes.com.au: eligibility
+    // form → /qualified/ (embeds this page) → /booked/.
+    postBookingUrl: "https://springboardhomes.com.au/booked/",
   },
 ];
 

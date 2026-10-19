@@ -36,11 +36,14 @@ export default function BookClient({
   hostName,
   hostLabel,
   brand,
+  postBookingUrl,
 }: {
   slug: string;
   hostName: string;
   hostLabel: string;
   brand: string;
+  /** Brand website page to continue to after booking (null = stay here). */
+  postBookingUrl: string | null;
 }) {
   const [days, setDays] = useState<Day[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -56,6 +59,26 @@ export default function BookClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ videoLink: string | null } | null>(null);
+
+  // Once booked, hand the lead back to the brand's own site (Springboard's
+  // /booked/ page). This page may be running inside an <iframe> on that site,
+  // so navigate the TOP window; if the embedder is some other origin the
+  // browser refuses and we fall back to navigating this frame only.
+  useEffect(() => {
+    if (!done || !postBookingUrl) return;
+    const t = setTimeout(() => {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = postBookingUrl;
+          return;
+        }
+      } catch {
+        /* cross-origin top — fall through */
+      }
+      window.location.href = postBookingUrl;
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [done, postBookingUrl]);
 
   useEffect(() => {
     (async () => {
@@ -158,6 +181,12 @@ export default function BookClient({
                   className="inline-block mt-5 text-white font-semibold px-5 py-2.5 rounded-lg" style={{ background: accent }}>
                   📹 Join the video meeting
                 </a>
+              )}
+              {postBookingUrl && (
+                <p className="text-sm text-gray-500 mt-4">
+                  Taking you to what happens next…{" "}
+                  <a href={postBookingUrl} className="underline">Continue now</a>
+                </p>
               )}
             </div>
           ) : loadErr ? (
