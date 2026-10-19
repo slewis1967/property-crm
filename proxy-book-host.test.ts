@@ -57,6 +57,12 @@ describe.each([
     ["GET", "/api/book/springboard/icon"],
     ["GET", "/api/portal/logo"],
     ["GET", "/_next/static/chunks/main.js"],
+    // The lead's guest video join
+    ["GET", "/join/abc.def.ghi"],
+    ["GET", "/join/abc.def.ghi/pa"],
+    ["POST", "/join/abc.def.ghi/pa"],
+    ["GET", "/join/abc.def.ghi/pa/file"],
+    ["POST", "/api/livekit/guest-token"],
   ])("lets %s %s through, tagged public + booking host", async (method, path) => {
     const res = await run(`${BOOK}${path}`, { method, headers: { origin: BOOK } });
     expect(res.status).toBe(200);
@@ -109,9 +115,19 @@ describe.each([
     "/book/springboard/extra",
     "/api/book/springboard/anything",
     // The CRM's other public (token / session) surfaces stay on the CRM host
-    "/join/abc.def.ghi",
-    "/api/livekit/guest-token",
     "/api/livekit/webhook",
+    "/api/livekit/token",
+    "/api/livekit/record",
+    "/api/livekit/calls",
+    "/api/livekit/guest-link",
+    "/api/livekit/guest-tokens",
+    // Only the exact join shapes
+    "/join",
+    "/join/",
+    "/joined/tok",
+    "/join/tok/other",
+    "/join/tok/pa/file/x",
+    "/join/a/b/pa",
     "/sign/tok",
     "/api/sign/tok/complete",
     "/portal/tok",
@@ -152,6 +168,10 @@ describe.each([
     ["POST", "/api/book/springboard/og"],
     ["POST", "/api/portal/logo"],
     ["POST", "/robots.txt"],
+    ["GET", "/api/livekit/guest-token"],
+    ["POST", "/join/tok"],
+    ["POST", "/join/tok/pa/file"],
+    ["DELETE", "/join/tok/pa"],
   ])("404s %s %s (method not on the allow-list)", async (method, path) => {
     const res = await run(`${BOOK}${path}`, { method, headers: { origin: BOOK } });
     expect(res.status).toBe(404);
@@ -159,6 +179,11 @@ describe.each([
 
   it.each([CRM, "https://evil.example", "null"])("403s a booking POST from origin %s", async (origin) => {
     const res = await run(`${BOOK}/api/book/springboard`, { method: "POST", headers: { origin } });
+    expect(res.status).toBe(403);
+  });
+
+  it("403s a guest-token POST from the CRM origin", async () => {
+    const res = await run(`${BOOK}/api/livekit/guest-token`, { method: "POST", headers: { origin: CRM } });
     expect(res.status).toBe(403);
   });
 
@@ -201,11 +226,18 @@ describe("crm.nextkey.com.au is unchanged", () => {
     expect(res.headers.get("x-user-email")).toBe("attacker@example.com");
   });
 
-  it.each(["/book/springboard", "/book/sean", "/api/book/glenn", "/join/abc", "/portal/tok"])(
+  it.each(["/book/springboard", "/book/sean", "/api/book/glenn", "/join/abc", "/join/abc/pa", "/portal/tok"])(
     "still treats %s as public",
     async (path) => {
       const res = await run(`${CRM}${path}`);
       expect(reqHeader(res, "x-public-route")).toBe("1");
+    },
+  );
+
+  it.each(["/api/livekit/token", "/api/livekit/record", "/api/livekit/guest-link"])(
+    "still gates %s behind CF Access",
+    async (path) => {
+      expect((await run(`${CRM}${path}`, { method: "POST" })).status).toBe(401);
     },
   );
 

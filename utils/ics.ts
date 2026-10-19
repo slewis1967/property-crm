@@ -35,7 +35,14 @@ export interface IcsEvent {
   sequence?: number;
   /** Overrides "now" for DTSTAMP — only used to make tests deterministic. */
   dtstamp?: string | Date;
+  /**
+   * PRODID (who produced the file). Some calendar apps show it, so a
+   * Springboard invite must not say "NextKey". Defaults to DEFAULT_PRODID.
+   */
+  prodId?: string;
 }
+
+export const DEFAULT_PRODID = "-//NextKey CRM//Meeting//EN";
 
 /** RFC 5545 §3.3.11 text escaping: backslash, semicolon, comma, newline. */
 function escapeText(value: string): string {
@@ -85,7 +92,7 @@ export function buildIcs(ev: IcsEvent): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//NextKey CRM//Meeting//EN",
+    `PRODID:${(ev.prodId ?? DEFAULT_PRODID).replace(/[\r\n]/g, "")}`,
     "CALSCALE:GREGORIAN",
     `METHOD:${method}`,
     "BEGIN:VEVENT",

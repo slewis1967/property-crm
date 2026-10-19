@@ -16,7 +16,7 @@ import { buildAppointmentRow } from "../../../../utils/appointments";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../sign/_shared";
 import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
-import { crmLinkOrigin, isSpringboardBookHost } from "../../../../utils/springboard-book-host";
+import { crmLinkOrigin, guestJoinOrigin, isSpringboardBookHost } from "../../../../utils/springboard-book-host";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -174,15 +174,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
       const room = contactId ? roomForContact(contactId) : `book-${startMs}`;
       const ttlHours = Math.max(24, Math.ceil((endMs - now) / 3_600_000) + 6);
       const token = await signGuestToken({ room, name, ttlHours });
-      // /join and /video live on the CRM host only. A booking taken on
-      // book.springboardhomes.com.au mints them against the CRM; on the CRM
-      // host this is the request's own origin, as before.
-      const linkOrigin = crmLinkOrigin(
-        req.nextUrl.origin,
-        isSpringboardBookHost(req.nextUrl.hostname, req.headers.get("host"), req.headers.get("x-forwarded-host")),
+      // The lead's join link: Springboard leads get it on
+      // book.springboardhomes.com.au (no nextkey.com.au URL in the panel,
+      // email or .ics); NextKey hosts keep the request origin. The host's
+      // /video room is a staff page and always stays on the CRM.
+      const onBookHost = isSpringboardBookHost(
+        req.nextUrl.hostname,
+        req.headers.get("host"),
+        req.headers.get("x-forwarded-host"),
       );
-      videoLink = `${linkOrigin}/join/${encodeURIComponent(token)}`;
-      hostVideoLink = `${linkOrigin}/video/${encodeURIComponent(room)}`;
+      videoLink = `${guestJoinOrigin(host.brand, req.nextUrl.origin, onBookHost)}/join/${encodeURIComponent(token)}`;
+      hostVideoLink = `${crmLinkOrigin(req.nextUrl.origin, onBookHost)}/video/${encodeURIComponent(room)}`;
     } catch {
       videoLink = null;
       hostVideoLink = null;

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   crmLinkOrigin,
+  guestJoinOrigin,
   isSpringboardBookHost,
   springboardBookRoute,
 } from "./springboard-book-host";
@@ -34,6 +35,17 @@ describe("springboardBookRoute", () => {
 
   it("serves the slug the hostname is for", () => {
     expect(findHostBySlug("springboard")?.brand).toBe("springboard");
+  });
+});
+
+describe("guestJoinOrigin", () => {
+  it("puts a Springboard lead's join link on the Springboard host, from either host", () => {
+    expect(guestJoinOrigin("springboard", "https://crm.nextkey.com.au", false)).toBe("https://book.springboardhomes.com.au");
+    expect(guestJoinOrigin("springboard", "https://book.springboardhomes.com.au", true)).toBe("https://book.springboardhomes.com.au");
+  });
+
+  it("keeps NextKey join links on the request origin", () => {
+    expect(guestJoinOrigin("nextkey", "https://crm.nextkey.com.au", false)).toBe("https://crm.nextkey.com.au");
   });
 });
 

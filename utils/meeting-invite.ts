@@ -13,7 +13,7 @@
  * Springboard sender (both Brevo-validated — see CLAUDE.md EMAIL SENDERS).
  */
 import { sendBrevoEmail, type BrevoSendResult } from "./brevo";
-import { icsBase64 } from "./ics";
+import { DEFAULT_PRODID, icsBase64 } from "./ics";
 import type { Brand } from "./scheduling-hosts";
 
 /** Validated Brevo senders per brand (mirrors utils/signatures + brevo.ts). */
@@ -54,7 +54,22 @@ export interface MeetingInviteOpts {
   attendees?: Array<{ email: string; name?: string }>;
 }
 
-const BRAND_TEAL = "#0F4C5C";
+/**
+ * Invite colours per brand. NextKey keeps its teal; a Springboard invite goes
+ * to Springboard leads, so it uses Springboard navy + amber (brand firewall).
+ * Navy carries the heading, button and link (amber text on white is too faint
+ * to read); amber is the accent rule under the heading.
+ */
+const BRAND_COLOURS: Record<Brand, { primary: string; accent: string | null }> = {
+  nextkey: { primary: "#0F4C5C", accent: null },
+  springboard: { primary: "#020e40", accent: "#c7894e" },
+};
+
+/** .ics PRODID per brand — some calendar apps show who produced the file. */
+const BRAND_PRODID: Record<Brand, string> = {
+  nextkey: DEFAULT_PRODID,
+  springboard: "-//Springboard Homes//Meeting//EN",
+};
 
 function fmtRange(start: string, end: string, tz: string): string {
   const s = new Date(start);
@@ -81,10 +96,14 @@ function escapeHtml(s: string): string {
 export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   const tz = opts.tz ?? "Australia/Brisbane";
   const when = fmtRange(opts.start, opts.end, tz);
+  const { primary, accent } = BRAND_COLOURS[opts.host.brand] ?? BRAND_COLOURS.nextkey;
+  const accentRule = accent
+    ? `<div style="width:56px;height:3px;background:${accent};margin:0 0 12px;"></div>`
+    : "";
   const greetingName = opts.to.name ? ` ${escapeHtml(opts.to.name.split(" ")[0])}` : "";
   const joinBtn = opts.joinUrl
     ? `<tr><td style="padding:8px 0 20px;">
-         <a href="${escapeHtml(opts.joinUrl)}" style="display:inline-block;background:${BRAND_TEAL};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
+         <a href="${escapeHtml(opts.joinUrl)}" style="display:inline-block;background:${primary};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
        </td></tr>`
     : "";
   const locationRow = !opts.joinUrl && opts.location
@@ -94,12 +113,13 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
     ? `<tr><td style="padding:12px 0 0;color:#4b5563;white-space:pre-line;">${escapeHtml(opts.description)}</td></tr>`
     : "";
   const joinFallback = opts.joinUrl
-    ? `<p style="color:#6b7280;font-size:13px;margin:18px 0 0;">If the button doesn't work, copy this link into your browser:<br><a href="${escapeHtml(opts.joinUrl)}" style="color:${BRAND_TEAL};">${escapeHtml(opts.joinUrl)}</a></p>`
+    ? `<p style="color:#6b7280;font-size:13px;margin:18px 0 0;">If the button doesn't work, copy this link into your browser:<br><a href="${escapeHtml(opts.joinUrl)}" style="color:${primary};">${escapeHtml(opts.joinUrl)}</a></p>`
     : "";
 
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
-    <h2 style="color:${BRAND_TEAL};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
+    <h2 style="color:${primary};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
+    ${accentRule}
     <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">You've been invited to a meeting</p>
     <p style="margin:0 0 14px;">Hi${greetingName},</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;">
@@ -138,6 +158,7 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
       email: a.email,
     })),
     method: "REQUEST",
+    prodId: BRAND_PRODID[opts.host.brand],
   });
 
   return sendBrevoEmail({
