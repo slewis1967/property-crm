@@ -8,6 +8,7 @@ import PublicRouteGate from "./components/PublicRouteGate";
 import Sidebar from "./components/Sidebar";
 import HelpButton from "./components/HelpButton";
 import { headers as nextHeaders } from "next/headers";
+import { BOOK_HOST_HEADER } from "../utils/springboard-book-host";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -124,6 +125,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // set by the proxy AFTER stripping any client-supplied value, so it is not forgeable.
   const h = await nextHeaders();
   const isPublic = h.get("x-public-route") === "1";
+  // book.springboardhomes.com.au, same trusted-header model. There the URL is
+  // "/" (rewritten to /book/springboard), so the pathname-based chrome checks
+  // in AppShell / PublicRouteGate can't see it is the booking page; this flag
+  // makes those pages chromeless from the server render on, and drops the
+  // NextKey CRM manifest (which also 404s on that host).
+  const isBookHost = h.get(BOOK_HOST_HEADER) === "1";
   // Only fetch sidebar counts for authenticated/staff routes. Public routes render
   // chromeless and must not execute sidebar DB queries or serialize staff routes.
   const counts = isPublic ? null : await getSidebarCounts();
@@ -135,13 +142,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             /manifest.json (503 / login redirect). use-credentials sends the CF
             Access cookie, so the manifest loads for signed-in users (the whole
             app is behind Access anyway). */}
-        <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
+        {!isBookHost && <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />}
       </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />} help={isPublic ? null : <HelpButton />}>
+        <AppShell
+          sidebar={isPublic ? null : <Sidebar counts={counts!} />}
+          help={isPublic ? null : <HelpButton />}
+          standalone={isBookHost}
+        >
           {children}
         </AppShell>
-        <PublicRouteGate>
+        <PublicRouteGate hidden={isBookHost}>
           <VoiceAssistant />
         </PublicRouteGate>
       </body>

@@ -16,6 +16,7 @@ import { buildAppointmentRow } from "../../../../utils/appointments";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../sign/_shared";
 import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
+import { crmLinkOrigin, guestJoinOrigin, isSpringboardBookHost } from "../../../../utils/springboard-book-host";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -173,8 +174,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
       const room = contactId ? roomForContact(contactId) : `book-${startMs}`;
       const ttlHours = Math.max(24, Math.ceil((endMs - now) / 3_600_000) + 6);
       const token = await signGuestToken({ room, name, ttlHours });
-      videoLink = `${req.nextUrl.origin}/join/${encodeURIComponent(token)}`;
-      hostVideoLink = `${req.nextUrl.origin}/video/${encodeURIComponent(room)}`;
+      // The lead's join link: Springboard leads get it on
+      // book.springboardhomes.com.au (no nextkey.com.au URL in the panel,
+      // email or .ics); NextKey hosts keep the request origin. The host's
+      // /video room is a staff page and always stays on the CRM.
+      const onBookHost = isSpringboardBookHost(
+        req.nextUrl.hostname,
+        req.headers.get("host"),
+        req.headers.get("x-forwarded-host"),
+      );
+      videoLink = `${guestJoinOrigin(host.brand, req.nextUrl.origin, onBookHost)}/join/${encodeURIComponent(token)}`;
+      hostVideoLink = `${crmLinkOrigin(req.nextUrl.origin, onBookHost)}/video/${encodeURIComponent(room)}`;
     } catch {
       videoLink = null;
       hostVideoLink = null;

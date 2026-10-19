@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { log } from "./utils/logger";
+import {
+  BOOK_HOST_HEADER,
+  isSpringboardBookHost,
+  springboardBookRobots,
+  springboardBookRoute,
+} from "./utils/springboard-book-host";
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
@@ -342,12 +348,86 @@ function originAllowed(origin: string | null): boolean {
   }
 }
 
+// book.springboardhomes.com.au — the Springboard booking page on its own
+// hostname (see utils/springboard-book-host.ts). That host is a Netlify domain
+// alias with NO Cloudflare Access in front of it, so it gets its own branch,
+// decided before anything else: an exact allow-list, a 404 for everything else.
+// It never reaches the CF Access gate below and never redirects to the CRM.
+function plainText(body: string, status: number, extra: Record<string, string> = {}): NextResponse {
+  return new NextResponse(body, {
+    status,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "x-content-type-options": "nosniff",
+      ...extra,
+    },
+  });
+}
+
+function springboardBookHostResponse(req: NextRequest, requestHeaders: Headers): NextResponse {
+  const { pathname } = req.nextUrl;
+
+  // CSRF, scoped to this host: a mutation must come from this host's own page
+  // (or carry no Origin at all). The CRM's TRUSTED_HOSTS list is deliberately
+  // NOT widened — a page on this host can never POST to the CRM host.
+  if (MUTATING_METHODS.has(req.method)) {
+    const origin = req.headers.get("origin");
+    if (origin) {
+      let originHost = "";
+      try {
+        originHost = new URL(origin).hostname;
+      } catch {
+        /* unparseable (e.g. "null") — rejected below */
+      }
+      if (!isSpringboardBookHost(originHost)) {
+        return NextResponse.json({ error: "Forbidden: untrusted origin" }, { status: 403 });
+      }
+    }
+  }
+
+  const decision = springboardBookRoute(pathname, req.method);
+  if (decision.kind === "not_found") {
+    return plainText("Not found", 404, { "x-robots-tag": "noindex", "cache-control": "no-store" });
+  }
+  if (decision.kind === "robots") {
+    return plainText(springboardBookRobots(), 200, { "cache-control": "public, max-age=3600" });
+  }
+
+  // Allowed: tag it public (chromeless, no sidebar queries) and as this host.
+  requestHeaders.set("x-public-route", "1");
+  requestHeaders.set(BOOK_HOST_HEADER, "1");
+  if (decision.kind === "rewrite") {
+    const url = req.nextUrl.clone();
+    url.pathname = decision.pathname;
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+  }
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // Prepare request headers for downstream with sanitisation of any client-forgeable flags.
   const requestHeaders = new Headers(req.headers);
   // NEVER trust client-supplied public-route flags — strip before we decide.
   requestHeaders.delete("x-public-route");
+  requestHeaders.delete(BOOK_HOST_HEADER);
+
+  // Every host signal, so a request is restricted if ANY of them names the
+  // booking host. Matching only ever narrows what a caller can reach.
+  if (
+    isSpringboardBookHost(
+      req.nextUrl.hostname,
+      req.headers.get("host"),
+      req.headers.get("x-forwarded-host"),
+    )
+  ) {
+    return springboardBookHostResponse(req, requestHeaders);
+  }
+
+  // /favicon.ico is in the matcher only so the booking host above can swap in
+  // the Springboard icon. Everywhere else it passes straight through, exactly
+  // as it did when the matcher excluded it.
+  if (pathname === "/favicon.ico") return NextResponse.next();
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
   // a Cloudflare Access redirect_url concatenation can produce URLs like
@@ -430,6 +510,8 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   // Apply to everything except Next's static assets and image-optimisation
-  // pipeline. API routes ARE matched — they need the same gate.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // pipeline. API routes ARE matched — they need the same gate. /favicon.ico is
+  // matched (it used to be excluded) so the Springboard booking host can serve
+  // its own icon; on every other host proxy() passes it straight through.
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };
