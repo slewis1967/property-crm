@@ -16,6 +16,7 @@ import { buildAppointmentRow } from "../../../../utils/appointments";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../sign/_shared";
 import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
+import { checkEmail, checkPhone } from "../../../../utils/lead-check";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -26,7 +27,7 @@ import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
  *
  *   GET  /api/book/<slug>            → { host, days: [{date,label,slots[]}] }
  *   POST /api/book/<slug>            → { ok, video_link }
- *          body { start, name, email, phone?, notes?, website? }
+ *          body { start, name, email, phone, notes?, website? }
  *
  * Availability is derived from the host's existing `appointments` (no external
  * calendar). `website` is a honeypot — bots fill it; we silently drop those.
@@ -126,6 +127,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   }
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
+  // Real details only: refuses fake numbers, throwaway addresses and domains that
+  // can't receive mail, before a calendar slot is taken or an invite is sent.
+  const phoneCheck = checkPhone(body.phone || "");
+  if (!phoneCheck.ok) {
+    return NextResponse.json({ error: phoneCheck.message }, { status: 400 });
+  }
+  const emailCheck = await checkEmail(email);
+  if (!emailCheck.ok) {
+    return NextResponse.json({ error: emailCheck.message }, { status: 400 });
   }
   const startMs = Date.parse(start);
   if (!Number.isFinite(startMs)) {

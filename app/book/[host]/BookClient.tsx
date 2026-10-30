@@ -217,7 +217,7 @@ export default function BookClient({
                       className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${tint.ring}`} />
                     <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address"
                       className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${tint.ring}`} />
-                    <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)"
+                    <input required type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone"
                       className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${tint.ring}`} />
                     <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Anything you'd like to cover? (optional)"
                       className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${tint.ring}`} />
