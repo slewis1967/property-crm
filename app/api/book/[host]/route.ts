@@ -69,7 +69,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ host: stri
     // still re-validated against live busy times on POST.
     busy = [];
   }
-  const days = computeAvailability(now, busy);
+  const days = computeAvailability(now, busy, host.booking);
 
   return NextResponse.json({
     host: { slug: host.slug, label: host.label, displayName: host.displayName, brand: host.brand },
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   const now = Date.now();
   const windowEnd = now + (DEFAULT_BOOKING_CONFIG.lookaheadDays + 1) * 86_400_000;
   const busy = await busyFor(host.email, now, windowEnd);
-  if (!isSlotAvailable(start, now, busy)) {
+  if (!isSlotAvailable(start, now, busy, host.booking)) {
     return NextResponse.json(
       { error: "Sorry, that time was just taken. Please pick another." },
       { status: 409 },
