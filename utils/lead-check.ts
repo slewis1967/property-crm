@@ -44,6 +44,10 @@ export function checkPhone(raw: string): CheckResult {
   const value = raw.trim();
   const digits = value.replace(/\D/g, "");
   if (!digits) return { ok: false, message: "Please enter your phone number." };
+  // The digits are checked but the typed value is what gets stored and emailed.
+  if (/[^\d\s+().-]/.test(value)) {
+    return { ok: false, message: "Please enter your real phone number so we can reach you." };
+  }
 
   const plus = value.startsWith("+");
   let national = digits;
@@ -133,8 +137,11 @@ export async function checkEmail(raw: string, resolver: MailResolver = dns): Pro
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, message: "Please enter a valid email address." };
   }
-  const domain = domainToASCII(email.slice(at + 1));
-  if (!isHostname(domain)) {
+  // domainToASCII decodes %2e and drops "/x", so check what was typed as well: the
+  // raw address is what gets stored and emailed.
+  const rawDomain = email.slice(at + 1);
+  const domain = domainToASCII(rawDomain);
+  if (/[^\p{L}\p{M}\p{N}.-]/u.test(rawDomain) || !isHostname(domain)) {
     return { ok: false, message: "Please enter a valid email address." };
   }
 
