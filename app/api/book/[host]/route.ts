@@ -33,6 +33,10 @@ import { checkEmail, checkPhone } from "../../../../utils/lead-check";
  * calendar). `website` is a honeypot — bots fill it; we silently drop those.
  */
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function busyFor(hostEmail: string, fromMs: number, toMs: number): Promise<Interval[]> {
@@ -243,11 +247,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
       name: email === host.email ? host.displayName : email,
     })),
     subject: `New booking: ${name} — ${whenLabel}`,
-    html: `<p>${name} booked a meeting via your self-book page.</p>
+    html: `<p>${escapeHtml(name)} booked a meeting via your self-book page.</p>
       <p><strong>When:</strong> ${whenLabel} (AEST)<br>
-      <strong>Email:</strong> ${email}${body.phone ? `<br><strong>Phone:</strong> ${body.phone}` : ""}</p>
+      <strong>Email:</strong> ${escapeHtml(email)}${body.phone ? `<br><strong>Phone:</strong> ${escapeHtml(body.phone)}` : ""}</p>
       ${hostVideoLink ? `<p><a href="${hostVideoLink}">Join the video meeting</a></p>` : ""}
-      ${body.notes ? `<p><strong>Notes:</strong> ${body.notes}</p>` : ""}`,
+      ${body.notes ? `<p><strong>Notes:</strong> ${escapeHtml(String(body.notes))}</p>` : ""}`,
     tags: ["self-book-notify"],
   }).catch(() => undefined);
 

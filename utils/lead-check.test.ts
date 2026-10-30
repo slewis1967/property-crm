@@ -24,7 +24,7 @@ describe("checkPhone", () => {
     expect(checkPhone(n)).toMatchObject({ ok: false, message: expect.stringContaining("real phone number") });
   });
 
-  it.each(["", "12345", "+1 555", "0512 678 901", "04126789"])("refuses the malformed %j", (n) => {
+  it.each(["", "12345", "+1 555", "0512 678 901", "04126789", "0455867214<img src=x>"])("refuses the malformed %j", (n) => {
     expect(checkPhone(n).ok).toBe(false);
   });
 });
@@ -66,7 +66,7 @@ describe("checkEmail", () => {
     expect((await checkEmail("not-an-email", hasMx)).ok).toBe(false);
   });
 
-  it.each(["a@mailinator.com.", "a@example..com", "a@-example.com", "a@exa_mple.com"])(
+  it.each(["a@mailinator.com.", "a@example..com", "a@-example.com", "a@exa_mple.com", "a@evil%2ecom", "a@a.com/x", "a@a.com?x"])(
     "refuses the malformed domain %s before any lookup",
     async (e) => {
       expect(await checkEmail(e, hasMx)).toMatchObject({ ok: false, message: "Please enter a valid email address." });
