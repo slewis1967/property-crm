@@ -8,6 +8,7 @@
  * Server-side only: it pulls in node:dns and the 10,000-line throwaway list.
  */
 import { promises as dns } from "node:dns";
+import { domainToASCII } from "node:url";
 import { DISPOSABLE_DOMAINS } from "./disposable-domains";
 import { suggestEmailCorrection } from "./email-typo";
 
@@ -75,10 +76,20 @@ export type MailResolver = {
   resolve4: (domain: string) => Promise<unknown[]>;
 };
 
+/**
+ * Strict hostname check, run before the throwaway list and DNS. A trailing dot
+ * ("mailinator.com.") resolves fine but wouldn't match the list.
+ */
+function isHostname(domain: string): boolean {
+  if (domain.length > 253) return false;
+  const labels = domain.split(".");
+  return labels.length >= 2 && labels.every((l) => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(l));
+}
+
 /** DNS answered and there is no such record. Anything else (timeout, SERVFAIL) is not an answer. */
 function isNoRecord(err: unknown): boolean {
   const code = (err as { code?: string } | null)?.code;
-  return code === "ENOTFOUND" || code === "ENODATA";
+  return code === "ENOTFOUND" || code === "ENODATA" || code === "EBADNAME";
 }
 
 const DNS_TIMEOUT_MS = 3000;
@@ -122,7 +133,10 @@ export async function checkEmail(raw: string, resolver: MailResolver = dns): Pro
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, message: "Please enter a valid email address." };
   }
-  const domain = email.slice(at + 1);
+  const domain = domainToASCII(email.slice(at + 1));
+  if (!isHostname(domain)) {
+    return { ok: false, message: "Please enter a valid email address." };
+  }
 
   const suggestion = suggestEmailCorrection(email);
   if (suggestion) {

@@ -65,4 +65,15 @@ describe("checkEmail", () => {
   it("refuses bad syntax", async () => {
     expect((await checkEmail("not-an-email", hasMx)).ok).toBe(false);
   });
+
+  it.each(["a@mailinator.com.", "a@example..com", "a@-example.com", "a@exa_mple.com"])(
+    "refuses the malformed domain %s before any lookup",
+    async (e) => {
+      expect(await checkEmail(e, hasMx)).toMatchObject({ ok: false, message: "Please enter a valid email address." });
+    },
+  );
+
+  it("accepts an international domain", async () => {
+    expect(await checkEmail("a@müller-bau.de", hasMx)).toEqual({ ok: true });
+  });
 });
