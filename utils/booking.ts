@@ -24,6 +24,13 @@ export interface BookingConfig {
   lookaheadDays: number;
   /** Minimum notice before a slot, in minutes (no "in 5 minutes" bookings). */
   minLeadMinutes: number;
+  /**
+   * Per-weekday hours, in minutes after midnight AEST: weekday (0=Sun … 6=Sat)
+   * → [first slot start, last slot end]. When set it replaces `weekdays`,
+   * `dayStartHour` and `dayEndHour`: only the weekdays listed are bookable.
+   * Allows half-hours, e.g. 8:00–19:30 is [480, 1170].
+   */
+  hours?: Partial<Record<number, [number, number]>>;
 }
 
 export const DEFAULT_BOOKING_CONFIG: BookingConfig = {
@@ -105,24 +112,28 @@ export function computeAvailability(
     // aestParts handles month/year rollovers, and QLD's no-DST offset means the
     // shift is constant so no slot lands on the wrong wall-clock hour.
     const { y, m, d, weekday } = aestParts(nowMs + offset * 86_400_000);
-    if (!cfg.weekdays.includes(weekday)) continue;
+    const window = cfg.hours
+      ? cfg.hours[weekday]
+      : cfg.weekdays.includes(weekday)
+        ? [cfg.dayStartHour * 60, cfg.dayEndHour * 60]
+        : undefined;
+    if (!window) continue;
+    const [openMin, closeMin] = window;
 
     const slots: Slot[] = [];
-    for (let hour = cfg.dayStartHour; hour < cfg.dayEndHour; hour++) {
-      for (let min = 0; min < 60; min += cfg.slotMinutes) {
-        const startMs = aestInstant(y, m, d, hour, min);
-        const endMs = startMs + slotMs;
-        // Slot must end by the day-end hour.
-        const dayEndMs = aestInstant(y, m, d, cfg.dayEndHour, 0);
-        if (endMs > dayEndMs) continue;
-        if (startMs < earliestMs) continue;
-        if (overlapsBusy(startMs, endMs, busy)) continue;
-        slots.push({
-          startISO: new Date(startMs).toISOString(),
-          endISO: new Date(endMs).toISOString(),
-          label: `${pad(hour)}:${pad(min)}`,
-        });
-      }
+    // Slots step from the opening time and must end by closing time.
+    for (let t = openMin; t + cfg.slotMinutes <= closeMin; t += cfg.slotMinutes) {
+      const hour = Math.floor(t / 60);
+      const min = t % 60;
+      const startMs = aestInstant(y, m, d, hour, min);
+      const endMs = startMs + slotMs;
+      if (startMs < earliestMs) continue;
+      if (overlapsBusy(startMs, endMs, busy)) continue;
+      slots.push({
+        startISO: new Date(startMs).toISOString(),
+        endISO: new Date(endMs).toISOString(),
+        label: `${pad(hour)}:${pad(min)}`,
+      });
     }
     if (slots.length === 0) continue;
 
