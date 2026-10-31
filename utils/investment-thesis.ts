@@ -1,4 +1,4 @@
-import { MODELS, orText } from "./openrouter";
+import { MODELS, aiText } from "./anthropic";
 import { getCachedOrGenerate } from "./ai-cache";
 import { recall } from "./memory";
 import type { MarketData } from "./deal-packet";
@@ -99,7 +99,7 @@ export async function getInvestmentThesis(args: {
       },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
       generate: async () => {
-        let text = await orText({
+        let text = await aiText({
           model: MODEL,
           maxTokens: 1500,
           web: true,

@@ -18,7 +18,7 @@
  * model request, so the limit is cost control as much as abuse control).
  */
 import { NextResponse } from "next/server";
-import { MODELS, orChat } from "../../../../../utils/openrouter";
+import { aiText, imageBlock, MODELS } from "../../../../../utils/anthropic";
 import { enforceRateLimit } from "../../../../../utils/rate-limit";
 import { resolveToken, clientIp } from "../../_shared";
 import {
@@ -67,22 +67,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 
   const years = financialYearsNeeded(new Date());
   try {
-    const response = await orChat({
+    const text = await aiText({
       model: MODELS.extract,
-      max_tokens: 400,
-      reasoning: { effort: "low" },
+      maxTokens: 400,
+      effort: "low",
       messages: [
         {
           role: "user",
-          content: [
-            { type: "image_url", image_url: { url: image } },
-            { type: "text", text: screenHelpPrompt(years) },
-          ],
+          content: [imageBlock(mime, m[2]!), { type: "text", text: screenHelpPrompt(years) }],
         },
       ],
     });
-    const text = response.choices?.[0]?.message?.content;
-    const help = parseScreenHelp(typeof text === "string" ? text : "");
+    const help = parseScreenHelp(text);
     log.info("portal.mygov_help", { requestId: resolved.request.id, stuck: help.stuck });
     return NextResponse.json({ ok: true, help });
   } catch (e) {
