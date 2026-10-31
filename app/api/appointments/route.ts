@@ -53,6 +53,7 @@ type Body = {
   notes?: string;           // legacy alias accepted for backward compat
   location?: string;        // physical location; ignored when a video link is minted
   timeZone?: string;        // IANA tz used to render the invite's human time
+  meeting_kind?: "video" | "phone"; // default "video" — "phone" skips the LiveKit link
 
   // Host / attendees
   host_email?: string;      // meeting owner; defaults to current authenticated user
@@ -102,7 +103,8 @@ export async function POST(req: NextRequest) {
   const startISO = new Date(startMs).toISOString();
   const endISO = new Date(endMs).toISOString();
   const description = (body.description ?? body.notes ?? "").trim() || undefined;
-  const location = body.location?.trim() || undefined;
+  const meetingKind: "video" | "phone" = body.meeting_kind === "phone" ? "phone" : "video";
+  const location = body.location?.trim() || (meetingKind === "phone" ? "Phone call" : undefined);
   const host_email = (body.host_email && EMAIL_RE.test(body.host_email)) ? body.host_email : currentUser;
   const host = findHost(host_email) ?? {
     email: host_email,
@@ -127,7 +129,7 @@ export async function POST(req: NextRequest) {
   // meeting. Best-effort: if LiveKit isn't configured or signing fails, the
   // meeting is still booked, just without a video link.
   let videoLink: string | null = null;
-  if (livekitConfigured()) {
+  if (meetingKind !== "phone" && livekitConfigured()) {
     try {
       const room = roomForContact(body.contact_id);
       const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
@@ -192,6 +194,7 @@ export async function POST(req: NextRequest) {
           uid,
           tz: body.timeZone,
           attendees: roster,
+          kind: meetingKind,
         }),
       ),
     );
