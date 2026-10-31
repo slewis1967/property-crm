@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { formatDateTime } from "../../../../utils/datetime";
-
-type NoteEntry = { text: string; created_at: string };
+import { CALL_OUTCOMES, type CallOutcome, type NoteEntry } from "../../../../utils/call-outcome";
 
 /**
  * Stage picker + notes for one lead. The stage goes through the same
@@ -29,6 +28,7 @@ export default function LeadActions({
   const [notes, setNotes] = useState(initialNotes);
   const [draft, setDraft] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [savingCall, setSavingCall] = useState(false);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
 
@@ -58,6 +58,26 @@ export default function LeadActions({
     }
   };
 
+  const logCall = async (outcome: CallOutcome) => {
+    setSavingCall(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/opportunities/${leadId}/call`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcome }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (Array.isArray(data.notes)) setNotes(data.notes);
+      say(`Logged: ${CALL_OUTCOMES[outcome]}`);
+    } catch (e) {
+      setError(`Call not logged: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setSavingCall(false);
+    }
+  };
+
   const addNote = async () => {
     const text = draft.trim();
     if (!text) return;
@@ -83,6 +103,25 @@ export default function LeadActions({
 
   return (
     <>
+      <section className="px-4 pt-5">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          How did the call go?
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.keys(CALL_OUTCOMES) as CallOutcome[]).map((outcome) => (
+            <button
+              key={outcome}
+              type="button"
+              disabled={savingCall}
+              onClick={() => logCall(outcome)}
+              className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 disabled:opacity-50"
+            >
+              {CALL_OUTCOMES[outcome]}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="px-4 pt-5">
         <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
           Stage{pipelineName ? ` · ${pipelineName}` : ""}
