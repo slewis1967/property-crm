@@ -15,7 +15,7 @@
  * servicing signal and each one is a model call we'd be paying for.
  */
 import { supabase } from "./supabase";
-import { MODELS, orChat } from "./openrouter";
+import { aiText, MODELS, pdfBlock } from "./anthropic";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import { hydrateNeedsAnalysis, type NeedsAnalysisData } from "./needsAnalysis";
 import { hydrateFactFind } from "./factfind";
@@ -467,26 +467,21 @@ export async function runIncomeReconciliation(
         const res = await fetch(signed.signedUrl);
         if (!res.ok) throw new Error("could not download");
         const buf = new Uint8Array(await res.arrayBuffer());
-        const dataUrl = `data:application/pdf;base64,${Buffer.from(buf).toString("base64")}`;
-
-        const response = await orChat({
+        const text = await aiText({
           model: MODELS.extract,
-          max_tokens: 900,
-          reasoning: { effort: "low" },
+          maxTokens: 900,
+          effort: "low",
           messages: [
             {
               role: "user",
               content: [
-                { type: "file", file: { filename: t.filename, file_data: dataUrl } },
+                pdfBlock(Buffer.from(buf).toString("base64"), t.filename),
                 { type: "text", text: t.docKey === "payslip" ? PAYSLIP_PROMPT : ATO_PROMPT },
               ],
             },
           ],
-          plugins: [{ id: "file-parser", pdf: { engine: "native" } }],
         });
-
-        const text = response.choices?.[0]?.message?.content;
-        const j = parseJson(typeof text === "string" ? text : "");
+        const j = parseJson(text);
 
         if (t.docKey === "payslip") {
           const ded = Array.isArray(j.deductions) ? j.deductions : [];

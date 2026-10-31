@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MODELS, orText } from "@/utils/openrouter";
+import { MODELS, aiText } from "@/utils/anthropic";
 import { supabase } from "@/utils/supabase";
 import { requireAuth } from "@/utils/cf-access";
 import type { DealPacket, AssumptionSource } from "@/utils/deal-packet";
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 
   let parsed: Record<string, unknown> | null = null;
   try {
-    const text = await orText({
+    const text = await aiText({
       model: MODEL,
       maxTokens: 1500,
       web: true,

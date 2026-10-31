@@ -1,4 +1,4 @@
-import { MODELS, orText } from "./openrouter";
+import { MODELS, aiText } from "./anthropic";
 import { entityPreamble } from "./compliance-entity";
 import { type MailIdentityKey } from "./mailIdentities";
 
@@ -202,7 +202,7 @@ OUTPUT — STRICT JSON, no code fences, no commentary:
 {"violations":[{"law":"...","severity":"high"|"medium"|"low","snippet":"...","reason":"...","fix":"..."}],"suggestion":"<compliant rewrite or empty>"}`;
 
 export async function reviewDealNote(note: string): Promise<NoteReviewResult> {
-  const text = await orText({
+  const text = await aiText({
     model: MODEL,
     maxTokens: 1200,
     thinking: false,
@@ -226,7 +226,7 @@ export async function reviewBroadcastCopy(args: {
   brand?: MailIdentityKey;
 }): Promise<ComplianceReviewResult> {
   const brand: MailIdentityKey = args.brand === "springboard" ? "springboard" : "nextkey";
-  const text = await orText({
+  const text = await aiText({
     model: MODEL,
     maxTokens: 2000,
     thinking: false,

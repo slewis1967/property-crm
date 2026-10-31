@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MODELS, orText, orErrorMessage } from "@/utils/openrouter";
+import { MODELS, aiText, aiErrorMessage } from "@/utils/anthropic";
 
 const CRM_FIELDS = [
   { key: "full_name",       label: "Full Name",       desc: "Contact's full name (use if stored as one field)" },
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No headers provided" }, { status: 400 });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || apiKey === "your_api_key_here") {
     // Fallback: best-guess heuristic mapping without AI
     const mapping: Record<string, string> = {};
@@ -69,7 +69,7 @@ Instructions:
 Return ONLY a JSON object with no explanation: {"csv_header": "crm_field_key", ...}`;
 
   try {
-    const text = await orText({
+    const text = await aiText({
       model: MODELS.fast,
       user: prompt,
       maxTokens: 512,
@@ -91,6 +91,6 @@ Return ONLY a JSON object with no explanation: {"csv_header": "crm_field_key", .
 
     return NextResponse.json({ mapping, method: "ai" });
   } catch (e) {
-    return NextResponse.json({ error: orErrorMessage(e) }, { status: 500 });
+    return NextResponse.json({ error: aiErrorMessage(e) }, { status: 500 });
   }
 }

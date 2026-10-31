@@ -9,7 +9,7 @@
  */
 import { supabase } from "./supabase";
 import { requiredSlots, allowsExtra } from "./yla-documents";
-import { MODELS, orChat } from "./openrouter";
+import { aiText, MODELS, pdfBlock } from "./anthropic";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import {
   hasPdfHeader,
@@ -41,7 +41,7 @@ const SELECT =
  * its verdict — silently, and identically on every retry. One wave costs about
  * as long as the slowest single document.
  *
- * Safe to raise: each call goes through the OpenAI SDK, which already retries
+ * Safe to raise: each call goes through the Anthropic SDK, which already retries
  * 429/5xx, so a burst that brushes a rate limit is retried rather than being
  * turned into a spurious "this document couldn't be checked" fault.
  */
@@ -209,25 +209,21 @@ export async function runApplicationVerification(
           ...structuralIssues({ mime: m.mime, sizeBytes, isPdfHeader: hasPdfHeader(buf), encrypted: looksEncrypted(buf) }),
         );
         if (doVisual && structural.length === 0) {
-          const dataUrl = `data:application/pdf;base64,${Buffer.from(buf).toString("base64")}`;
-          const chatBody: Record<string, unknown> = {
+          const text = await aiText({
             model: MODELS.extract,
-            max_tokens: 600,
-            reasoning: { effort: "low" },
+            maxTokens: 600,
+            effort: "low",
             messages: [
               {
                 role: "user",
                 content: [
-                  { type: "file", file: { filename: m.filename, file_data: dataUrl } },
+                  pdfBlock(Buffer.from(buf).toString("base64"), m.filename),
                   { type: "text", text: visualCheckPrompt(m.docKey, m.slot) },
                 ],
               },
             ],
-            plugins: [{ id: "file-parser", pdf: { engine: "native" } }],
-          };
-          const response = await orChat(chatBody);
-          const text = response.choices?.[0]?.message?.content;
-          const verdict = parseVisualVerdict(typeof text === "string" ? text : "");
+          });
+          const verdict = parseVisualVerdict(text);
           financialYears[i] = verdict.financialYear ?? null;
           tfnSeen[i] = verdict.showsTfn === true;
           visual.push(...visualIssues(verdict));

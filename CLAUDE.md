@@ -42,7 +42,7 @@ All property data comes from **Supabase `global_stock_pool`** — not DuckDB. Th
 PWA basics live in `public/manifest.json` + the `metadata`/`viewport` exports in `app/layout.tsx`: standalone display, theme/background `#0F4C5C` (brand teal), `en-AU`, `appleWebApp.capable`, and the favicon/android-chrome/apple-touch icon set wired through `metadata.icons`. The OG/Twitter cards are also declared there.
 
 ### Voice Assistant (`app/components/VoiceAssistant.tsx` + `app/api/voice/converse/route.ts`)
-Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a `FAST`-model (Claude Haiku via OpenRouter) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
+Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a `FAST`-model (Claude Haiku) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
 
 Tool inventory (MVP):
 - `find_contact` — lookup by name/phone/email, returns top match (must be called before any contact-scoped tool)
@@ -69,10 +69,10 @@ Two-phase POST flow on `/api/broadcast`:
 
 **Compliance reviewer** (`utils/compliance-review.ts`) is purpose-built — does NOT call `senior_advisor.py`. Senior Advisor is a scheduled batch agent reviewing recommendations from a Veteran Advisor, not a generic copy reviewer. The reviewer here borrows Senior's AU-law lens but with a `(subject, body) → {violations: [...]}` interface tailored to broadcast copy.
 
-**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (OpenRouter/model outage), the UI offers the same override under a softer warning.
+**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (API/model outage), the UI offers the same override under a softer warning.
 
 ### Planning Feasibility (`app/feasibility/` + `app/api/ai/planning-feasibility/route.ts`)
-AI-led, Australia-wide development-feasibility tool. The advisor describes a property + objective; the tool **interviews** them (a small batch of targeted questions, grounded in the council planning scheme via OpenRouter web search and pre-filled with best-guesses), then **generates** a comprehensive preliminary report. The route runs `orText` (`MODELS.smart`, `web:true`) over a shared `messages` transcript in two phases:
+AI-led, Australia-wide development-feasibility tool. The advisor describes a property + objective; the tool **interviews** them (a small batch of targeted questions, grounded in the council planning scheme via Anthropic web search and pre-filled with best-guesses), then **generates** a comprehensive preliminary report. The route runs `aiText` (`MODELS.smart`, `web:true`) over a shared `messages` transcript in two phases:
 - `phase:"interview"` → returns `{ status:"questions"|"ready", understanding, questions[] }`
 - `phase:"report"` → returns `{ report }` as structured JSON (`title/subtitle/meta/keyStats/sections[blocks]/disclaimer`)
 
@@ -419,22 +419,43 @@ python3 /mnt/c/NEXUS-Memory/projects/enrich_images.py
 ```
 This scrapes PropMarket for estate images and fuzzy-matches to `builder_name`. ~7 of 149 properties currently have images; 25 builders are unmatched (not on PropMarket — came via email stocklists).
 
-## AI PROVIDER (OpenRouter)
-All server-side AI goes through **OpenRouter** (OpenAI-compatible API), via the
-shared client in `utils/openrouter.ts` — not the Anthropic SDK directly. Models
-are env-driven: `OPENROUTER_MODEL_SMART` (advisor text + document extraction,
-default `anthropic/claude-sonnet-4`) and `OPENROUTER_MODEL_FAST` (voice loop,
-compliance, deal-analyser parse/research, CSV mapping, default
-`anthropic/claude-haiku-4.5`). Web search uses OpenRouter's `:online` suffix, not
-Anthropic's `web_search` tool. References to "Claude Haiku/Opus" below mean the
-`FAST`/`SMART` models routed through OpenRouter (the defaults are Claude, but
-either can be repointed at any OpenRouter slug — e.g. `openai/gpt-4o-mini`).
+## AI PROVIDER (Anthropic)
+All server-side AI goes through the **Anthropic API** via the official SDK and the
+shared client in `utils/anthropic.ts`. Use `aiText()`; only the voice tool loop calls
+`getAnthropic()` directly. Models are env-driven: `ANTHROPIC_MODEL_SMART` (default
+`claude-sonnet-5-5`), `ANTHROPIC_MODEL_FAST` (default `claude-haiku-5-5`) and
+`ANTHROPIC_MODEL_EXTRACT` (document reading, defaults to SMART). References to "Claude
+Haiku/Opus" elsewhere mean those FAST/SMART models. Overrides must be current-generation
+models, because every request sets `output_config.effort`.
+
+Things that bite:
+- **Billing:** the key belongs to the Nextkey Console organisation, linked to Sean's Max
+  plan: $100 USD of credit each billing cycle, no rollover. When it runs out requests
+  fail until the next grant, unless purchased credits or auto-reload are set up.
+- **`maxTokens` means the answer's length.** Thinking counts toward the API's
+  `max_tokens` and can't be turned off on these models, so `aiText` adds room on top.
+  `thinking: false` means low effort, not no thinking.
+- **Web search** is the `web_search_20250305` server tool, capped by `maxSearches`
+  (default 3) and billed per search; Netlify functions get 60s. `aiText` returns only the text after the last search,
+  so narration before a search can't break a JSON parse.
+- **Long JSON:** Sonnet 5.5 broke the feasibility report's JSON in 3 of 7 tries, closing the
+  object just after `keyStats`, so that report passes `jsonSchema` (`utils/feasibility-report-schema.ts`).
+  Keep `minItems: 1` there, or the same slip returns valid JSON with no sections. Lower effort
+  isn't a fix for its speed: at `low` the model skipped web search altogether.
+- **No prefill:** a request whose last message is the assistant's returns a 400.
+- **Refusals:** SMART requests use the server-side fallback (`fallbacks: "default"`);
+  Haiku has none, so a declined FAST request throws.
+- **Voice history** goes through the browser and comes back untrusted, so
+  `utils/voice-history.ts` rebuilds it and strips thinking blocks.
+- **`OPENROUTER_API_KEY` stays set in the CRM** only for the OpenRouter balance on Paid
+  Accounts: the NEXUS fleet and Hermes still run on OpenRouter. `openai` stays a dependency
+  for `utils/embeddings.ts`.
 
 ## ENV VARS
 Stored in `.env.local` at project root:
-- `OPENROUTER_API_KEY` (required — all AI features; app fails env validation without it)
-- `OPENROUTER_MODEL_SMART` / `OPENROUTER_MODEL_FAST` (optional — override default model slugs)
-- `OPENROUTER_MODEL_EXTRACT` (optional — model for uploaded-document extraction in `/api/ai/extract-document`; defaults to `OPENROUTER_MODEL_SMART`. Set to a cheaper slug to trade contract/ID reading accuracy for cost)
+- `ANTHROPIC_API_KEY` (all AI features; a missing key warns at boot and AI calls fail at call-time)
+- `ANTHROPIC_MODEL_SMART` / `ANTHROPIC_MODEL_FAST` / `ANTHROPIC_MODEL_EXTRACT` (optional — override default models, see *AI PROVIDER*)
+- `OPENROUTER_API_KEY` (optional — only reads the OpenRouter balance for Paid Accounts)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `PARTNER_NOTIFY_EMAILS` (optional — who hears about partner hold requests; default `sean.l@nextkey.com.au`)
