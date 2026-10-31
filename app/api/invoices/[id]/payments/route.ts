@@ -3,30 +3,14 @@ import { supabase } from "../../../../../utils/supabase";
 import { requireAuth } from "../../../../../utils/cf-access";
 import { log, errInfo } from "../../../../../utils/logger";
 import { brisbaneToday } from "../../../../../utils/paid-services";
-import { invoiceErrMessage, isIsoDate, parseMoneyToCents, statusAfterPayments } from "../../../../../utils/invoices";
-import { loadInvoice, logInvoiceEvent } from "../../../../../utils/invoices-store";
+import { invoiceErrMessage, isIsoDate, parseMoneyToCents } from "../../../../../utils/invoices";
+import { loadInvoice } from "../../../../../utils/invoices-store";
 
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Re-add from the payments themselves, so the invoice can't drift from them. */
-async function settle(id: string, totalCents: number, lastPaidOn: string | null): Promise<void> {
-  const { data, error } = await supabase.from("invoice_payments").select("amount_cents").eq("invoice_id", id);
-  if (error) throw error;
-  const paid = (data ?? []).reduce((sum, p) => sum + Number(p.amount_cents), 0);
-  const status = statusAfterPayments(totalCents, paid);
-  const { error: updateError } = await supabase
-    .from("invoices")
-    .update({
-      amount_paid_cents: paid,
-      status,
-      paid_at: status === "paid" ? lastPaidOn : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id);
-  if (updateError) throw updateError;
-}
+const text = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
 
 /** POST { amount, paid_on, method?, note? }: record money received. */
 export async function POST(req: Request, { params }: Ctx) {
@@ -44,18 +28,15 @@ export async function POST(req: Request, { params }: Ctx) {
     if (cents === null || cents <= 0) {
       return NextResponse.json({ ok: false, error: "Enter the amount received." }, { status: 400 });
     }
-    const paidOn = isIsoDate(b.paid_on) ? b.paid_on : brisbaneToday();
-    const { error } = await supabase.from("invoice_payments").insert({
-      invoice_id: id,
-      amount_cents: cents,
-      paid_on: paidOn,
-      method: typeof b.method === "string" && b.method.trim() ? b.method.trim() : null,
-      note: typeof b.note === "string" && b.note.trim() ? b.note.trim() : null,
-      created_by: auth,
+    const { error } = await supabase.rpc("record_invoice_payment", {
+      p_id: id,
+      p_cents: cents,
+      p_paid_on: isIsoDate(b.paid_on) ? b.paid_on : brisbaneToday(),
+      p_method: text(b.method),
+      p_note: text(b.note),
+      p_actor: auth,
     });
     if (error) throw error;
-    await settle(id, invoice.total_cents, paidOn);
-    await logInvoiceEvent(id, "payment_recorded", auth, { cents, paid_on: paidOn });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("invoices.payment_failed", errInfo(e));
@@ -71,18 +52,13 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const paymentId = new URL(req.url).searchParams.get("payment");
   if (!paymentId) return NextResponse.json({ ok: false, error: "Which payment?" }, { status: 400 });
   try {
-    const invoice = await loadInvoice(id);
-    if (!invoice) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    const { data, error } = await supabase
-      .from("invoice_payments")
-      .delete()
-      .eq("id", paymentId)
-      .eq("invoice_id", id)
-      .select("amount_cents,paid_on");
+    const { data: removed, error } = await supabase.rpc("remove_invoice_payment", {
+      p_id: id,
+      p_payment_id: paymentId,
+      p_actor: auth,
+    });
     if (error) throw error;
-    if (!data?.length) return NextResponse.json({ ok: false, error: "Payment not found" }, { status: 404 });
-    await settle(id, invoice.total_cents, invoice.paid_at);
-    await logInvoiceEvent(id, "payment_removed", auth, { cents: data[0].amount_cents, paid_on: data[0].paid_on });
+    if (!removed) return NextResponse.json({ ok: false, error: "Payment not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("invoices.payment_remove_failed", errInfo(e));

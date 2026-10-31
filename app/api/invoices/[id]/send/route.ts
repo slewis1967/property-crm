@@ -7,7 +7,7 @@ import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { renderInvoiceHtml } from "../../../../../utils/pdf/invoicePdf";
 import { resolveIdentity } from "../../../../../utils/mailIdentities";
 import { brisbaneToday } from "../../../../../utils/paid-services";
-import { balanceCents, invoiceEmail, invoiceErrMessage, splitEmails } from "../../../../../utils/invoices";
+import { balanceCents, invoiceEmail, invoiceErrMessage, sellerFor, splitEmails } from "../../../../../utils/invoices";
 import { loadInvoice, loadSettings, logInvoiceEvent } from "../../../../../utils/invoices-store";
 
 export const runtime = "nodejs";
@@ -46,8 +46,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ ok: false, error: "Add the buyer's email address first." }, { status: 422 });
     }
 
-    const pdf = await htmlToPdf(renderInvoiceHtml(invoice, settings));
-    const message = invoiceEmail(invoice, settings, kind, brisbaneToday());
+    const seller = sellerFor(invoice, settings);
+    const pdf = await htmlToPdf(renderInvoiceHtml(invoice, seller));
+    const message = invoiceEmail(invoice, seller, kind, brisbaneToday());
     const identity = resolveIdentity(invoice.trading_as === "Springboard Homes" ? "springboard" : "nextkey");
     const cc = splitEmails(settings.cc_emails)
       .filter((email) => email.toLowerCase() !== to.toLowerCase())
@@ -60,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       html: message.html,
       fromEmail: identity.fromEmail,
       fromName: identity.fromName,
-      replyTo: settings.email ?? undefined,
+      replyTo: seller.email ?? undefined,
       tags: ["invoice", kind],
       attachments: [{ name: `Invoice_${invoice.number}.pdf`, content: Buffer.from(pdf).toString("base64") }],
     });

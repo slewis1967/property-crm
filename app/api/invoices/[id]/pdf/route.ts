@@ -3,7 +3,7 @@ import { requireAuth } from "../../../../../utils/cf-access";
 import { log, errInfo } from "../../../../../utils/logger";
 import { htmlToPdf } from "../../../../../utils/pdf/render";
 import { renderInvoiceHtml } from "../../../../../utils/pdf/invoicePdf";
-import { invoiceErrMessage } from "../../../../../utils/invoices";
+import { invoiceErrMessage, sellerFor } from "../../../../../utils/invoices";
 import { loadInvoice, loadSettings } from "../../../../../utils/invoices-store";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const [invoice, settings] = await Promise.all([loadInvoice(id), loadSettings()]);
     if (!invoice) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    const body = new Uint8Array(await htmlToPdf(renderInvoiceHtml(invoice, settings)));
+    const body = new Uint8Array(await htmlToPdf(renderInvoiceHtml(invoice, sellerFor(invoice, settings))));
     const filename = invoice.number ? `Invoice_${invoice.number}.pdf` : "Invoice_draft.pdf";
     return new NextResponse(body, {
       status: 200,

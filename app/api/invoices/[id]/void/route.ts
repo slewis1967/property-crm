@@ -3,11 +3,15 @@ import { supabase } from "../../../../../utils/supabase";
 import { requireAuth } from "../../../../../utils/cf-access";
 import { log, errInfo } from "../../../../../utils/logger";
 import { invoiceErrMessage } from "../../../../../utils/invoices";
-import { loadInvoice, logInvoiceEvent } from "../../../../../utils/invoices-store";
+import { loadInvoice } from "../../../../../utils/invoices-store";
 
 export const dynamic = "force-dynamic";
 
-/** POST { reason }: cancel an issued invoice. It stays on file; its number isn't reused. */
+/**
+ * POST { reason }: cancel an issued invoice. It stays on file; its number isn't
+ * reused. These checks give the usual answers; void_invoice repeats them under
+ * the row lock, so a payment arriving at the same moment can't slip past.
+ */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -28,13 +32,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const reason = typeof b.reason === "string" ? b.reason.trim() : "";
     if (!reason) return NextResponse.json({ ok: false, error: "Say why it's being voided." }, { status: 400 });
 
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from("invoices")
-      .update({ status: "void", voided_at: now, void_reason: reason, updated_at: now })
-      .eq("id", id);
+    const { error } = await supabase.rpc("void_invoice", { p_id: id, p_actor: auth, p_reason: reason });
     if (error) throw error;
-    await logInvoiceEvent(id, "voided", auth, { reason });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("invoices.void_failed", errInfo(e));

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { requireAuth } from "../../../../utils/cf-access";
+import { isSuperAdmin } from "../../../../utils/super-admin";
 import { log, errInfo } from "../../../../utils/logger";
 import { INVOICE_MIGRATION_HINT, invoiceErrMessage, invoicesTableMissing, isValidAbn } from "../../../../utils/invoices";
 import { loadSettings } from "../../../../utils/invoices-store";
@@ -34,9 +35,16 @@ const TEXT_FIELDS = [
   "account_number",
 ] as const;
 
+/**
+ * PUT: these details go on every invoice, including where customers send money,
+ * so only the super admin can change them. A database trigger logs every change.
+ */
 export async function PUT(req: Request) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
+  if (!isSuperAdmin(auth)) {
+    return NextResponse.json({ ok: false, error: "Only Sean can change invoice settings." }, { status: 403 });
+  }
   try {
     const b = (await req.json()) as Record<string, unknown>;
     const row: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: auth };

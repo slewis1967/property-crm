@@ -19,7 +19,6 @@ import {
   parseMoneyToCents,
   sellerDisplayName,
   splitEmails,
-  statusAfterPayments,
   summariseInvoices,
 } from "./invoices";
 import { renderInvoiceHtml } from "./pdf/invoicePdf";
@@ -76,7 +75,9 @@ const INVOICE: Invoice = {
   paid_at: null,
   voided_at: null,
   void_reason: null,
+  seller_snapshot: null,
   created_at: "2026-11-01T00:00:00Z",
+  updated_at: "2026-11-01T00:00:00Z",
 };
 
 describe("money", () => {
@@ -202,9 +203,7 @@ describe("state", () => {
     }
   });
 
-  it("flips to paid only when fully received, and overpayment leaves no negative balance", () => {
-    expect(statusAfterPayments(1000, 999)).toBe("issued");
-    expect(statusAfterPayments(1000, 1000)).toBe("paid");
+  it("leaves no negative balance after an overpayment", () => {
     expect(balanceCents({ total_cents: 1000, amount_paid_cents: 1200 })).toBe(0);
   });
 

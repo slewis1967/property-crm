@@ -55,7 +55,9 @@ export type Invoice = {
   paid_at: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  seller_snapshot: Partial<InvoiceSettings> | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type InvoiceSettings = {
@@ -74,7 +76,7 @@ export type InvoiceSettings = {
 };
 
 export const INVOICE_MIGRATION_HINT =
-  "Invoices aren't set up yet: run migrations/20261031_invoices.sql in the Supabase SQL editor.";
+  "Invoices aren't set up yet: run migrations/20261031_invoices.sql, then 20261031b_invoices_atomic.sql, in the Supabase SQL editor.";
 
 /** Table-level codes only, so a column error can't pose as a missing migration. */
 export function invoicesTableMissing(error: unknown): boolean {
@@ -246,8 +248,9 @@ export function summariseInvoices(
 }
 
 /** The payment status that follows from what's been received. */
-export function statusAfterPayments(totalCents: number, paidCents: number): "issued" | "paid" {
-  return totalCents > 0 && paidCents >= totalCents ? "paid" : "issued";
+/** An issued invoice keeps the seller and bank details it was issued with. */
+export function sellerFor(invoice: Pick<Invoice, "seller_snapshot">, settings: InvoiceSettings): InvoiceSettings {
+  return invoice.seller_snapshot ? { ...settings, ...invoice.seller_snapshot } : settings;
 }
 
 // ── issuing ──────────────────────────────────────────────────────────────────

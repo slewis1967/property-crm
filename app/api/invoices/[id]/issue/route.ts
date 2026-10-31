@@ -4,7 +4,7 @@ import { requireAuth } from "../../../../../utils/cf-access";
 import { log, errInfo } from "../../../../../utils/logger";
 import { brisbaneToday } from "../../../../../utils/paid-services";
 import { computeTotals, invoiceErrMessage, issueProblems } from "../../../../../utils/invoices";
-import { loadInvoice, loadSettings, logInvoiceEvent } from "../../../../../utils/invoices-store";
+import { loadInvoice, loadSettings } from "../../../../../utils/invoices-store";
 
 export const dynamic = "force-dynamic";
 
@@ -25,18 +25,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ ok: false, error: problems[0], problems }, { status: 422 });
     }
 
-    // Stored totals are recomputed here, while it's still a draft, so what gets
-    // locked can't differ from what the lines add up to.
-    const { error: totalsError } = await supabase
-      .from("invoices")
-      .update(computeTotals(invoice.lines, invoice.amounts_include_gst))
-      .eq("id", id)
-      .eq("status", "draft");
-    if (totalsError) throw totalsError;
-
-    const { data: number, error } = await supabase.rpc("issue_invoice", { p_id: id, p_actor: auth, p_today: today });
+    // Totals are recomputed from the lines just checked. The function refuses if
+    // the draft has changed since, so what gets locked is what was checked.
+    const totals = computeTotals(invoice.lines, invoice.amounts_include_gst);
+    const { data: number, error } = await supabase.rpc("issue_invoice", {
+      p_id: id,
+      p_actor: auth,
+      p_today: today,
+      p_expected_updated_at: invoice.updated_at,
+      p_subtotal_cents: totals.subtotal_cents,
+      p_gst_cents: totals.gst_cents,
+      p_total_cents: totals.total_cents,
+    });
     if (error) throw error;
-    await logInvoiceEvent(id, "issued", auth, { number });
     return NextResponse.json({ ok: true, number });
   } catch (e) {
     log.error("invoices.issue_failed", errInfo(e));
