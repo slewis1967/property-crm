@@ -34,8 +34,9 @@
  * yes. The server enforces the rule — confirmed=false never actually fires.
  */
 import { NextResponse } from "next/server";
-import type OpenAI from "openai";
-import { getOpenRouter, MODELS, orErrorMessage } from "../../../../utils/openrouter";
+import type Anthropic from "@anthropic-ai/sdk";
+import { aiErrorMessage, getAnthropic, MODELS } from "../../../../utils/anthropic";
+import { sanitizeVoiceHistory } from "../../../../utils/voice-history";
 import { supabase } from "../../../../utils/supabase";
 import { nexusApi } from "../../../../utils/nexus-api";
 import { sendBrevoEmail } from "../../../../utils/brevo";
@@ -52,163 +53,136 @@ export const dynamic = "force-dynamic";
 const MODEL = MODELS.fast;
 const MAX_TOOL_ITERATIONS = 6;
 
-// ── Tool definitions (OpenAI/OpenRouter function-calling format) ────────────
-const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+// ── Tool definitions ────────────
+const TOOLS: Anthropic.Tool[] = [
   {
-    type: "function",
-    function: {
-      name: "find_contact",
-      description:
-        "Look up a contact by name, phone number, or email. Returns the top match with id, full_name, phone, email, and a short summary of their last note. Use this first whenever the user mentions a person by name — you need their id before you can log calls, create tasks, or send messages to them.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "Name, phone, or email to search." },
-        },
-        required: ["query"],
+    name: "find_contact",
+    description:
+      "Look up a contact by name, phone number, or email. Returns the top match with id, full_name, phone, email, and a short summary of their last note. Use this first whenever the user mentions a person by name — you need their id before you can log calls, create tasks, or send messages to them.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Name, phone, or email to search." },
       },
+      required: ["query"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "log_call",
-      description:
-        "Append a dated call note to a contact. Use after the user describes a phone conversation they just had or wants to record. No confirmation needed — this is a low-risk write.",
-      parameters: {
-        type: "object",
-        properties: {
-          contact_id: { type: "string", description: "UUID from find_contact." },
-          summary: { type: "string", description: "What was discussed, max ~500 chars." },
-        },
-        required: ["contact_id", "summary"],
+    name: "log_call",
+    description:
+      "Append a dated call note to a contact. Use after the user describes a phone conversation they just had or wants to record. No confirmation needed — this is a low-risk write.",
+    input_schema: {
+      type: "object",
+      properties: {
+        contact_id: { type: "string", description: "UUID from find_contact." },
+        summary: { type: "string", description: "What was discussed, max ~500 chars." },
       },
+      required: ["contact_id", "summary"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "create_task",
-      description:
-        "Create a task / reminder. Can be attached to a contact (use contact_id) or standalone. Use when the user says 'remind me to…' or 'add a task to…'.",
-      parameters: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "What to do." },
-          contact_id: { type: "string", description: "Optional contact this task relates to." },
-          due_date: {
-            type: "string",
-            description: "ISO date (YYYY-MM-DD) if the user specified one. Resolve relative phrases ('next Tuesday') to absolute dates yourself.",
-          },
+    name: "create_task",
+    description:
+      "Create a task / reminder. Can be attached to a contact (use contact_id) or standalone. Use when the user says 'remind me to…' or 'add a task to…'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "What to do." },
+        contact_id: { type: "string", description: "Optional contact this task relates to." },
+        due_date: {
+          type: "string",
+          description: "ISO date (YYYY-MM-DD) if the user specified one. Resolve relative phrases ('next Tuesday') to absolute dates yourself.",
         },
-        required: ["title"],
       },
+      required: ["title"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "remember_fact",
-      description:
-        "Save a durable fact, preference, or learning to long-term memory so you (and the rest of the CRM's AI) recall it in future conversations. Use when the user says 'remember that…', 'note that…', 'from now on…', or tells you a lasting business fact or preference (e.g. 'Glenn prefers SMS', 'builder X only does house-and-land in QLD'). Do NOT use this for one-off reminders with a date — use create_task for those.",
-      parameters: {
-        type: "object",
-        properties: {
-          title: { type: "string", description: "Short headline, e.g. 'Glenn prefers SMS over email'." },
-          detail: { type: "string", description: "The full fact in a sentence or two." },
-          contact_id: { type: "string", description: "Optional UUID from find_contact if the fact is about a specific contact." },
-          tags: { type: "array", items: { type: "string" }, description: "Optional keywords for retrieval." },
-        },
-        required: ["title", "detail"],
+    name: "remember_fact",
+    description:
+      "Save a durable fact, preference, or learning to long-term memory so you (and the rest of the CRM's AI) recall it in future conversations. Use when the user says 'remember that…', 'note that…', 'from now on…', or tells you a lasting business fact or preference (e.g. 'Glenn prefers SMS', 'builder X only does house-and-land in QLD'). Do NOT use this for one-off reminders with a date — use create_task for those.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short headline, e.g. 'Glenn prefers SMS over email'." },
+        detail: { type: "string", description: "The full fact in a sentence or two." },
+        contact_id: { type: "string", description: "Optional UUID from find_contact if the fact is about a specific contact." },
+        tags: { type: "array", items: { type: "string" }, description: "Optional keywords for retrieval." },
       },
+      required: ["title", "detail"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "search_stock",
-      description:
-        "Search the aggregator stock feed (available house-and-land / property packages) by suburb, state, price, bedrooms, or builder. READ-ONLY — just returns matching listings for you to read back. Use when the user asks 'what have we got in <suburb>', 'anything under <price>', 'any <builder> stock', etc. Returns up to 5 packages with address, price, beds/baths and builder.",
-      parameters: {
-        type: "object",
-        properties: {
-          suburb: { type: "string", description: "Suburb name to filter by (partial match)." },
-          state: { type: "string", description: "State code, e.g. QLD, NSW, VIC." },
-          max_price: { type: "number", description: "Maximum total package price in dollars." },
-          min_bedrooms: { type: "number", description: "Minimum number of bedrooms." },
-          builder: { type: "string", description: "Builder name to filter by (partial match)." },
-        },
-        required: [],
+    name: "search_stock",
+    description:
+      "Search the aggregator stock feed (available house-and-land / property packages) by suburb, state, price, bedrooms, or builder. READ-ONLY — just returns matching listings for you to read back. Use when the user asks 'what have we got in <suburb>', 'anything under <price>', 'any <builder> stock', etc. Returns up to 5 packages with address, price, beds/baths and builder.",
+    input_schema: {
+      type: "object",
+      properties: {
+        suburb: { type: "string", description: "Suburb name to filter by (partial match)." },
+        state: { type: "string", description: "State code, e.g. QLD, NSW, VIC." },
+        max_price: { type: "number", description: "Maximum total package price in dollars." },
+        min_bedrooms: { type: "number", description: "Minimum number of bedrooms." },
+        builder: { type: "string", description: "Builder name to filter by (partial match)." },
       },
+      required: [],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "list_tasks",
-      description:
-        "List open (not-completed) CRM tasks. READ-ONLY. Use when the user asks 'what's on my list', 'what's due today', 'anything overdue'. Optional `due` filter: 'today', 'overdue', or 'all' (default). Returns up to 10 tasks with title, due date, and linked contact name if any.",
-      parameters: {
-        type: "object",
-        properties: {
-          due: {
-            type: "string",
-            enum: ["today", "overdue", "all"],
-            description: "Which open tasks to return. Default 'all'.",
-          },
+    name: "list_tasks",
+    description:
+      "List open (not-completed) CRM tasks. READ-ONLY. Use when the user asks 'what's on my list', 'what's due today', 'anything overdue'. Optional `due` filter: 'today', 'overdue', or 'all' (default). Returns up to 10 tasks with title, due date, and linked contact name if any.",
+    input_schema: {
+      type: "object",
+      properties: {
+        due: {
+          type: "string",
+          enum: ["today", "overdue", "all"],
+          description: "Which open tasks to return. Default 'all'.",
         },
-        required: [],
       },
+      required: [],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "lead_status",
-      description:
-        "Look up where a lead/contact sits in the sales pipeline. READ-ONLY. Resolves a person by name or email and returns their pipeline, current stage, temperature and any top property match. Use when the user asks 'where's <name> at', 'what stage is <name> in', 'what's happening with <name>'.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "Name or email of the lead/contact to look up." },
-        },
-        required: ["query"],
+    name: "lead_status",
+    description:
+      "Look up where a lead/contact sits in the sales pipeline. READ-ONLY. Resolves a person by name or email and returns their pipeline, current stage, temperature and any top property match. Use when the user asks 'where's <name> at', 'what stage is <name> in', 'what's happening with <name>'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Name or email of the lead/contact to look up." },
       },
+      required: ["query"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "send_sms",
-      description:
-        "Send an SMS via ClickSend. ALWAYS call this twice when the user asks to send a text:\n  1. First with confirmed=false — this drafts only, does NOT send. Then speak back the draft and ask 'send it?'.\n  2. Once the user says yes/confirm/send, call again with confirmed=true. Otherwise abandon.\nIf the user says 'and send it' / 'just do it' in the initial request, you may skip step 1 and call with confirmed=true directly.",
-      parameters: {
-        type: "object",
-        properties: {
-          contact_id: { type: "string", description: "UUID from find_contact." },
-          message: { type: "string", description: "The SMS body, max 320 chars." },
-          confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
-        },
-        required: ["contact_id", "message", "confirmed"],
+    name: "send_sms",
+    description:
+      "Send an SMS via ClickSend. ALWAYS call this twice when the user asks to send a text:\n  1. First with confirmed=false — this drafts only, does NOT send. Then speak back the draft and ask 'send it?'.\n  2. Once the user says yes/confirm/send, call again with confirmed=true. Otherwise abandon.\nIf the user says 'and send it' / 'just do it' in the initial request, you may skip step 1 and call with confirmed=true directly.",
+    input_schema: {
+      type: "object",
+      properties: {
+        contact_id: { type: "string", description: "UUID from find_contact." },
+        message: { type: "string", description: "The SMS body, max 320 chars." },
+        confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
       },
+      required: ["contact_id", "message", "confirmed"],
     },
   },
   {
-    type: "function",
-    function: {
-      name: "send_email",
-      description:
-        "Send an email via Brevo. Same two-step confirm pattern as send_sms — first call confirmed=false to draft + read back, second call confirmed=true to actually send.",
-      parameters: {
-        type: "object",
-        properties: {
-          contact_id: { type: "string", description: "UUID from find_contact." },
-          subject: { type: "string" },
-          body: { type: "string", description: "Plain text — signature is appended server-side." },
-          confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
-        },
-        required: ["contact_id", "subject", "body", "confirmed"],
+    name: "send_email",
+    description:
+      "Send an email via Brevo. Same two-step confirm pattern as send_sms — first call confirmed=false to draft + read back, second call confirmed=true to actually send.",
+    input_schema: {
+      type: "object",
+      properties: {
+        contact_id: { type: "string", description: "UUID from find_contact." },
+        subject: { type: "string" },
+        body: { type: "string", description: "Plain text — signature is appended server-side." },
+        confirmed: { type: "boolean", description: "false = draft only, true = actually send." },
       },
+      required: ["contact_id", "subject", "body", "confirmed"],
     },
   },
 ];
@@ -663,118 +637,6 @@ confirm "did you mean X?" if there's ambiguity.
 
 Today's date: ${new Date().toLocaleDateString("en-AU", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.`;
 
-// The history we accept back from the client is whatever we returned on the
-// previous turn — but the client can also tamper with it. Validating defends
-// against injecting fake tool results (e.g. "user already confirmed the SMS")
-// that would prime the model to call confirmed=true without a real verbal yes.
-//
-// Two passes:
-//   1. Per-message shape check — only the three OpenAI shapes we ourselves emit.
-//   2. Structural pairing (pairToolMessages) — an assistant `tool_calls` is kept
-//      only with the contiguous following `tool` messages that answer it, and a
-//      `tool` message survives only if it answers a kept call. This both keeps
-//      the OpenAI API contract ("every tool message must follow a matching
-//      assistant tool_call", and vice-versa) AND prevents a fabricated/dangling
-//      tool result from being smuggled in to prime a send.
-type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
-type AssistantToolCall = {
-  id: string;
-  type: "function";
-  function: { name: string; arguments: string };
-};
-
-function pairToolMessages(msgs: ChatMessage[]): ChatMessage[] {
-  const out: ChatMessage[] = [];
-  for (let i = 0; i < msgs.length; i++) {
-    const m = msgs[i];
-    // A `tool` message reached here was not consumed as a result below → orphan.
-    if (m.role === "tool") continue;
-
-    const calls = m.role === "assistant" ? (m.tool_calls ?? []) : [];
-    if (m.role === "assistant" && calls.length > 0) {
-      // Gather the contiguous run of following `tool` messages — these are the
-      // only legitimate answers to this assistant turn (matches how we emit).
-      const results: ChatMessage[] = [];
-      let j = i + 1;
-      while (j < msgs.length && msgs[j].role === "tool") {
-        results.push(msgs[j]);
-        j++;
-      }
-      const resultIds = new Set(
-        results.map((r) => (r as { tool_call_id: string }).tool_call_id),
-      );
-      const keptCalls = calls.filter((tc) => resultIds.has(tc.id));
-      if (keptCalls.length > 0) {
-        const keptIds = new Set(keptCalls.map((tc) => tc.id));
-        out.push({ ...m, tool_calls: keptCalls });
-        for (const r of results) {
-          if (keptIds.has((r as { tool_call_id: string }).tool_call_id)) out.push(r);
-        }
-      } else if (typeof m.content === "string" && m.content) {
-        // No call had a matching result — keep any spoken text, drop the calls.
-        out.push({ role: "assistant", content: m.content });
-      }
-      i = j - 1; // skip the tool messages we just consumed (or discarded)
-      continue;
-    }
-
-    out.push(m);
-  }
-  return out;
-}
-
-function sanitizeHistory(raw: unknown): ChatMessage[] {
-  if (!Array.isArray(raw)) return [];
-  const prelim: ChatMessage[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const role = (item as { role?: unknown }).role;
-    const content = (item as { content?: unknown }).content;
-
-    if (role === "user") {
-      if (typeof content === "string" && content) prelim.push({ role, content });
-      continue;
-    }
-
-    if (role === "assistant") {
-      const rawCalls = (item as { tool_calls?: unknown }).tool_calls;
-      const tool_calls: AssistantToolCall[] = Array.isArray(rawCalls)
-        ? rawCalls
-            .filter(
-              (c): c is AssistantToolCall =>
-                c !== null &&
-                typeof c === "object" &&
-                typeof (c as { id?: unknown }).id === "string" &&
-                (c as { type?: unknown }).type === "function" &&
-                typeof (c as { function?: { name?: unknown } }).function?.name === "string" &&
-                typeof (c as { function?: { arguments?: unknown } }).function?.arguments === "string",
-            )
-            .map((c) => ({
-              id: c.id,
-              type: "function" as const,
-              function: { name: c.function.name, arguments: c.function.arguments },
-            }))
-        : [];
-      const text = typeof content === "string" ? content : null;
-      if (tool_calls.length > 0) {
-        prelim.push({ role, content: text, tool_calls });
-      } else if (text) {
-        prelim.push({ role, content: text });
-      }
-      continue;
-    }
-
-    if (role === "tool") {
-      const toolCallId = (item as { tool_call_id?: unknown }).tool_call_id;
-      if (typeof toolCallId === "string" && toolCallId && typeof content === "string") {
-        prelim.push({ role, tool_call_id: toolCallId, content });
-      }
-      continue;
-    }
-  }
-  return pairToolMessages(prelim);
-}
-
 export async function POST(req: Request) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -806,9 +668,8 @@ export async function POST(req: Request) {
     // Operator's custom instructions (Settings → AI instructions), appended as a
     // subordinate block — can't override confirm-before-send or compliance limits.
     const system = SYSTEM + aiInstructionsBlock(await getAiInstructions()) + memoryBlock;
-    const messages: ChatMessage[] = [
-      { role: "system", content: system },
-      ...sanitizeHistory(history),
+    const messages: Anthropic.MessageParam[] = [
+      ...sanitizeVoiceHistory(history),
       { role: "user", content: transcript },
     ];
 
@@ -816,54 +677,47 @@ export async function POST(req: Request) {
     let finalText = "";
 
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-      const response = await getOpenRouter().chat.completions.create({
+      const response = await getAnthropic().messages.create({
         model: MODEL,
-        max_tokens: 1024,
+        max_tokens: 2048,
+        output_config: { effort: "low" },
+        system,
         tools: TOOLS,
         messages,
       });
 
-      const msg = response.choices?.[0]?.message;
-      const toolCalls = msg?.tool_calls ?? [];
-      const turnText = (msg?.content ?? "").trim();
+      // Append the whole turn: the next request needs its tool_use blocks, and
+      // any thinking blocks must go back unmodified with the tool results.
+      messages.push({ role: "assistant", content: response.content });
 
-      // Append the assistant turn to history regardless of tool use — the
-      // conversation must include the assistant tool_calls and the matching
-      // `tool` messages on the next turn.
-      messages.push({
-        role: "assistant",
-        content: msg?.content ?? null,
-        ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
-      });
-
-      if (toolCalls.length === 0) {
-        finalText = turnText;
+      // Only a finished request runs tools. A turn cut off at max_tokens or
+      // declined by a safety classifier must never trigger a send.
+      if (response.stop_reason !== "tool_use") {
+        finalText = response.content
+          .flatMap((b) => (b.type === "text" ? [b.text] : []))
+          .join("")
+          .trim();
         break;
       }
 
-      // Run all tool calls in this turn, then send results back to the model
-      for (const tc of toolCalls) {
-        if (tc.type !== "function") continue;
-        let input: Record<string, unknown> = {};
-        try {
-          input = JSON.parse(tc.function.arguments || "{}");
-        } catch {
-          input = {};
-        }
-        const result = await dispatchTool(tc.function.name, input, senderEmail);
+      // Run all tool calls in this turn, then send the results back together.
+      const results: Anthropic.ToolResultBlockParam[] = [];
+      for (const block of response.content) {
+        if (block.type !== "tool_use") continue;
+        const input =
+          block.input && typeof block.input === "object"
+            ? (block.input as Record<string, unknown>)
+            : {};
+        const result = await dispatchTool(block.name, input, senderEmail);
         if (result.side_effect) sideEffects.push(result.side_effect);
-        messages.push({
-          role: "tool",
-          tool_call_id: tc.id,
-          content: result.content,
-        });
+        results.push({ type: "tool_result", tool_use_id: block.id, content: result.content });
       }
+      messages.push({ role: "user", content: results });
     }
 
-    // The returned history must NOT include the system prompt — the client
-    // sends it back next turn and we re-prepend a fresh one (with current
-    // AI instructions + date). Stripping it also keeps SYSTEM off the wire.
-    const returnedHistory = messages.filter((m) => m.role !== "system");
+    // The client sends this back next turn. Thinking blocks and any other fields
+    // the validator wouldn't accept back are stripped here too.
+    const returnedHistory = sanitizeVoiceHistory(messages);
 
     return NextResponse.json({
       ok: true,
@@ -873,7 +727,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     return NextResponse.json(
-      { ok: false, error: orErrorMessage(e) },
+      { ok: false, error: aiErrorMessage(e) },
       { status: 500 },
     );
   }

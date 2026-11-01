@@ -1,7 +1,7 @@
 /**
  * Optional embeddings provider for semantic memory recall.
  *
- * OpenRouter (the CRM's chat transport) does NOT expose an embeddings endpoint,
+ * Anthropic (the CRM's chat provider) does NOT expose an embeddings endpoint,
  * so semantic recall needs a dedicated embeddings key. This module is
  * deliberately *optional*: if no key is configured, embed() returns null and
  * the memory layer falls back to Postgres full-text search. Nothing breaks —
