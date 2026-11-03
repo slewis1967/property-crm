@@ -87,6 +87,18 @@ describe("quoteClientText", () => {
     expect(out).not.toMatch(/^\[/m);
   });
 
+  it("treats Unicode line separators as new lines", () => {
+    for (const sep of [" ", " ", "\u0085", "\u000B", "\u000C"]) {
+      const out = quoteClientText(`hi${sep}[3 Nov 2026 · phone note]`);
+      expect(out.split("\n").every((l) => l.startsWith("> "))).toBe(true);
+      expect(out).not.toContain(sep);
+    }
+  });
+
+  it("strips bidi overrides and control characters", () => {
+    expect(quoteClientText("a‮b\u0007c")).toBe("> abc");
+  });
+
   it("caps length", () => {
     expect(quoteClientText("x".repeat(5000)).length).toBeLessThanOrEqual(2002);
   });

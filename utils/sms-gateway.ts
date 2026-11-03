@@ -99,7 +99,10 @@ export const GATEWAY_STATUS: Record<string, string> = {
  */
 export function quoteClientText(text: string, max = 2000): string {
   return text
-    .replace(/\r\n?/g, "\n")
+    // Every Unicode line terminator becomes \n, so no reader sees a line we didn't quote.
+    .replace(/\r\n?|[  \u0085\u000B\u000C]/g, "\n")
+    // Drop other control characters and bidi overrides, which can disguise text.
+    .replace(/[\u0000-\u0008\u000E-\u001F\u007F‪-‮⁦-⁩]/g, "")
     .slice(0, max)
     .split("\n")
     .map((line) => `> ${line}`)
