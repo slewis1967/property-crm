@@ -89,3 +89,19 @@ export const GATEWAY_STATUS: Record<string, string> = {
   "sms:failed": "failed",
   "sms:cancelled": "failed",
 };
+
+/**
+ * Client SMS text, made safe to append to contacts.notes. Notes are a staff
+ * record that people and the CRM's AI read as "what we know", made of
+ * "[date · source]" entries. A client's text must never pass as one of those,
+ * so every line is quoted with "> " (a client cannot start a line with "[")
+ * and the whole thing is capped.
+ */
+export function quoteClientText(text: string, max = 2000): string {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .slice(0, max)
+    .split("\n")
+    .map((line) => `> ${line}`)
+    .join("\n");
+}

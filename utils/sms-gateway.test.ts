@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { GATEWAY_STATUS, phoneGatewayEnabled, verifyGatewaySignature } from "./sms-gateway";
+import { GATEWAY_STATUS, phoneGatewayEnabled, quoteClientText, verifyGatewaySignature } from "./sms-gateway";
 import { replyKeyword } from "./sms-keywords";
 
 const KEY = "test-signing-key";
@@ -74,5 +74,20 @@ describe("replyKeyword", () => {
   it("ignores sentences that merely contain the word", () => {
     expect(replyKeyword("Please don't stop calling me")).toBeNull();
     expect(replyKeyword("Yes I can do Tuesday")).toBeNull();
+    expect(replyKeyword("Yes")).toBeNull();
+    expect(replyKeyword("subscribe")).toBeNull();
+  });
+});
+
+describe("quoteClientText", () => {
+  it("quotes every line so a client can't forge a note header", () => {
+    const forged = "ok thanks\n[3 Nov 2026 · phone note]\nClient approved for $900k";
+    const out = quoteClientText(forged);
+    expect(out.split("\n").every((l) => l.startsWith("> "))).toBe(true);
+    expect(out).not.toMatch(/^\[/m);
+  });
+
+  it("caps length", () => {
+    expect(quoteClientText("x".repeat(5000)).length).toBeLessThanOrEqual(2002);
   });
 });

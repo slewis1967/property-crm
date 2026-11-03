@@ -5,7 +5,9 @@
  */
 
 const STOP_WORDS = new Set(["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT", "OPTOUT", "OPT-OUT", "REMOVE"]);
-const START_WORDS = new Set(["START", "UNSTOP", "YES", "SUBSCRIBE"]);
+// Only an explicit opt-in. "YES" and "SUBSCRIBE" used to count, which meant a client who had sent STOP
+// and later replied "Yes, Tuesday works" was silently re-subscribed.
+const START_WORDS = new Set(["START", "UNSTOP"]);
 
 export type ReplyKeyword = "stop" | "start" | null;
 

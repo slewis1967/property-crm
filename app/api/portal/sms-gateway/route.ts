@@ -19,13 +19,12 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { toE164AU } from "../../../../utils/sms";
 import { replyKeyword } from "../../../../utils/sms-keywords";
-import { GATEWAY_STATUS, verifyGatewaySignature } from "../../../../utils/sms-gateway";
+import { GATEWAY_STATUS, quoteClientText, verifyGatewaySignature } from "../../../../utils/sms-gateway";
 import { formatDateTime } from "../../../../utils/datetime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_NOTE = 2000;
 
 type GatewayEvent = {
   event?: string;
@@ -52,7 +51,7 @@ async function findContactByPhone(e164: string): Promise<{ id: string; notes: st
 }
 
 async function appendNote(contact: { id: string; notes: string | null }, text: string) {
-  const entry = `[${formatDateTime(new Date())} · SMS from client]\n${text.slice(0, MAX_NOTE)}`;
+  const entry = `[${formatDateTime(new Date())} · SMS from client]\n${quoteClientText(text)}`;
   const notes = contact.notes ? `${contact.notes}\n\n${entry}` : entry;
   await supabase.from("contacts").update({ notes, updated_at: new Date().toISOString() }).eq("id", contact.id);
 }
