@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import CallRecordingNote from "../../components/CallRecordingNote";
+import type { NoteEntry as CallNoteEntry } from "../../../utils/call-outcome";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
@@ -224,7 +226,7 @@ export default function OpportunityDetail({
   };
 
   // Notes feed
-  type NoteEntry = { text: string; created_at: string };
+  type NoteEntry = CallNoteEntry;
   const parseNotes = (raw: string | null): NoteEntry[] => {
     if (!raw) return [];
     try { return JSON.parse(raw); }
@@ -964,6 +966,7 @@ export default function OpportunityDetail({
                       {new Date(n.created_at).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })}
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{n.text}</p>
+                    <CallRecordingNote leadId={lead.lead_id} recordingPath={n.recording_path} transcript={n.transcript} />
                   </div>
                 ))}
                 {lead.message && (
