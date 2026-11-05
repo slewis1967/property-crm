@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDateTime } from "../../../../utils/datetime";
 import { CALL_OUTCOMES, type CallOutcome, type NoteEntry } from "../../../../utils/call-outcome";
+import CallRecordingNote from "../../../components/CallRecordingNote";
 
 /**
  * Stage picker + notes for one lead. The stage goes through the same
@@ -169,6 +170,7 @@ export default function LeadActions({
               <li key={`${n.created_at}-${i}`} className="rounded-xl bg-white px-4 py-3 shadow-sm">
                 <p className="text-xs text-gray-400">{formatDateTime(n.created_at, "")}</p>
                 <p className="mt-0.5 whitespace-pre-wrap text-sm">{n.text}</p>
+                <CallRecordingNote leadId={leadId} recordingPath={n.recording_path} transcript={n.transcript} />
               </li>
             ))}
           </ul>

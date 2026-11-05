@@ -4,10 +4,9 @@ import { Header, Section, ContactButtons, Facts, LoadError } from "../../ui";
 import { loadLead, loadPipelines, parseTags, pipelineOf, stageOf, stagesOf } from "../../data";
 import { formatDateTime } from "../../../../utils/datetime";
 import LeadActions from "./LeadActions";
+import type { NoteEntry } from "../../../../utils/call-outcome";
 
 export const dynamic = "force-dynamic";
-
-type NoteEntry = { text: string; created_at: string };
 
 function parseNotes(raw: string | null, fallbackDate: string): NoteEntry[] {
   if (!raw) return [];
