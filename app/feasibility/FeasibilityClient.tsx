@@ -538,7 +538,7 @@ function ReportView({
           <div className="text-right text-[11px] text-gray-500 leading-5">
             NEXTKEY PTY LTD · ABN 28 689 818 264
             <br />
-            0477 007 785 · sean.l@nextkey.com.au
+            0477 201 245 · glenn.m@nextkey.com.au
             <br />
             nextkey.com.au
           </div>
