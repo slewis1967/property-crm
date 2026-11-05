@@ -17,12 +17,10 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { toE164AU } from "../../../../utils/sms";
+import { replyKeyword } from "../../../../utils/sms-keywords";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const STOP_WORDS = new Set(["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT", "OPTOUT", "OPT-OUT", "REMOVE"]);
-const START_WORDS = new Set(["START", "UNSTOP", "YES", "SUBSCRIBE"]);
 
 async function parseBody(req: Request): Promise<Record<string, string>> {
   const ct = req.headers.get("content-type") || "";
@@ -46,15 +44,15 @@ export async function POST(req: Request) {
   const from = body.from || body.sender || body.originalsenderid || "";
   const message = (body.message || body.body || body.sms || body.originalmessage || "").trim();
   const phone = toE164AU(from);
-  const word = message.toUpperCase().replace(/[^A-Z-]/g, "");
+  const keyword = replyKeyword(message);
 
   if (!phone) return NextResponse.json({ ok: true, action: "ignored", reason: "unparseable sender" });
 
-  if (STOP_WORDS.has(word)) {
+  if (keyword === "stop") {
     await supabase.from("sms_opt_outs").upsert({ phone, reason: "stop_reply" }, { onConflict: "phone" });
     return NextResponse.json({ ok: true, action: "opted_out", phone });
   }
-  if (START_WORDS.has(word)) {
+  if (keyword === "start") {
     await supabase.from("sms_opt_outs").delete().eq("phone", phone);
     return NextResponse.json({ ok: true, action: "opted_in", phone });
   }

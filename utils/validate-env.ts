@@ -38,6 +38,10 @@ const CRITICAL_VARS: EnvVar[] = [
   { name: "BREVO_API_KEY", required: false, feature: "outbound email" },
   { name: "CLICKSEND_API_KEY", required: false, feature: "outbound SMS" },
   { name: "CLICKSEND_USERNAME", required: false, feature: "outbound SMS" },
+  { name: "SMS_PROVIDER", required: false, feature: "outbound SMS route — 'phone' sends from the work phone via utils/sms-gateway.ts; anything else uses ClickSend" },
+  { name: "SMSGATE_USERNAME", required: false, feature: "work-phone SMS gateway (sms-gate.app cloud credentials)" },
+  { name: "SMSGATE_PASSWORD", required: false, feature: "work-phone SMS gateway (sms-gate.app cloud credentials)" },
+  { name: "SMSGATE_SIGNING_KEY", required: false, feature: "work-phone SMS gateway webhook signature check (/api/portal/sms-gateway)" },
 
   // Auth — required in production for Cloudflare Access JWT verification.
   // In dev, missing CF Access means we'll fall back to header trust (still
