@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { roomForContact } from "../../utils/livekit-rooms";
 import { businessDayKey, formatLongDateTime, formatTime } from "../../utils/datetime";
+import AppointmentForm, { type Host } from "./AppointmentForm";
 
 type Appt = {
   id: string;
@@ -83,6 +84,12 @@ export default function CalendarClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Appt | null>(null);
+  const [hosts, setHosts] = useState<Host[]>([]);
+  // The form: null = closed; {appt} = edit it; {date} = new entry on that day.
+  const [form, setForm] = useState<{ appt?: Appt; date?: string } | null>(null);
+  const [notice, setNotice] = useState<{ kind: "ok" | "warn"; text: string } | null>(null);
+  // Bumped after any add/change/cancel/delete so the range effect refetches.
+  const [reloadKey, setReloadKey] = useState(0);
 
   const now = useMemo(() => new Date(), []);
 
@@ -114,6 +121,7 @@ export default function CalendarClient() {
         if (cancelled) return;
         if (!res.ok) throw new Error(data.error || `Failed (${res.status})`);
         setAppts((data.appointments as Appt[]) ?? []);
+        if (Array.isArray(data.hosts)) setHosts(data.hosts as Host[]);
         setError(null);
       } catch (e) {
         if (!cancelled) {
@@ -125,7 +133,16 @@ export default function CalendarClient() {
       }
     })();
     return () => { cancelled = true; };
-  }, [fromISO, toISO]);
+  }, [fromISO, toISO, reloadKey]);
+
+  /** After any write: close dialogs, say what happened, refetch. */
+  const afterWrite = (okText: string, warning: string | null) => {
+    setForm(null);
+    setSelected(null);
+    setNotice(warning ? { kind: "warn", text: warning } : { kind: "ok", text: okText });
+    setLoading(true);
+    setReloadKey((k) => k + 1);
+  };
 
   // Bucket appointments by business day for O(1) cell lookup — matching the
   // zone the times render in, so a meeting can't sit in the wrong cell.
@@ -190,6 +207,13 @@ export default function CalendarClient() {
           <h2 className="ml-2 text-lg font-semibold text-gray-900">{heading}</h2>
           {loading && <span className="text-xs text-gray-400 ml-2">Loading…</span>}
         </div>
+        <div className="flex items-center gap-2">
+        <button
+          onClick={() => setForm({})}
+          className="px-3 h-8 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold"
+        >
+          + New appointment
+        </button>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {(["month", "week"] as View[]).map((v) => (
             <button
@@ -203,7 +227,17 @@ export default function CalendarClient() {
             </button>
           ))}
         </div>
+        </div>
       </div>
+
+      {notice && (
+        <div className={`rounded-xl px-4 py-3 text-sm mb-4 flex items-start justify-between gap-3 border ${
+          notice.kind === "ok" ? "bg-teal-50 border-teal-200 text-teal-800" : "bg-amber-50 border-amber-200 text-amber-800"
+        }`}>
+          <span>{notice.text}</span>
+          <button onClick={() => setNotice(null)} className="opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-4">
@@ -212,20 +246,41 @@ export default function CalendarClient() {
       )}
 
       {view === "month" ? (
-        <MonthGrid days={days} anchorMonth={anchor.getMonth()} now={now} byDay={byDay} onSelect={setSelected} />
+        <MonthGrid days={days} anchorMonth={anchor.getMonth()} now={now} byDay={byDay} onSelect={setSelected}
+          onAddOnDay={(d) => setForm({ date: dayKey(d) })} />
       ) : (
-        <WeekAgenda days={days} now={now} byDay={byDay} onSelect={setSelected} />
+        <WeekAgenda days={days} now={now} byDay={byDay} onSelect={setSelected}
+          onAddOnDay={(d) => setForm({ date: dayKey(d) })} />
       )}
 
-      {selected && <ApptDetail appt={selected} now={now} onClose={() => setSelected(null)} />}
+      {selected && !form && (
+        <ApptDetail
+          appt={selected}
+          now={now}
+          onClose={() => setSelected(null)}
+          onEdit={() => setForm({ appt: selected })}
+          onRemoved={(text, warning) => afterWrite(text, warning)}
+        />
+      )}
+
+      {form && (
+        <AppointmentForm
+          appt={form.appt ? { ...form.appt, event_title: apptTitle(form.appt) } : undefined}
+          initialDate={form.date}
+          hosts={hosts}
+          onClose={() => setForm(null)}
+          onSaved={(warning) => afterWrite(form.appt ? "Appointment updated." : "Appointment added to the diary.", warning)}
+        />
+      )}
     </div>
   );
 }
 
 function MonthGrid({
-  days, anchorMonth, now, byDay, onSelect,
+  days, anchorMonth, now, byDay, onSelect, onAddOnDay,
 }: {
   days: Date[]; anchorMonth: number; now: Date; byDay: Map<string, Appt[]>; onSelect: (a: Appt) => void;
+  onAddOnDay: (d: Date) => void;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -242,9 +297,12 @@ function MonthGrid({
           return (
             <div
               key={d.toISOString()}
-              className={`min-h-[104px] border-b border-r border-gray-100 p-1.5 ${inMonth ? "bg-white" : "bg-gray-50/60"}`}
+              onClick={() => onAddOnDay(d)}
+              title="Click an empty spot to add an appointment on this day"
+              className={`group min-h-[104px] border-b border-r border-gray-100 p-1.5 cursor-pointer hover:bg-teal-50/40 ${inMonth ? "bg-white" : "bg-gray-50/60"}`}
             >
-              <div className="flex justify-end">
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] text-teal-700 opacity-0 group-hover:opacity-100 pl-0.5">+ Add</span>
                 <span className={`text-xs w-6 h-6 flex items-center justify-center rounded-full ${
                   isToday ? "bg-teal-600 text-white font-semibold" : inMonth ? "text-gray-700" : "text-gray-400"
                 }`}>
@@ -257,7 +315,7 @@ function MonthGrid({
                   return (
                     <button
                       key={a.id}
-                      onClick={() => onSelect(a)}
+                      onClick={(e) => { e.stopPropagation(); onSelect(a); }}
                       title={apptTitle(a)}
                       className={`w-full text-left px-1.5 py-0.5 rounded text-[11px] leading-tight truncate ${chipClasses(apptStatus(a), isPast)}`}
                     >
@@ -269,7 +327,7 @@ function MonthGrid({
                   );
                 })}
                 {dayAppts.length > 3 && (
-                  <button onClick={() => onSelect(dayAppts[3])} className="text-[11px] text-gray-500 hover:text-gray-700 pl-1.5">
+                  <button onClick={(e) => { e.stopPropagation(); onSelect(dayAppts[3]); }} className="text-[11px] text-gray-500 hover:text-gray-700 pl-1.5">
                     +{dayAppts.length - 3} more
                   </button>
                 )}
@@ -283,9 +341,10 @@ function MonthGrid({
 }
 
 function WeekAgenda({
-  days, now, byDay, onSelect,
+  days, now, byDay, onSelect, onAddOnDay,
 }: {
   days: Date[]; now: Date; byDay: Map<string, Appt[]>; onSelect: (a: Appt) => void;
+  onAddOnDay: (d: Date) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -300,6 +359,7 @@ function WeekAgenda({
               </span>
               {isToday && <span className="text-[10px] font-semibold text-teal-700 bg-teal-100 rounded-full px-2 py-0.5">TODAY</span>}
               <span className="text-xs text-gray-400 ml-auto">{dayAppts.length || "—"}</span>
+              <button onClick={() => onAddOnDay(d)} className="text-xs font-medium text-teal-700 hover:text-teal-900 ml-2">+ Add</button>
             </div>
             {dayAppts.length === 0 ? (
               <p className="px-4 py-3 text-sm text-gray-400 italic">No meetings.</p>
@@ -337,13 +397,46 @@ function WeekAgenda({
   );
 }
 
-function ApptDetail({ appt, now, onClose }: { appt: Appt; now: Date; onClose: () => void }) {
+function ApptDetail({
+  appt, now, onClose, onEdit, onRemoved,
+}: {
+  appt: Appt; now: Date; onClose: () => void; onEdit: () => void;
+  onRemoved: (text: string, warning: string | null) => void;
+}) {
+  // Cancel keeps the entry (struck through, stays on the client's history);
+  // delete removes it for good: for mistakes and duplicates.
+  const [confirm, setConfirm] = useState<"cancel" | "delete" | null>(null);
+  const [reason, setReason] = useState("");
+  const [notify, setNotify] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const start = new Date(appt.start_time);
   const end = appt.end_time ? new Date(appt.end_time) : null;
   const isPast = +start < +now;
   const when = formatLongDateTime(start);
   const endStr = end ? formatTime(end) : null;
   const video = isVideo(appt);
+  const status = apptStatus(appt);
+  // Only an upcoming, still-live meeting with a client email gets a cancellation email.
+  const canNotify = !!appt.contact_email && status !== "cancelled" && +(end ?? start) > +now;
+
+  async function remove() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/appointments/${appt.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: confirm, reason: reason || undefined, notify: canNotify && notify }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Failed (${res.status})`);
+      onRemoved(confirm === "cancel" ? "Appointment cancelled." : "Appointment deleted.", data.notify_warning ?? null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
@@ -386,6 +479,47 @@ function ApptDetail({ appt, now, onClose }: { appt: Appt; now: Date; onClose: ()
           )}
           {!video && appt.location && <p className="text-gray-700">📍 {appt.location}</p>}
         </div>
+
+        {confirm ? (
+          <div className="px-5 py-4 border-t border-gray-100 space-y-3 text-sm bg-gray-50 rounded-b-2xl">
+            <p className="font-medium text-gray-900">
+              {confirm === "cancel"
+                ? "Cancel this appointment? It stays in the diary, marked cancelled."
+                : "Delete this appointment for good? It can't be brought back."}
+            </p>
+            <input
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              placeholder="Reason (optional)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            {canNotify && (
+              <label className="flex items-start gap-2 text-gray-700">
+                <input type="checkbox" className="mt-0.5" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
+                <span>Email {appt.contact_name || appt.contact_email} a cancellation (removes it from their calendar)</span>
+              </label>
+            )}
+            {err && <p className="text-red-600">{err}</p>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setConfirm(null); setErr(null); }} className="px-3 py-1.5 rounded-lg text-gray-600 hover:bg-white">Back</button>
+              <button
+                onClick={remove}
+                disabled={busy}
+                className="px-3 py-1.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {busy ? "Working…" : confirm === "cancel" ? "Cancel appointment" : "Delete appointment"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-gray-100">
+            <button onClick={() => setConfirm("delete")} className="px-3 py-1.5 rounded-lg text-sm text-red-600 hover:bg-red-50 mr-auto">Delete</button>
+            {status !== "cancelled" && (
+              <button onClick={() => setConfirm("cancel")} className="px-3 py-1.5 rounded-lg text-sm text-gray-700 border border-gray-200 hover:bg-gray-50">Cancel appointment</button>
+            )}
+            <button onClick={onEdit} className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700">Change</button>
+          </div>
+        )}
       </div>
     </div>
   );
