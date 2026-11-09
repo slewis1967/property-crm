@@ -72,3 +72,31 @@ export function businessDayKey(value: DateInput): string | null {
     day: "2-digit",
   }).format(d);
 }
+
+/**
+ * The business-timezone wall clock of an instant, for prefilling date/time
+ * inputs: { date: "YYYY-MM-DD", time: "HH:MM" } in Brisbane time.
+ */
+export function businessDateTimeParts(value: DateInput): { date: string; time: string } | null {
+  const d = toDate(value);
+  if (!d) return null;
+  const date = businessDayKey(d)!;
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: BUSINESS_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(d);
+  return { date, time };
+}
+
+/**
+ * A Brisbane wall-clock date + time ("2026-11-10", "09:30") as an ISO instant
+ * string. Brisbane is UTC+10 all year (no DST), so the offset is fixed; this is
+ * the same rule utils/booking.ts uses for self-book slots.
+ */
+export function businessWallClockToISO(date: string, time: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
+  const ms = Date.parse(`${date}T${time}:00+10:00`);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
