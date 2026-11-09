@@ -8,6 +8,7 @@ import PublicRouteGate from "./components/PublicRouteGate";
 import Sidebar from "./components/Sidebar";
 import HelpButton from "./components/HelpButton";
 import { headers as nextHeaders } from "next/headers";
+import type { CrmRole } from "../utils/roles";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -119,6 +120,8 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
   };
 }
 
+const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0 };
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Trusted public-route signal from the edge proxy (see proxy.ts). This header is
   // set by the proxy AFTER stripping any client-supplied value, so it is not forgeable.
@@ -126,7 +129,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isPublic = h.get("x-public-route") === "1";
   // Only fetch sidebar counts for authenticated/staff routes. Public routes render
   // chromeless and must not execute sidebar DB queries or serialize staff routes.
-  const counts = isPublic ? null : await getSidebarCounts();
+  // Role flag set by proxy.ts (client-sent values are stripped there).
+  const role: CrmRole = h.get("x-crm-role") === "marketing" ? "marketing" : "staff";
+  const isMarketing = role === "marketing";
+  // Marketing users get no badge counts (review queue, AML reports, paid accounts).
+  const counts = isPublic ? null : isMarketing ? EMPTY_COUNTS : await getSidebarCounts();
   return (
     <html lang="en">
       <head>
@@ -138,11 +145,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
       </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />} help={isPublic ? null : <HelpButton />}>
+        <AppShell
+          sidebar={isPublic ? null : <Sidebar counts={counts!} role={role} />}
+          help={isPublic || isMarketing ? null : <HelpButton />}
+        >
           {children}
         </AppShell>
         <PublicRouteGate>
-          <VoiceAssistant />
+          {/* The voice assistant reads contacts and sends SMS/email — staff only. */}
+          {!isMarketing && <VoiceAssistant />}
         </PublicRouteGate>
       </body>
     </html>
