@@ -13,8 +13,9 @@
  * Springboard sender (both Brevo-validated — see CLAUDE.md EMAIL SENDERS).
  */
 import { sendBrevoEmail, type BrevoSendResult } from "./brevo";
-import { icsBase64 } from "./ics";
+import { DEFAULT_PRODID, icsBase64 } from "./ics";
 import type { Brand } from "./scheduling-hosts";
+import { EMAIL_FONT, hostSignature, type SignatureBlock } from "./email-signature";
 
 /** Validated Brevo senders per brand (mirrors utils/signatures + brevo.ts). */
 const BRAND_SENDER: Record<Brand, { email: string; name: string }> = {
@@ -45,6 +46,14 @@ export interface MeetingInviteOpts {
   /** IANA tz used to render the human-readable time. Defaults AU/Brisbane. */
   tz?: string;
   /**
+   * "phone" drops the meeting-invite framing in favour of a callback
+   * confirmation — there's no join link to promote, so the copy shouldn't
+   * imply one is coming. Defaults to "video" for backward compatibility.
+   * Separate from `kind` (invite/update/cancel): a phone call can be updated
+   * or cancelled too.
+   */
+  medium?: "video" | "phone";
+  /**
    * Everyone invited, for the .ics ATTENDEE lines — so each recipient's
    * calendar shows the full participant list rather than just themselves.
    * `to` is still the one person THIS email goes to; send once per attendee
@@ -52,9 +61,38 @@ export interface MeetingInviteOpts {
    * Defaults to `[to]`.
    */
   attendees?: Array<{ email: string; name?: string }>;
+  /**
+   * "invite" (default) for a new meeting, "update" when the time or details of
+   * an already-sent meeting changed, "cancel" to withdraw it. Update and cancel
+   * MUST reuse the original `uid` so the attendee's calendar edits the existing
+   * entry instead of adding a second one.
+   */
+  kind?: "invite" | "update" | "cancel";
+  /** .ics SEQUENCE. Must rise on every update/cancel of the same uid. */
+  sequence?: number;
+  /**
+   * The sender's signature. sendMeetingInvite fills it from the host
+   * (hostSignature); only pass it to override, e.g. in tests.
+   */
+  signature?: SignatureBlock;
 }
 
-const BRAND_TEAL = "#0F4C5C";
+/**
+ * Invite colours per brand. NextKey keeps its teal; a Springboard invite goes
+ * to Springboard leads, so it uses Springboard navy + amber (brand firewall).
+ * Navy carries the heading, button and link (amber text on white is too faint
+ * to read); amber is the accent rule under the heading.
+ */
+const BRAND_COLOURS: Record<Brand, { primary: string; accent: string | null }> = {
+  nextkey: { primary: "#0F4C5C", accent: null },
+  springboard: { primary: "#020e40", accent: "#c7894e" },
+};
+
+/** .ics PRODID per brand — some calendar apps show who produced the file. */
+const BRAND_PRODID: Record<Brand, string> = {
+  nextkey: DEFAULT_PRODID,
+  springboard: "-//Springboard Homes//Meeting//EN",
+};
 
 function fmtRange(start: string, end: string, tz: string): string {
   const s = new Date(start);
@@ -81,10 +119,21 @@ function escapeHtml(s: string): string {
 export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   const tz = opts.tz ?? "Australia/Brisbane";
   const when = fmtRange(opts.start, opts.end, tz);
+  const { primary, accent } = BRAND_COLOURS[opts.host.brand] ?? BRAND_COLOURS.nextkey;
+  const accentRule = accent
+    ? `<div style="width:56px;height:3px;background:${accent};margin:0 0 12px;"></div>`
+    : "";
   const greetingName = opts.to.name ? ` ${escapeHtml(opts.to.name.split(" ")[0])}` : "";
-  const joinBtn = opts.joinUrl
+  const kind = opts.kind ?? "invite";
+  const lede =
+    kind === "cancel" ? "This meeting has been cancelled"
+    : kind === "update" ? "This meeting has been updated — the details below replace the earlier invite"
+    : opts.medium === "phone" ? "Confirming our call"
+    : "You've been invited to a meeting";
+  const showJoin = !!opts.joinUrl && opts.kind !== "cancel";
+  const joinBtn = showJoin
     ? `<tr><td style="padding:8px 0 20px;">
-         <a href="${escapeHtml(opts.joinUrl)}" style="display:inline-block;background:${BRAND_TEAL};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
+         <a href="${escapeHtml(opts.joinUrl!)}" style="display:inline-block;background:${primary};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
        </td></tr>`
     : "";
   const locationRow = !opts.joinUrl && opts.location
@@ -93,14 +142,15 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   const descRow = opts.description
     ? `<tr><td style="padding:12px 0 0;color:#4b5563;white-space:pre-line;">${escapeHtml(opts.description)}</td></tr>`
     : "";
-  const joinFallback = opts.joinUrl
-    ? `<p style="color:#6b7280;font-size:13px;margin:18px 0 0;">If the button doesn't work, copy this link into your browser:<br><a href="${escapeHtml(opts.joinUrl)}" style="color:${BRAND_TEAL};">${escapeHtml(opts.joinUrl)}</a></p>`
+  const joinFallback = showJoin
+    ? `<p style="color:#6b7280;font-size:13px;margin:18px 0 0;">If the button doesn't work, copy this link into your browser:<br><a href="${escapeHtml(opts.joinUrl!)}" style="color:${primary};">${escapeHtml(opts.joinUrl!)}</a></p>`
     : "";
 
   return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
-    <h2 style="color:${BRAND_TEAL};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
-    <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">You've been invited to a meeting</p>
+  <div style="font-family:${EMAIL_FONT};max-width:560px;margin:0 auto;color:#111827;">
+    <h2 style="color:${primary};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
+    ${accentRule}
+    <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">${lede}</p>
     <p style="margin:0 0 14px;">Hi${greetingName},</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:15px;">
       <tr><td style="padding:2px 0;color:#374151;"><strong>When:</strong> ${escapeHtml(when)}</td></tr>
@@ -110,8 +160,11 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
       ${descRow}
     </table>
     ${joinFallback}
+    ${opts.signature?.html ?? ""}
     <p style="color:#9ca3af;font-size:12px;margin:22px 0 0;border-top:1px solid #e5e7eb;padding-top:12px;">
-      A calendar file is attached — open it to add this meeting to your calendar.
+      ${opts.kind === "cancel"
+        ? "A calendar file is attached — open it to remove this meeting from your calendar."
+        : "A calendar file is attached — open it to add this meeting to your calendar."}
     </p>
   </div>`.trim();
 }
@@ -122,7 +175,18 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
  */
 export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoSendResult> {
   const sender = BRAND_SENDER[opts.host.brand];
-  const html = meetingInviteHtml(opts);
+  // Outward-email rule: every email carries its sender's signature. No
+  // signature on file → don't send, and say why; the callers already report a
+  // failed invite to the person who booked it so they can follow up.
+  const signature = opts.signature ?? (await hostSignature(opts.host));
+  if (!signature) {
+    const who = opts.host.brand === "springboard" ? "Glenn (Springboard invites)" : opts.host.email;
+    return {
+      ok: false,
+      error: `no email signature on file for ${who}. Add one in Settings → Email signature, then resend`,
+    };
+  }
+  const html = meetingInviteHtml({ ...opts, signature });
 
   const ics = icsBase64({
     uid: opts.uid,
@@ -137,18 +201,26 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
       name: a.name,
       email: a.email,
     })),
-    method: "REQUEST",
+    method: opts.kind === "cancel" ? "CANCEL" : "REQUEST",
+    sequence: opts.sequence,
+    prodId: BRAND_PRODID[opts.host.brand],
   });
+
+  const subject =
+    opts.kind === "cancel" ? `Cancelled: ${opts.title}`
+    : opts.kind === "update" ? `Updated: ${opts.title}`
+    : opts.medium === "phone" ? `Confirming: ${opts.title}`
+    : `Invitation: ${opts.title}`;
 
   return sendBrevoEmail({
     to: [{ email: opts.to.email, name: opts.to.name }],
-    subject: `Invitation: ${opts.title}`,
+    subject,
     html,
     fromEmail: sender.email,
     fromName: sender.name,
     // Reply-to the host so a reply reaches the person running the meeting.
     replyTo: opts.host.email,
-    tags: ["crm-meeting-invite"],
+    tags: [opts.kind && opts.kind !== "invite" ? `crm-meeting-${opts.kind}` : "crm-meeting-invite"],
     attachments: [{ name: "invite.ics", content: ics }],
   });
 }

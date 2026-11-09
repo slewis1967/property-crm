@@ -13,8 +13,16 @@ import { usePathname } from "next/navigation";
 import { isPartnerPortalPath } from "../../utils/partner";
 import { isShortlistPortalPath } from "../../utils/shortlist-path";
 
-export default function PublicRouteGate({ children }: { children: React.ReactNode }) {
+export default function PublicRouteGate({
+  children,
+  hidden = false,
+}: {
+  children: React.ReactNode;
+  /** Render nothing whatever the path (the Springboard booking host). */
+  hidden?: boolean;
+}) {
   const pathname = usePathname();
+  if (hidden) return null;
   if (pathname === "/sign" || pathname?.startsWith("/sign/")) return null;
   if (pathname === "/introducer" || pathname?.startsWith("/introducer/")) return null;
   // Self-book page: the link goes to leads by text and email.
