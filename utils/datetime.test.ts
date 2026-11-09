@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  businessDateTimeParts,
+  businessWallClockToISO,
   BUSINESS_TIME_ZONE,
   businessDayKey,
   formatAgendaDateTime,
@@ -88,5 +90,15 @@ describe("businessDayKey", () => {
 
   it("zero-pads so keys sort lexicographically and match the grid's format", () => {
     expect(businessDayKey("2026-01-05T00:00:00+10:00")).toBe("2026-01-05");
+  });
+});
+
+describe("business wall clock round trip", () => {
+  it("reads an instant as Brisbane date + time", () => {
+    expect(businessDateTimeParts("2026-11-09T22:30:00Z")).toEqual({ date: "2026-11-10", time: "08:30" });
+  });
+  it("turns Brisbane wall clock into the right UTC instant", () => {
+    expect(businessWallClockToISO("2026-11-10", "08:30")).toBe("2026-11-09T22:30:00.000Z");
+    expect(businessWallClockToISO("2026-11-10", "8:30")).toBeNull();
   });
 });
