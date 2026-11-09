@@ -46,6 +46,14 @@ export interface MeetingInviteOpts {
   /** IANA tz used to render the human-readable time. Defaults AU/Brisbane. */
   tz?: string;
   /**
+   * "phone" drops the meeting-invite framing in favour of a callback
+   * confirmation — there's no join link to promote, so the copy shouldn't
+   * imply one is coming. Defaults to "video" for backward compatibility.
+   * Separate from `kind` (invite/update/cancel): a phone call can be updated
+   * or cancelled too.
+   */
+  medium?: "video" | "phone";
+  /**
    * Everyone invited, for the .ics ATTENDEE lines — so each recipient's
    * calendar shows the full participant list rather than just themselves.
    * `to` is still the one person THIS email goes to; send once per attendee
@@ -120,6 +128,7 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
   const lede =
     kind === "cancel" ? "This meeting has been cancelled"
     : kind === "update" ? "This meeting has been updated — the details below replace the earlier invite"
+    : opts.medium === "phone" ? "Confirming our call"
     : "You've been invited to a meeting";
   const showJoin = !!opts.joinUrl && opts.kind !== "cancel";
   const joinBtn = showJoin
@@ -200,6 +209,7 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
   const subject =
     opts.kind === "cancel" ? `Cancelled: ${opts.title}`
     : opts.kind === "update" ? `Updated: ${opts.title}`
+    : opts.medium === "phone" ? `Confirming: ${opts.title}`
     : `Invitation: ${opts.title}`;
 
   return sendBrevoEmail({
