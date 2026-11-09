@@ -218,9 +218,9 @@ export default function PitchDeck({ partner, stats, springboardRef, showSpringbo
                 Fifteen minutes, and we&apos;ll bring a sample of current stock in your area.
               </p>
               <div style={{ fontSize: 14, lineHeight: 1.7 }}>
-                <strong style={{ color: NK_AMBER }}>Sean Lewis</strong>, Co-Founder
+                <strong style={{ color: NK_AMBER }}>Glenn Mayes</strong>
                 <br />
-                0494 822 912 · sean.l@nextkey.com.au · nextkey.com.au
+                0477 201 245 · glenn.m@nextkey.com.au · nextkey.com.au
               </div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
