@@ -30,8 +30,12 @@ export const RECORDING_BUCKET = "call-recordings";
  * under this lead's own folder: the path comes from the notes blob, which any note writer can
  * set, so the signing route must not sign whatever it is handed.
  */
+const LEAD_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function recordingObjectPath(recordingPath: unknown, leadId: string): string | null {
   if (typeof recordingPath !== "string") return null;
+  // The lead id comes from the URL; it must be a plain UUID, or ".." could walk out of leads/<id>/.
+  if (!LEAD_ID.test(leadId)) return null;
   const prefix = `${RECORDING_BUCKET}/leads/${leadId}/`;
   if (!recordingPath.startsWith(prefix)) return null;
   const rest = recordingPath.slice(prefix.length);

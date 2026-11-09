@@ -35,4 +35,9 @@ describe("recordingObjectPath", () => {
     expect(recordingObjectPath(`call-recordings/leads/${lead}/secrets.pdf`, lead)).toBeNull();
     expect(recordingObjectPath(undefined, lead)).toBeNull();
   });
+  it("refuses a lead id that is not a UUID, so '..' in the URL can't leave the lead's folder", () => {
+    expect(recordingObjectPath("call-recordings/leads/../record-1.mp3", "..")).toBeNull();
+    expect(recordingObjectPath("call-recordings/leads/x/../record-1.mp3", "x/..")).toBeNull();
+    expect(recordingObjectPath("call-recordings/leads/abc/record-1.mp3", "abc")).toBeNull();
+  });
 });
