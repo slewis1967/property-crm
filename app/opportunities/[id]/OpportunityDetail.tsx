@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import CallRecordingNote from "../../components/CallRecordingNote";
+import { CALL_OUTCOMES, type CallOutcome, type NoteEntry as CallNoteEntry } from "../../../utils/call-outcome";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
@@ -224,7 +226,7 @@ export default function OpportunityDetail({
   };
 
   // Notes feed
-  type NoteEntry = { text: string; created_at: string };
+  type NoteEntry = CallNoteEntry;
   const parseNotes = (raw: string | null): NoteEntry[] => {
     if (!raw) return [];
     try { return JSON.parse(raw); }
@@ -233,6 +235,31 @@ export default function OpportunityDetail({
   const [noteEntries, setNoteEntries] = useState<NoteEntry[]>(() => parseNotes(lead.notes));
   const [newNote, setNewNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [savingCall, setSavingCall] = useState(false);
+  const [callStatus, setCallStatus] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Same route as the phone page: the server prepends to the lead's current notes,
+  // so a page opened a while ago can't overwrite notes added since. The Springboard
+  // ads agent reads these `call` entries to judge which ads bring leads who answer.
+  const logCall = async (outcome: CallOutcome) => {
+    setSavingCall(true);
+    setCallStatus(null);
+    try {
+      const res = await fetch(`/api/opportunities/${lead.lead_id}/call`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcome }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (Array.isArray(data.notes)) setNoteEntries(data.notes);
+      setCallStatus({ ok: true, text: `Logged: ${CALL_OUTCOMES[outcome]}` });
+    } catch (e) {
+      setCallStatus({ ok: false, text: `Call not logged: ${e instanceof Error ? e.message : "unknown error"}` });
+    } finally {
+      setSavingCall(false);
+    }
+  };
 
   // Tags
   const parseTags = (raw: string | null): string[] => { try { return raw ? JSON.parse(raw) : []; } catch { return []; } };
@@ -931,6 +958,31 @@ export default function OpportunityDetail({
               {savingNote && <span className="text-xs text-gray-400">Saving…</span>}
             </div>
 
+            {/* Log a call */}
+            <div className="px-5 pt-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">How did the call go?</h3>
+                {callStatus && (
+                  <span role="status" className={`text-xs ${callStatus.ok ? "text-green-600" : "text-red-600"}`}>
+                    {callStatus.text}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(Object.keys(CALL_OUTCOMES) as CallOutcome[]).map((outcome) => (
+                  <button
+                    key={outcome}
+                    type="button"
+                    disabled={savingCall}
+                    onClick={() => logCall(outcome)}
+                    className="px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition"
+                  >
+                    {CALL_OUTCOMES[outcome]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Add new note */}
             <div className="px-5 pt-4 pb-3 border-b border-gray-100">
               <textarea
@@ -964,6 +1016,7 @@ export default function OpportunityDetail({
                       {new Date(n.created_at).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })}
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{n.text}</p>
+                    <CallRecordingNote leadId={lead.lead_id} recordingPath={n.recording_path} transcript={n.transcript} />
                   </div>
                 ))}
                 {lead.message && (

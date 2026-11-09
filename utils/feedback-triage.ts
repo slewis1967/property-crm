@@ -1,14 +1,14 @@
 /**
  * Feedback triage — classify a user-submitted report with the FAST model.
  *
- * Server-only (imports the OpenRouter client). Returns a structured verdict the
+ * Server-only (imports the Anthropic client). Returns a structured verdict the
  * autonomous agent then acts on. The single most important output is
  * `riskClass`: when true, the item touches authentication / access control /
  * data deletion / payments / outbound sending, and must NEVER be auto-shipped —
  * it is always held for human sign-off regardless of the fix-autonomy setting.
  */
 
-import { orText, MODELS } from "./openrouter";
+import { aiText, MODELS } from "./anthropic";
 import type { FeedbackType, FeedbackPriority } from "./feedback";
 
 export interface TriageResult {
@@ -75,7 +75,7 @@ export async function triageFeedback(input: {
     `Details: ${input.details?.trim() || "(none)"}\n` +
     `Page/area: ${input.area?.trim() || "(unspecified)"}`;
 
-  const raw = await orText({
+  const raw = await aiText({
     system: SYSTEM,
     user,
     model: MODELS.fast,

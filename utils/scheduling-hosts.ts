@@ -6,6 +6,8 @@
  * calendar, so every host is bookable immediately.
  */
 
+import type { BookingConfig } from "./booking";
+
 export type Brand = "nextkey" | "springboard";
 
 export type SchedulingHost = {
@@ -32,6 +34,8 @@ export type SchedulingHost = {
    * omit to stay on the CRM's own "You're booked in" panel.
    */
   postBookingUrl?: string;
+  /** Overrides for this host's self-book availability (default Mon–Fri 9–5 AEST). */
+  booking?: Partial<BookingConfig>;
 };
 
 export const BRAND_LABEL: Record<Brand, string> = {
@@ -53,6 +57,17 @@ export const SCHEDULING_HOSTS: SchedulingHost[] = [
     displayName: "Glenn Mayes",
     brand: "nextkey",
     slug: "glenn",
+    // Sean, 30 Oct 2026: weekdays 8am–7:30pm, Saturday 9am–5pm (AEST).
+    booking: {
+      hours: {
+        1: [8 * 60, 19 * 60 + 30],
+        2: [8 * 60, 19 * 60 + 30],
+        3: [8 * 60, 19 * 60 + 30],
+        4: [8 * 60, 19 * 60 + 30],
+        5: [8 * 60, 19 * 60 + 30],
+        6: [9 * 60, 17 * 60],
+      },
+    },
   },
   {
     // Springboard's own Workspace identity, so invites reach the client from

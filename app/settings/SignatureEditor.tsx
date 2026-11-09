@@ -262,7 +262,7 @@ export default function SignatureEditor({
         <Field label="Title" value={fields.title} onChange={(v) => update("title", v)} placeholder="Director, NextKey Property Strategists" />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Email" value={fields.email} onChange={(v) => update("email", v)} placeholder="sean.l@nextkey.com.au" type="email" />
-          <Field label="Phone" value={fields.phone} onChange={(v) => update("phone", v)} placeholder="0477 007 785" />
+          <Field label="Phone" value={fields.phone} onChange={(v) => update("phone", v)} placeholder="0477 201 245" />
         </div>
         <Field label="Web" value={fields.web} onChange={(v) => update("web", v)} placeholder="nextkey.com.au" />
         <label className="block">

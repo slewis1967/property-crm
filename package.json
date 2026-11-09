@@ -13,6 +13,7 @@
     "help:manifest": "node scripts/help-videos/manifest.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@livekit/components-react": "^2.9.23",
     "@livekit/components-styles": "^1.2.0",
     "@livekit/track-processors": "^0.5.4",

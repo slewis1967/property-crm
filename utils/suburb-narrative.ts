@@ -1,4 +1,4 @@
-import { MODELS, orText } from "./openrouter";
+import { MODELS, aiText } from "./anthropic";
 import { getCachedOrGenerate } from "./ai-cache";
 import type { MarketData } from "./deal-packet";
 import type { SuburbIntel } from "./suburb-intel";
@@ -77,7 +77,7 @@ export async function getSuburbNarrative(args: {
       fingerprintInput: { v: 2, suburb, state: state ?? null, week: weekBucket() },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
       generate: async () => {
-        let text = await orText({
+        let text = await aiText({
           model: MODEL,
           maxTokens: 1800,
           web: true,
