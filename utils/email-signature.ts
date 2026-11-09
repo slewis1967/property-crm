@@ -29,6 +29,29 @@ export type SignatureBlock = {
   text: string;
 };
 
+/**
+ * The font every outward email is set in. Sean's standing rule (2 Nov 2026):
+ * Arial on the body and the signature. Use this constant rather than retyping
+ * a stack, so one place changes if the rule ever does.
+ */
+export const EMAIL_FONT = "Arial,Helvetica,sans-serif";
+
+/**
+ * Who signs Springboard-branded emails that aren't from a signed-in person
+ * (self-book and Springboard-host meeting invites). Glenn is the only public
+ * contact for buyers and leads, so it's his name and number under the
+ * Springboard brand (Sean, 9 Nov 2026).
+ */
+export const SPRINGBOARD_SIGNATORY_EMAIL = "glenn.m@nextkey.com.au";
+
+/** "0477201245" → "0477 201 245"; landlines "0755551234" → "07 5555 1234". Anything else unchanged. */
+export function formatAuPhone(phone: string): string {
+  const d = phone.replace(/[\s()-]/g, "");
+  if (/^04\d{8}$/.test(d)) return `${d.slice(0, 4)} ${d.slice(4, 7)} ${d.slice(7)}`;
+  if (/^0[2378]\d{8}$/.test(d)) return `${d.slice(0, 2)} ${d.slice(2, 6)} ${d.slice(6)}`;
+  return phone;
+}
+
 const HARDCODED_DEFAULTS: SignatureFields = {
   name: "Sean Lewis",
   title: "Director, NextKey Property Strategists",
@@ -112,23 +135,78 @@ export async function getSignatureFields(userEmail?: string): Promise<SignatureF
   };
 }
 
+/**
+ * The signature saved for exactly this person, or null when they have none.
+ * No fallback: the outward-email rule says an email carries the SENDER's
+ * signature, and the shared/hardcoded fallbacks in getSignatureFields are
+ * Sean's details, which would sign someone else's email as Sean.
+ */
+export async function getOwnSignatureFields(userEmail: string): Promise<SignatureFields | null> {
+  try {
+    const { data } = await supabase
+      .from("email_user_aliases")
+      .select("signature")
+      .ilike("user_email", userEmail)
+      .maybeSingle();
+    const sig = data?.signature as Partial<SignatureFields> | null | undefined;
+    if (!sig || typeof sig !== "object" || !sig.name || !sig.email) return null;
+    return {
+      name: sig.name,
+      title: sig.title ?? "",
+      email: sig.email,
+      phone: sig.phone ?? "",
+      web: sig.web ?? "",
+      disclaimer: sig.disclaimer ?? "",
+      logo_url: sig.logo_url || undefined,
+      logo_height: typeof sig.logo_height === "number" ? sig.logo_height : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The signature for an email sent as a meeting host.
+ *   - NextKey host → that host's own saved signature.
+ *   - Springboard host → Glenn's name and number under the Springboard brand,
+ *     with no NextKey logo, title or disclaimer (brand firewall).
+ * Returns null when there's no signature on file, and the caller must not send.
+ */
+export async function hostSignature(host: { email: string; brand: MailIdentityKey }): Promise<SignatureBlock | null> {
+  if (host.brand === "springboard") {
+    const glenn = await getOwnSignatureFields(SPRINGBOARD_SIGNATORY_EMAIL);
+    if (!glenn) return null;
+    return renderSignature({
+      name: glenn.name,
+      title: "Springboard Homes",
+      email: process.env.SPRINGBOARD_SENDER_EMAIL ?? "hello@springboardhomes.com.au",
+      phone: glenn.phone,
+      web: "springboardhomes.com.au",
+      disclaimer: "",
+    });
+  }
+  const own = await getOwnSignatureFields(host.email);
+  return own ? renderSignature(own) : null;
+}
+
 /** Render a SignatureFields into HTML + plain-text bodies. */
 export function renderSignature(f: SignatureFields): SignatureBlock {
+  const phone = f.phone ? formatAuPhone(f.phone) : "";
   const logoH = typeof f.logo_height === "number" && f.logo_height > 0 ? f.logo_height : 60;
   const logoBlock = f.logo_url
     ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(f.logo_url)}" alt="${escapeHtml(f.name)}" style="height:${logoH}px;width:auto;display:block;" /></div>`
     : "";
   const html = `
-<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;color:#374151;line-height:1.5;">
+<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:${EMAIL_FONT};font-size:13px;color:#374151;line-height:1.5;">
   ${logoBlock}
   <p style="margin:0 0 4px;font-weight:600;color:#111827;">${escapeHtml(f.name)}</p>
-  <p style="margin:0 0 6px;color:#6b7280;">${escapeHtml(f.title)}</p>
+  ${f.title ? `<p style="margin:0 0 6px;color:#6b7280;">${escapeHtml(f.title)}</p>` : ""}
   <p style="margin:0;color:#6b7280;">
-    <a href="mailto:${escapeHtml(f.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.email)}</a>
-    &nbsp;·&nbsp;
-    <a href="tel:${escapeHtml(f.phone.replace(/\s/g, ""))}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.phone)}</a>
-    &nbsp;·&nbsp;
-    <a href="https://${escapeHtml(f.web)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.web)}</a>
+    ${[
+      `<a href="mailto:${escapeHtml(f.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.email)}</a>`,
+      phone ? `<a href="tel:${escapeHtml(phone.replace(/\s/g, ""))}" style="color:#2563eb;text-decoration:none;">${escapeHtml(phone)}</a>` : "",
+      f.web ? `<a href="https://${escapeHtml(f.web)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(f.web)}</a>` : "",
+    ].filter(Boolean).join(" &nbsp;·&nbsp; ")}
   </p>
   ${f.disclaimer ? `<p style="margin:8px 0 0;font-size:11px;color:#9ca3af;font-style:italic;">${escapeHtml(f.disclaimer)}</p>` : ""}
 </div>`.trim();
@@ -137,8 +215,8 @@ export function renderSignature(f: SignatureFields): SignatureBlock {
     "",
     "—",
     f.name,
-    f.title,
-    `${f.email} · ${f.phone} · ${f.web}`,
+    f.title || null,
+    [f.email, phone, f.web].filter(Boolean).join(" · "),
     f.disclaimer ? "" : null,
     f.disclaimer || null,
   ]
