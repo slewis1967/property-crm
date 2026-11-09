@@ -203,9 +203,20 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     }
     log.info("appointments.cancelled", { id, by: who, reason });
   } else {
-    // deletion_log's CHECK only allows contact/opportunity, so the snapshot of
-    // a deleted appointment goes to the app log for recovery.
-    log.info("appointments.deleted", { id, by: who, reason, snapshot: row });
+    // Enough to tell what was deleted, nothing more. Never the client's email,
+    // the notes, or the location: for a video meeting that is the client's
+    // signed join link, a live credential until it expires.
+    log.info("appointments.deleted", {
+      id,
+      by: who,
+      reason,
+      title: row.event_title,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      status: row.status,
+      host_email: row.host_email,
+      contact_id: row.contact_id,
+    });
     const { error } = await supabase.from("appointments").delete().eq("id", id);
     if (error) {
       return NextResponse.json({ error: `Failed to delete: ${errMessage(error)}` }, { status: 500 });
