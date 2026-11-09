@@ -55,11 +55,24 @@ function norm(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
-/** True for a file served out of /public (logo.png, manifest.json, …). */
+/** Brand/PWA files in /public the app chrome loads. An explicit list, not a
+ *  pattern: a file-extension test would also let through a dynamic page route
+ *  whose last segment merely looks like a file (/contacts/x.json). The help
+ *  videos in /public/help describe internal screens and stay staff-only. */
+const PUBLIC_ASSETS: ReadonlySet<string> = new Set([
+  "/manifest.json",
+  "/favicon.ico",
+  "/favicon-16x16.png",
+  "/favicon-32x32.png",
+  "/favicon-96x96.png",
+  "/apple-touch-icon.png",
+  "/android-chrome-192x192.png",
+  "/android-chrome-512x512.png",
+  "/logo.png",
+]);
+
 function isPublicAsset(pathname: string): boolean {
-  if (pathname.startsWith("/api/")) return false;
-  const last = pathname.split("/").pop() ?? "";
-  return /^[\w-]+\.(png|jpe?g|svg|ico|webp|gif|json|txt|webmanifest|woff2?)$/i.test(last);
+  return PUBLIC_ASSETS.has(pathname);
 }
 
 export function isMarketingPage(pathname: string): boolean {

@@ -46,9 +46,12 @@ describe("marketingMayAccess", () => {
   it("blocks server-action POSTs to pages", () => {
     expect(marketingMayAccess("/analytics", "POST")).toBe(false);
   });
-  it("allows public static files but not API paths that look like files", () => {
+  it("allows the listed brand files only, not paths that merely look like files", () => {
     expect(marketingMayAccess("/logo.png", "GET")).toBe(true);
     expect(marketingMayAccess("/manifest.json", "GET")).toBe(true);
     expect(marketingMayAccess("/api/export.json", "GET")).toBe(false);
+    expect(marketingMayAccess("/contacts/x.json", "GET")).toBe(false);
+    expect(marketingMayAccess("/fact-find/abc.png", "GET")).toBe(false);
+    expect(marketingMayAccess("/help/inbox-triage.mp4", "GET")).toBe(false);
   });
 });
