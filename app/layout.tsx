@@ -128,7 +128,7 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
   };
 }
 
-const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0 };
+const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0, overdueInvoices: 0 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Trusted public-route signal from the edge proxy (see proxy.ts). This header is
