@@ -64,8 +64,8 @@ export const metadata: Metadata = {
 // render, and the functions (us-east-2) sit a Pacific round trip from the
 // database (Seoul), so five sequential queries cost ~1s of every page load.
 // Missing a badge isn't worth a layout-fail, so a failed query reads as 0.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number }> {
-  const [pendingReview, draftBuilders, dealPackets, amlReports, paidAccounts] = await Promise.allSettled([
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number; overdueInvoices: number }> {
+  const [pendingReview, draftBuilders, dealPackets, amlReports, paidAccounts, overdueInvoices] = await Promise.allSettled([
     supabase
       .from("property_review_queue")
       .select("id", { count: "exact", head: true })
@@ -102,6 +102,13 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
         "id,name,category,criticality,status,cost,currency,billing_cycle,next_due_date,auto_renew,payment_method,card_expiry,balance_remaining,balance_unit,low_balance_threshold,alert_lead_days,snoozed_until,purpose,plan",
       )
       .limit(500),
+    // Issued invoices past their due date. Same rule as invoiceState() in
+    // utils/invoices.ts: "issued" means money is still owing.
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "issued")
+      .lt("due_date", brisbaneToday()),
   ]);
   const count = (r: PromiseSettledResult<{ count: number | null }>) =>
     r.status === "fulfilled" ? r.value.count ?? 0 : 0;
@@ -117,10 +124,11 @@ async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilder
     dealPackets: count(dealPackets),
     amlReports: count(amlReports),
     paidAccounts: paid,
+    overdueInvoices: count(overdueInvoices),
   };
 }
 
-const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0 };
+const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0, overdueInvoices: 0 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Trusted public-route signal from the edge proxy (see proxy.ts). This header is

@@ -19,7 +19,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { isMarketingPage, type CrmRole } from "../../utils/roles";
 
-type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports" | "paidAccounts";
+type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports" | "paidAccounts" | "overdueInvoices";
 type Item = { href: string; icon: string; label: string; badge?: BadgeKey };
 type Group = { key: string; label: string; icon: string; items: Item[] };
 
@@ -29,6 +29,7 @@ export type SidebarCounts = {
   dealPackets: number;
   amlReports: number;
   paidAccounts: number;
+  overdueInvoices: number;
 };
 
 const GROUPS: Group[] = [
@@ -39,6 +40,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/", icon: "🎯", label: "War Room" },
       { href: "/revenue", icon: "💰", label: "Revenue" },
+      { href: "/invoices", icon: "🧾", label: "Invoices", badge: "overdueInvoices" },
       { href: "/advisor", icon: "🎩", label: "Advisor" },
       { href: "/brain", icon: "🧠", label: "Brain" },
       { href: "/search", icon: "🔍", label: "Smart Search" },

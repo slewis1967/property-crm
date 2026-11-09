@@ -45,6 +45,7 @@ export async function unsubscribedEmails(emails: string[]): Promise<Set<string>>
 
 export type BrevoSendOptions = {
   to: { email: string; name?: string }[];
+  cc?: { email: string; name?: string }[];
   subject: string;
   html: string;
   /** Plain-text fallback. If omitted, a stripped-HTML version is generated. */
@@ -129,6 +130,7 @@ export async function sendBrevoEmail(opts: BrevoSendOptions): Promise<BrevoSendR
       body: JSON.stringify({
         sender: { email: senderEmail, name: senderName },
         to: recipients,
+        cc: opts.cc && opts.cc.length > 0 ? opts.cc : undefined,
         subject: opts.subject,
         htmlContent: opts.html,
         textContent: text,
