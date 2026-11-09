@@ -7,6 +7,7 @@ import NewPipelineModal from "./NewPipelineModal";
 import DeleteReasonModal from "../components/DeleteReasonModal";
 import { log, errInfo } from "../../utils/logger";
 import { errMessage } from "../../utils/errors";
+import { normaliseStage } from "../../utils/pipeline-stage";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,22 +66,6 @@ function buildStages(names: string[]) {
     label: name,
     ...STAGE_PALETTE[i % STAGE_PALETTE.length],
   }));
-}
-
-function normaliseStage(raw: string | null, stages: string[]): string {
-  if (!raw) return stages[0] || "New Lead";
-  // Exact match first
-  if (stages.includes(raw)) return raw;
-  // Fuzzy fallback for legacy data
-  const s = raw.toLowerCase();
-  if (s.includes("won"))      return stages.find(x => x.toLowerCase().includes("won"))  || stages[stages.length - 2] || stages[0];
-  if (s.includes("lost"))     return stages.find(x => x.toLowerCase().includes("lost")) || stages[stages.length - 1] || stages[0];
-  if (s.includes("qualif"))   return stages.find(x => x.toLowerCase().includes("qualif")) || stages[1] || stages[0];
-  if (s.includes("match"))    return stages.find(x => x.toLowerCase().includes("match")) || stages[0];
-  if (s.includes("contact"))  return stages.find(x => x.toLowerCase().includes("contact")) || stages[0];
-  if (s.includes("proposal") || s.includes("sent")) return stages.find(x => x.toLowerCase().includes("proposal") || x.toLowerCase().includes("sent")) || stages[0];
-  if (s.includes("negotiat")) return stages.find(x => x.toLowerCase().includes("negotiat")) || stages[0];
-  return stages[0];
 }
 
 const tempBadge = (t: string | null) => {

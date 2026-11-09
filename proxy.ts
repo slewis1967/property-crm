@@ -2,6 +2,28 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { log } from "./utils/logger";
+import { MARKETING_HOME, marketingMayAccess, roleForEmail, type CrmRole } from "./utils/roles";
+
+/**
+ * Role gate (see utils/roles.ts). Runs after identity is established. Returns
+ * a response to send instead of the page/API, or null to let it through.
+ * API calls get a 403; page loads are sent to the marketing home page.
+ */
+function roleGate(req: NextRequest, role: CrmRole): NextResponse | null {
+  if (role !== "marketing") return null;
+  const { pathname } = req.nextUrl;
+  if (marketingMayAccess(pathname, req.method)) return null;
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Forbidden: not available to your role" }, { status: 403 });
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+  const home = req.nextUrl.clone();
+  home.pathname = MARKETING_HOME;
+  home.search = "";
+  return NextResponse.redirect(home, 307);
+}
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
@@ -348,6 +370,8 @@ export async function proxy(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   // NEVER trust client-supplied public-route flags — strip before we decide.
   requestHeaders.delete("x-public-route");
+  // Same for the role flag — only this proxy may set it.
+  requestHeaders.delete("x-crm-role");
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
   // a Cloudflare Access redirect_url concatenation can produce URLs like
@@ -381,6 +405,11 @@ export async function proxy(req: NextRequest) {
   if (mode !== "tunnel") {
     // Local/dev passthrough — still tag the request explicitly as NOT public.
     requestHeaders.set("x-public-route", "0");
+    // Dev: DEV_USER_EMAIL set to a marketing address previews that role.
+    const devRole = roleForEmail(process.env.DEV_USER_EMAIL);
+    const blocked = roleGate(req, devRole);
+    if (blocked) return blocked;
+    requestHeaders.set("x-crm-role", devRole);
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
@@ -420,8 +449,14 @@ export async function proxy(req: NextRequest) {
     );
   }
 
+  // Role gate: a marketing user only reaches the allowlist in utils/roles.ts.
+  const role = roleForEmail(email);
+  const blocked = roleGate(req, role);
+  if (blocked) return blocked;
+
   // Pass-through with explicit "NOT public" tag for downstream.
   requestHeaders.set("x-public-route", "0");
+  requestHeaders.set("x-crm-role", role);
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   // Expose user email to API routes that read it directly (dev-only override honoured downstream).
   res.headers.set("x-user-email", email);

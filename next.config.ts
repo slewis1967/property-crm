@@ -41,13 +41,35 @@ import path from "path";
  */
 const DEV_EVAL = process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'";
 
+/**
+ * The video server the browser is told to connect to, as CSP sources.
+ *
+ * The hard-coded nextkey-livekit.fly.dev entries below are the live SFU. This
+ * adds whatever NEXT_PUBLIC_LIVEKIT_URL points at, so the policy can no longer
+ * drift from the setting: the feature shipped with that drift once, and every
+ * call dropped on connect until the host was added by hand. Both schemes are
+ * emitted because the client opens the wss signal socket and also fetches
+ * /rtc/validate over https on the same host.
+ */
+function livekitCspSources(): string {
+  const raw = (process.env.NEXT_PUBLIC_LIVEKIT_URL || "").trim();
+  if (!raw) return "";
+  try {
+    const { protocol, host } = new URL(raw);
+    const secure = protocol === "wss:" || protocol === "https:";
+    return secure ? ` https://${host} wss://${host}` : ` http://${host} ws://${host}`;
+  } catch {
+    return "";
+  }
+}
+
 const SECURITY_HEADERS = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
       // Supabase REST/Auth/Realtime + Cloudflare Access team domain + LiveKit SFU
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev https://cdn.jsdelivr.net https://storage.googleapis.com",
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflareaccess.com https://api.minimax.io https://api.minimaxi.com https://nextkey-livekit.fly.dev wss://nextkey-livekit.fly.dev https://cdn.jsdelivr.net https://storage.googleapis.com${livekitCspSources()}`,
       `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${DEV_EVAL} blob: https://*.brevo.com https://cdn.jsdelivr.net https://storage.googleapis.com`,
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",

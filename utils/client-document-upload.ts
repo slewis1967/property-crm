@@ -15,6 +15,7 @@
  */
 import { supabase } from "./supabase";
 import { DOC_BY_KEY, ylaFilename, surnameOf, maxSlotFor, YLA_MAX_BYTES } from "./yla-documents";
+import { redactStoredDocument } from "./tfn-redact-store";
 
 export const CLIENT_DOCUMENTS_BUCKET = "client-documents";
 
@@ -163,5 +164,21 @@ export async function confirmClientDocumentUpload(args: {
     .eq("request_id", args.requestId);
 
   if (error) return { ok: false, status: 500, error: "Could not confirm the upload." };
+
+  // Clean it before anyone reads it. A TFN that never settles in the bucket is
+  // one that cannot be packaged, exported or emailed by mistake later, and the
+  // client cannot remove it themselves — the ATO print always carries it.
+  //
+  // Deliberately NOT allowed to fail the upload: the document IS delivered, and
+  // reporting failure here would have the client re-upload the same file
+  // forever. A document this cannot clean is caught by the gate instead.
+  if (args.succeeded) {
+    try {
+      await redactStoredDocument(String(documentId));
+    } catch {
+      /* gated downstream rather than blocking delivery */
+    }
+  }
+
   return { ok: true, status: 200 };
 }

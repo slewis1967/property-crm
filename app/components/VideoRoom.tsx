@@ -10,6 +10,8 @@ import {
 import VirtualBackgroundControl, {
   type BackgroundMode,
 } from "./VirtualBackgroundControl";
+import PaPresenter from "./PaPresenter";
+import PaAudience from "./PaAudience";
 import { errMessage } from "../../utils/errors";
 
 /**
@@ -108,17 +110,29 @@ function RecordToggle({ room }: { room: string }) {
  * Pass `room` to show the Record toggle (server-side recording via egress).
  * `onLeave` fires when the user disconnects so the host page can close a modal
  * or route away.
+ *
+ * `room` and `guestToken` also decide which half of the Preliminary Assessment
+ * presentation mounts: a page that knows the room name is the authed staff
+ * page (the presenter), a page holding a guest link token is an applicant (the
+ * audience). Never both, and neither on calls that have nothing to present.
  */
 export default function VideoRoom({
   token,
   serverUrl,
   room,
+  guestToken,
   onLeave,
   background = "brand",
 }: {
   token: string;
   serverUrl: string;
   room?: string;
+  /**
+   * The signed guest link token, on the public /join page only. It is the
+   * applicant's credential for the PA being presented (/join/<token>/pa), so
+   * the audience overlay needs it; staff pages never pass one.
+   */
+  guestToken?: string;
   onLeave?: () => void;
   /**
    * What replaces the local camera's real background. Staff pages take the
@@ -145,6 +159,12 @@ export default function VideoRoom({
             default either way, with a top-left toggle. */}
         <VirtualBackgroundControl mode={background} />
         <VideoConference />
+        {/* Preliminary Assessment presentation. Both render nothing until there
+            is something to present, sit above the grid but stop short of the
+            control bar, and leave RoomAudioRenderer alone, so nobody loses
+            sound or their mute button while a document is on screen. */}
+        {room && <PaPresenter room={room} />}
+        {!room && guestToken && <PaAudience guestToken={guestToken} />}
         {/* Renders remote participant audio; VideoConference handles video. */}
         <RoomAudioRenderer />
       </LiveKitRoom>

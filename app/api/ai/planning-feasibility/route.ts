@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import type OpenAI from "openai";
-import { orText, MODELS } from "../../../../utils/openrouter";
+import { aiText, MODELS } from "../../../../utils/anthropic";
+import { REPORT_SCHEMA } from "../../../../utils/feasibility-report-schema";
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
 
@@ -184,7 +184,7 @@ export async function POST(req: Request) {
     // The slow site I/O (geocode + satellite fetch) is gathered in a separate,
     // fast "prepare" call and handed back into the "report" call via
     // `body.prepared`, so the report request is AI-only and each request stays
-    // under Netlify's ~26s function cap. When `prepared` is absent (older client)
+    // under Netlify's 60s function limit. When `prepared` is absent (older client)
     // we still compute inline for backward compatibility.
     const prepared = body?.prepared as
       | { location?: { lat: number; lng: number } | null; satellite?: string | null }
@@ -223,10 +223,17 @@ export async function POST(req: Request) {
       }
     }
 
-    const chatMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: system },
-      ...messages,
-    ];
+    // Only the shape the client sends, and it must end on the user's turn: the API
+    // rejects a request whose last message is the assistant's.
+    const transcript = messages.filter(
+      (m) => (m?.role === "user" || m?.role === "assistant") && typeof m.content === "string" && m.content,
+    );
+    if (transcript[0]?.role !== "user" || transcript[transcript.length - 1]?.role !== "user") {
+      return NextResponse.json(
+        { ok: false, error: "The conversation must start and end with your message." },
+        { status: 400 },
+      );
+    }
 
     // Report is AI-only (site I/O pre-fetched in "prepare"). We keep web search
     // on — it is the report's only grounding, and an ungrounded report that
@@ -234,12 +241,14 @@ export async function POST(req: Request) {
     // drop the satellite vision image (~10s) and lower effort/tokens. Interview
     // keeps its lighter settings.
     const modelT0 = Date.now();
-    const text = await orText({
+    const text = await aiText({
       model: MODELS.smart,
       web: true,
       effort: "medium",
       maxTokens: phase === "report" ? 6000 : 1500,
-      messages: chatMessages,
+      system,
+      messages: transcript,
+      ...(phase === "report" ? { jsonSchema: REPORT_SCHEMA } : {}),
     });
     log.info("planning_feasibility.model_ms", { phase, ms: Date.now() - modelT0 });
 
@@ -257,6 +266,14 @@ export async function POST(req: Request) {
     if (phase === "report") {
       const report =
         parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+      // Valid JSON isn't enough: a report with no sections would render blank.
+      if (!Array.isArray(report.sections) || report.sections.length === 0) {
+        log.warn("planning_feasibility.empty_report", { keys: Object.keys(report) });
+        return NextResponse.json(
+          { ok: false, error: "The report came back empty. Please try again." },
+          { status: 502 },
+        );
+      }
       if (location) report.location = location; // authoritative coords for the map
       return NextResponse.json({ ok: true, report });
     }

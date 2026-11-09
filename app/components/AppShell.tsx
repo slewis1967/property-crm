@@ -11,20 +11,27 @@
  * in as a left drawer with a tappable scrim to dismiss. The drawer closes
  * itself on every route change so tapping a nav link auto-collapses it.
  *
+ * The mobile top bar also links to the phone view (/m), a separate set of
+ * phone-sized screens; /m itself renders without this chrome.
+ *
  * Server-rendered sidebar content (with the live unread + draft counts)
  * is passed in as the `sidebar` prop — AppShell stays presentational so
  * the data fetch can keep happening at the layout level.
  */
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { isPartnerPortalPath } from "../../utils/partner";
 import { isShortlistPortalPath } from "../../utils/shortlist-path";
 
 export default function AppShell({
   sidebar,
+  help,
   children,
 }: {
   sidebar: React.ReactNode;
+  /** The staff "How do I do this?" button; null on public routes. */
+  help?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -65,7 +72,10 @@ export default function AppShell({
     // isPartnerPortalPath for why "/partners" must not match.
     isPartnerPortalPath(pathname) ||
     // Client property shortlist — opened by a client, never a CRM user.
-    isShortlistPortalPath(pathname);
+    isShortlistPortalPath(pathname) ||
+    // Phone view — staff-only (still behind Cloudflare Access), but it brings
+    // its own header and bottom tab bar, so the sidebar chrome would double up.
+    pathname === "/m" || pathname?.startsWith("/m/");
   if (isStandalone) {
     return (
       <div data-appshell-root className="h-screen overflow-y-auto bg-gray-50">
@@ -87,7 +97,10 @@ export default function AppShell({
           ☰
         </button>
         <div className="text-sm font-bold">NextKey CRM</div>
-        <div className="w-9" /> {/* spacer to balance the hamburger */}
+        {/* Only rendered below lg, so the desktop never sees it. */}
+        <Link href="/m" className="px-2 py-1 rounded bg-white/15 text-xs font-medium">
+          Phone view
+        </Link>
       </div>
 
       {/* Desktop sidebar — always present on lg+ */}
@@ -124,6 +137,12 @@ export default function AppShell({
       <main data-appshell-main className="flex-1 overflow-y-auto p-4 lg:p-8 min-w-0">
         {children}
       </main>
+
+      {/* "How do I do this?" is passed in by the layout, which only builds it
+          for signed-in staff routes (the proxy's trusted public-route signal).
+          Importing it here instead would ship every staff guide in the bundle
+          that public pages load. The standalone branch above never shows it. */}
+      {help}
     </div>
   );
 }

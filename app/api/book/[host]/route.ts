@@ -16,6 +16,7 @@ import { buildAppointmentRow } from "../../../../utils/appointments";
 import { enforceRateLimit } from "../../../../utils/rate-limit";
 import { clientIp } from "../../sign/_shared";
 import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
+import { checkEmail, checkPhone } from "../../../../utils/lead-check";
 
 /**
  * PUBLIC self-book endpoint — the in-house replacement for the Google Calendar
@@ -26,11 +27,15 @@ import { findOrCreateContactByEmail } from "../../../../utils/contacts-create";
  *
  *   GET  /api/book/<slug>            → { host, days: [{date,label,slots[]}] }
  *   POST /api/book/<slug>            → { ok, video_link }
- *          body { start, name, email, phone?, notes?, website? }
+ *          body { start, name, email, phone, notes?, website? }
  *
  * Availability is derived from the host's existing `appointments` (no external
  * calendar). `website` is a honeypot — bots fill it; we silently drop those.
  */
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -69,7 +74,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ host: stri
     // still re-validated against live busy times on POST.
     busy = [];
   }
-  const days = computeAvailability(now, busy);
+  const days = computeAvailability(now, busy, host.booking);
 
   return NextResponse.json({
     host: { slug: host.slug, label: host.label, displayName: host.displayName, brand: host.brand },
@@ -127,6 +132,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
   }
+  // Real details only: refuses fake numbers, throwaway addresses and domains that
+  // can't receive mail, before a calendar slot is taken or an invite is sent.
+  const phoneCheck = checkPhone(body.phone || "");
+  if (!phoneCheck.ok) {
+    return NextResponse.json({ error: phoneCheck.message }, { status: 400 });
+  }
+  const emailCheck = await checkEmail(email);
+  if (!emailCheck.ok) {
+    return NextResponse.json({ error: emailCheck.message }, { status: 400 });
+  }
   const startMs = Date.parse(start);
   if (!Number.isFinite(startMs)) {
     return NextResponse.json({ error: "Please choose a time." }, { status: 400 });
@@ -137,7 +152,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
   const now = Date.now();
   const windowEnd = now + (DEFAULT_BOOKING_CONFIG.lookaheadDays + 1) * 86_400_000;
   const busy = await busyFor(host.email, now, windowEnd);
-  if (!isSlotAvailable(start, now, busy)) {
+  if (!isSlotAvailable(start, now, busy, host.booking)) {
     return NextResponse.json(
       { error: "Sorry, that time was just taken. Please pick another." },
       { status: 409 },
@@ -217,7 +232,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
     start: startISO,
     end: endISO,
     joinUrl: videoLink,
-    uid: `appt-${apptId}@nextkey.com.au`,
+    // The .ics UID is visible in some calendar apps — keep it on-brand.
+    uid: `appt-${apptId}@${host.brand === "springboard" ? "springboardhomes.com.au" : "nextkey.com.au"}`,
     tz: body.timeZone,
   });
 
@@ -231,11 +247,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ host: stri
       name: email === host.email ? host.displayName : email,
     })),
     subject: `New booking: ${name} — ${whenLabel}`,
-    html: `<p>${name} booked a meeting via your self-book page.</p>
+    html: `<p>${escapeHtml(name)} booked a meeting via your self-book page.</p>
       <p><strong>When:</strong> ${whenLabel} (AEST)<br>
-      <strong>Email:</strong> ${email}${body.phone ? `<br><strong>Phone:</strong> ${body.phone}` : ""}</p>
+      <strong>Email:</strong> ${escapeHtml(email)}${body.phone ? `<br><strong>Phone:</strong> ${escapeHtml(body.phone)}` : ""}</p>
       ${hostVideoLink ? `<p><a href="${hostVideoLink}">Join the video meeting</a></p>` : ""}
-      ${body.notes ? `<p><strong>Notes:</strong> ${body.notes}</p>` : ""}`,
+      ${body.notes ? `<p><strong>Notes:</strong> ${escapeHtml(String(body.notes))}</p>` : ""}`,
     tags: ["self-book-notify"],
   }).catch(() => undefined);
 

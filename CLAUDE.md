@@ -42,7 +42,7 @@ All property data comes from **Supabase `global_stock_pool`** — not DuckDB. Th
 PWA basics live in `public/manifest.json` + the `metadata`/`viewport` exports in `app/layout.tsx`: standalone display, theme/background `#0F4C5C` (brand teal), `en-AU`, `appleWebApp.capable`, and the favicon/android-chrome/apple-touch icon set wired through `metadata.icons`. The OG/Twitter cards are also declared there.
 
 ### Voice Assistant (`app/components/VoiceAssistant.tsx` + `app/api/voice/converse/route.ts`)
-Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a `FAST`-model (Claude Haiku via OpenRouter) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
+Floating push-to-talk button mounted from `layout.tsx` (so it's available on every page). The client transcribes speech and POSTs `{ transcript, history }` to `/api/voice/converse`; the route runs a `FAST`-model (Claude Haiku) tool-use loop (max `MAX_TOOL_ITERATIONS = 6`) and returns `{ ok, reply, history, side_effects }`. The client speaks `reply` via `speechSynthesis` and surfaces `side_effects` as visual confirmation.
 
 Tool inventory (MVP):
 - `find_contact` — lookup by name/phone/email, returns top match (must be called before any contact-scoped tool)
@@ -69,10 +69,10 @@ Two-phase POST flow on `/api/broadcast`:
 
 **Compliance reviewer** (`utils/compliance-review.ts`) is purpose-built — does NOT call `senior_advisor.py`. Senior Advisor is a scheduled batch agent reviewing recommendations from a Veteran Advisor, not a generic copy reviewer. The reviewer here borrows Senior's AU-law lens but with a `(subject, body) → {violations: [...]}` interface tailored to broadcast copy.
 
-**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (OpenRouter/model outage), the UI offers the same override under a softer warning.
+**Override path**: if Phase 1 returns violations, the UI shows them in a card with a "I've read these warnings and want to send anyway" checkbox. Ticking it enables an "Override and send" button that re-POSTs with `acknowledge_violations=true`. If the review itself fails (API/model outage), the UI offers the same override under a softer warning.
 
 ### Planning Feasibility (`app/feasibility/` + `app/api/ai/planning-feasibility/route.ts`)
-AI-led, Australia-wide development-feasibility tool. The advisor describes a property + objective; the tool **interviews** them (a small batch of targeted questions, grounded in the council planning scheme via OpenRouter web search and pre-filled with best-guesses), then **generates** a comprehensive preliminary report. The route runs `orText` (`MODELS.smart`, `web:true`) over a shared `messages` transcript in two phases:
+AI-led, Australia-wide development-feasibility tool. The advisor describes a property + objective; the tool **interviews** them (a small batch of targeted questions, grounded in the council planning scheme via Anthropic web search and pre-filled with best-guesses), then **generates** a comprehensive preliminary report. The route runs `aiText` (`MODELS.smart`, `web:true`) over a shared `messages` transcript in two phases:
 - `phase:"interview"` → returns `{ status:"questions"|"ready", understanding, questions[] }`
 - `phase:"report"` → returns `{ report }` as structured JSON (`title/subtitle/meta/keyStats/sections[blocks]/disclaimer`)
 
@@ -81,6 +81,19 @@ AI-led, Australia-wide development-feasibility tool. The advisor describes a pro
 **Auto-research + satellite (from a property).** The property-detail button deep-links `?address=…&auto=1&property=<id>`. With `auto=1` the tool skips the interview, researches everything from the address itself, and generates the report. The report phase also geocodes the address (OSM Nominatim) and fetches a current satellite tile (Esri World Imagery, keyless) which it (a) feeds to the vision model so the AI reads the actual site and (b) embeds in the report (CSP allows external `<img>`, not iframes) with a live Google Maps link. All satellite steps are best-effort — failure degrades to web-search-only.
 
 **Persistence** (`app/api/feasibility/reports/` + `migrations/20260701_feasibility_reports.sql`). "Save to CRM" in the report toolbar POSTs the report + transcript to `feasibility_reports` (jsonb, `created_by`, optional `property_id`); the start screen lists saved reports (GET) with open/delete. The routes degrade gracefully if the table doesn't exist yet (list returns empty; save returns a "run the migration" message), so the code is safe to deploy before the SQL is applied in the Supabase editor.
+
+### Invoices (`app/invoices/` + `app/api/invoices/` + `utils/invoices.ts`)
+Stage 1 of the CRM's own books, replacing Conta: GST tax invoices for NextKey Pty Ltd and its registered business names. Sidebar link **Invoices** under Command, badged with the overdue count. Migrations `migrations/20261031_invoices.sql` then `20261031b_invoices_atomic.sql`. Planned next: expenses and NAB statement import, then GST/BAS figures and profit and loss. Payroll (no staff) and direct ATO lodgement (needs software meeting the DSP Operational Security Framework) are out of scope.
+- `utils/invoices.ts` is pure and holds the rules: money in whole cents, `computeTotals`, `issueProblems` (what the ATO requires on a tax invoice, including the buyer's name or ABN from $1,000) and `invoiceState`. GST is worked out once on the taxable total, not per line, so it matches the 1/11 on the document.
+- **Issuing locks the invoice, enforced twice.** `issue_invoice()` takes the number under a row lock and skips any already used. `invoices_lock_guard` then refuses changes to the number, buyer, lines, amounts or dates, and refuses deletes. Only the due date, buyer email, internal note, CRM links and payment fields can change. To correct one, void it and issue a new one; numbers are never reused. Add any new printed column to the trigger, or it stays editable after issue.
+- **Emails only go when a person presses the button.** Nothing sends invoices or reminders on a schedule. The sent date is stamped only after Brevo accepts it. They're transactional, so a marketing unsubscribe doesn't block them.
+- **Brand firewall:** a Springboard invoice shows only that registered business name plus the ABN, which GSTR 2013/1 accepts, and sends from the Springboard address. The bank account name is the one place the legal entity appears, because the customer's bank needs it.
+- `invoice_settings` is one row: seller details, bank details, next number. Bank details live there rather than in the repo. Only the super admin can change it, and a trigger logs each change to `invoice_events` under the all-zero invoice id.
+- **Issuing freezes the seller and bank details** into `seller_snapshot`, so a later settings change doesn't rewrite an old invoice. `sellerFor()` applies this on the PDF and email. If the bank account changes, an unpaid invoice still shows the old one until it's voided and reissued.
+- **State changes run in database functions under the row lock** (`issue_invoice`, `void_invoice`, `record_invoice_payment`, `remove_invoice_payment`). Checks in the routes only give friendlier answers. `issue_invoice` refuses if the draft changed after the route checked it.
+- `invoice_events` is append-only and has no foreign key, so history outlives a deleted draft.
+- Payments are separate rows, and `amount_paid_cents` is re-added from them on every change. A payment against a voided invoice is refused, and an invoice with payments can't be voided until they're removed.
+- The Conta import isn't built yet. It will insert rows with `source='conta_import'` directly as issued, keeping their numbers.
 
 ### Paid Accounts (`app/paid-services/` + `app/api/paid-services/` + `utils/paid-services.ts`)
 Register of every paid service the CRM/business runs on, plus a daily email digest when one needs attention. Sidebar link **Paid Accounts** under System, badged with the count needing attention. Full write-up: `docs/FEATURE-paid-accounts.md`.
@@ -142,7 +155,7 @@ External introducer firms register YLA clients and track their progress, segrega
   - **Exactly ONE `signature_requests` row per signer, rotated in place.** Not tidiness: the completion route calls `allSigned(rows)`, which selects *every* row for the document and requires all of them to be `signed`. Inserting a fresh request per visit and marking the old one `expired` leaves a permanently-unsigned row, so `allSigned` never becomes true, `markDocSigned` never runs, and the document sits `Draft` while the signer is told it worked. Re-opening rotates `token_hash` on the one row, which kills the old link and keeps the invariant.
   - `ndaDataFor()` is pure and snapshots the applicant into the document. `readyToIssue()` exempts the NDA from needing an accreditation number — it is signed before the exam, so there isn't one yet.
 - **Accreditation expires, and the expiry is enforced** (`migrations/20260819_introducer_accreditation_expiry.sql`). Twelve months for the accreditation, **six for the SMSF competency** — two clocks, because M4 is 23% of the Tier 1 exam and goes stale fastest. Both are derived once at certificate issue by `accreditationExpiries()` and stored as `date`, never recomputed at read time; a **reissued** certificate derives from the FIRST issue date, so replacing a misspelt name does not hand out another year. `addMonthsClamped` clamps to month end (31 Aug + 6 = 28 Feb) because JS date arithmetic rolls over. The dates are copied onto the firm at activation and resolved with the session (`IntroducerIdentity.accreditationExpiresAt`), so `POST .../submit` refuses an expired accreditation without a second query. **NULL is "not recorded", never "expired"** — every firm activated before this shipped has no dates, and reading NULL as expired would have shut the portal for all of them. Only the accreditation blocks submission; a lapsed SMSF competency is reported and narrows what may be discussed.
-- **The consent statement names the whole disclosure chain**, not just Springboard: G.B. Mayes Holdings → CRE8 Finance t/a Your Loan Assist → a licensed financial adviser → lenders, plus the two conflict disclosures (independent, not an agent; may be paid a fee). Consent to pass details to one company does not cover onward disclosure to a credit licensee and a separate advice business. Pinned field-by-field in `utils/introducer.test.ts`; it is stored verbatim on the row, so changing it never applies retrospectively.
+- **The consent statement names the whole disclosure chain**, not just Springboard: Springboard Homes (a business name of NextKey Pty Ltd — the one place introducer-facing copy may say "NextKey", as the legal entity) → G.B. Mayes Holdings → CRE8 Finance t/a Your Loan Assist → a licensed financial adviser → lenders, plus the two conflict disclosures (independent, not an agent; may be paid a fee). Consent to pass details to one company does not cover onward disclosure to a credit licensee and a separate advice business. Pinned field-by-field in `utils/introducer.test.ts`; it is stored verbatim on the row, so changing it never applies retrospectively.
 - **Submitting needs the signed form, not just the tick.** `CONSENT_FORM_LABEL` documents are the one upload that is NOT a reply to an information request — allowed on a **draft** only, `info_request_id` null — and `submit` refuses without one. Once submitted, a replacement needs an information request like every other document.
 - **The course's gates can be overridden, per invitation** (`{ override: true }` on `POST .../exam-invite`; *Reopen the course for them* on the accreditation card). **Gated on `canOverrideCourse`, NOT on super-admin** — `COURSE_OVERRIDE_EMAILS`, defaulting to the owner alone. Deliberately its own variable: `SUPER_ADMIN_EMAILS` is a list that grows for good operational reasons, and a colleague who can accept referrals and authorise unlocks must not thereby be able to soften what accreditation requires. Checked in the route, not just hidden in the UI. Four things at once: the reading timer, the cooling-off ladder, the 24h five-failure lock **and its progress wipe**, and the re-locking of any module the candidate has already attempted — which is the case it exists for, a failed exam sending someone back through modules they had passed. It also **keeps their progress**, where every other re-issued link deliberately clears it; `resetIfReissued` skips the wipe for an override token, because wiping first would leave nothing to reopen. A module never opened stays locked (`attempts > 0` is the test) and the pass mark is unchanged — it unsticks, it does not shorten. All of it lives in the **course's** JavaScript (`03-course/index.html` in the Springboard pack), enforced against state on the candidate's device, so the flag rides inside the HMAC-signed invite payload where the candidate cannot forge it, and the exam function reads it off the signed token rather than the request body. Never silent: the course banners it, the audit file gets `exam_invite_waits_and_gates_overridden`, and a pass sat that way gets `exam_passed_under_override`. Action NAMES carry it because the audit file renders the action and nothing else. **Both repos must change together** — `mintExamInvite` here and `verifyInvite` in the pack's `netlify/functions/exam.mjs`.
 
@@ -188,7 +201,20 @@ The CRM is its own calendar — **no Google**. Google Calendar/OAuth was removed
 - The write path never needed this — `appointments.start_time` is a `timestamptz` UTC instant, and `utils/booking.ts` / `app/api/book/[host]` already pin their own output, which is why confirmation emails were always correct.
 
 **In-house self-book (`app/book/[host]/`, `app/api/book/[host]/`, `utils/booking.ts`) — replaced the Google booking pages.** A **public** page at `/book/<host-slug>` (Sean/Glenn/Springboard, `SchedulingHost.slug`) lets a lead pick an open slot with no CRM login. `utils/booking.ts` is a pure, vitest-tested availability engine: business hours (Mon–Fri 09:00–17:00) minus the host's existing `appointments`, in **AEST/UTC+10** (QLD has no DST, so slot instants are built from `…+10:00` strings — no tz lib). `GET /api/book/<slug>` returns open days/slots; `POST` re-validates the slot against live busy times (never trusts the client), **captures the lead as a `contacts` row** (find-or-create by email), books the meeting (LiveKit link + `appointments` row), and emails the lead an invite (+.ics) and the host a heads-up. A hidden `website` **honeypot** drops bots. The opportunity page's **"Self-book link"** dropdown copies `<origin>/book/<slug>` to send the lead.
+- **Lead check (`utils/lead-check.ts`, 30 Oct 2026):** `POST` refuses fake phone numbers, throwaway email domains, mistyped providers and domains that can't receive mail, before any slot is taken. Phone is now required. Same rules as the NextKey Lead Check WordPress plugin (`~/wp-plugins/nextkey-lead-check`), so change them together; `utils/disposable-domains.ts` is generated from the plugin's list. It checks details are real, not that they belong to the person (no SMS or email codes, Sean's call). DNS fails open: only a clear "no such record" refuses. The WordPress sites (`inc/call-times.php`) POST here too, and a refusal there still emails Glenn the enquiry.
 - **Public-route plumbing (mirrors the guest-video model):** `proxy.ts` `isPublicBookingRoute` exempts `/book/*` + `/api/book/*` from the CF Access gate, and `AppShell` renders `/book/*` chromeless. **Reachability also needs a Cloudflare Access *bypass* app** for `crm.nextkey.com.au/book/*` + `/api/book/*` (dashboard, same as `/join/*`) — until that's added, external leads hit the Access login wall.
+
+### Preliminary Assessment: present on a call, YLA video, e-sign (`app/preliminary-assessments/`, `app/join/[token]/pa/`, `utils/pa-*.ts`, `utils/preliminary-assessments.ts`)
+The PA is the 4-page credit proposal Your Loan Assist emails back to Glenn. A rep presents it on a video call, the applicants watch YLA's program video, and it is then emailed to them to sign. Sidebar link **Preliminary Assessments** under CRM; a card on the contact page; a **Present PA** button in the call. Migrations `20261006_preliminary_assessments.sql` + `20261006b_pa_signature_doc_type.sql` + `20261006c_pa_presentation_started.sql`.
+- **Intake is a mailbox feeder, not the CRM.** Glenn's personal inbox is not in `email_log`, so `elvis_pa_intake.py` (NEXUS) reads it over IMAP, strictly read-only, stores the PDF in the private `preliminary-assessments` bucket and writes one row per email with the PDF already parsed into `data` (applicants + emails, and where each printed signature rule sits). The CRM never parses a PDF server-side; it only stamps at stored coordinates with `pdf-lib`.
+- **Matching is by the applicants' emails printed in the PDF** (`utils/pa-match.ts`, run by the list route and `POST /api/cron/run?job=pa`), never by surname. No email hit means it stays unmatched for a rep to match by hand; a hand-cleared match is not re-matched. A re-issued PA under the same YLA ref supersedes the older unsigned one.
+- **`pa_received_at` is NOT stamped automatically** unless `PA_AUTO_MARK_RECEIVED=true`. That flag is half the gate on the director ID walkthrough, and an email match is not a rep reading the structure.
+- **Guest endpoints live under `/join/<token>/pa`, not `/api/`.** `/join/*` already has the Cloudflare Access bypass and the `proxy.ts` exemption; a new `/api/` path would need both added. The signed guest token in the path is the whole credential. A guest link exposes nothing until the rep presses Present PA, and stops three hours after (`presentation_started_at`, `GUEST_PA_WINDOW_MS`): the link also sits in the client's calendar invite, so access is tied to a recent Present, not to one having happened once. The guest rate limit that counts is the per-link ceiling, keyed on the link and the bare path so no header or query string can raise it. A per-caller split (CF-Connecting-IP) sits in front so one applicant reloading does not lock out the others, but it is a courtesy: these paths skip the tunnel gate, so that header can be forged by going to the Netlify origin directly. `publicOrigin()` only trusts hosts we serve from; a guest must not be able to choose the host a signing link points at.
+- **The call follows the rep over the LiveKit data channel** (`PA_TOPIC`, `PaRoomMessage`), re-sent every 2 seconds so late joiners and reconnects land on the right page. `PaAudience` ignores any message from an identity starting `guest:`; identities are server-assigned, which is what stops one applicant driving another's screen.
+- **YLA's video cannot be embedded or detected.** Their page asks for the applicant's email and a code YLA emails them. The applicants get a button that opens it in a new tab; signing is triggered when an applicant presses "We've finished watching" or the rep presses "Video watched". Only hosts in `safeYlaVideoUrl` are ever opened, and the URL comes from the server, never from a room message.
+- **Signing reuses the e-signature engine** as doc type `preliminary_assessment`, the one type that is a PDF we were given: `LoadedDoc.renderPdf` (`utils/pa-signed-pdf.ts`) draws each signature on that applicant's printed rule and appends a signature record page. `sendPaForSigning` claims `signing_sent_at` atomically so two confirmations cannot both send, sends Springboard-branded, and refuses outright for more than two applicants or a missing email rather than sending to a subset. **Resend** (`resendPaSigning`) rotates each unsigned signer's ONE row in place; a second row per signer would stop the PA ever locking.
+- **pdf.js is the legacy build, pinned (5.4.624), loaded only by dynamic `import()` in an effect**; a static import pulls it into the server bundle (the Leaflet trap). Applicants on browsers older than iOS 16.4 get an "Open the document" link instead.
+- `next.config.ts` now derives the LiveKit CSP sources from `NEXT_PUBLIC_LIVEKIT_URL` as well as the hard-coded SFU host.
 
 ### Borrowing capacity engine (`utils/finance/`)
 Pure, tax-year-aware servicing model behind the War Room **Borrowing capacity** card (`app/components/WarRoomCalculators.tsx`) and the opportunity **Calculations** section. The component is a thin UI over it; all arithmetic lives here and is vitest-tested (`tax.test.ts`, `capacity.test.ts`).
@@ -285,7 +311,7 @@ PropertyGrid uses both the normalised aliases AND the raw Supabase column names 
 - `properties/delete` — DELETE from Supabase by ID array
 - `properties/map` — active stock rolled up to one cluster per suburb (Stock Map)
 - `properties/map/geocode` — fills the `stock_geocodes` suburb-centroid cache, 12 at a time
-- `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot. Not a GHL proxy.
+- `contacts/` — **Supabase directly** (`utils/supabase.ts`): `contacts/[id]` PATCH/DELETE hit the live `contacts` table; `contacts/list` merges live `contacts` with the `ghl_archive_contacts` snapshot — the merge is the `contacts_list_v` view (`migrations/20260919_contacts_list_view.sql`, `security_invoker`), paged in `utils/contacts-list.ts`; never read both tables in full to show one page. Not a GHL proxy.
 - `opportunities/`, `pipelines/` — proxy to the **NEXUS API** (`utils/nexus-api.ts` → Flask app on `localhost:8765` / `api.nextkey.com.au`, DuckDB-backed) at `/api/leads` + `/api/pipelines`. "GHL" here is legacy naming only — GoHighLevel was decommissioned; this is NextKey's own nexus-api. (There is no separate `app/api/duckdb/` route; the DuckDB backend is reached through these proxies and the suburbs/appointments pages.)
 - `voice/converse` — voice assistant brain (Claude Haiku tool loop, see *Voice Assistant* above)
 - `broadcast` — two-phase bulk-email send: Phase 1 compliance review (Haiku), Phase 2 sequence + enrolment writes (see *Broadcast* above)
@@ -316,6 +342,7 @@ Grouped to match the sidebar in `app/layout.tsx`. Detail routes (`[id]`) sit und
 | `/leads` | **Lead Intake** — the inbound/AI-triage inbox over Supabase `property_leads`. One flow with `/opportunities`: a **Promote** action (`POST /api/leads/promote`) creates a NEXUS opportunity from the lead and stamps `promoted_at`/`promoted_opportunity_id` so it drops off the inbox. `/opportunities` (NEXUS DuckDB) is the working pipeline. `property_leads` is intake+triage; the NEXUS pipeline is the deal board — deliberately two layers, not merged. (`migrations/20260714_property_leads_promote.sql`; promote falls back gracefully before it's applied.) |
 | `/admin/partners` | **Partners** (staff) — hold-request/deal queue with the supplier behind each lot (grant, decline, advance, release, *release lot details*), and the partner-firm register (onboard, tier, extras, white-label branding, logins). See *Channel-partner portal* |
 | `/partner` | **Partner Portal** (PUBLIC, own session, no CRM chrome) — sign-in, then `/partner/stock` (masked stock book + referral fee), `/partner/clients`, `/partner/deals`, `/partner/account` (plan) |
+| `/preliminary-assessments` | **Preliminary Assessments** — PAs back from YLA: match to a contact, view, open the presentation call, resend signing links. See *Preliminary Assessment* in ARCHITECTURE |
 | `/eoi` | Expressions of Interest — list. `?property=`/`?contact=`/`?opportunity=` auto-creates a prefilled EOI and opens it |
 | `/eoi/[id]` | EOI form — matches the paper EOI; send for e-signing (licence attached at signing) + "Start CDD from this EOI" |
 | `/fact-find` | Borrower Fact Find — list of fact finds |
@@ -405,22 +432,43 @@ python3 /mnt/c/NEXUS-Memory/projects/enrich_images.py
 ```
 This scrapes PropMarket for estate images and fuzzy-matches to `builder_name`. ~7 of 149 properties currently have images; 25 builders are unmatched (not on PropMarket — came via email stocklists).
 
-## AI PROVIDER (OpenRouter)
-All server-side AI goes through **OpenRouter** (OpenAI-compatible API), via the
-shared client in `utils/openrouter.ts` — not the Anthropic SDK directly. Models
-are env-driven: `OPENROUTER_MODEL_SMART` (advisor text + document extraction,
-default `anthropic/claude-sonnet-4`) and `OPENROUTER_MODEL_FAST` (voice loop,
-compliance, deal-analyser parse/research, CSV mapping, default
-`anthropic/claude-haiku-4.5`). Web search uses OpenRouter's `:online` suffix, not
-Anthropic's `web_search` tool. References to "Claude Haiku/Opus" below mean the
-`FAST`/`SMART` models routed through OpenRouter (the defaults are Claude, but
-either can be repointed at any OpenRouter slug — e.g. `openai/gpt-4o-mini`).
+## AI PROVIDER (Anthropic)
+All server-side AI goes through the **Anthropic API** via the official SDK and the
+shared client in `utils/anthropic.ts`. Use `aiText()`; only the voice tool loop calls
+`getAnthropic()` directly. Models are env-driven: `ANTHROPIC_MODEL_SMART` (default
+`claude-sonnet-5-5`), `ANTHROPIC_MODEL_FAST` (default `claude-haiku-5-5`) and
+`ANTHROPIC_MODEL_EXTRACT` (document reading, defaults to SMART). References to "Claude
+Haiku/Opus" elsewhere mean those FAST/SMART models. Overrides must be current-generation
+models, because every request sets `output_config.effort`.
+
+Things that bite:
+- **Billing:** the key belongs to the Nextkey Console organisation, linked to Sean's Max
+  plan: $100 USD of credit each billing cycle, no rollover. When it runs out requests
+  fail until the next grant, unless purchased credits or auto-reload are set up.
+- **`maxTokens` means the answer's length.** Thinking counts toward the API's
+  `max_tokens` and can't be turned off on these models, so `aiText` adds room on top.
+  `thinking: false` means low effort, not no thinking.
+- **Web search** is the `web_search_20250305` server tool, capped by `maxSearches`
+  (default 3) and billed per search; Netlify functions get 60s. `aiText` returns only the text after the last search,
+  so narration before a search can't break a JSON parse.
+- **Long JSON:** Sonnet 5.5 broke the feasibility report's JSON in 3 of 7 tries, closing the
+  object just after `keyStats`, so that report passes `jsonSchema` (`utils/feasibility-report-schema.ts`).
+  Keep `minItems: 1` there, or the same slip returns valid JSON with no sections. Lower effort
+  isn't a fix for its speed: at `low` the model skipped web search altogether.
+- **No prefill:** a request whose last message is the assistant's returns a 400.
+- **Refusals:** SMART requests use the server-side fallback (`fallbacks: "default"`);
+  Haiku has none, so a declined FAST request throws.
+- **Voice history** goes through the browser and comes back untrusted, so
+  `utils/voice-history.ts` rebuilds it and strips thinking blocks.
+- **`OPENROUTER_API_KEY` stays set in the CRM** only for the OpenRouter balance on Paid
+  Accounts: the NEXUS fleet and Hermes still run on OpenRouter. `openai` stays a dependency
+  for `utils/embeddings.ts`.
 
 ## ENV VARS
 Stored in `.env.local` at project root:
-- `OPENROUTER_API_KEY` (required — all AI features; app fails env validation without it)
-- `OPENROUTER_MODEL_SMART` / `OPENROUTER_MODEL_FAST` (optional — override default model slugs)
-- `OPENROUTER_MODEL_EXTRACT` (optional — model for uploaded-document extraction in `/api/ai/extract-document`; defaults to `OPENROUTER_MODEL_SMART`. Set to a cheaper slug to trade contract/ID reading accuracy for cost)
+- `ANTHROPIC_API_KEY` (all AI features; a missing key warns at boot and AI calls fail at call-time)
+- `ANTHROPIC_MODEL_SMART` / `ANTHROPIC_MODEL_FAST` / `ANTHROPIC_MODEL_EXTRACT` (optional — override default models, see *AI PROVIDER*)
+- `OPENROUTER_API_KEY` (optional — only reads the OpenRouter balance for Paid Accounts)
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `PARTNER_NOTIFY_EMAILS` (optional — who hears about partner hold requests; default `sean.l@nextkey.com.au`)

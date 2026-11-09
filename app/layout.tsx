@@ -6,7 +6,9 @@ import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
 import PublicRouteGate from "./components/PublicRouteGate";
 import Sidebar from "./components/Sidebar";
+import HelpButton from "./components/HelpButton";
 import { headers as nextHeaders } from "next/headers";
+import type { CrmRole } from "../utils/roles";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -17,6 +19,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  // Without a base, relative og:image URLs render as http://localhost:3000/…
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://crm.nextkey.com.au"),
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
   // NOTE: the PWA manifest link is emitted manually in <head> below with
@@ -56,63 +60,75 @@ export const metadata: Metadata = {
 };
 
 // Sidebar shows badges with the count of items needing attention. Single
-// HEAD count(*) per badge — Postgres handles this in milliseconds, and
-// missing the badge isn't worth a layout-fail so we swallow errors.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number }> {
-  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0 };
-  try {
-    const { count } = await supabase
+// HEAD count(*) per badge, all issued at once: this runs on every staff page
+// render, and the functions (us-east-2) sit a Pacific round trip from the
+// database (Seoul), so five sequential queries cost ~1s of every page load.
+// Missing a badge isn't worth a layout-fail, so a failed query reads as 0.
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number; overdueInvoices: number }> {
+  const [pendingReview, draftBuilders, dealPackets, amlReports, paidAccounts, overdueInvoices] = await Promise.allSettled([
+    supabase
       .from("property_review_queue")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending");
-    out.pendingReview = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .eq("status", "pending"),
     // Auto-deactivated drafts (e.g. Netlify newsletters) have draft=true
     // AND active=false — those are noise. Surface only the ones still
     // active, which is what Sean needs to confirm or reject. Each draft
     // here blocks future ingestion runs from that sender.
-    const { count } = await supabase
+    supabase
       .from("builders")
       .select("id", { count: "exact", head: true })
       .eq("draft", true)
-      .eq("active", true);
-    out.draftBuilders = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .eq("active", true),
     // Packets awaiting operator action: rent still needed, or rent supplied but
     // reports not yet generated. reports_generated / failed drop off the badge.
-    const { count } = await supabase
+    supabase
       .from("deal_packets")
       .select("id", { count: "exact", head: true })
-      .in("status", ["needs_rent_input", "ready"]);
-    out.dealPackets = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .in("status", ["needs_rent_input", "ready"]),
     // AUSTRAC reports (SMR/TTR/IFTI) not yet lodged — each has a statutory
     // deadline, so surface the outstanding count as a compliance nudge.
-    const { count } = await supabase
+    supabase
       .from("aml_reports")
       .select("id", { count: "exact", head: true })
-      .neq("status", "lodged");
-    out.amlReports = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .neq("status", "lodged"),
     // Paid accounts needing attention (payment due/overdue, card expiring,
     // prepaid balance dry). Unlike the others this can't be a count(*) — the
     // rules are date arithmetic in utils/paid-services.ts, and duplicating them
     // in SQL is how the badge and the email start disagreeing. The register is
     // tens of rows, so read the few columns the rules need and count in code.
-    const { data } = await supabase
+    supabase
       .from("paid_services")
       .select(
         "id,name,category,criticality,status,cost,currency,billing_cycle,next_due_date,auto_renew,payment_method,card_expiry,balance_remaining,balance_unit,low_balance_threshold,alert_lead_days,snoozed_until,purpose,plan",
       )
-      .limit(500);
-    if (data) out.paidAccounts = summarise(data as unknown as PaidService[], brisbaneToday()).needingAttention;
-  } catch { /* swallow */ }
-  return out;
+      .limit(500),
+    // Issued invoices past their due date. Same rule as invoiceState() in
+    // utils/invoices.ts: "issued" means money is still owing.
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "issued")
+      .lt("due_date", brisbaneToday()),
+  ]);
+  const count = (r: PromiseSettledResult<{ count: number | null }>) =>
+    r.status === "fulfilled" ? r.value.count ?? 0 : 0;
+  let paid = 0;
+  if (paidAccounts.status === "fulfilled" && paidAccounts.value.data) {
+    try {
+      paid = summarise(paidAccounts.value.data as unknown as PaidService[], brisbaneToday()).needingAttention;
+    } catch { /* swallow */ }
+  }
+  return {
+    pendingReview: count(pendingReview),
+    draftBuilders: count(draftBuilders),
+    dealPackets: count(dealPackets),
+    amlReports: count(amlReports),
+    paidAccounts: paid,
+    overdueInvoices: count(overdueInvoices),
+  };
 }
+
+const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0, overdueInvoices: 0 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Trusted public-route signal from the edge proxy (see proxy.ts). This header is
@@ -121,7 +137,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isPublic = h.get("x-public-route") === "1";
   // Only fetch sidebar counts for authenticated/staff routes. Public routes render
   // chromeless and must not execute sidebar DB queries or serialize staff routes.
-  const counts = isPublic ? null : await getSidebarCounts();
+  // Role flag set by proxy.ts (client-sent values are stripped there).
+  const role: CrmRole = h.get("x-crm-role") === "marketing" ? "marketing" : "staff";
+  const isMarketing = role === "marketing";
+  // Marketing users get no badge counts (review queue, AML reports, paid accounts).
+  const counts = isPublic ? null : isMarketing ? EMPTY_COUNTS : await getSidebarCounts();
   return (
     <html lang="en">
       <head>
@@ -133,11 +153,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
       </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
-        <AppShell sidebar={isPublic ? null : <Sidebar counts={counts!} />}>
+        <AppShell
+          sidebar={isPublic ? null : <Sidebar counts={counts!} role={role} />}
+          help={isPublic || isMarketing ? null : <HelpButton />}
+        >
           {children}
         </AppShell>
         <PublicRouteGate>
-          <VoiceAssistant />
+          {/* The voice assistant reads contacts and sends SMS/email — staff only. */}
+          {!isMarketing && <VoiceAssistant />}
         </PublicRouteGate>
       </body>
     </html>

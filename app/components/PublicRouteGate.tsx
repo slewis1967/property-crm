@@ -17,6 +17,8 @@ export default function PublicRouteGate({ children }: { children: React.ReactNod
   const pathname = usePathname();
   if (pathname === "/sign" || pathname?.startsWith("/sign/")) return null;
   if (pathname === "/introducer" || pathname?.startsWith("/introducer/")) return null;
+  // Self-book page: the link goes to leads by text and email.
+  if (pathname === "/book" || pathname?.startsWith("/book/")) return null;
   // Channel-partner portal, same reason. "/partners" is not a match.
   if (isPartnerPortalPath(pathname)) return null;
   // Client property shortlist, same reason. "/shortlists" is not a match.

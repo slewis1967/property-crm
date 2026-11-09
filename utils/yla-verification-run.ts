@@ -9,7 +9,7 @@
  */
 import { supabase } from "./supabase";
 import { requiredSlots, allowsExtra } from "./yla-documents";
-import { MODELS, orChat } from "./openrouter";
+import { aiText, MODELS, pdfBlock } from "./anthropic";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import {
   hasPdfHeader,
@@ -21,10 +21,12 @@ import {
   docVerdict,
   buildResult,
   atoYearCoverageIssues,
+  tfnBlocker,
   type DocVerdict,
   type VerificationResult,
 } from "./yla-verification";
 import { missingComplianceDocs } from "./yla-package";
+import { columnMissing } from "./column-missing";
 import { financialYearsNeeded } from "./mygov-guide";
 
 const BUCKET = "client-documents";
@@ -39,7 +41,7 @@ const SELECT =
  * its verdict — silently, and identically on every retry. One wave costs about
  * as long as the slowest single document.
  *
- * Safe to raise: each call goes through the OpenAI SDK, which already retries
+ * Safe to raise: each call goes through the Anthropic SDK, which already retries
  * 429/5xx, so a burst that brushes a rate limit is retried rather than being
  * turned into a spurious "this document couldn't be checked" fault.
  */
@@ -60,6 +62,17 @@ export type VerifyRunResult =
       result: VerificationResult;
     };
 
+type DocRow = {
+  id: string;
+  doc_type: string;
+  filename: string;
+  storage_path: string;
+  mime_type: string | null;
+  status: string;
+  uploaded_at: string;
+  check_override_at?: string | null;
+};
+
 type Matched = {
   applicant: string;
   docKey: string;
@@ -68,6 +81,8 @@ type Matched = {
   filename: string;
   storage_path: string;
   mime: string;
+  /** A rep has looked at this file and dismissed the check's objection to it. */
+  overridden: boolean;
 };
 
 export async function runApplicationVerification(
@@ -106,12 +121,25 @@ export async function runApplicationVerification(
   for (let ai = 0; ai < siblings.length; ai++) {
     const sib = siblings[ai]!;
     const who = siblings.length > 1 ? `Applicant ${ai + 1}` : sib.applicant_name || "Applicant";
-    const { data: docs } = await supabase
-      .from("client_documents")
-      .select("id,doc_type,filename,storage_path,mime_type,status,uploaded_at")
-      .eq("request_id", sib.id)
-      .neq("status", "replaced")
-      .order("uploaded_at", { ascending: true });
+    // Before 20260917_document_check_override.sql is applied there are no
+    // dismissals to honour, so fall back to checking everything — the verdict
+    // the sweep produced for months. Failing here instead would stop every
+    // application in the pipeline over a column nobody has used yet.
+    const DOC_COLUMNS = "id,doc_type,filename,storage_path,mime_type,status,uploaded_at";
+    const docQuery = async (columns: string) => {
+      const { data, error } = await supabase
+        .from("client_documents")
+        .select(columns)
+        .eq("request_id", sib.id)
+        .neq("status", "replaced")
+        .order("uploaded_at", { ascending: true });
+      return { data: data as unknown as DocRow[] | null, error };
+    };
+
+    const withOverrides = await docQuery(`${DOC_COLUMNS},check_override_at`);
+    const docs = columnMissing(withOverrides.error, ["check_override_at"])
+      ? (await docQuery(DOC_COLUMNS)).data
+      : withOverrides.data;
 
     const used = new Set<string>();
     for (const slot of slots) {
@@ -131,6 +159,7 @@ export async function runApplicationVerification(
         filename: m.filename,
         storage_path: m.storage_path,
         mime: m.mime_type || "application/pdf",
+        overridden: !!m.check_override_at,
       });
     }
 
@@ -151,6 +180,7 @@ export async function runApplicationVerification(
         filename: d.filename,
         storage_path: d.storage_path,
         mime: d.mime_type || "application/pdf",
+        overridden: !!d.check_override_at,
       });
     }
   }
@@ -158,6 +188,8 @@ export async function runApplicationVerification(
   const verdicts: DocVerdict[] = new Array(matched.length);
   /** Per-document facts only the cross-document checks below can act on. */
   const financialYears: (string | null)[] = new Array(matched.length).fill(null);
+  /** Per-document: did the model see a Tax File Number on it? */
+  const tfnSeen: boolean[] = new Array(matched.length).fill(false);
   let next = 0;
   async function worker() {
     while (next < matched.length) {
@@ -177,32 +209,37 @@ export async function runApplicationVerification(
           ...structuralIssues({ mime: m.mime, sizeBytes, isPdfHeader: hasPdfHeader(buf), encrypted: looksEncrypted(buf) }),
         );
         if (doVisual && structural.length === 0) {
-          const dataUrl = `data:application/pdf;base64,${Buffer.from(buf).toString("base64")}`;
-          const chatBody: Record<string, unknown> = {
+          const text = await aiText({
             model: MODELS.extract,
-            max_tokens: 600,
-            reasoning: { effort: "low" },
+            maxTokens: 600,
+            effort: "low",
             messages: [
               {
                 role: "user",
                 content: [
-                  { type: "file", file: { filename: m.filename, file_data: dataUrl } },
+                  pdfBlock(Buffer.from(buf).toString("base64"), m.filename),
                   { type: "text", text: visualCheckPrompt(m.docKey, m.slot) },
                 ],
               },
             ],
-            plugins: [{ id: "file-parser", pdf: { engine: "native" } }],
-          };
-          const response = await orChat(chatBody);
-          const text = response.choices?.[0]?.message?.content;
-          const verdict = parseVisualVerdict(typeof text === "string" ? text : "");
+          });
+          const verdict = parseVisualVerdict(text);
           financialYears[i] = verdict.financialYear ?? null;
+          tfnSeen[i] = verdict.showsTfn === true;
           visual.push(...visualIssues(verdict));
         }
       } catch (e) {
         structural.push(`couldn't be checked (${e instanceof Error ? e.message : "read error"})`);
       }
-      verdicts[i] = docVerdict({ docKey: m.docKey, applicant: m.applicant, filename: m.filename, sizeBytes, structural, visual });
+      const verdict = docVerdict({ docKey: m.docKey, applicant: m.applicant, filename: m.filename, sizeBytes, structural, visual });
+      // A dismissed document is still READ — we want what it says, because the
+      // cross-document year check depends on it — but its own objections no
+      // longer hold the set. Without this, the next re-verification (any new
+      // upload triggers one) would raise the identical objection a human has
+      // already ruled on, and the dismissal would silently stop meaning
+      // anything. A set-level fault found below can still attach to it: the rep
+      // vouched for this file, not for the completeness of the set.
+      verdicts[i] = m.overridden ? { ...verdict, issues: [], pass: true } : verdict;
     }
   }
   await Promise.all(Array.from({ length: Math.min(AI_CONCURRENCY, matched.length) }, () => worker()));
@@ -221,6 +258,16 @@ export async function runApplicationVerification(
     if (!verdict) continue;
     verdict.issues.push(issue);
     verdict.pass = false;
+  }
+
+  // A Tax File Number on ANY document, in any slot — payslips and super
+  // statements carry them too. Raised against the application rather than the
+  // document on purpose: the client cannot remove it from an ATO print, so
+  // telling them to re-upload would be a loop, and a rep cannot wave it through.
+  for (let i = 0; i < matched.length; i++) {
+    if (!tfnSeen[i]) continue;
+    const m = matched[i]!;
+    missing.push(tfnBlocker(m.applicant, m.filename));
   }
 
   // The two documents the client never uploads. They belong in `missing` (a

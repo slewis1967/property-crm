@@ -23,7 +23,7 @@
  * — the advisor keeps the original locally; we just save the extraction.
  */
 import { NextResponse } from "next/server";
-import { MODELS, orChat, orErrorMessage } from "../../../../utils/openrouter";
+import { aiErrorMessage, aiText, imageBlock, MODELS, pdfBlock } from "../../../../utils/anthropic";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
@@ -94,54 +94,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const dataUrl = `data:${mediaType};base64,${fileBase64}`;
-    const isPdf = mediaType === "application/pdf";
-
-    // OpenRouter multimodal content: images use `image_url`; PDFs use a `file`
-    // part + the file-parser plugin. `engine: "native"` defers to the model's
-    // own document support (the Claude default has it) and is the cheapest path.
-    const sourceBlock = isPdf
-      ? {
-          type: "file" as const,
-          file: { filename: "document.pdf", file_data: dataUrl },
-        }
-      : {
-          type: "image_url" as const,
-          image_url: { url: dataUrl },
-        };
+    const sourceBlock =
+      mediaType === "application/pdf"
+        ? pdfBlock(fileBase64, "document.pdf")
+        : imageBlock(mediaType, fileBase64);
 
     const userInstruction = hint
       ? `Hint from advisor: ${hint}\n\nExtract the structured data per the system prompt.`
       : `Extract the structured data per the system prompt.`;
 
-    const chatBody: Record<string, unknown> = {
-      // Configurable via OPENROUTER_MODEL_EXTRACT; defaults to the SMART model
-      // (contracts/IDs are accuracy-critical). See MODELS.extract.
+    // Configurable via ANTHROPIC_MODEL_EXTRACT (contracts/IDs are accuracy-critical).
+    const raw = await aiText({
       model: MODELS.extract,
-      // Reasoning tokens share this budget on OpenRouter, so leave generous
-      // headroom — a dense multi-page PDF can spend a lot thinking before it
-      // emits the ~4k-token JSON, and a too-tight cap returns empty content
-      // (misreported as "document may be empty or unreadable").
-      max_tokens: 12000,
-      reasoning: { effort: "medium" },
+      system: SYSTEM,
+      maxTokens: 12000,
+      effort: "medium",
       messages: [
-        { role: "system", content: SYSTEM },
-        {
-          role: "user",
-          content: [sourceBlock, { type: "text", text: userInstruction }],
-        },
+        { role: "user", content: [sourceBlock, { type: "text", text: userInstruction }] },
       ],
-    };
-    if (isPdf) chatBody.plugins = [{ id: "file-parser", pdf: { engine: "native" } }];
-
-    const response = await orChat(chatBody);
-    const raw = response.choices?.[0]?.message?.content ?? "";
-    if (!raw) {
-      return NextResponse.json(
-        { ok: false, error: "AI returned no text. The document may be empty or unreadable." },
-        { status: 500 },
-      );
-    }
+    });
 
     const m = raw.match(/\{[\s\S]*\}/);
     if (!m) {
@@ -173,7 +144,7 @@ export async function POST(req: Request) {
         typeof parsed.suggested_notes_text === "string" ? parsed.suggested_notes_text : "",
     });
   } catch (e) {
-    const msg = orErrorMessage(e);
+    const msg = aiErrorMessage(e);
     const status = /rate-limited/.test(msg) ? 429 : 500;
     return NextResponse.json({ ok: false, error: msg }, { status });
   }

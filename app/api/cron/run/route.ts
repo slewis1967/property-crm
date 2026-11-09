@@ -17,7 +17,7 @@
  * triggering the cron never sends anything that wasn't already enabled — it only
  * makes the schedule fire.
  *
- * Body/query: ?job=yla|reminders|accounts|income|all (default all). ?dry_run=1 forces dry.
+ * Body/query: ?job=yla|reminders|accounts|income|pa|all (default all). ?dry_run=1 forces dry.
  *
  * `accounts` (the paid-accounts payment-due digest) is in `all`, but it also has
  * its OWN daily schedule (.github/workflows/paid-account-alerts.yml): it must
@@ -30,6 +30,7 @@ import { runYlaAutoSubmit } from "../../../../utils/yla-auto-submit";
 import { runDocumentReminders } from "../../../../utils/document-reminders";
 import { runPaidServiceAlerts } from "../../../../utils/paid-service-alerts";
 import { runIncomeSweep } from "../../../../utils/income-reconciliation-sweep";
+import { matchPendingPas } from "../../../../utils/pa-match";
 import { log, errInfo } from "../../../../utils/logger";
 
 export const runtime = "nodejs";
@@ -102,9 +103,23 @@ export async function POST(req: Request) {
     }
   }
 
+  if (job === "pa" || job === "all") {
+    try {
+      // Ties Preliminary Assessments the mailbox feeder filed to their client
+      // and retires re-issued ones. It sends nothing, so it has no send gate —
+      // but it does write, and has no dry mode, so a dry_run request skips it
+      // rather than quietly doing the real thing.
+      result.pa = forceDry ? { ok: true, skipped: "dry_run" } : await matchPendingPas();
+      ran.push("pa");
+    } catch (e) {
+      log.error("cron.pa_failed", { ...errInfo(e) });
+      result.pa = { ok: false, error: e instanceof Error ? e.message : "failed" };
+    }
+  }
+
   if (ran.length === 0) {
     return NextResponse.json(
-      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|all)` },
+      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|pa|all)` },
       { status: 400 },
     );
   }

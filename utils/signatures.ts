@@ -11,6 +11,7 @@
  */
 
 import type { ComplianceDocType } from "./compliance-audit";
+import { BUSINESS_TIME_ZONE } from "./datetime";
 
 /** The signable documents (a subset of ComplianceDocType — aml_case is not one). */
 export const SIGN_DOC_TYPES: ComplianceDocType[] = [
@@ -22,6 +23,7 @@ export const SIGN_DOC_TYPES: ComplianceDocType[] = [
   "introducer_agreement",
   "introducer_schedule",
   "referral_consent",
+  "preliminary_assessment",
 ];
 
 export function isSignDocType(v: unknown): v is ComplianceDocType {
@@ -42,6 +44,7 @@ export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
   introducer_agreement: "Introducer Referral Agreement",
   introducer_schedule: "Commission Schedule",
   referral_consent: "Referral Consent and Privacy Form",
+  preliminary_assessment: "Preliminary Assessment",
 };
 
 /** The lifecycle of a single signer's request. */
@@ -91,6 +94,22 @@ export function isExpired(expiresAt: string | null | undefined, now: number): bo
 }
 
 /**
+ * The status to SHOW for a request. Nothing ever writes "expired" to a row — the
+ * signing routes just refuse a link past its `expires_at` — so a lapsed request
+ * keeps its stored "sent"/"viewed" forever. Shown raw, a dead link reads as a
+ * client who is ignoring you, and nobody resends. Signed and declined are final
+ * and are never overridden by the date.
+ */
+export function displaySignStatus(
+  status: string,
+  expiresAt: string | null | undefined,
+  now: number,
+): string {
+  if ((status === "sent" || status === "viewed") && isExpired(expiresAt, now)) return "expired";
+  return status;
+}
+
+/**
  * True when every signer request for a document has been signed — the trigger to
  * lock the underlying document and record the `sign` audit. An empty list is not
  * "all signed" (nothing was ever requested).
@@ -120,9 +139,20 @@ export function buildSignaturesArray(rows: SignerLike[]): (SignatureMark | null)
   return out;
 }
 
-/** "13 Jul 2026" from an ISO timestamp; passes non-parseable input through. */
+/**
+ * "13 Jul 2026" from an ISO timestamp; passes non-parseable input through.
+ *
+ * Pinned to the business timezone. The signed PDF is rendered on the server
+ * (UTC on Netlify), so an unpinned formatter dated anything signed before 10am
+ * Brisbane as the previous day, on the one document where the date is evidence.
+ */
 export function formatSignedDate(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
+  });
 }

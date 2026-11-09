@@ -20,6 +20,7 @@ import { enforceRateLimit } from "../../../utils/rate-limit";
 import { log, errInfo } from "../../../utils/logger";
 import { isSignDocType } from "../../../utils/signatures";
 import { loadDoc } from "../../../utils/sign-doc-render";
+import { publicOrigin } from "../../../utils/public-origin";
 import {
   createSignatureRequests,
   MAX_SIGNERS,
@@ -34,20 +35,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-/**
- * The public origin to build signing links from. Prefer an explicit env
- * (PUBLIC_APP_URL) so links are always the customer-facing host; otherwise derive
- * from the forwarded host headers Cloudflare/Netlify set.
- */
-function publicOrigin(req: Request): string {
-  const env = process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL;
-  if (env) return env.replace(/\/+$/, "");
-  const proto = req.headers.get("x-forwarded-proto") || "https";
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  if (host) return `${proto}://${host}`;
-  return new URL(req.url).origin;
-}
 
 export async function POST(req: Request): Promise<NextResponse> {
   const auth = await requireAuth(req);
@@ -157,6 +144,8 @@ function documentLabel(docType: string, summary: string): string {
         ? "Needs Analysis"
         : docType === "eoi"
           ? "Expression of Interest"
-          : "Credit Authorisation";
+          : docType === "preliminary_assessment"
+            ? "Preliminary Assessment"
+            : "Credit Authorisation";
   return summary ? `${base} (${summary})` : base;
 }

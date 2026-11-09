@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeAvailability, isSlotAvailable, type Interval } from "./booking";
+import { findHostBySlug } from "./scheduling-hosts";
 
 // A fixed "now": Monday 20 July 2026, 00:00 AEST (= 2026-07-19T14:00:00Z).
 const MON_20_JUL_MIDNIGHT_AEST = Date.parse("2026-07-20T00:00:00+10:00");
@@ -49,6 +50,43 @@ describe("computeAvailability", () => {
       { startMs: Date.parse("2026-07-20T09:00:00+10:00"), endMs: Date.parse("2026-07-20T17:00:00+10:00") },
     ];
     expect(computeAvailability(MON_20_JUL_MIDNIGHT_AEST, busy, cfg)).toHaveLength(0);
+  });
+});
+
+describe("per-weekday hours (Glenn's)", () => {
+  const glenn = findHostBySlug("glenn")!.booking!;
+  const one = { ...glenn, lookaheadDays: 1, minLeadMinutes: 0 };
+
+  it("weekdays run 08:00 to 19:30", () => {
+    const slots = computeAvailability(MON_20_JUL_MIDNIGHT_AEST, [], one)[0].slots;
+    // 08:00–19:30 in 30-min slots → 23 slots, last 19:00–19:30.
+    expect(slots).toHaveLength(23);
+    expect(slots[0].label).toBe("08:00");
+    expect(slots[22].label).toBe("19:00");
+    expect(slots[22].endISO).toBe("2026-07-20T09:30:00.000Z"); // 19:30 AEST
+  });
+
+  it("Saturday runs 09:00 to 17:00", () => {
+    const sat = Date.parse("2026-07-25T00:00:00+10:00");
+    const slots = computeAvailability(sat, [], one)[0].slots;
+    expect(slots).toHaveLength(16);
+    expect(slots[0].label).toBe("09:00");
+    expect(slots[15].label).toBe("16:30");
+  });
+
+  it("Sunday is closed", () => {
+    const sun = Date.parse("2026-07-26T00:00:00+10:00");
+    expect(computeAvailability(sun, [], one)).toHaveLength(0);
+  });
+
+  it("accepts an evening slot and rejects one past closing", () => {
+    // 19:00 AEST Mon = 09:00Z; 19:30 AEST = 09:30Z (would end 20:00).
+    expect(isSlotAvailable("2026-07-20T09:00:00.000Z", MON_20_JUL_MIDNIGHT_AEST, [], one)).toBe(true);
+    expect(isSlotAvailable("2026-07-20T09:30:00.000Z", MON_20_JUL_MIDNIGHT_AEST, [], one)).toBe(false);
+  });
+
+  it("leaves hosts without hours on the default Mon–Fri 9–5", () => {
+    expect(findHostBySlug("sean")!.booking).toBeUndefined();
   });
 });
 

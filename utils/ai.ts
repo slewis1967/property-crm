@@ -1,28 +1,25 @@
 /**
- * Server-side wrapper around OpenRouter for adviser-facing AI features.
+ * Server-side wrapper around the Anthropic API for adviser-facing AI features.
  *
- * Defaults: MODELS.smart (Claude Sonnet via OpenRouter) + reasoning at medium
- * effort. Bump `effort` to "high"/"max" per call site if quality matters more
- * than cost, or pass `thinking: false` to disable reasoning for trivial calls.
+ * Defaults: MODELS.smart at medium effort. Bump `effort` to "high"/"max" per call
+ * site if quality matters more than cost, or pass `thinking: false` to run at low
+ * effort for trivial calls.
  *
  * All calls go through aiCall(); features pass their own system + user prompts.
- * Server-only (process.env.OPENROUTER_API_KEY). The public API (aiCall /
- * aiCallEnvelope / AICallOptions / AIEffort) is unchanged from the previous
- * Anthropic implementation, so existing callers need no edits.
+ * Server-only (process.env.ANTHROPIC_API_KEY).
  */
-import { MODELS, orText, orErrorMessage, type AIEffort } from "./openrouter";
+import { MODELS, aiText, aiErrorMessage, type AIEffort } from "./anthropic";
 
 export type { AIEffort };
 
 export type AICallOptions = {
   system: string;
   user: string;
-  /** Cap on output tokens. Reasoning shares this budget — leave generous
-   * headroom so the model has room to think AND respond. */
+  /** Length of the expected answer, in tokens. Room for thinking is added. */
   maxTokens?: number;
   /** Lower = faster + cheaper. Default "medium". */
   effort?: AIEffort;
-  /** Set false to disable reasoning for very simple calls. Default true. */
+  /** Set false to run at low effort for very simple calls. Default true. */
   thinking?: boolean;
 };
 
@@ -34,7 +31,7 @@ export async function aiCall({
   thinking = true,
 }: AICallOptions): Promise<string> {
   try {
-    return await orText({
+    return await aiText({
       model: MODELS.smart,
       system,
       user,
@@ -43,7 +40,7 @@ export async function aiCall({
       thinking,
     });
   } catch (error) {
-    throw new Error(orErrorMessage(error));
+    throw new Error(aiErrorMessage(error));
   }
 }
 

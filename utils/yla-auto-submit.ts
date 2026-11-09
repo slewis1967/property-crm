@@ -30,6 +30,8 @@ import { supabase } from "./supabase";
 import { YLA_DOCUMENTS } from "./yla-documents";
 import { DOCUMENT_REQUESTS_TABLE } from "./document-requests-db";
 import { runApplicationVerification } from "./yla-verification-run";
+import { predatesTfnRule, hasTfnBlocker } from "./yla-verification";
+import { redactApplicationTfns } from "./tfn-redact-store";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
 import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
@@ -67,6 +69,7 @@ type Candidate = {
   opportunity_id: string | null;
   verification_status: string | null;
   verified_at: string | null;
+  verification_issues: { filename?: string | null; issues?: string[] }[] | null;
   drive_folder_url: string | null;
   submit_target: string | null;
   broker_name: string | null;
@@ -91,8 +94,10 @@ export type SweepResult = {
   actions: SweepAction[];
 };
 
-/** Cheap completeness (no byte fetch): every applicant has YLA's required counts. */
-async function applicationState(requestIds: string[]): Promise<{ complete: boolean; latestUpload: string | null }> {
+/** Cheap completeness (no byte fetch): every applicant has YLA's required counts.
+ * Exported because an override has to ask the same question after it changes the
+ * document set — and must get the same answer the sweep would. */
+export async function applicationState(requestIds: string[]): Promise<{ complete: boolean; latestUpload: string | null }> {
   const { data: docs, error } = await supabase
     .from("client_documents")
     .select("request_id,doc_type,uploaded_at,status")
@@ -118,7 +123,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   const { data: cands, error: candErr } = await supabase
     .from(DOCUMENT_REQUESTS_TABLE)
     .select(
-      "id,application_id,applicant_name,client_ref,contact_id,opportunity_id,verification_status,verified_at,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
+      "id,application_id,applicant_name,client_ref,contact_id,opportunity_id,verification_status,verified_at,verification_issues,drive_folder_url,submit_target,broker_name,broker_email,broker_reference",
     )
     .is("yla_submitted_at", null)
     .neq("status", "cancelled")
@@ -153,9 +158,30 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     if (!complete) continue;
     completeCount++;
 
-    // Skip a static previously-failed set (no new uploads since it was checked).
+    // Skip a static previously-failed set (no new uploads since it was checked)
+    // — UNLESS what is holding it is a Tax File Number, which is the one fault
+    // we can fix ourselves without the client touching anything.
     if (rep.verification_status === "failed" && rep.verified_at && latestUpload && latestUpload <= rep.verified_at) {
-      continue;
+      if (!hasTfnBlocker(rep.verification_issues)) continue;
+      // Redact FIRST and re-verify only if something actually came out.
+      // Otherwise a number that lives in pixels — a photographed statement,
+      // where there is no text layer to search — would be re-checked, and
+      // re-paid for, on every sweep forever.
+      const cleaned = await redactApplicationTfns(ids);
+      if (cleaned.length === 0) continue;
+      // Bank it. The documents have CHANGED, so the recorded verdict is now
+      // about files that no longer exist — and the re-verification below is the
+      // slow part, easily lost to the serverless ceiling. Losing it used to
+      // strand the application for good: the next sweep would find nothing left
+      // to clean, take the `continue` above, and never re-check a set that was
+      // already clean. Clearing the verdict first means a run cut short here
+      // resumes as an ordinary unverified set. (Same reasoning as the verdicts
+      // banked before packaging below.)
+      await supabase
+        .from(DOCUMENT_REQUESTS_TABLE)
+        .update({ verification_status: null, verification_issues: null, verified_at: null, updated_at: now.toISOString() })
+        .in("id", ids);
+      rep.verification_status = null;
     }
     // Skip a set already PACKAGED and waiting on a human: it passed, its Drive
     // folder exists, and yla_submitted_at is null only because nobody has
@@ -165,8 +191,12 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     // "passed" WITHOUT a Drive folder is a different thing — a run that
     // verified and was then cut short before it could package (see below). That
     // one resumes at the export rather than paying for the AI pass again.
+    // A pass reached before the TFN rule existed answered a question that did
+    // not include "does this show a Tax File Number?". Re-check it once rather
+    // than packaging on the strength of it.
+    const preTfnRule = rep.verification_status === "passed" && predatesTfnRule(rep.verified_at);
     const packaged = sibs.some((s) => !!s.drive_folder_url);
-    if (rep.verification_status === "passed" && packaged) continue;
+    if (rep.verification_status === "passed" && packaged && !preTfnRule) continue;
     processed++;
 
     let primaryApplicant = rep.applicant_name;
@@ -178,7 +208,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
     // STAGE 1 — verify. Skipped entirely when a previous invocation already
     // recorded a pass, which is what makes the two stages add up to less than
     // one serverless request each.
-    if (rep.verification_status !== "passed") {
+    if (rep.verification_status !== "passed" || preTfnRule) {
       const run = await runApplicationVerification(rep.id, { visual: true });
       if (!run.ok) {
         actions.push({ application: rep.application_id || rep.id, applicant: rep.applicant_name, action: "error", error: run.error });

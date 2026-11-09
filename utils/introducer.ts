@@ -253,7 +253,9 @@ export function fieldLabel(key: string): string {
  * referrals that were made under the old wording.
  *
  * IT NAMES THE WHOLE CHAIN, NOT JUST US. The client's details do not stop at
- * Springboard: they travel to G.B. Mayes Holdings, to Your Loan Assist under
+ * Springboard Homes (a business name of NextKey Pty Ltd, the collecting
+ * entity — named by its legal name because that is who holds the data): they
+ * travel to G.B. Mayes Holdings, to Your Loan Assist under
  * ACL 477483, to a licensed financial adviser and to lenders. Consent to pass
  * details to ONE company does not cover onward disclosure to a credit licensee
  * and a separate advice business — so the attestation names each of them, in the
@@ -268,7 +270,7 @@ export function fieldLabel(key: string): string {
 export const CONSENT_STATEMENT =
   "I confirm I have given the client the Springboard Homes Referral Consent and Privacy Form, that they " +
   "have signed it, and that they have consented to their personal details being provided to Springboard " +
-  "Homes and disclosed to G.B. Mayes Holdings Pty Ltd, CRE8 Finance Pty Ltd trading as Your Loan Assist, " +
+  "Homes (a business name of NextKey Pty Ltd) and disclosed to G.B. Mayes Holdings Pty Ltd, CRE8 Finance Pty Ltd trading as Your Loan Assist, " +
   "a licensed financial adviser and lenders, for the purpose of assessing and progressing an enquiry " +
   "about the Community Funding Program. I have told them I am an independent introducer, that I am not " +
   "an employee or agent of Your Loan Assist, and that I may be paid a fee if they proceed.";

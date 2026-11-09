@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { requireAuth } from "../../../../utils/cf-access";
 import { log, errInfo } from "../../../../utils/logger";
-import { MODELS, orErrorMessage, orText } from "../../../../utils/openrouter";
+import { MODELS, aiErrorMessage, aiText } from "../../../../utils/anthropic";
 import { brisbaneToday, hydratePolicy, policyFacts } from "../../../../utils/lender-policy";
 import type { Fact, LenderPolicy } from "../../../../utils/lender-policy/types";
 import { verifyFact, type VerificationIssue } from "../../../../utils/lender-policy/verify";
@@ -161,11 +161,12 @@ export async function POST(req: Request) {
     }
 
     const today = brisbaneToday();
-    const raw = await orText({
+    const raw = await aiText({
       system: SYSTEM,
       user: userPrompt(existing),
       model: MODELS.smart,
       web: true,
+      maxSearches: 5,
       maxTokens: 8000,
       effort: "high",
     });
@@ -305,7 +306,7 @@ export async function POST(req: Request) {
   } catch (error) {
     log.error("lenders.research_failed", { lenderId, ...errInfo(error) });
     return NextResponse.json(
-      { ok: false, error: orErrorMessage(error) || "The research pass failed. Nothing was changed." },
+      { ok: false, error: aiErrorMessage(error) || "The research pass failed. Nothing was changed." },
       { status: 500 },
     );
   }

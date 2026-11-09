@@ -66,7 +66,16 @@ type Detail = {
     docKey: string;
     label: string;
     slot: number;
-    document: { filename: string; status: string; check_notes: string | null } | null;
+    /** A document beyond the required set — a third ATO statement, say. */
+    extra?: boolean;
+    document: {
+      id: string;
+      filename: string;
+      status: string;
+      check_notes: string | null;
+      check_override_by?: string | null;
+      check_override_at?: string | null;
+    } | null;
   }[];
 };
 
@@ -91,6 +100,7 @@ export default function DocumentRequestsClient() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [exportMsg, setExportMsg] = useState<{ id: string; text: string; url?: string; error?: boolean } | null>(null);
+  const [docBusy, setDocBusy] = useState<string | null>(null);
   const [videoBusy, setVideoBusy] = useState<string | null>(null);
   const [videoMsg, setVideoMsg] = useState<{ id: string; text: string; error?: boolean } | null>(null);
 
@@ -198,6 +208,81 @@ export default function DocumentRequestsClient() {
     if (openId === id) {
       setOpenId(null);
       setDetail(null);
+    }
+  }
+
+  /**
+   * The rep has looked at the file and disagrees with the check. Clears that one
+   * objection; the application stays held while any other objection stands.
+   */
+  async function dismissIssue(id: string, issue: VerificationIssue) {
+    const doc = detail?.slots.find((s) => s.document && s.document.filename === issue.filename)?.document;
+    if (!doc) {
+      setExportMsg({ id, text: "That file isn't in this request any more — reopen the row.", error: true });
+      return;
+    }
+    if (
+      !confirm(
+        `Dismiss the check's objection to ${issue.filename}?\n\n${issue.issues.join("; ")}\n\nOnly do this if you have opened the file and it is fine. It goes to YLA as it is.`,
+      )
+    ) {
+      return;
+    }
+    setDocBusy(doc.id);
+    setExportMsg(null);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/dismiss-issue`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ document_id: doc.id }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setExportMsg({ id, text: json.error || "Could not dismiss that.", error: true });
+      } else if (json.remaining > 0) {
+        setExportMsg({
+          id,
+          text: `Dismissed. ${json.remaining} issue${json.remaining === 1 ? "" : "s"} still holding this application.`,
+        });
+      } else {
+        setExportMsg({ id, text: "Dismissed — nothing else is holding this application." });
+      }
+      await reload();
+      await loadWeekly();
+      if (openId === id) await refreshDetail(id);
+    } catch {
+      setExportMsg({ id, text: "Could not reach the server.", error: true });
+    } finally {
+      setDocBusy(null);
+    }
+  }
+
+  /** Remove a file the client should never have sent. The bytes go; the slot reopens. */
+  async function deleteDocument(id: string, docId: string, filename: string) {
+    if (
+      !confirm(
+        `Delete ${filename}?\n\nThe file is permanently removed from storage and this slot reopens — the client's existing link will accept a replacement. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDocBusy(docId);
+    setExportMsg(null);
+    try {
+      const res = await fetch(`/api/document-requests/${id}/documents/${docId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!json.ok) {
+        setExportMsg({ id, text: json.error || "Could not delete that file.", error: true });
+      } else {
+        setExportMsg({ id, text: `Deleted ${filename}. The slot is open again.` });
+      }
+      await reload();
+      await loadWeekly();
+      if (openId === id) await refreshDetail(id);
+    } catch {
+      setExportMsg({ id, text: "Could not reach the server.", error: true });
+    } finally {
+      setDocBusy(null);
     }
   }
 
@@ -601,6 +686,8 @@ export default function DocumentRequestsClient() {
                               // this list has no "primary" row to hang them on.
                               issues={issuesForApplicant(r.verification_issues, r.applicant_name, true)}
                               verifiedAt={r.verified_at ?? null}
+                              dismissing={docBusy !== null}
+                              onDismiss={(issue) => void dismissIssue(r.id, issue)}
                             />
                           </div>
                         )}
@@ -613,6 +700,25 @@ export default function DocumentRequestsClient() {
                               <span className={s.document ? "text-gray-700" : "text-gray-500"}>
                                 {s.document ? s.document.filename : slotLabel(s)}
                               </span>
+                              {s.extra && <span className="text-xs text-gray-400">extra</span>}
+                              {s.document?.check_override_at && (
+                                <span
+                                  title={`Check dismissed by ${s.document.check_override_by ?? "a rep"}`}
+                                  className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-600"
+                                >
+                                  check dismissed
+                                </span>
+                              )}
+                              {s.document && r.status !== "submitted" && r.status !== "cancelled" && !r.yla_submitted_at && (
+                                <button
+                                  type="button"
+                                  disabled={docBusy === s.document.id}
+                                  onClick={() => void deleteDocument(r.id, s.document!.id, s.document!.filename)}
+                                  className="text-xs text-gray-400 hover:text-red-600 disabled:opacity-50"
+                                >
+                                  {docBusy === s.document.id ? "…" : "Delete"}
+                                </button>
+                              )}
                             </li>
                           ))}
                         </ul>

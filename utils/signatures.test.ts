@@ -3,6 +3,7 @@ import {
   isSignDocType,
   isTerminalStatus,
   isExpired,
+  displaySignStatus,
   allSigned,
   buildSignaturesArray,
   formatSignedDate,
@@ -97,7 +98,31 @@ describe("formatSignedDate", () => {
   it("formats an ISO date to a short en-AU form", () => {
     expect(formatSignedDate("2026-07-13T02:00:00Z")).toMatch(/2026/);
   });
+  it("dates a signature by the Brisbane day, not the server's", () => {
+    // 23:30 UTC on the 12th is 9:30am on the 13th in Brisbane.
+    expect(formatSignedDate("2026-07-12T23:30:00Z")).toMatch(/^13 Jul[a-z]* 2026$/);
+  });
   it("passes through unparseable input", () => {
     expect(formatSignedDate("nope")).toBe("nope");
+  });
+});
+
+describe("displaySignStatus", () => {
+  const now = Date.parse("2026-10-01T00:00:00Z");
+  const past = "2026-09-24T04:54:36Z";
+  const future = "2026-10-15T05:00:00Z";
+
+  it("shows an unsigned request past its expiry as expired", () => {
+    expect(displaySignStatus("sent", past, now)).toBe("expired");
+    expect(displaySignStatus("viewed", past, now)).toBe("expired");
+  });
+  it("leaves a live request as stored", () => {
+    expect(displaySignStatus("sent", future, now)).toBe("sent");
+    expect(displaySignStatus("viewed", future, now)).toBe("viewed");
+    expect(displaySignStatus("sent", null, now)).toBe("sent");
+  });
+  it("never overrides a final status with the date", () => {
+    expect(displaySignStatus("signed", past, now)).toBe("signed");
+    expect(displaySignStatus("declined", past, now)).toBe("declined");
   });
 });
