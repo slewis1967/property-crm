@@ -27,11 +27,17 @@ import { isShortlistPortalPath } from "../../utils/shortlist-path";
 export default function AppShell({
   sidebar,
   help,
+  standalone = false,
   children,
 }: {
   sidebar: React.ReactNode;
   /** The staff "How do I do this?" button; null on public routes. */
   help?: React.ReactNode;
+  /**
+   * Force the chromeless branch whatever the path — set by the layout on
+   * book.springboardhomes.com.au, where the booking page is served at "/".
+   */
+  standalone?: boolean;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -64,6 +70,7 @@ export default function AppShell({
   // internal surface we have. Note the trailing slash — "/introducers" must not
   // match, for the same reason it must not match in proxy.ts.
   const isStandalone =
+    standalone ||
     pathname === "/sign" || pathname?.startsWith("/sign/") ||
     pathname === "/book" || pathname?.startsWith("/book/") ||
     pathname === "/portal" || pathname?.startsWith("/portal/") ||
