@@ -65,6 +65,7 @@ export default function ScheduleMeetingModal({
   lead,
   hosts,
   contactId,
+  defaultKind = "video",
   onClose,
   onCreated,
 }: {
@@ -74,17 +75,26 @@ export default function ScheduleMeetingModal({
    * /api/appointments insert. If null (lead with no matched contact),
    * scheduling is disabled with a soft message. */
   contactId: string | null;
+  /** Pre-selects the meeting type — e.g. the "📞 Phone call" quick action
+   * opens straight into the phone flow instead of making the operator
+   * switch it every time. */
+  defaultKind?: "video" | "phone";
   onClose: () => void;
   /** Optional: called after a successful save so the parent can refresh
    * the appointments panel without a full page reload. */
   onCreated?: () => void;
 }) {
   const def = useMemo(() => defaultStart(), []);
+  const [kind, setKind] = useState<"video" | "phone">(defaultKind);
   const [hostEmail, setHostEmail] = useState(hosts[0]?.email ?? "");
   const [date, setDate] = useState(def.date);
   const [time, setTime] = useState(def.time);
   const [duration, setDuration] = useState(30);
-  const [title, setTitle] = useState(`Meeting — ${lead.full_name || "NextKey lead"}`);
+  const [title, setTitle] = useState(
+    defaultKind === "phone"
+      ? `Phone call — ${lead.full_name || "NextKey lead"}`
+      : `Meeting — ${lead.full_name || "NextKey lead"}`,
+  );
   const [attendeeEmail, setAttendeeEmail] = useState(lead.email ?? "");
   const [description, setDescription] = useState(() =>
     [
@@ -140,6 +150,7 @@ export default function ScheduleMeetingModal({
             ? [{ email: attendeeEmail, displayName: lead.full_name || undefined }]
             : [],
           send_invite: sendInvite,
+          meeting_kind: kind,
         }),
       });
       const data = await res.json();
@@ -167,7 +178,9 @@ export default function ScheduleMeetingModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-10">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">📅 Schedule meeting</h2>
+          <h2 className="text-lg font-bold text-gray-900">
+            {kind === "phone" ? "📞 Log phone call" : "📅 Schedule meeting"}
+          </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 text-lg leading-none">✕</button>
         </div>
 
@@ -175,22 +188,30 @@ export default function ScheduleMeetingModal({
           <div className="p-6 space-y-4">
             {success.inviteSent ? (
               <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-                ✓ Meeting scheduled. Invite emailed to {attendeeEmail}.
+                {kind === "phone"
+                  ? `✓ Call logged. Confirmation emailed to ${attendeeEmail}.`
+                  : `✓ Meeting scheduled. Invite emailed to ${attendeeEmail}.`}
               </div>
             ) : success.inviteRequested ? (
               // The row saved, but we told the user we'd email the attendee and
               // didn't. Never dress this as a success — it needs manual follow-up.
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-                <div className="font-semibold">Invite NOT sent to {attendeeEmail}.</div>
+                <div className="font-semibold">
+                  {kind === "phone" ? "Confirmation NOT sent" : "Invite NOT sent"} to {attendeeEmail}.
+                </div>
                 <div className="mt-1 text-xs">
-                  The meeting is saved in the CRM calendar, but the invite email
-                  didn&rsquo;t go out. Send the join link below to the attendee
-                  manually, or reschedule.
+                  {kind === "phone"
+                    ? "The call is saved in the CRM calendar, but the confirmation email didn't go out. Follow up with the attendee manually."
+                    : <>The meeting is saved in the CRM calendar, but the invite email
+                    didn&rsquo;t go out. Send the join link below to the attendee
+                    manually, or reschedule.</>}
                 </div>
               </div>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-                ✓ Meeting added to the calendar. No invite was sent, as requested.
+                {kind === "phone"
+                  ? "✓ Call added to the calendar. No confirmation was sent, as requested."
+                  : "✓ Meeting added to the calendar. No invite was sent, as requested."}
               </div>
             )}
             {warning && (
@@ -230,6 +251,31 @@ export default function ScheduleMeetingModal({
           </div>
         ) : (
           <form onSubmit={submit} className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Type</label>
+              <div className="flex gap-2">
+                {(["video", "phone"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold border transition ${
+                      kind === k
+                        ? "bg-blue-100 text-blue-700 border-blue-300"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {k === "video" ? "🎥 Video call" : "📞 Phone call"}
+                  </button>
+                ))}
+              </div>
+              {kind === "phone" && (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  No video link is sent — just a confirmation email for the call.
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Meeting host</label>
               <select
@@ -299,7 +345,7 @@ export default function ScheduleMeetingModal({
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-              Send invite email to attendee
+              {kind === "phone" ? "Send confirmation email to attendee" : "Send invite email to attendee"}
             </label>
 
             {error && (
@@ -315,7 +361,9 @@ export default function ScheduleMeetingModal({
               </button>
               <button type="submit" disabled={submitting}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition">
-                {submitting ? "Scheduling…" : "Schedule meeting"}
+                {submitting
+                  ? (kind === "phone" ? "Logging…" : "Scheduling…")
+                  : (kind === "phone" ? "Log call" : "Schedule meeting")}
               </button>
             </div>
           </form>
