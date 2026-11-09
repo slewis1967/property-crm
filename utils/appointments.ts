@@ -60,3 +60,99 @@ export function buildAppointmentRow(i: AppointmentInsertInput): Record<string, u
     status: APPOINTMENT_STATUS_BOOKED,
   };
 }
+
+export const APPOINTMENT_STATUS_RESCHEDULED = "rescheduled";
+
+/**
+ * The .ics UID an appointment's invites were sent under. Both writers use
+ * `appt-<id>@<brand domain>` (the self-book route picks the Springboard domain
+ * for Springboard hosts), so update/cancel emails must rebuild the same string
+ * or the attendee's calendar adds a second entry instead of moving the first.
+ */
+export function appointmentIcsUid(id: string, brand: "nextkey" | "springboard"): string {
+  return `appt-${id}@${brand === "springboard" ? "springboardhomes.com.au" : "nextkey.com.au"}`;
+}
+
+/**
+ * A rising .ics SEQUENCE for an update/cancel. Calendar clients ignore an
+ * update whose SEQUENCE isn't higher than the last one they saw; we don't store
+ * a counter, so seconds-since-epoch is used — always higher than the 0 the
+ * original invite carried, and higher than any earlier update.
+ */
+export function nextIcsSequence(now: number = Date.now()): number {
+  return Math.floor(now / 1000);
+}
+
+export interface AppointmentPatchInput {
+  title?: unknown;
+  start_time?: unknown;
+  end_time?: unknown;
+  notes?: unknown;
+  location?: unknown;
+  host_email?: unknown;
+}
+
+export type AppointmentPatch = {
+  event_title?: string;
+  start_time?: string;
+  end_time?: string;
+  additional_notes?: string | null;
+  location?: string | null;
+  host_email?: string;
+};
+
+/**
+ * Validate an edit to an existing appointment. Only the fields present are
+ * changed. `current` supplies the existing start/end so a move of just one end
+ * is still checked for end > start. Pure — unit-tested.
+ */
+export function validateAppointmentPatch(
+  body: AppointmentPatchInput,
+  current: { start_time: string; end_time: string | null },
+): { ok: true; patch: AppointmentPatch; timeChanged: boolean } | { ok: false; error: string } {
+  const patch: AppointmentPatch = {};
+
+  if (body.title !== undefined) {
+    const t = typeof body.title === "string" ? body.title.trim() : "";
+    if (!t) return { ok: false, error: "Title can't be blank." };
+    patch.event_title = t;
+  }
+
+  let startMs = Date.parse(current.start_time);
+  let endMs = current.end_time ? Date.parse(current.end_time) : startMs + 60 * 60_000;
+  if (body.start_time !== undefined) {
+    const ms = typeof body.start_time === "string" ? Date.parse(body.start_time) : NaN;
+    if (!Number.isFinite(ms)) return { ok: false, error: "Start time isn't a valid date/time." };
+    startMs = ms;
+  }
+  if (body.end_time !== undefined) {
+    const ms = typeof body.end_time === "string" ? Date.parse(body.end_time) : NaN;
+    if (!Number.isFinite(ms)) return { ok: false, error: "End time isn't a valid date/time." };
+    endMs = ms;
+  }
+  if (!(endMs > startMs)) return { ok: false, error: "End time must be after the start time." };
+
+  const newStart = new Date(startMs).toISOString();
+  const newEnd = new Date(endMs).toISOString();
+  const oldStart = new Date(Date.parse(current.start_time)).toISOString();
+  const oldEnd = current.end_time ? new Date(Date.parse(current.end_time)).toISOString() : null;
+  const timeChanged = newStart !== oldStart || newEnd !== oldEnd;
+  if (body.start_time !== undefined || body.end_time !== undefined) {
+    patch.start_time = newStart;
+    patch.end_time = newEnd;
+  }
+
+  if (body.notes !== undefined) {
+    patch.additional_notes = typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null;
+  }
+  if (body.location !== undefined) {
+    patch.location = typeof body.location === "string" && body.location.trim() ? body.location.trim() : null;
+  }
+  if (body.host_email !== undefined) {
+    const h = typeof body.host_email === "string" ? body.host_email.trim() : "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(h)) return { ok: false, error: "Host must be a valid email." };
+    patch.host_email = h;
+  }
+
+  return { ok: true, patch, timeChanged };
+}
