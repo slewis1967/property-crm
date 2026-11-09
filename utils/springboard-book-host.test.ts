@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   crmLinkOrigin,
   guestJoinOrigin,
+  rehostJoinLink,
   isSpringboardBookHost,
   springboardBookRoute,
 } from "./springboard-book-host";
@@ -65,5 +66,22 @@ describe("crmLinkOrigin", () => {
     expect(crmLinkOrigin("https://book.springboardhomes.com.au", true)).toBe("https://crm.nextkey.com.au");
     vi.stubEnv("PUBLIC_APP_URL", "https://crm.example.test/");
     expect(crmLinkOrigin("https://book.springboardhomes.com.au", true)).toBe("https://crm.example.test");
+  });
+});
+
+describe("rehostJoinLink", () => {
+  const tok = "/join/abc.def.ghi";
+  it("moves a CRM join link onto the Springboard host, keeping the token", () => {
+    expect(rehostJoinLink(`https://crm.nextkey.com.au${tok}`, "springboard", "https://crm.nextkey.com.au"))
+      .toBe(`https://book.springboardhomes.com.au${tok}`);
+  });
+  it("moves a Springboard join link back to the CRM for a NextKey host", () => {
+    expect(rehostJoinLink(`https://book.springboardhomes.com.au${tok}`, "nextkey", "https://crm.nextkey.com.au"))
+      .toBe(`https://crm.nextkey.com.au${tok}`);
+  });
+  it("leaves anything that is not a join link alone", () => {
+    expect(rehostJoinLink("Phone call", "springboard", "https://crm.nextkey.com.au")).toBe("Phone call");
+    expect(rehostJoinLink("https://crm.nextkey.com.au/video/room", "springboard", "https://crm.nextkey.com.au"))
+      .toBe("https://crm.nextkey.com.au/video/room");
   });
 });

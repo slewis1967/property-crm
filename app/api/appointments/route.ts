@@ -11,6 +11,7 @@ import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS, appointmentIcsUid } from
 import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
 import { meetingSmsBody } from "../../../utils/meeting-sms";
 import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
+import { guestJoinOrigin } from "../../../utils/springboard-book-host";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -142,7 +143,9 @@ export async function POST(req: NextRequest) {
       const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
       const ttlHours = Math.max(24, hoursUntilEnd + 6);
       const guestToken = await signGuestToken({ room, name: body.contact_name, ttlHours });
-      videoLink = `${req.nextUrl.origin}/join/${encodeURIComponent(guestToken)}`;
+      // A Springboard host's meeting gives the lead a Springboard join link
+      // (book.springboardhomes.com.au), matching the Springboard invite email.
+      videoLink = `${guestJoinOrigin(host.brand, req.nextUrl.origin, false)}/join/${encodeURIComponent(guestToken)}`;
     } catch {
       videoLink = null;
     }
