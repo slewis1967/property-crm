@@ -31,13 +31,9 @@ import {
 } from "../../../../utils/pagination";
 import { interleaveByBuilder } from "../../../../utils/feed-order";
 import { log, errInfo } from "../../../../utils/logger";
+import { fetchAllRows, fetchRowWindow } from "../../../../utils/supabase-paginate";
 
 export const dynamic = "force-dynamic";
-
-// Cap for the interleave path — we fetch all matching rows, round-robin them
-// across builders, then slice the page. The active feed is a few hundred rows;
-// this bounds the work if it ever grows unexpectedly.
-const INTERLEAVE_CAP = 3000;
 
 function num(v: string | null): number | null {
   if (v == null || v.trim() === "") return null;
@@ -80,27 +76,33 @@ async function handler(req: Request) {
     "status,pipeline_status,titled,created_at,updated_at," +
     "brochure_url,confidence_score";
 
-  let query = supabase
-    .from("global_stock_pool")
-    .select(COLS, { count: "exact" })
-    .neq("pipeline_status", "withdrawn")
-    .neq("pipeline_status", "legacy");
+  // A factory, not one query: a Supabase query builder is consumed when it is
+  // awaited, and the interleave path below issues it once per 1,000-row batch.
+  // Newest first, with `id` breaking created_at ties so pages can't shift.
+  const buildQuery = (withCount: boolean) => {
+    let query = supabase
+      .from("global_stock_pool")
+      .select(COLS, withCount ? { count: "exact" } : undefined)
+      .neq("pipeline_status", "withdrawn")
+      .neq("pipeline_status", "legacy");
 
-  if (builder) query = query.eq("builder_name", builder);
-  if (state) query = query.eq("state", state);
-  if (type) query = query.eq("property_type", type);
-  if (priceMin != null) query = query.gte("total_package_price", priceMin);
-  if (priceMax != null) query = query.lte("total_package_price", priceMax);
-  if (bedsMin != null) query = query.gte("bedrooms", bedsMin);
-  if (bathsMin != null) query = query.gte("bathrooms", bathsMin);
-  if (carsMin != null) query = query.gte("car_spaces", carsMin);
-  if (q) {
-    const like = `%${q.replace(/[%,()]/g, " ")}%`;
-    query = query.or(
-      `suburb.ilike.${like},builder_name.ilike.${like},estate_name.ilike.${like},` +
-        `street_address.ilike.${like},lot_number.ilike.${like}`,
-    );
-  }
+    if (builder) query = query.eq("builder_name", builder);
+    if (state) query = query.eq("state", state);
+    if (type) query = query.eq("property_type", type);
+    if (priceMin != null) query = query.gte("total_package_price", priceMin);
+    if (priceMax != null) query = query.lte("total_package_price", priceMax);
+    if (bedsMin != null) query = query.gte("bedrooms", bedsMin);
+    if (bathsMin != null) query = query.gte("bathrooms", bathsMin);
+    if (carsMin != null) query = query.gte("car_spaces", carsMin);
+    if (q) {
+      const like = `%${q.replace(/[%,()]/g, " ")}%`;
+      query = query.or(
+        `suburb.ilike.${like},builder_name.ilike.${like},estate_name.ilike.${like},` +
+          `street_address.ilike.${like},lot_number.ilike.${like}`,
+      );
+    }
+    return query.order("created_at", { ascending: false }).order("id", { ascending: true });
+  };
 
   type PropertyListRow = {
     builder_name?: string | null;
@@ -130,27 +132,32 @@ async function handler(req: Request) {
   // round-robin it across builders (so no bulk import dominates the feed), then
   // slice the requested page.
   if (builder) {
+    // One page can itself exceed PostgREST's 1,000-row response cap now that
+    // "All" goes past 1,000, so page through the requested window too.
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-    const { data, count, error } = await query
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    if (error) {
-      log.error("properties.list.query_failed", errInfo(error));
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    const { count, error: countError } = await buildQuery(true).range(0, 0);
+    if (countError) {
+      log.error("properties.list.query_failed", errInfo(countError));
+      return NextResponse.json({ ok: false, error: countError.message }, { status: 500 });
     }
-    const rows = ((data ?? []) as unknown as PropertyListRow[]).map(normalise);
+    const { data, error } = await fetchRowWindow((a, b) => buildQuery(false).range(a, b), from, pageSize);
+    if (error) {
+      log.error("properties.list.query_failed", { error });
+      return NextResponse.json({ ok: false, error }, { status: 500 });
+    }
+    const rows = (data as unknown as PropertyListRow[]).map(normalise);
     return NextResponse.json(paginate(rows, page, pageSize, count ?? 0));
   }
 
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(INTERLEAVE_CAP);
+  // Every matching row, in 1,000-row batches. A single request silently stopped
+  // at 1,000 (PostgREST's per-response cap) once the feed passed that size, so
+  // the oldest lots could never be reached and `total` read 1,000.
+  const { data, error } = await fetchAllRows((from, to) => buildQuery(false).range(from, to));
   if (error) {
-    log.error("properties.list.query_failed", errInfo(error));
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    log.error("properties.list.query_failed", { error });
+    return NextResponse.json({ ok: false, error }, { status: 500 });
   }
-  const all = interleaveByBuilder(((data ?? []) as unknown as PropertyListRow[]).map(normalise));
+  const all = interleaveByBuilder((data as unknown as PropertyListRow[]).map(normalise));
   const from = (page - 1) * pageSize;
   const pageRows = all.slice(from, from + pageSize);
   return NextResponse.json(paginate(pageRows, page, pageSize, all.length));

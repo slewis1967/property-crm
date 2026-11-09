@@ -1,5 +1,6 @@
 import { supabase } from "../../utils/supabase";
-import { currentUserEmail } from "../../utils/cf-access";
+import { currentUserEmail, UNAUTHENTICATED_SENTINEL } from "../../utils/cf-access";
+import { sharedMailboxFor } from "../../utils/shared-mailboxes";
 import { htmlToSnippet } from "../../utils/email-snippet";
 import InboxSidebar from "./InboxSidebar";
 import InboxTable, { type EmailRow, type Thread, type FolderOption } from "./InboxTable";
@@ -27,16 +28,22 @@ const VIEW_META: Record<string, { title: string; description: string }> = {
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; folder?: string; search?: string }>;
+  searchParams: Promise<{ view?: string; folder?: string; search?: string; mailbox?: string }>;
 }) {
   const sp = await searchParams;
   const view = sp.view && VIEWS.has(sp.view) ? sp.view : sp.folder ? null : "inbox";
   const folderId = sp.folder ?? null;
   const searchQuery = (sp.search ?? "").trim();
-  const owner = await currentUserEmail();
+  const user = await currentUserEmail();
 
-  // Build the query against the current selection. Per-user filter is
-  // always on so each user sees only their own mail.
+  // ?mailbox=<key> switches to a shared mailbox (utils/shared-mailboxes.ts):
+  // rows owned by the mailbox address instead of the user. An unknown key or a
+  // non-member resolves to the sentinel, so they see nothing.
+  const mailbox = sp.mailbox ? sharedMailboxFor(user, sp.mailbox) : null;
+  const owner = sp.mailbox ? (mailbox?.address ?? UNAUTHENTICATED_SENTINEL) : user;
+
+  // Build the query against the current selection. The owner filter is
+  // always on so each user sees only their own (or their shared) mail.
   let q = supabase
     .from("email_log")
     .select(
@@ -151,15 +158,20 @@ export default async function InboxPage({
 
   const threads = groupIntoThreads(all);
 
-  const header = folderName
+  const baseHeader = folderName
     ? { title: folderName, description: "Custom folder" }
     : view
       ? VIEW_META[view]
       : { title: "Inbox", description: "" };
+  const header = mailbox
+    ? { title: `${mailbox.label} · ${baseHeader.title}`, description: `Shared mailbox ${mailbox.address}` }
+    : baseHeader;
 
   return (
     <div className="flex h-[calc(100vh-7rem)] lg:h-[calc(100vh-4rem)] -mx-4 -my-4 lg:-mx-8 lg:-my-8">
-      <InboxSidebar selection={{ view: view ?? undefined, folder: folderId ?? undefined }} />
+      <InboxSidebar
+        selection={{ view: view ?? undefined, folder: folderId ?? undefined, mailbox: mailbox?.key }}
+      />
 
       <div className="flex-1 overflow-y-auto px-8 py-6 min-w-0">
         <div className="mb-5 flex items-end justify-between gap-4">
@@ -194,7 +206,12 @@ export default async function InboxPage({
             Nothing here yet.
           </div>
         ) : (
-          <InboxTable threads={threads} contactNames={contactNames} folders={folderOptions} />
+          <InboxTable
+            threads={threads}
+            contactNames={contactNames}
+            folders={folderOptions}
+            mailbox={mailbox ? { key: mailbox.key, address: mailbox.address, label: mailbox.label } : null}
+          />
         )}
       </div>
     </div>

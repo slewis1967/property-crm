@@ -1,23 +1,28 @@
 /**
  * Redeem a sign-in credential and start a portal session.
  *
- *   GET  /api/introducer/verify?t=<link-token>   — the emailed button
- *   POST /api/introducer/verify  { email, code } — the 6-digit fallback
+ *   POST /api/introducer/verify  { token }        — from the confirm page the emailed link opens
+ *   POST /api/introducer/verify  { email, code }  — the 6-digit fallback
+ *   GET  /api/introducer/verify?t=<token>         — never redeems; forwards to the confirm page
  *
- * PUBLIC. The GET is a state-changing GET, which is normally a smell; it is the
- * standard shape for an emailed sign-in link and is safe here because the token
- * is single-use and unguessable, so a prefetch or a mis-click can at worst
- * consume a credential the recipient already holds.
+ * PUBLIC. WHY THE LINK DOESN'T SIGN YOU IN ON CLICK. Mail security gateways
+ * (Mimecast, Proofpoint, Defender) open every link on delivery. This GET used to
+ * redeem, which meant a scanner burned the credential — link AND code, they
+ * share a row — so the human got "not valid" either way, and the scanner was
+ * left holding a live 30-day session. The link now lands on /introducer/verify,
+ * a page with a button, and only this POST redeems. Scanners fetch; they don't
+ * press buttons. (Ported from the partner portal, security review 2026-09-11.)
  *
- * Both paths set the session cookie in a route handler — server components
- * cannot set cookies in Next 15, which is why the emailed link points at an API
- * route rather than a page.
+ * Links already sitting in inboxes keep working — the GET forwards to that page.
+ *
+ * Cookies are set in a route handler because server components cannot set them.
  */
 import { NextResponse } from "next/server";
 import {
   redeemLinkToken,
   redeemCode,
   clientIp,
+  normaliseEmail,
   sessionCookieName,
   sessionCookieOptions,
   SESSION_MAX_AGE_SECONDS,
@@ -27,34 +32,12 @@ import { enforceRateLimit } from "../../../../utils/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-function meta(req: Request) {
-  return { ip: clientIp(req), userAgent: req.headers.get("user-agent") };
-}
-
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const token = url.searchParams.get("t") ?? "";
-  const result = await redeemLinkToken(token, meta(req));
-
-  if (!result.ok) {
-    // Bounce back to the sign-in page with the reason, rather than rendering an
-    // error JSON blob at a URL the user clicked from their email.
-    const back = new URL("/introducer", url.origin);
-    back.searchParams.set("error", result.error);
-    return NextResponse.redirect(back, { status: 303 });
-  }
-
-  await logIntroducerEvent({
-    introducerId: result.identity.introducerId,
-    actorType: "introducer",
-    actor: result.identity.email,
-    action: "signed_in",
-    detail: { method: "link", ip: clientIp(req) },
-  });
-
-  const res = NextResponse.redirect(new URL("/introducer/clients", url.origin), { status: 303 });
-  res.cookies.set(sessionCookieName(), result.sessionToken, sessionCookieOptions(SESSION_MAX_AGE_SECONDS));
-  return res;
+  const to = new URL("/introducer/verify", url.origin);
+  const t = url.searchParams.get("t");
+  if (t) to.searchParams.set("t", t);
+  return NextResponse.redirect(to, { status: 303 });
 }
 
 export async function POST(req: Request) {
@@ -65,19 +48,36 @@ export async function POST(req: Request) {
   });
   if (limited) return limited;
 
-  const body = (await req.json().catch(() => ({}))) as { email?: unknown; code?: unknown };
-  const result = await redeemCode(body.email, body.code, meta(req));
+  const body = (await req.json().catch(() => ({}))) as { token?: unknown; email?: unknown; code?: unknown };
+  const meta = { ip: clientIp(req), userAgent: req.headers.get("user-agent") };
 
-  if (!result.ok) {
-    return NextResponse.json({ ok: false, error: result.error }, { status: 401 });
+  let method: "link" | "code";
+  let result;
+  if (typeof body.token === "string") {
+    method = "link";
+    result = await redeemLinkToken(body.token, meta);
+  } else {
+    // A second, per-address gate. In-memory and per-instance, so it is not the
+    // control — the compare-and-set attempt counter in redeemCode is — but it
+    // blunts a spray from many IPs at one mailbox.
+    const perEmail = enforceRateLimit(req, {
+      windowMs: 15 * 60_000,
+      max: 10,
+      keyFn: () => `introducer-verify-email:${normaliseEmail(body.email)}`,
+    });
+    if (perEmail) return perEmail;
+    method = "code";
+    result = await redeemCode(body.email, body.code, meta);
   }
+
+  if (!result.ok) return NextResponse.json({ ok: false, error: result.error }, { status: 401 });
 
   await logIntroducerEvent({
     introducerId: result.identity.introducerId,
     actorType: "introducer",
     actor: result.identity.email,
     action: "signed_in",
-    detail: { method: "code", ip: clientIp(req) },
+    detail: { method, ip: clientIp(req) },
   });
 
   const res = NextResponse.json({ ok: true, redirect: "/introducer/clients" });

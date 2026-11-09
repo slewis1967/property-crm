@@ -7,7 +7,7 @@ import { roomForContact, livekitConfigured } from "../../../utils/livekit";
 import { signGuestToken } from "../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../utils/meeting-invite";
 import { sendBrevoEmail } from "../../../utils/brevo";
-import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS } from "../../../utils/appointments";
+import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS, appointmentIcsUid } from "../../../utils/appointments";
 import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
 import { meetingSmsBody } from "../../../utils/meeting-sms";
 import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
@@ -40,9 +40,9 @@ import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
 type Attendee = { email: string; displayName?: string };
 
 type Body = {
-  // Linkage (CRM-side)
-  contact_id: string;
-  contact_email: string;
+  // Linkage (CRM-side). Omit both for a diary entry with no client.
+  contact_id?: string;
+  contact_email?: string;
   contact_name?: string;
   /** Optional: overrides the contact record when sending the confirmation SMS. */
   contact_phone?: string;
@@ -81,10 +81,14 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Validate ---
-  if (!body.contact_id || !UUID_RE.test(body.contact_id)) {
-    return NextResponse.json({ error: "Valid contact_id (UUID) is required" }, { status: 400 });
+  // A diary entry with no client (internal meeting, site visit, personal
+  // block-out) is allowed: no contact → no video link, no invite, no SMS.
+  // contact_email is NOT NULL on this table, so it's stored as "".
+  const personal = !body.contact_id;
+  if (!personal && !UUID_RE.test(body.contact_id!)) {
+    return NextResponse.json({ error: "contact_id must be a UUID" }, { status: 400 });
   }
-  if (!body.contact_email || !EMAIL_RE.test(body.contact_email)) {
+  if (!personal && (!body.contact_email || !EMAIL_RE.test(body.contact_email))) {
     return NextResponse.json({ error: "Valid contact_email is required" }, { status: 400 });
   }
   const title = (body.title || "").trim();
@@ -117,8 +121,8 @@ export async function POST(req: NextRequest) {
   let attendees: Attendee[] | undefined;
   if (body.attendees && Array.isArray(body.attendees)) {
     attendees = body.attendees.filter((a) => a?.email && EMAIL_RE.test(a.email));
-  } else if (body.invite_contact !== false) {
-    attendees = [{ email: body.contact_email, displayName: body.contact_name }];
+  } else if (!personal && body.invite_contact !== false) {
+    attendees = [{ email: body.contact_email!, displayName: body.contact_name }];
   }
   const hasAttendee = !!(attendees && attendees.length > 0);
   const wantInvite = (body.send_invite ?? true) && hasAttendee;
@@ -130,9 +134,9 @@ export async function POST(req: NextRequest) {
   // meeting. Best-effort: if LiveKit isn't configured or signing fails, the
   // meeting is still booked, just without a video link.
   let videoLink: string | null = null;
-  if (livekitConfigured()) {
+  if (!personal && livekitConfigured()) {
     try {
-      const room = roomForContact(body.contact_id);
+      const room = roomForContact(body.contact_id!);
       const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
       const ttlHours = Math.max(24, hoursUntilEnd + 6);
       const guestToken = await signGuestToken({ room, name: body.contact_name, ttlHours });
@@ -149,8 +153,8 @@ export async function POST(req: NextRequest) {
   const { data: inserted, error: insertErr } = await supabase
     .from("appointments")
     .insert(buildAppointmentRow({
-      contactId: body.contact_id,
-      contactEmail: body.contact_email,
+      contactId: personal ? null : body.contact_id!,
+      contactEmail: personal ? "" : body.contact_email!,
       contactName: body.contact_name ?? null,
       hostEmail: host_email,
       hostName: host.displayName ?? host_email,
@@ -179,7 +183,9 @@ export async function POST(req: NextRequest) {
     // meeting — silently received nothing while the UI reported the invite as
     // sent. One .ics uid across all copies, so their calendars treat it as the
     // same meeting rather than one each.
-    const uid = `appt-${(inserted as unknown as { id: string }).id}@nextkey.com.au`;
+    // Brand-aware like the self-book route, so a later update/cancel
+    // (app/api/appointments/[id]) rebuilds the same uid via appointmentIcsUid.
+    const uid = appointmentIcsUid((inserted as unknown as { id: string }).id, host.brand);
     const roster = attendees!.map((a) => ({ email: a.email, name: a.displayName }));
     const results = await Promise.all(
       attendees!.map((a) =>
@@ -228,7 +234,7 @@ export async function POST(req: NextRequest) {
   // without a deploy, and it honours the SMS opt-out list (Spam Act).
   let smsSent = false;
   let smsWarning: string | null = null;
-  if (process.env.MEETING_SMS_ENABLED === "true") {
+  if (!personal && process.env.MEETING_SMS_ENABLED === "true") {
     const phone = toE164AU(await contactPhone(body.contact_id, body.contact_phone));
     if (phone) {
       if (await isOptedOut(phone)) {
@@ -276,9 +282,11 @@ export async function POST(req: NextRequest) {
           name: email === knownHost.email ? knownHost.displayName : email,
         })),
         subject: `New meeting booked for you: ${title} — ${whenLabel}`,
+        // A personal entry (no contact, since #303) has nobody to name, so the
+        // "With" line is left out rather than printing "undefined".
         html: `<p>${currentUser} booked a meeting for you.</p>
-          <p><strong>When:</strong> ${whenLabel} (AEST)<br>
-          <strong>With:</strong> ${body.contact_name || body.contact_email}</p>
+          <p><strong>When:</strong> ${whenLabel} (AEST)${personal ? "" : `<br>
+          <strong>With:</strong> ${body.contact_name || body.contact_email}`}</p>
           ${videoLink ? `<p><a href="${videoLink}">Join the video meeting</a></p>` : ""}
           ${description ? `<p><strong>Notes:</strong> ${description}</p>` : ""}`,
         tags: ["appointment-host-notify"],

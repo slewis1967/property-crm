@@ -10,6 +10,7 @@
  */
 import { supabase } from "./supabase";
 import { errMessage } from "./errors";
+import { phoneGatewayEnabled, sendViaPhoneGateway } from "./sms-gateway";
 
 const CLICKSEND_BASE = "https://rest.clicksend.com/v3";
 // Outbound sender ("from"). Defaults to Glenn Mayes' verified mobile
@@ -44,13 +45,19 @@ export async function isOptedOut(phone: string): Promise<boolean> {
   return !!data;
 }
 
-/** Send one SMS via ClickSend. Writes sms_log row regardless of outcome. */
+/**
+ * Send one SMS. Writes an sms_log row regardless of outcome.
+ * With SMS_PROVIDER=phone it goes out from the work phone's own SIM
+ * (utils/sms-gateway.ts); otherwise through ClickSend.
+ */
 export async function sendSms(opts: {
   contactId?: string | null;
   phone: string; // E.164
   body: string;
   campaign?: string;
 }): Promise<SmsResult> {
+  if (phoneGatewayEnabled()) return sendSmsViaPhone(opts);
+
   const username = process.env.CLICKSEND_USERNAME;
   const apiKey = process.env.CLICKSEND_API_KEY;
   if (!username || !apiKey) {
@@ -130,4 +137,48 @@ export async function sendSms(opts: {
     cost: cost ?? 0,
     status: providerStatus ?? "sent",
   };
+}
+
+/**
+ * Work-phone path. The gateway only QUEUES the text; the phone sends it over
+ * its SIM a moment later and reports sent/delivered/failed by webhook
+ * (/api/portal/sms-gateway), which updates this row by provider_msg_id. So a
+ * successful call here is logged as "queued", not "sent".
+ */
+async function sendSmsViaPhone(opts: {
+  contactId?: string | null;
+  phone: string;
+  body: string;
+  campaign?: string;
+}): Promise<SmsResult> {
+  const base = {
+    contact_id: opts.contactId ?? null,
+    phone: opts.phone,
+    body: opts.body,
+    campaign: opts.campaign ?? null,
+    provider: "phone",
+  };
+
+  if (await isOptedOut(opts.phone)) {
+    await supabase.from("sms_log").insert({ ...base, status: "opted_out" });
+    return { ok: false, error: "Recipient has opted out" };
+  }
+
+  let result: Awaited<ReturnType<typeof sendViaPhoneGateway>>;
+  try {
+    result = await sendViaPhoneGateway(opts.phone, opts.body);
+  } catch (e) {
+    result = { ok: false, error: errMessage(e, "Network error") };
+  }
+
+  await supabase.from("sms_log").insert({
+    ...base,
+    status: result.ok ? "queued" : "failed",
+    provider_msg_id: result.ok ? result.id : null,
+    error: result.ok ? null : result.error,
+    cost: 0, // goes out on the phone plan
+  });
+
+  if (!result.ok) return { ok: false, error: result.error };
+  return { ok: true, provider_msg_id: result.id, cost: 0, status: "queued" };
 }

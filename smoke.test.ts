@@ -16,7 +16,7 @@ describe("validate-env", () => {
   it("throws when required vars are missing", async () => {
     // Clear all CRM env vars to trigger the error
     const keys = [
-      "OPENROUTER_API_KEY",
+      "ANTHROPIC_API_KEY",
       "NEXT_PUBLIC_SUPABASE_URL",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY",
       "SUPABASE_SERVICE_KEY",
@@ -48,17 +48,17 @@ describe("validate-env", () => {
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
     process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
     process.env.CF_ACCESS_AUD = "test-aud-tag";
-    const savedAi = process.env.OPENROUTER_API_KEY;
-    delete process.env.OPENROUTER_API_KEY;
+    const savedAi = process.env.ANTHROPIC_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
 
     const { validateEnv } = await import("./utils/validate-env");
     expect(() => validateEnv()).not.toThrow();
 
-    if (savedAi) process.env.OPENROUTER_API_KEY = savedAi;
+    if (savedAi) process.env.ANTHROPIC_API_KEY = savedAi;
   });
 
   it("DOES throw when a genuinely-required Supabase var is missing", async () => {
-    process.env.OPENROUTER_API_KEY = "test-key";
+    process.env.ANTHROPIC_API_KEY = "test-key";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";
     process.env.CF_ACCESS_TEAM_DOMAIN = "test-team";
@@ -74,7 +74,7 @@ describe("validate-env", () => {
 
   it("warns on missing optional vars but does not throw", async () => {
     // Should warn about optional vars when critical ones are present
-    process.env.OPENROUTER_API_KEY = "test-key";
+    process.env.ANTHROPIC_API_KEY = "test-key";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_test";
     process.env.SUPABASE_SERVICE_KEY = "sb_secret_test";

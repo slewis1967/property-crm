@@ -15,14 +15,14 @@ interface EnvVar {
 const CRITICAL_VARS: EnvVar[] = [
   // Core — app doesn't function without these.
   //
-  // OPENROUTER_API_KEY is deliberately NOT required here (warn, don't throw).
-  // utils/openrouter.ts now degrades gracefully when it's missing (lazy client,
+  // ANTHROPIC_API_KEY is deliberately NOT required here (warn, don't throw).
+  // utils/anthropic.ts degrades gracefully when it's missing (lazy client,
   // AI calls fail at call-time with a clear 401 message rather than crashing).
   // validateEnv() runs at startup via instrumentation.ts, so hard-throwing on a
   // missing AI key would re-introduce the exact boot-crash that the lazy client
   // removes. The non-AI CRM (properties, contacts, opportunities) must still
   // boot and serve with the AI key absent — so this is a loud warning only.
-  { name: "OPENROUTER_API_KEY", required: false, feature: "all AI features (voice, compliance, deal-analyser, document extraction) — via OpenRouter; degrades gracefully if unset" },
+  { name: "ANTHROPIC_API_KEY", required: false, feature: "all AI features (voice, compliance, deal-analyser, document extraction) — degrades gracefully if unset" },
   { name: "NEXT_PUBLIC_SUPABASE_URL", required: true, feature: "property/contact data" },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", required: true, feature: "Supabase client" },
   { name: "SUPABASE_SERVICE_KEY", required: true, feature: "server-side Supabase (bypasses RLS)" },
@@ -38,6 +38,10 @@ const CRITICAL_VARS: EnvVar[] = [
   { name: "BREVO_API_KEY", required: false, feature: "outbound email" },
   { name: "CLICKSEND_API_KEY", required: false, feature: "outbound SMS" },
   { name: "CLICKSEND_USERNAME", required: false, feature: "outbound SMS" },
+  { name: "SMS_PROVIDER", required: false, feature: "outbound SMS route — 'phone' sends from the work phone via utils/sms-gateway.ts; anything else uses ClickSend" },
+  { name: "SMSGATE_USERNAME", required: false, feature: "work-phone SMS gateway (sms-gate.app cloud credentials)" },
+  { name: "SMSGATE_PASSWORD", required: false, feature: "work-phone SMS gateway (sms-gate.app cloud credentials)" },
+  { name: "SMSGATE_SIGNING_KEY", required: false, feature: "work-phone SMS gateway webhook signature check (/api/portal/sms-gateway)" },
 
   // Auth — required in production for Cloudflare Access JWT verification.
   // In dev, missing CF Access means we'll fall back to header trust (still

@@ -1,14 +1,11 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
-import { log, errInfo } from "../../utils/logger";
+import { log } from "../../utils/logger";
 import PropertyGrid from "./PropertyGrid";
 import { DEFAULT_PAGE_SIZE, coercePropertiesPageSize } from "../../utils/pagination";
 import { interleaveByBuilder } from "../../utils/feed-order";
-
-// Upper bound on rows pulled for the first-page interleave (mirrors the API
-// route). The active feed is a few hundred rows; this bounds the work.
-const FEED_INTERLEAVE_CAP = 3000;
+import { fetchAllRows } from "../../utils/supabase-paginate";
 
 // The Aggregator Feed must reflect live stock on every load — without this,
 // Next.js serves a cached build snapshot, so withdrawn/edited rows (e.g. the
@@ -81,29 +78,38 @@ export default async function PropertiesPage() {
     "status,pipeline_status,titled,created_at,updated_at," +
     "brochure_url,confidence_score";
 
-  // Fetch the whole active set (bounded) so we can interleave builders for the
-  // first page — otherwise a single bulk import (e.g. 200+ rows added the same
-  // day) floods newest-first and buries every other builder. The "Load more"
-  // API applies the same interleave for subsequent pages.
+  // Fetch the whole active set so we can interleave builders for the first page
+  // — otherwise a single bulk import (e.g. 200+ rows added the same day) floods
+  // newest-first and buries every other builder. The "Load more" API applies
+  // the same interleave for subsequent pages.
+  //
+  // PAGED, not one request: PostgREST returns at most 1,000 rows per request no
+  // matter what .range()/.limit() asks for. A single range(0, 2999) silently
+  // stopped at 1,000 once the feed passed that (1,186 rows on 2026-09-15), so
+  // the oldest lots vanished from the feed and the builder dropdown. `id` breaks
+  // created_at ties so page boundaries don't shift between batches.
   const runQuery = (cols: string) =>
-    supabase
-      .from("global_stock_pool")
-      .select(cols, { count: "exact" })
-      .neq("pipeline_status", "withdrawn")
-      .neq("pipeline_status", "legacy")
-      .order("created_at", { ascending: false })
-      .range(0, FEED_INTERLEAVE_CAP - 1);
+    fetchAllRows((from, to) =>
+      supabase
+        .from("global_stock_pool")
+        .select(cols)
+        .neq("pipeline_status", "withdrawn")
+        .neq("pipeline_status", "legacy")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
   // Request contract_type, but fall back to the base projection if the column
   // hasn't been added yet (ALTER pending) — keeps the page working either way.
-  let { data: firstPage, count, error } = await runQuery(BASE_COLS + ",contract_type");
-  if (error && /contract_type/i.test(error.message || "")) {
-    ({ data: firstPage, count, error } = await runQuery(BASE_COLS));
+  let { data: firstPage, error } = await runQuery(BASE_COLS + ",contract_type");
+  if (error && /contract_type/i.test(error)) {
+    ({ data: firstPage, error } = await runQuery(BASE_COLS));
   }
 
   if (error) {
-    log.error("properties.page.query_failed", errInfo(error));
-    return <div className="text-red-600 p-4">Error: {error.message}</div>;
+    log.error("properties.page.query_failed", { error });
+    return <div className="text-red-600 p-4">Error: {error}</div>;
   }
 
   const propertyTypes = await getPropertyTypes();
@@ -144,7 +150,8 @@ export default async function PropertiesPage() {
     new Set(allNormalised.map((p) => (p.builder_name || "").toString().trim()).filter(Boolean)),
   ).sort();
 
-  const total = count ?? allNormalised.length;
+  // Every matching row is fetched above, so the row count IS the total.
+  const total = allNormalised.length;
 
   return (
     <div>

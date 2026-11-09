@@ -296,9 +296,12 @@ describe("overriding the accreditation course is narrower than super-admin", () 
 });
 
 describe("introducer-facing copy is Springboard-branded", () => {
-  it("the consent statement names Springboard, never NextKey", () => {
-    expect(CONSENT_STATEMENT).toContain("Springboard");
-    expect(CONSENT_STATEMENT).not.toContain("NextKey");
+  it("the consent statement names Springboard; NextKey only as the legal entity", () => {
+    // Springboard Homes is a business name of NextKey Pty Ltd, and the client is
+    // consenting to that company holding their details, so the legal name has to
+    // be there. The NextKey brand ("NextKey Property Strategists") must not be.
+    expect(CONSENT_STATEMENT).toContain("Springboard Homes (a business name of NextKey Pty Ltd)");
+    expect(CONSENT_STATEMENT.replace("NextKey Pty Ltd", "")).not.toContain("NextKey");
   });
 
   it("the consent statement covers the whole disclosure chain", () => {
@@ -307,6 +310,7 @@ describe("introducer-facing copy is Springboard-branded", () => {
     // dropped from this sentence, the referrals made after it are consented to
     // a narrower disclosure than the one that actually happens.
     for (const party of [
+      "NextKey Pty Ltd",
       "G.B. Mayes Holdings",
       "CRE8 Finance",
       "Your Loan Assist",

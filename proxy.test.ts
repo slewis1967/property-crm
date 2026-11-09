@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute, isLivekitWebhookRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isLivekitWebhookRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute, isPublicIntroducerRoute } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -25,6 +25,24 @@ describe("isPublicGuestRoute", () => {
     expect(isPublicGuestRoute("/joined")).toBe(false);
     expect(isPublicGuestRoute("/api/livekit/guest-tokens")).toBe(false);
     expect(isPublicGuestRoute("/")).toBe(false);
+  });
+});
+
+describe("isPublicIntroducerRoute", () => {
+  it("exempts the public introducer portal (bare + nested) and its APIs", () => {
+    expect(isPublicIntroducerRoute("/introducer")).toBe(true);
+    expect(isPublicIntroducerRoute("/introducer/start")).toBe(true);
+    expect(isPublicIntroducerRoute("/api/introducer/login")).toBe(true);
+  });
+
+  it("does NOT exempt lookalikes or staff-side routes", () => {
+    // Trailing 's' is a STAFF area under a different subtree:
+    expect(isPublicIntroducerRoute("/introducers")).toBe(false);
+    expect(isPublicIntroducerRoute("/introducerx")).toBe(false);
+    expect(isPublicIntroducerRoute("/api/introducerx/login")).toBe(false);
+    // Staff-side subtree keeps its CF Access header:
+    expect(isPublicIntroducerRoute("/admin/introducers")).toBe(false);
+    expect(isPublicIntroducerRoute("/api/admin/introducers/list")).toBe(false);
   });
 });
 

@@ -265,13 +265,24 @@ export async function redeemCode(
     return { ok: false, error: "Too many incorrect attempts. Please request a new code." };
   }
 
-  if (!safeEqual(sha256(code), row.code_hash)) {
-    await supabase
-      .from("introducer_login_codes")
-      .update({ attempts: row.attempts + 1 })
-      .eq("id", row.id);
-    return { ok: false, error: GENERIC_LOGIN_FAILURE };
-  }
+  // Spend the attempt BEFORE comparing, and only if the count is still the one
+  // we read. Read-compare-then-increment let N parallel guesses all read the
+  // same count and all be compared, so MAX_CODE_ATTEMPTS capped ROUNDS of
+  // guessing rather than guesses. With the compare-and-set each count value is
+  // won by exactly one request, so a code gets at most MAX_CODE_ATTEMPTS
+  // comparisons however the requests arrive. (Ported from utils/partner-auth.ts
+  // after the 2026-09-11 security review — keep the two in step.)
+  const { data: claimed } = await supabase
+    .from("introducer_login_codes")
+    .update({ attempts: row.attempts + 1 })
+    .eq("id", row.id)
+    .eq("attempts", row.attempts)
+    .is("consumed_at", null)
+    .select("id")
+    .maybeSingle();
+  if (!claimed) return { ok: false, error: GENERIC_LOGIN_FAILURE };
+
+  if (!safeEqual(sha256(code), row.code_hash)) return { ok: false, error: GENERIC_LOGIN_FAILURE };
 
   return finishLogin(row, meta);
 }

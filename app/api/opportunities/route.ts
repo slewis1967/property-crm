@@ -1,4 +1,5 @@
 import { nexusApi } from "@/utils/nexus-api";
+import { invalidateLeadCache } from "@/utils/nexus-leads-cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: friendly }, { status: 503 });
     }
     if (!res.ok) return NextResponse.json(data, { status: res.status });
+    invalidateLeadCache();
     return NextResponse.json(data, { status: 201 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";

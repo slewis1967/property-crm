@@ -70,22 +70,62 @@ const FIX_GUIDANCE: Record<string, string> = {
   super_statement: "Your most recent super statement as a PDF, from myGov or your fund's website.",
 };
 
+/** YLA's format standard, stated once in every fixup so the client isn't left
+ * to guess why a second attempt would be rejected too. Source: YLA's
+ * "Operational Guidelines for Documentation". */
+export const YLA_FORMAT_RULES: string[] = [
+  "PDF files only — not photos, JPG/PNG images or screenshots of a screen",
+  "Each file under 1MB",
+  "One document per file — don't merge several into one PDF",
+  "Clear, upright and fully readable — not blurry, cut off or sideways",
+  "Not password-protected",
+];
+
+/** The portal slot a stored file sits in — "ATO Income Statement 1 - Libman
+ * (NK-10017).pdf" → "ATO Income Statement 1". The client sees slots by this
+ * name, so it tells them WHICH upload to replace when they have several of one
+ * type (myGov issues one ATO statement per employer). */
+export function slotNameFromFilename(filename: string): string {
+  return filename.replace(/\.pdf$/i, "").split(" - ")[0]!.trim() || filename;
+}
+
 export type FixupAction =
   | { requestId: string; applicant: string; action: "emailed" | "would_email"; to: string; docs: string[] }
   | { requestId: string; applicant: string; action: "skipped"; reason: string };
 
-type Sibling = {
+export type Sibling = {
   id: string;
   applicant_name: string | null;
   applicant_email: string | null;
   created_at: string | null;
 };
 
+/** An application's applicant requests, oldest first — the same set and order
+ * the verification numbers as "Applicant 1", "Applicant 2" (non-cancelled,
+ * by created_at), so index i here IS "Applicant i+1" in a verdict. */
+export async function loadApplicationSiblings(applicationId: string | null, repId: string): Promise<Sibling[]> {
+  if (applicationId) {
+    const { data } = await supabase
+      .from(DOCUMENT_REQUESTS_TABLE)
+      .select("id,applicant_name,applicant_email,created_at")
+      .eq("application_id", applicationId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true });
+    return (data ?? []) as Sibling[];
+  }
+  const { data } = await supabase
+    .from(DOCUMENT_REQUESTS_TABLE)
+    .select("id,applicant_name,applicant_email,created_at")
+    .eq("id", repId)
+    .maybeSingle();
+  return data ? [data as Sibling] : [];
+}
+
 /** Which of an application's flagged docs belong to a given sibling index.
  * Multi-applicant verdicts are labelled "Applicant N" (1-based, in created_at
  * order); a solo application labels by name, so all flagged docs are the one
  * applicant's. */
-function flaggedForSibling(
+export function flaggedForSibling(
   failed: DocVerdict[],
   siblingIndex: number,
   soloApplicant: boolean,
@@ -95,51 +135,62 @@ function flaggedForSibling(
   return failed.filter((d) => d.applicant === label);
 }
 
-function renderFixup(opts: { applicantName: string | null; link: string; flagged: DocVerdict[] }): {
+export function renderFixup(opts: { applicantName: string | null; link: string; flagged: DocVerdict[] }): {
   subject: string;
   html: string;
   text: string;
 } {
   const first = firstNameOf(opts.applicantName);
   const rows = opts.flagged.map((d) => {
-    const label = DOC_BY_KEY[d.docKey]?.label || d.docKey.replace(/_/g, " ");
+    const slot = slotNameFromFilename(d.filename);
     const why = d.issues.length ? d.issues.join("; ") : "needs to be re-supplied";
     const how = FIX_GUIDANCE[d.docKey] || "Please re-upload this as a clear PDF.";
-    return { label, why, how };
+    return { slot, why, how };
   });
 
-  const subject = "Springboard Homes — a quick fix on your uploaded documents";
+  const subject = "Action needed — please re-upload your documents (Springboard Homes)";
 
   const htmlRows = rows
     .map(
       (r) =>
-        `<li style="margin:0 0 12px"><strong>${escapeHtml(r.label)}</strong> — ${escapeHtml(r.why)}.<br>` +
+        `<li style="margin:0 0 12px"><strong>${escapeHtml(r.slot)}</strong> — ${escapeHtml(r.why)}.<br>` +
         `<span style="color:#555">${escapeHtml(r.how)}</span></li>`,
     )
     .join("");
+  const htmlRules = YLA_FORMAT_RULES.map((r) => `<li style="margin:0 0 4px">${escapeHtml(r)}</li>`).join("");
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#222;line-height:1.5">
     <div style="text-align:center;padding:4px 0 14px"><img src="${logoUrl()}" alt="Springboard Homes" width="240" style="width:240px;max-width:70%;height:auto"></div>
     <p>Hi ${escapeHtml(first)},</p>
-    <p>Thanks for uploading your documents — you're almost there. Our lending partner reviews everything to bank standard, and a couple of files need to be re-supplied in the right format before we can put your application forward:</p>
+    <p>Thanks for uploading your documents — you're almost there. Our lending partner reviews everything to bank standard, and the following ${rows.length === 1 ? "file needs" : "files need"} to be replaced before we can put your application forward:</p>
     <ul style="padding-left:20px">${htmlRows}</ul>
+    <div style="margin:18px 0;padding:12px 16px;background:#f4f6fb;border-left:4px solid #020e40;border-radius:4px">
+      <p style="margin:0 0 6px;font-weight:bold">The format we need</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px">${htmlRules}</ul>
+    </div>
+    <p>Open your upload page, find each document listed above and press <strong>Replace</strong> next to it.</p>
     <p style="margin:20px 0">
-      <a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#020e40;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">Re-upload your documents</a>
+      <a href="${escapeHtml(opts.link)}" style="display:inline-block;background:#020e40;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold">Open my upload page</a>
     </p>
     <p style="font-size:13px;color:#555">Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(opts.link)}</span></p>
-    <p>Getting these in as PDFs is the last step before we can move you forward. Any questions, just reply to this email.</p>
+    <p>This is the last step before we can move you forward. Any questions, just reply to this email.</p>
     <p>Kind regards,<br>${signature().html}</p>
   </div>`;
 
-  const textRows = rows.map((r) => `• ${r.label} — ${r.why}. ${r.how}`).join("\n");
+  const textRows = rows.map((r) => `• ${r.slot} — ${r.why}. ${r.how}`).join("\n");
+  const textRules = YLA_FORMAT_RULES.map((r) => `• ${r}`).join("\n");
   const text = `Hi ${first},
 
-Thanks for uploading your documents — you're almost there. A couple of files need to be re-supplied in the right format before we can put your application forward:
+Thanks for uploading your documents — you're almost there. The following ${rows.length === 1 ? "file needs" : "files need"} to be replaced before we can put your application forward:
 
 ${textRows}
 
-Re-upload here: ${opts.link}
+THE FORMAT WE NEED
+${textRules}
 
-Getting these in as PDFs is the last step before we can move you forward. Any questions, just reply to this email.
+Open your upload page, find each document listed above and press Replace next to it:
+${opts.link}
+
+This is the last step before we can move you forward. Any questions, just reply to this email.
 
 Kind regards,
 ${signature().text}`;
@@ -165,23 +216,7 @@ export async function sendClientDocFixups(opts: {
 
   // The applicant requests for this application, oldest first (matches the
   // "Applicant N" numbering the verification uses).
-  let siblings: Sibling[];
-  if (opts.applicationId) {
-    const { data } = await supabase
-      .from(DOCUMENT_REQUESTS_TABLE)
-      .select("id,applicant_name,applicant_email,created_at")
-      .eq("application_id", opts.applicationId)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: true });
-    siblings = (data ?? []) as Sibling[];
-  } else {
-    const { data } = await supabase
-      .from(DOCUMENT_REQUESTS_TABLE)
-      .select("id,applicant_name,applicant_email,created_at")
-      .eq("id", opts.repId)
-      .maybeSingle();
-    siblings = data ? [data as Sibling] : [];
-  }
+  const siblings = await loadApplicationSiblings(opts.applicationId, opts.repId);
   if (siblings.length === 0) return [];
   const solo = siblings.length === 1;
 

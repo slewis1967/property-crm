@@ -2,6 +2,28 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { log } from "./utils/logger";
+import { MARKETING_HOME, marketingMayAccess, roleForEmail, type CrmRole } from "./utils/roles";
+
+/**
+ * Role gate (see utils/roles.ts). Runs after identity is established. Returns
+ * a response to send instead of the page/API, or null to let it through.
+ * API calls get a 403; page loads are sent to the marketing home page.
+ */
+function roleGate(req: NextRequest, role: CrmRole): NextResponse | null {
+  if (role !== "marketing") return null;
+  const { pathname } = req.nextUrl;
+  if (marketingMayAccess(pathname, req.method)) return null;
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Forbidden: not available to your role" }, { status: 403 });
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+  const home = req.nextUrl.clone();
+  home.pathname = MARKETING_HOME;
+  home.search = "";
+  return NextResponse.redirect(home, 307);
+}
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
@@ -275,6 +297,38 @@ export function isPublicIntroducerRoute(pathname: string): boolean {
   return false;
 }
 
+// Public channel-partner portal routes. Same reasoning, and the same shape, as
+// the introducer carve-out above: partners are external firms selling our stock,
+// must never hold a Cloudflare Access identity, and carry their own session
+// (utils/partner-auth.ts). Must mirror the CF Access bypass app
+// (crm.nextkey.com.au/partner + /api/partner) EXACTLY.
+//
+// Trailing slash load-bearing again: `"/partners".startsWith("/partner")` is
+// true. The staff side lives at /admin/partners and /api/admin/partners, and
+// the recruitment list at /channel-partners — neither can match here. Every
+// route under /api/partner/* resolves the session through requirePartner() and
+// filters on the partner id from that session, never from the request.
+export function isPublicPartnerRoute(pathname: string): boolean {
+  if (pathname === "/partner" || pathname.startsWith("/partner/")) return true;
+  if (pathname.startsWith("/api/partner/")) return true;
+  return false;
+}
+
+// Public client property-shortlist routes. A client opens the properties a
+// consultant picked for them WITHOUT a Cloudflare Access identity — same model
+// as the document portal: the 256-bit token in the path is the credential, only
+// its SHA-256 is stored, and every handler re-resolves it. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/shortlist/* + /api/shortlist/*) EXACTLY.
+//
+// Trailing slash load-bearing: "/shortlists".startsWith("/shortlist") is true.
+// The staff side lives at /property-shortlists and /api/property-shortlists — a
+// different subtree, so it keeps its CF Access auth header.
+export function isPublicShortlistRoute(pathname: string): boolean {
+  if (pathname === "/shortlist" || pathname.startsWith("/shortlist/")) return true;
+  if (pathname.startsWith("/api/shortlist/")) return true;
+  return false;
+}
+
 // External-cron trigger route. Netlify's scheduled functions stopped executing,
 // so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
 // machine caller with no Cloudflare Access identity. Exempt from the CF Access
@@ -312,6 +366,12 @@ function originAllowed(origin: string | null): boolean {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Prepare request headers for downstream with sanitisation of any client-forgeable flags.
+  const requestHeaders = new Headers(req.headers);
+  // NEVER trust client-supplied public-route flags — strip before we decide.
+  requestHeaders.delete("x-public-route");
+  // Same for the role flag — only this proxy may set it.
+  requestHeaders.delete("x-crm-role");
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
   // a Cloudflare Access redirect_url concatenation can produce URLs like
@@ -343,10 +403,17 @@ export async function proxy(req: NextRequest) {
     ? "tunnel"
     : (process.env.AUTH_MODE ?? "local").toLowerCase();
   if (mode !== "tunnel") {
-    return NextResponse.next();
+    // Local/dev passthrough — still tag the request explicitly as NOT public.
+    requestHeaders.set("x-public-route", "0");
+    // Dev: DEV_USER_EMAIL set to a marketing address previews that role.
+    const devRole = roleForEmail(process.env.DEV_USER_EMAIL);
+    const blocked = roleGate(req, devRole);
+    if (blocked) return blocked;
+    requestHeaders.set("x-crm-role", devRole);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (
+  const isPublic =
     PUBLIC_PATHS.has(pathname) ||
     isPublicSignRoute(pathname) ||
     isPublicGuestRoute(pathname) ||
@@ -354,9 +421,14 @@ export async function proxy(req: NextRequest) {
     isPublicBookingRoute(pathname) ||
     isPublicPortalRoute(pathname) ||
     isPublicIntroducerRoute(pathname) ||
-    isCronRoute(pathname)
-  ) {
-    return NextResponse.next();
+    isPublicPartnerRoute(pathname) ||
+    isPublicShortlistRoute(pathname) ||
+    isCronRoute(pathname);
+
+  if (isPublic) {
+    // Tag trusted public routes for downstream server components/layouts.
+    requestHeaders.set("x-public-route", "1");
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const email = req.headers.get("cf-access-authenticated-user-email");
@@ -377,8 +449,16 @@ export async function proxy(req: NextRequest) {
     );
   }
 
-  // Pass-through with the user email exposed for downstream server components.
-  const res = NextResponse.next();
+  // Role gate: a marketing user only reaches the allowlist in utils/roles.ts.
+  const role = roleForEmail(email);
+  const blocked = roleGate(req, role);
+  if (blocked) return blocked;
+
+  // Pass-through with explicit "NOT public" tag for downstream.
+  requestHeaders.set("x-public-route", "0");
+  requestHeaders.set("x-crm-role", role);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  // Expose user email to API routes that read it directly (dev-only override honoured downstream).
   res.headers.set("x-user-email", email);
   return res;
 }

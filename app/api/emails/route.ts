@@ -13,6 +13,8 @@ import { sendBrevoEmail } from "../../../utils/brevo";
 import { requireAuth } from "../../../utils/cf-access";
 import { defaultSignature } from "../../../utils/email-signature";
 import { resolveSender } from "../../../utils/mail-owner";
+import { resolveIdentity } from "../../../utils/mailIdentities";
+import { sharedMailboxFor } from "../../../utils/shared-mailboxes";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +105,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "body_html required" }, { status: 400 });
   }
 
+  // Replying from a shared mailbox view (e.g. Springboard): only members may.
+  // The mail goes out as that brand, the row is filed under the mailbox so the
+  // reply joins the thread for every member, and the sender's personal NextKey
+  // signature is skipped so the brand firewall holds.
+  const shared = body.mailbox ? sharedMailboxFor(auth, body.mailbox) : null;
+  if (body.mailbox && !shared) {
+    return NextResponse.json({ ok: false, error: "No access to that mailbox" }, { status: 403 });
+  }
+  const sender = shared
+    ? resolveIdentity(shared.identity)
+    : { fromEmail: SENDER_EMAIL, fromName: SENDER_NAME };
+
   const sentBy =
     req.headers.get("x-user-email") ??
     req.headers.get("cf-access-authenticated-user-email") ??
@@ -113,7 +127,7 @@ export async function POST(req: Request) {
   // shared sig if their per-user row is empty. Caller can opt out by
   // passing `skip_signature: true` for system mail.
   const sig = await defaultSignature(sentBy ?? undefined);
-  const skipSig = body.skip_signature === true;
+  const skipSig = body.skip_signature === true || shared !== null;
   const finalHtml = skipSig ? body_html : `${body_html}${sig.html}`;
   const finalText = skipSig
     ? (body_text ?? null)
@@ -123,7 +137,7 @@ export async function POST(req: Request) {
   // by whoever sent it (CF-Access authenticated email). When that doesn't
   // map to a registered alias — e.g. system-generated mail — leave it null
   // and the message lives in the shared/system inbox view.
-  const ownerEmail = await resolveSender(sentBy);
+  const ownerEmail = shared ? shared.address : await resolveSender(sentBy);
 
   // 1. Insert as queued so we have an audit row even if Brevo errors.
   const { data: row, error: insertErr } = await supabase
@@ -134,8 +148,8 @@ export async function POST(req: Request) {
       direction: "outbound",
       to_email: to,
       to_name: to_name ?? null,
-      from_email: SENDER_EMAIL,
-      from_name: SENDER_NAME,
+      from_email: sender.fromEmail,
+      from_name: sender.fromName,
       cc: Array.isArray(cc) ? cc : [],
       bcc: Array.isArray(bcc) ? bcc : [],
       subject,
@@ -174,6 +188,7 @@ export async function POST(req: Request) {
     text: finalText ?? undefined,
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
     headers: replyHeaders,
+    ...(shared ? { fromEmail: sender.fromEmail, fromName: sender.fromName } : {}),
   });
 
   // 3. Update row with outcome. Brevo's `messageId` IS the RFC822 Message-ID
