@@ -15,6 +15,7 @@
 import { sendBrevoEmail, type BrevoSendResult } from "./brevo";
 import { icsBase64 } from "./ics";
 import type { Brand } from "./scheduling-hosts";
+import { EMAIL_FONT, hostSignature, type SignatureBlock } from "./email-signature";
 
 /** Validated Brevo senders per brand (mirrors utils/signatures + brevo.ts). */
 const BRAND_SENDER: Record<Brand, { email: string; name: string }> = {
@@ -61,6 +62,11 @@ export interface MeetingInviteOpts {
   kind?: "invite" | "update" | "cancel";
   /** .ics SEQUENCE. Must rise on every update/cancel of the same uid. */
   sequence?: number;
+  /**
+   * The sender's signature. sendMeetingInvite fills it from the host
+   * (hostSignature); only pass it to override, e.g. in tests.
+   */
+  signature?: SignatureBlock;
 }
 
 const BRAND_TEAL = "#0F4C5C";
@@ -113,7 +119,7 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
     : "";
 
   return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#111827;">
+  <div style="font-family:${EMAIL_FONT};max-width:560px;margin:0 auto;color:#111827;">
     <h2 style="color:${BRAND_TEAL};font-size:20px;margin:0 0 4px;">${escapeHtml(opts.title)}</h2>
     <p style="color:#6b7280;margin:0 0 18px;font-size:14px;">${lede}</p>
     <p style="margin:0 0 14px;">Hi${greetingName},</p>
@@ -125,6 +131,7 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
       ${descRow}
     </table>
     ${joinFallback}
+    ${opts.signature?.html ?? ""}
     <p style="color:#9ca3af;font-size:12px;margin:22px 0 0;border-top:1px solid #e5e7eb;padding-top:12px;">
       ${opts.kind === "cancel"
         ? "A calendar file is attached — open it to remove this meeting from your calendar."
@@ -139,7 +146,18 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
  */
 export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoSendResult> {
   const sender = BRAND_SENDER[opts.host.brand];
-  const html = meetingInviteHtml(opts);
+  // Outward-email rule: every email carries its sender's signature. No
+  // signature on file → don't send, and say why; the callers already report a
+  // failed invite to the person who booked it so they can follow up.
+  const signature = opts.signature ?? (await hostSignature(opts.host));
+  if (!signature) {
+    const who = opts.host.brand === "springboard" ? "Glenn (Springboard invites)" : opts.host.email;
+    return {
+      ok: false,
+      error: `no email signature on file for ${who}. Add one in Settings → Email signature, then resend`,
+    };
+  }
+  const html = meetingInviteHtml({ ...opts, signature });
 
   const ics = icsBase64({
     uid: opts.uid,
