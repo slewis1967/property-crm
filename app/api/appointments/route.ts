@@ -284,11 +284,13 @@ export async function POST(req: NextRequest) {
         subject: `New meeting booked for you: ${title} — ${whenLabel}`,
         // A personal entry (no contact, since #303) has nobody to name, so the
         // "With" line is left out rather than printing "undefined".
-        html: `<p>${currentUser} booked a meeting for you.</p>
-          <p><strong>When:</strong> ${whenLabel} (AEST)${personal ? "" : `<br>
-          <strong>With:</strong> ${body.contact_name || body.contact_email}`}</p>
-          ${videoLink ? `<p><a href="${videoLink}">Join the video meeting</a></p>` : ""}
-          ${description ? `<p><strong>Notes:</strong> ${description}</p>` : ""}`,
+        // Everything typed by a person (names, notes) is escaped: a client
+        // name or note containing "<" would otherwise be read as HTML.
+        html: `<p>${esc(currentUser)} booked a meeting for you.</p>
+          <p><strong>When:</strong> ${esc(whenLabel)} (AEST)${personal ? "" : `<br>
+          <strong>With:</strong> ${esc(body.contact_name || body.contact_email || "")}`}</p>
+          ${videoLink ? `<p><a href="${esc(videoLink)}">Join the video meeting</a></p>` : ""}
+          ${description ? `<p><strong>Notes:</strong> ${esc(description)}</p>` : ""}`,
         tags: ["appointment-host-notify"],
       }).catch(() => undefined);
     }
@@ -303,6 +305,16 @@ export async function POST(req: NextRequest) {
     sms_sent: smsSent,
     sms_warning: smsWarning,
   });
+}
+
+/** Escape text for an HTML email body or attribute. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** The attendee's mobile: whatever the caller supplied, else the contact record. */
