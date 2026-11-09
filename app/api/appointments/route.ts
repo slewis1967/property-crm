@@ -6,9 +6,11 @@ import { errMessage } from "../../../utils/errors";
 import { roomForContact, livekitConfigured } from "../../../utils/livekit";
 import { signGuestToken } from "../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../utils/meeting-invite";
+import { sendBrevoEmail } from "../../../utils/brevo";
 import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS, appointmentIcsUid } from "../../../utils/appointments";
 import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
 import { meetingSmsBody } from "../../../utils/meeting-sms";
+import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -110,7 +112,8 @@ export async function POST(req: NextRequest) {
   const meetingKind: "video" | "phone" = body.meeting_kind === "phone" ? "phone" : "video";
   const location = body.location?.trim() || (meetingKind === "phone" ? "Phone call" : undefined);
   const host_email = (body.host_email && EMAIL_RE.test(body.host_email)) ? body.host_email : currentUser;
-  const host = findHost(host_email) ?? {
+  const knownHost = findHost(host_email);
+  const host = knownHost ?? {
     email: host_email,
     displayName: host_email,
     brand: "nextkey" as const,
@@ -258,6 +261,44 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // --- Step 5: heads-up to the host, when someone else booked on their behalf ---
+  //
+  // The host dropdown lets any operator book a meeting under a different
+  // person's name (e.g. Sean booking on Glenn's behalf). Steps 3-4 only ever
+  // notify the attendee — the host otherwise finds out by opening the
+  // calendar. Best-effort and unreported, same as the self-book flow's
+  // equivalent notify (app/api/book/[host]/route.ts) — a failed heads-up
+  // must never affect the saved booking or its response. Only fires for a
+  // recognised SchedulingHost — an arbitrary host_email has no notify list.
+  if (currentUser && knownHost && host_email.toLowerCase() !== currentUser.toLowerCase()) {
+    const recipients = bookingNotifyRecipients(knownHost).filter(
+      (email) => email.toLowerCase() !== currentUser.toLowerCase(),
+    );
+    if (recipients.length > 0) {
+      const whenLabel = new Intl.DateTimeFormat("en-AU", {
+        weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
+        timeZone: "Australia/Brisbane",
+      }).format(new Date(startMs));
+      await sendBrevoEmail({
+        to: recipients.map((email) => ({
+          email,
+          name: email === knownHost.email ? knownHost.displayName : email,
+        })),
+        subject: `New meeting booked for you: ${title} — ${whenLabel}`,
+        // A personal entry (no contact, since #303) has nobody to name, so the
+        // "With" line is left out rather than printing "undefined".
+        // Everything typed by a person (names, notes) is escaped: a client
+        // name or note containing "<" would otherwise be read as HTML.
+        html: `<p>${esc(currentUser)} booked a meeting for you.</p>
+          <p><strong>When:</strong> ${esc(whenLabel)} (AEST)${personal ? "" : `<br>
+          <strong>With:</strong> ${esc(body.contact_name || body.contact_email || "")}`}</p>
+          ${videoLink ? `<p><a href="${esc(videoLink)}">Join the video meeting</a></p>` : ""}
+          ${description ? `<p><strong>Notes:</strong> ${esc(description)}</p>` : ""}`,
+        tags: ["appointment-host-notify"],
+      }).catch(() => undefined);
+    }
+  }
+
   return NextResponse.json({
     appointment: inserted,
     video_link: videoLink,
@@ -267,6 +308,16 @@ export async function POST(req: NextRequest) {
     sms_sent: smsSent,
     sms_warning: smsWarning,
   });
+}
+
+/** Escape text for an HTML email body or attribute. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** The attendee's mobile: whatever the caller supplied, else the contact record. */
