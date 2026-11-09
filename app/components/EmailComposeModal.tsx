@@ -19,6 +19,11 @@ export type EmailComposeProps = {
    * thread_id to inherit. Sets In-Reply-To/References on the outgoing email. */
   inReplyTo?: string | null;
   threadId?: string | null;
+  /** Shared mailbox key when replying from a shared view (e.g. "springboard"):
+   * sends as that brand and files the reply under the mailbox. */
+  mailbox?: string | null;
+  /** Display-only From line for a shared mailbox. */
+  fromLabel?: string | null;
   /** Called after a successful send. Receives the new email_log row. */
   onSent?: (email: { id: string; to_email: string; subject: string }) => void;
 };
@@ -28,7 +33,7 @@ export default function EmailComposeModal({
   defaultTo = "", defaultToName = "",
   defaultSubject = "", defaultBody = "",
   contactId, opportunityId, tags,
-  inReplyTo, threadId,
+  inReplyTo, threadId, mailbox, fromLabel,
   onSent,
 }: EmailComposeProps) {
   const [to, setTo] = useState(defaultTo);
@@ -109,6 +114,7 @@ export default function EmailComposeModal({
           tags,
           in_reply_to: inReplyTo ?? undefined,
           thread_id: threadId ?? undefined,
+          mailbox: mailbox ?? undefined,
         }),
       });
       const json = await res.json();
@@ -192,7 +198,9 @@ export default function EmailComposeModal({
               placeholder={"Hi Sarah,\n\nFollowing on from our chat earlier…"}
             />
             <span className="block text-[11px] text-gray-400 mt-1">
-              Plain text. Paragraph breaks render as paragraphs. Your signature is auto-appended on send — no need to type it.
+              {mailbox
+                ? "Plain text. Paragraph breaks render as paragraphs. Sent as the shared mailbox — your personal signature is not added."
+                : "Plain text. Paragraph breaks render as paragraphs. Your signature is auto-appended on send — no need to type it."}
             </span>
           </label>
           {error && (
@@ -201,7 +209,7 @@ export default function EmailComposeModal({
         </div>
         <div className="flex items-center justify-between gap-2 p-5 border-t border-gray-100">
           <p className="text-xs text-gray-400">
-            From: {process.env.NEXT_PUBLIC_BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au"}
+            From: {fromLabel ?? process.env.NEXT_PUBLIC_BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au"}
           </p>
           <div className="flex gap-2">
             <button

@@ -17,8 +17,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { isMarketingPage, type CrmRole } from "../../utils/roles";
 
-type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports" | "paidAccounts";
+type BadgeKey = "dealPackets" | "pendingReview" | "draftBuilders" | "amlReports" | "paidAccounts" | "overdueInvoices";
 type Item = { href: string; icon: string; label: string; badge?: BadgeKey };
 type Group = { key: string; label: string; icon: string; items: Item[] };
 
@@ -28,6 +29,7 @@ export type SidebarCounts = {
   dealPackets: number;
   amlReports: number;
   paidAccounts: number;
+  overdueInvoices: number;
 };
 
 const GROUPS: Group[] = [
@@ -38,6 +40,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/", icon: "🎯", label: "War Room" },
       { href: "/revenue", icon: "💰", label: "Revenue" },
+      { href: "/invoices", icon: "🧾", label: "Invoices", badge: "overdueInvoices" },
       { href: "/advisor", icon: "🎩", label: "Advisor" },
       { href: "/brain", icon: "🧠", label: "Brain" },
       { href: "/search", icon: "🔍", label: "Smart Search" },
@@ -62,11 +65,14 @@ const GROUPS: Group[] = [
       // is exempt from the Cloudflare Access gate.
       { href: "/admin/introducers", icon: "🤝", label: "Introducers" },
       { href: "/channel-partners", icon: "🧲", label: "Channel Partners" },
+      // Staff side of the channel-partner portal; the public portal owns /partner/*.
+      { href: "/admin/partners", icon: "🏘️", label: "Partners" },
       { href: "/eoi", icon: "📝", label: "Expressions of Interest" },
       { href: "/fact-find", icon: "📋", label: "Fact Find" },
       { href: "/needs-analysis", icon: "🧭", label: "Needs Analysis" },
       { href: "/credit-authorisation", icon: "🔏", label: "Credit Authorisation" },
       { href: "/document-requests", icon: "📎", label: "Client Documents" },
+      { href: "/preliminary-assessments", icon: "📄", label: "Preliminary Assessments" },
       { href: "/shared-folder", icon: "📂", label: "Shared Folder" },
       { href: "/contacts", icon: "👥", label: "Contacts" },
       { href: "/calendar", icon: "📅", label: "Calendar" },
@@ -160,7 +166,15 @@ function groupKeyForPath(pathname: string): string | null {
   return GROUPS.find((g) => g.items.some((it) => it.href === href))?.key ?? null;
 }
 
-export default function Sidebar({ counts }: { counts: SidebarCounts }) {
+export default function Sidebar({ counts, role = "staff" }: { counts: SidebarCounts; role?: CrmRole }) {
+  // Marketing users see only the pages the proxy lets them open. Cosmetic —
+  // proxy.ts is what actually enforces it.
+  const groups: Group[] =
+    role === "marketing"
+      ? GROUPS.map((g) => ({ ...g, items: g.items.filter((it) => isMarketingPage(it.href)) })).filter(
+          (g) => g.items.length > 0,
+        )
+      : GROUPS;
   const pathname = usePathname();
   const active = activeHref(pathname);
   const [open, setOpen] = useState<string | null>(() => groupKeyForPath(pathname));
@@ -187,6 +201,7 @@ export default function Sidebar({ counts }: { counts: SidebarCounts }) {
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {/* Always-visible Feedback / issues entry */}
+        {role !== "marketing" && (
         <Link
           href="/feedback"
           className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition text-sm mb-2 ${
@@ -198,8 +213,9 @@ export default function Sidebar({ counts }: { counts: SidebarCounts }) {
           <span>💡</span>
           <span className="flex-1">Feedback &amp; issues</span>
         </Link>
+        )}
 
-        {GROUPS.map((g) => {
+        {groups.map((g) => {
           const isOpen = open === g.key;
           return (
             <div key={g.key}>

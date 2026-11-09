@@ -17,7 +17,7 @@
  * triggering the cron never sends anything that wasn't already enabled — it only
  * makes the schedule fire.
  *
- * Body/query: ?job=yla|reminders|accounts|income|partners|all (default all). ?dry_run=1 forces dry.
+ * Body/query: ?job=yla|reminders|accounts|income|pa|partners|all (default all). ?dry_run=1 forces dry.
  * `partners` (channel-partner contact re-check) is NOT part of `all` — see below.
  *
  * `accounts` (the paid-accounts payment-due digest) is in `all`, but it also has
@@ -32,6 +32,7 @@ import { runDocumentReminders } from "../../../../utils/document-reminders";
 import { runPaidServiceAlerts } from "../../../../utils/paid-service-alerts";
 import { runIncomeSweep } from "../../../../utils/income-reconciliation-sweep";
 import { runPartnerContactSweep } from "../../../../utils/channel-partners-server";
+import { matchPendingPas } from "../../../../utils/pa-match";
 import { log, errInfo } from "../../../../utils/logger";
 
 export const runtime = "nodejs";
@@ -104,6 +105,20 @@ export async function POST(req: Request) {
     }
   }
 
+  if (job === "pa" || job === "all") {
+    try {
+      // Ties Preliminary Assessments the mailbox feeder filed to their client
+      // and retires re-issued ones. It sends nothing, so it has no send gate —
+      // but it does write, and has no dry mode, so a dry_run request skips it
+      // rather than quietly doing the real thing.
+      result.pa = forceDry ? { ok: true, skipped: "dry_run" } : await matchPendingPas();
+      ran.push("pa");
+    } catch (e) {
+      log.error("cron.pa_failed", { ...errInfo(e) });
+      result.pa = { ok: false, error: e instanceof Error ? e.message : "failed" };
+    }
+  }
+
   // Deliberately NOT in `all`: one contact check is an outbound job of up to
   // ~20s and would starve the jobs above of this endpoint's timeout. It has its
   // own schedule (.github/workflows/partner-contact-checks.yml), one partner
@@ -121,7 +136,7 @@ export async function POST(req: Request) {
 
   if (ran.length === 0) {
     return NextResponse.json(
-      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|partners|all)` },
+      { ok: false, error: `unknown job "${job}" (use yla|reminders|accounts|income|pa|partners|all)` },
       { status: 400 },
     );
   }

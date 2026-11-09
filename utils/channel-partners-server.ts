@@ -1,6 +1,6 @@
 /**
  * Channel Partners — the server-only half (service-key Supabase, outbound
- * fetches, OpenRouter). Pure rules live in channel-partners.ts and
+ * fetches, Anthropic web search). Pure rules live in channel-partners.ts and
  * channel-partner-contacts.ts.
  *
  * Live stock figures: the numbers go into marketing copy, so they are computed
@@ -12,7 +12,7 @@
 import { supabase } from "./supabase";
 import type { ChannelPartner, StockStats } from "./channel-partners";
 import { isPubliclyRoutable } from "./lender-policy/source-check";
-import { MODELS, orText } from "./openrouter";
+import { MODELS, aiText } from "./anthropic";
 import { log, errInfo } from "./logger";
 import {
   buildContactProposals,
@@ -200,7 +200,7 @@ async function aiLookup(p: ChannelPartner): Promise<{ ai: AiLookup | null; error
     .join("\n");
   try {
     const text = await Promise.race([
-      orText({ model: MODELS.fast, web: true, thinking: false, maxTokens: 700, system: AI_SYSTEM, user }),
+      aiText({ model: MODELS.fast, web: true, thinking: false, maxTokens: 700, system: AI_SYSTEM, user }),
       new Promise<never>((_, rej) => setTimeout(() => rej(new Error("lookup timed out")), AI_TIMEOUT_MS)),
     ]);
     const ai = parseAiLookup(text);

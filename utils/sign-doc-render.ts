@@ -47,6 +47,8 @@ import {
   introducerProposedSigners,
 } from "./introducer-agreement";
 import { renderIntroducerAgreementHtml } from "./pdf/introducerAgreementPdf";
+import { hydratePa, paSummary, PRELIMINARY_ASSESSMENTS_TABLE } from "./preliminary-assessments";
+import { renderPaPdf } from "./pa-signed-pdf";
 
 /** A prospective signer prefilled from the document's applicant data. */
 export type ProposedSigner = { name: string; email: string };
@@ -70,6 +72,9 @@ const TABLE: Record<ComplianceDocType, string> = {
   // The client's own consent form. One row per referral; see
   // migrations/20260821_referral_consent_esignature.sql.
   referral_consent: "introducer_consent_docs",
+  // Rows are written by the mailbox feeder, not by a CRM form. See
+  // migrations/20261006_preliminary_assessments.sql.
+  preliminary_assessment: PRELIMINARY_ASSESSMENTS_TABLE,
 };
 
 /** What a fetched-and-hydrated document exposes to the signing routes. */
@@ -78,6 +83,14 @@ export type LoadedDoc = {
   summary: string;
   /** Render the document to standalone HTML, optionally with signatures baked in. */
   renderHtml: (signatures?: (SignatureMark | null)[]) => Promise<string>;
+  /**
+   * Produce the PDF directly, bypassing renderHtml + htmlToPdf. Set ONLY for a
+   * document that already exists as a PDF somebody else issued (the Preliminary
+   * Assessment): its signed copy is the original with signatures stamped on,
+   * and there is no HTML to print. The signing routes use this when present;
+   * every other doc type leaves it undefined and renders exactly as before.
+   */
+  renderPdf?: (signatures?: (SignatureMark | null)[]) => Promise<Uint8Array>;
   /** The signers proposed from the applicant data (name+email where known). */
   proposedSigners: () => ProposedSigner[];
 };
@@ -94,9 +107,13 @@ export async function loadDoc(
   docId: string,
 ): Promise<LoadedDoc | null> {
   const table = TABLE[docType];
+  // The PA also needs to know where its PDF is. Asked for only on that table —
+  // no other signable table has a `pdf_path` column, and naming a missing
+  // column fails the whole select.
+  const columns = docType === "preliminary_assessment" ? "id,data,pdf_path" : "id,data";
   const { data: row, error } = await supabase
     .from(table)
-    .select("id,data")
+    .select(columns)
     .eq("id", docId)
     .maybeSingle();
   if (error) {
@@ -104,7 +121,27 @@ export async function loadDoc(
     return null;
   }
   if (!row) return null;
-  const blob = (row as { data: unknown }).data;
+  const blob = (row as unknown as { data: unknown }).data;
+
+  if (docType === "preliminary_assessment") {
+    const data = hydratePa(blob);
+    const pdfPath = clean((row as unknown as { pdf_path?: unknown }).pdf_path);
+    return {
+      summary: paSummary(data),
+      /* There is no HTML form of this document, and inventing one would mean an
+       * applicant could be shown — or sign — our rendering of YLA's credit
+       * proposal instead of the proposal. A caller that reaches this has missed
+       * renderPdf, and should fail where it is noticed rather than produce a
+       * plausible-looking wrong document. */
+      renderHtml: async () => {
+        throw new Error(
+          "A Preliminary Assessment has no HTML rendering — it is YLA's own PDF. Use renderPdf().",
+        );
+      },
+      renderPdf: (sigs) => renderPaPdf(pdfPath, data.signature_lines, sigs, data.applicants),
+      proposedSigners: () => data.applicants.map((a) => ({ name: a.name, email: a.email })),
+    };
+  }
 
   if (docType === "fact_find") {
     const data: FactFindData = hydrateFactFind(blob);

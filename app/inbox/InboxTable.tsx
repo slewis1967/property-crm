@@ -48,10 +48,13 @@ export default function InboxTable({
   threads,
   contactNames,
   folders = [],
+  mailbox = null,
 }: {
   threads: Thread[];
   contactNames: Record<string, string>;
   folders?: FolderOption[];
+  /** Set when showing a shared mailbox — replies go out as that mailbox. */
+  mailbox?: { key: string; address: string; label: string } | null;
 }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -313,6 +316,8 @@ export default function InboxTable({
           inReplyTo={replyContext.email.message_id ?? undefined}
           threadId={replyContext.thread.thread_id}
           tags={["inbox-reply"]}
+          mailbox={mailbox?.key ?? null}
+          fromLabel={mailbox ? `${mailbox.label} <${mailbox.address}>` : null}
           onSent={() => { setReplyContext(null); setRefreshKey((k) => k + 1); }}
         />
       )}

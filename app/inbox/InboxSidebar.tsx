@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { supabase } from "../../utils/supabase";
 import { currentUserEmail } from "../../utils/cf-access";
+import { mailboxesFor } from "../../utils/shared-mailboxes";
 import NewFolderButton from "./NewFolderButton";
 
 type FolderRow = {
@@ -19,7 +20,7 @@ type FolderRow = {
   system: boolean;
 };
 
-type Selection = { view?: string; folder?: string };
+type Selection = { view?: string; folder?: string; mailbox?: string };
 
 // Lucide-style stand-in via emoji to avoid adding an icon dep. Order matters
 // — Inbox first because that's the default landing view.
@@ -78,7 +79,25 @@ export default async function InboxSidebar({ selection }: { selection: Selection
     ),
   );
 
-  const activeView = selection.view ?? (selection.folder ? null : "inbox");
+  // Shared mailboxes (utils/shared-mailboxes.ts) the user belongs to, each with
+  // its own inbox unread count. Drafts and folders stay personal, so a shared
+  // mailbox only gets the views that make sense for its rows.
+  const sharedMailboxes = mailboxesFor(owner);
+  const sharedUnread = await Promise.all(
+    sharedMailboxes.map((m) =>
+      supabase
+        .from("email_log")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_email", m.address)
+        .eq("direction", "inbound")
+        .eq("is_read", false)
+        .eq("is_archived", false)
+        .eq("is_trashed", false)
+        .eq("is_spam", false),
+    ),
+  );
+
+  const activeView = selection.mailbox ? null : selection.view ?? (selection.folder ? null : "inbox");
 
   return (
     <aside className="hidden md:flex md:flex-col w-56 flex-shrink-0 border-r border-gray-200 bg-white">
@@ -123,6 +142,57 @@ export default async function InboxSidebar({ selection }: { selection: Selection
                 </span>
               )}
             </Link>
+          );
+        })}
+
+        {sharedMailboxes.length > 0 && (
+          <p className="text-[10px] font-bold uppercase text-gray-400 px-2 pt-4 pb-1 tracking-wider">
+            Shared
+          </p>
+        )}
+        {sharedMailboxes.map((m, i) => {
+          const isOpen = selection.mailbox === m.key;
+          const unread = sharedUnread[i].count ?? 0;
+          const openView = selection.view ?? "inbox";
+          return (
+            <div key={m.key}>
+              <Link
+                href={`/inbox?mailbox=${m.key}`}
+                title={m.address}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition ${
+                  isOpen && openView === "inbox"
+                    ? "bg-[#0F4C5C] text-white font-semibold"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <span className="text-base leading-none">👥</span>
+                <span className="flex-1 truncate">{m.label}</span>
+                {unread > 0 && (
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      isOpen && openView === "inbox" ? "bg-white text-[#0F4C5C]" : "bg-[#0F4C5C] text-white"
+                    }`}
+                  >
+                    {unread}
+                  </span>
+                )}
+              </Link>
+              {isOpen &&
+                SYSTEM_ORDER.filter((s) => s.view !== "inbox" && s.view !== "drafts").map((s) => (
+                  <Link
+                    key={s.view}
+                    href={`/inbox?mailbox=${m.key}&view=${s.view}`}
+                    className={`flex items-center gap-2 pl-7 pr-2 py-1 rounded-md text-[13px] transition ${
+                      openView === s.view
+                        ? "bg-[#0F4C5C] text-white font-semibold"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <span className="text-sm leading-none">{s.icon}</span>
+                    <span className="flex-1 truncate">{s.name}</span>
+                  </Link>
+                ))}
+            </div>
           );
         })}
 

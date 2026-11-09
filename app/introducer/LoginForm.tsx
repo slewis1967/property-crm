@@ -5,7 +5,8 @@
  *
  * Two steps, one screen: enter an email, then enter the 6-digit code that
  * arrives (or just click the link in the same email, which lands on
- * /api/introducer/verify and skips step two entirely).
+ * /introducer/verify — a confirm page with one Sign in button — and skips
+ * step two).
  *
  * The "we've sent it" message is shown whether or not the address is known —
  * the server answers identically either way, and the UI must not undo that by
