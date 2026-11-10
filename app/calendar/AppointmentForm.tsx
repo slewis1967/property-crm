@@ -292,7 +292,7 @@ export default function AppointmentForm({
               <span>
                 {editing
                   ? "Email the client the updated time and details (their calendar entry moves)"
-                  : "Email the client an invite with a calendar attachment"}
+                  : "Notify the client: email an invite with a calendar attachment, and text a confirmation"}
               </span>
             </label>
           )}

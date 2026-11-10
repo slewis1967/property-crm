@@ -725,7 +725,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                       className="w-4 h-4 rounded border-gray-300 text-blue-600"
                     />
                     <span className="text-sm text-gray-700">
-                      Send calendar invite to <span className="font-semibold">{email.trim() || "the contact"}</span>
+                      Send calendar invite and text to <span className="font-semibold">{email.trim() || "the contact"}</span>
                     </span>
                   </label>
                 </div>
