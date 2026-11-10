@@ -22,7 +22,7 @@ describe("formatMeetingWhen", () => {
 });
 
 describe("meetingSmsBody", () => {
-  const base = { startISO: "2026-07-26T23:00:00+00:00", hostName: "Springboard Homes" };
+  const base = { startISO: "2026-07-26T23:00:00+00:00", hostName: "Springboard Homes", emailed: true };
 
   it("leads with the day and time, and says where the link is", () => {
     const body = meetingSmsBody({ ...base, firstName: "Kim" });
@@ -54,5 +54,21 @@ describe("meetingSmsBody", () => {
     // 306 chars = 2 GSM-7 segments. Longer costs a third and gets truncated by
     // some handsets.
     expect(meetingSmsBody({ ...base, firstName: "Kim" }).length).toBeLessThanOrEqual(306);
+  });
+
+  it("never claims an email was sent when the invite did not go (8 Nov 2026)", () => {
+    const body = meetingSmsBody({ ...base, firstName: "Sonia", emailed: false });
+    expect(body).toContain("Mon 27 Jul at 9am");
+    expect(body).not.toMatch(/emailed|inbox|spam/i);
+    expect(body).toMatch(/reply stop/i);
+  });
+
+  it("a phone call says phone call and never mentions a joining link", () => {
+    const sent = meetingSmsBody({ ...base, firstName: "Kim", medium: "phone" });
+    expect(sent).toContain("your phone call with Springboard Homes");
+    expect(sent).toContain("emailed you the details");
+    expect(sent).not.toMatch(/joining link|meeting/i);
+    const unsent = meetingSmsBody({ ...base, firstName: "Kim", medium: "phone", emailed: false });
+    expect(unsent).not.toMatch(/emailed|link/i);
   });
 });

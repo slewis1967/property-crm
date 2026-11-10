@@ -12,6 +12,7 @@ import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
 import { meetingSmsBody } from "../../../utils/meeting-sms";
 import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
 import { guestJoinOrigin } from "../../../utils/springboard-book-host";
+import { log } from "../../../utils/logger";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -182,6 +183,7 @@ export async function POST(req: NextRequest) {
   // --- Step 3: Brevo invite with .ics (best-effort, but reported) ---
   let inviteSent = false;
   let inviteWarning: string | null = null;
+  let inviteErrors: string[] = [];
   if (wantInvite) {
     // EVERY attendee gets an invite, not just the first. This used to send to
     // attendees[0] only, so a second applicant — or anyone else added to the
@@ -217,6 +219,7 @@ export async function POST(req: NextRequest) {
       .map((r, i) => (r.ok ? null : { email: attendees![i].email, error: r.error }))
       .filter((x): x is { email: string; error: string } => x !== null);
     inviteSent = failed.length === 0;
+    inviteErrors = failed.map((f) => f.error);
     if (failed.length > 0) {
       const who = failed.map((f) => `${f.email} (${f.error})`).join("; ");
       inviteWarning =
@@ -238,9 +241,15 @@ export async function POST(req: NextRequest) {
   // lose a saved booking, but the person who booked it has to know the attendee
   // wasn't reached. Gated on MEETING_SMS_ENABLED so it can be switched off
   // without a deploy, and it honours the SMS opt-out list (Spam Act).
+  //
+  // Unticking "notify the client" (send_invite: false, or invite_contact: false)
+  // means the client hears nothing, so it stops the text as well as the email.
+  // Before 10 Nov 2026 the text went regardless and claimed an email had been
+  // sent; the wording now follows what the invite step actually did.
   let smsSent = false;
   let smsWarning: string | null = null;
-  if (!personal && process.env.MEETING_SMS_ENABLED === "true") {
+  const clientOptedOutOfNotice = body.send_invite === false || body.invite_contact === false;
+  if (!personal && !clientOptedOutOfNotice && process.env.MEETING_SMS_ENABLED === "true") {
     const phone = toE164AU(await contactPhone(body.contact_id, body.contact_phone));
     if (phone) {
       if (await isOptedOut(phone)) {
@@ -253,6 +262,8 @@ export async function POST(req: NextRequest) {
             firstName: body.contact_name ?? null,
             startISO,
             hostName: host.displayName ?? "Springboard Homes",
+            emailed: inviteSent,
+            medium: meetingKind,
           }),
           campaign: "meeting-confirmation",
         });
@@ -301,6 +312,22 @@ export async function POST(req: NextRequest) {
       }).catch(() => undefined);
     }
   }
+
+  // One line per booking with what reached the client. Without it there was no
+  // way to tell afterwards why an invite never arrived (8 Nov 2026). No email
+  // address, notes or join link: the contact id is enough to find the record.
+  log.info("appointments.created", {
+    id: (inserted as unknown as { id: string }).id,
+    by: currentUser,
+    host_email,
+    contact_id: personal ? null : body.contact_id,
+    medium: meetingKind,
+    invite_requested: wantInvite,
+    invite_sent: inviteSent,
+    invite_errors: inviteErrors,
+    sms_sent: smsSent,
+    sms_warning: smsWarning,
+  });
 
   return NextResponse.json({
     appointment: inserted,

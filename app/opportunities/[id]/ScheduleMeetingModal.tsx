@@ -345,7 +345,7 @@ export default function ScheduleMeetingModal({
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-              {kind === "phone" ? "Send confirmation email to attendee" : "Send invite email to attendee"}
+              {kind === "phone" ? "Send confirmation email and text to attendee" : "Send invite email and text to attendee"}
             </label>
 
             {error && (

@@ -39,17 +39,30 @@ export function formatMeetingWhen(startISO: string): string {
 /**
  * The confirmation body. `firstName` is optional — an unnamed contact still
  * gets a usable message rather than "Hi ," which reads as a broken mailmerge.
+ *
+ * `emailed` must be the REAL outcome of the invite send, not the intent. On
+ * 8 Nov 2026 a client was texted "We've emailed you the joining link" eight
+ * times while no invite email went to her at all. The text may only point at
+ * an email that actually left.
+ *
+ * `medium` "phone" says "phone call" and never mentions a joining link: there
+ * is none for a call.
  */
 export function meetingSmsBody(opts: {
   firstName?: string | null;
   startISO: string;
   hostName: string;
+  emailed: boolean;
+  medium?: "video" | "phone";
 }): string {
   const who = (opts.firstName || "").trim().split(/\s+/)[0] || "";
   const greeting = who ? `Hi ${who}, ` : "";
-  return (
-    `${greeting}your meeting with ${opts.hostName} is confirmed for ` +
-    `${formatMeetingWhen(opts.startISO)}. We've emailed you the joining link — ` +
-    `if it's not in your inbox, please check your spam or promotions folder. Reply STOP to opt out.`
-  );
+  const phone = opts.medium === "phone";
+  const what = phone ? "phone call" : "meeting";
+  const lead = `${greeting}your ${what} with ${opts.hostName} is confirmed for ${formatMeetingWhen(opts.startISO)}. `;
+  const email = opts.emailed
+    ? `We've emailed you the ${phone ? "details" : "joining link"} — ` +
+      `if it's not in your inbox, please check your spam or promotions folder. `
+    : "";
+  return `${lead}${email}Reply STOP to opt out.`;
 }
