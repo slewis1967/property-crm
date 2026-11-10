@@ -173,3 +173,15 @@ export function guestJoinOrigin(brand: string, requestOrigin: string, onBookHost
   if (brand === "springboard") return SPRINGBOARD_BOOK_ORIGIN;
   return crmLinkOrigin(requestOrigin, onBookHost);
 }
+
+/**
+ * Moves an existing guest join link (`<origin>/join/<token>[…]`) onto the
+ * origin `guestJoinOrigin` picks for `brand`, keeping the token. Used when a
+ * staff-booked meeting changes host to one of the other brand. Anything that
+ * isn't a join link is returned unchanged.
+ */
+export function rehostJoinLink(link: string, brand: string, requestOrigin: string): string {
+  const m = /^https?:\/\/[^/]+(\/join\/.+)$/.exec(link);
+  if (!m) return link;
+  return `${guestJoinOrigin(brand, requestOrigin, false)}${m[1]}`;
+}

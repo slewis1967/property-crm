@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "../../../../utils/cf-access";
 import { roomForContact, livekitConfigured } from "../../../../utils/livekit";
 import { signGuestToken } from "../../../../utils/guest-token";
+import { guestJoinOrigin } from "../../../../utils/springboard-book-host";
 
 /**
  * Generate a shareable guest link for a call (broker action, authed).
  *
- * POST { contactId? | room?, guestName?, ttlHours? } -> { ok, url, room }
+ * POST { contactId? | room?, guestName?, ttlHours?, brand? } -> { ok, url, room }
+ *
+ * brand "springboard" puts the link on book.springboardhomes.com.au, so a
+ * Springboard lead never sees a nextkey.com.au address; anything else keeps
+ * the CRM origin.
  *
  * The returned URL points at the public /join/<token> page; the token is a
  * signed, expiring JWT naming the room + guest. Send it to a client so they can
@@ -28,6 +33,7 @@ export async function POST(req: NextRequest) {
     room?: string;
     guestName?: string;
     ttlHours?: number;
+    brand?: string;
   };
   try {
     body = await req.json();
@@ -51,6 +57,7 @@ export async function POST(req: NextRequest) {
     ttlHours: body.ttlHours,
   });
 
-  const url = `${req.nextUrl.origin}/join/${encodeURIComponent(token)}`;
+  const brand = body.brand === "springboard" ? "springboard" : "nextkey";
+  const url = `${guestJoinOrigin(brand, req.nextUrl.origin, false)}/join/${encodeURIComponent(token)}`;
   return NextResponse.json({ ok: true, url, room });
 }

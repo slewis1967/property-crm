@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { requireAuth, userEmailFromRequest } from "../../../../utils/cf-access";
 import { findHost } from "../../../../utils/scheduling-hosts";
+import { guestJoinOrigin, rehostJoinLink } from "../../../../utils/springboard-book-host";
 import { errMessage } from "../../../../utils/errors";
 import { roomForContact, livekitConfigured } from "../../../../utils/livekit";
 import { signGuestToken } from "../../../../utils/guest-token";
@@ -119,6 +120,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   // was sized to the ORIGINAL time, so pushing the meeting out could kill it.
   if (isGuestLink(row.location)) {
     delete update.location;
+    // The link's host follows the meeting owner's brand, as on create.
+    const hostChanged = typeof update.host_email === "string" && update.host_email !== row.host_email;
+    const brand = hostFor(hostChanged ? (update.host_email as string) : row.host_email).brand;
+    if (hostChanged && brand !== hostFor(row.host_email).brand) {
+      update.location = rehostJoinLink(row.location!, brand, req.nextUrl.origin);
+    }
     if (v.timeChanged && row.contact_id && livekitConfigured()) {
       try {
         const endMs = Date.parse((update.end_time as string | undefined) ?? row.end_time ?? row.start_time);
@@ -128,7 +135,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           name: row.contact_name ?? undefined,
           ttlHours,
         });
-        update.location = `${req.nextUrl.origin}/join/${encodeURIComponent(token)}`;
+        update.location = `${guestJoinOrigin(brand, req.nextUrl.origin, false)}/join/${encodeURIComponent(token)}`;
       } catch (e) {
         log.warn("appointments.patch.remint_failed", { id, message: errMessage(e) });
       }
