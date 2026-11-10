@@ -119,9 +119,9 @@ export async function POST(req: Request) {
             user: userPrompt,
             maxTokens: 2000,
             // Checks text against an enumerated, fully-specified rule
-            // checklist — rule lookup, not open-ended reasoning. Thinking off.
-            effort: "medium",
-            thinking: false,
+            // checklist — rule lookup, not open-ended reasoning. Current models
+            // always think; low effort is the cheap setting (utils/anthropic.ts).
+            effort: "low",
           }),
       });
       const parsed = parseResponse(result.text);
