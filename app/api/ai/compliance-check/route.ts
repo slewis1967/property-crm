@@ -118,7 +118,10 @@ export async function POST(req: Request) {
             system: SYSTEM,
             user: userPrompt,
             maxTokens: 2000,
-            effort: "medium",
+            // Checks text against an enumerated, fully-specified rule
+            // checklist — rule lookup, not open-ended reasoning. Current models
+            // always think; low effort is the cheap setting (utils/anthropic.ts).
+            effort: "low",
           }),
       });
       const parsed = parseResponse(result.text);
