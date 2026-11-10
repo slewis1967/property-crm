@@ -25,6 +25,51 @@ const runStatusStyle: Record<string, string> = {
   no_op: "bg-gray-100 text-gray-600",
 };
 
+// Row shapes read from the sequence tables below.
+type SequenceRow = {
+  id: string;
+  slug: string | null;
+  name: string | null;
+  description: string | null;
+  // Non-null: used as a key into channelStyle.
+  channel: string;
+  is_active: boolean | null;
+  auto_enrol_tag: string | null;
+  created_at: string | null;
+};
+type StepRunRow = {
+  id: string;
+  // Non-null: used as lookup keys / style-map keys below.
+  enrollment_id: string;
+  step_position: number | null;
+  step_type: string | null;
+  status: string;
+  provider: string | null;
+  provider_id: string | null;
+  error: string | null;
+  run_at: string | null;
+};
+type EnrollmentRow = {
+  id: string;
+  // Non-null: used as lookup keys below.
+  sequence_id: string;
+  contact_id: string;
+};
+type DueRow = {
+  id: string;
+  // Non-null: used as lookup keys below.
+  sequence_id: string;
+  contact_id: string;
+  current_step_position: number;
+  next_step_due_at: string | null;
+};
+type SeqContactRow = {
+  id: string;
+  name: string | null;
+  full_name: string | null;
+  email: string | null;
+};
+
 export default async function SequencesPage() {
   const [{ data: sequences }, { data: recentRuns }, { data: dueNext }, { data: unsubs }] =
     await Promise.all([
@@ -56,40 +101,40 @@ export default async function SequencesPage() {
     .select("sequence_id,status");
   for (const e of allEnrollments ?? []) {
     if (counts[e.sequence_id] && e.status in counts[e.sequence_id]) {
-      (counts[e.sequence_id] as any)[e.status]++;
+      (counts[e.sequence_id] as Record<string, number>)[e.status]++;
     }
   }
 
   // Resolve contact + sequence labels for the recent activity panels
   const contactIds = Array.from(new Set([
-    ...(dueNext ?? []).map((d: any) => d.contact_id),
+    ...(dueNext ?? []).map((d: DueRow) => d.contact_id),
   ].filter(Boolean)));
-  const enrollmentIds = Array.from(new Set((recentRuns ?? []).map((r: any) => r.enrollment_id).filter(Boolean)));
+  const enrollmentIds = Array.from(new Set((recentRuns ?? []).map((r: StepRunRow) => r.enrollment_id).filter(Boolean)));
 
   const [{ data: contacts }, { data: enrollmentsForRuns }] = await Promise.all([
     contactIds.length > 0
       ? supabase.from("contacts").select("id,name,full_name,email").in("id", contactIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as SeqContactRow[] }),
     enrollmentIds.length > 0
       ? supabase.from("sequence_enrollments").select("id,sequence_id,contact_id").in("id", enrollmentIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as EnrollmentRow[] }),
   ]);
 
   const contactById: Record<string, { name: string; email: string }> = Object.fromEntries(
-    (contacts ?? []).map((c: any) => [c.id, {
+    (contacts ?? []).map((c: SeqContactRow): [string, { name: string; email: string }] => [c.id, {
       name: c.full_name || c.name || "(unnamed)",
       email: c.email || "",
     }])
   );
-  const enrollmentById: Record<string, any> = Object.fromEntries(
-    (enrollmentsForRuns ?? []).map((e: any) => [e.id, e])
+  const enrollmentById: Record<string, EnrollmentRow> = Object.fromEntries(
+    (enrollmentsForRuns ?? []).map((e: EnrollmentRow): [string, EnrollmentRow] => [e.id, e])
   );
-  const seqById: Record<string, any> = Object.fromEntries(
-    (sequences ?? []).map((s: any) => [s.id, s])
+  const seqById: Record<string, SequenceRow> = Object.fromEntries(
+    (sequences ?? []).map((s: SequenceRow): [string, SequenceRow] => [s.id, s])
   );
 
   // Hydrate the run-history records with their contact (via enrollment)
-  const enrolmentContactIds = Array.from(new Set(Object.values(enrollmentById).map((e: any) => e.contact_id).filter(Boolean)));
+  const enrolmentContactIds = Array.from(new Set(Object.values(enrollmentById).map((e) => e.contact_id).filter(Boolean)));
   if (enrolmentContactIds.length > 0) {
     const more = await supabase.from("contacts").select("id,name,full_name,email").in("id", enrolmentContactIds);
     for (const c of more.data ?? []) {
@@ -119,7 +164,7 @@ export default async function SequencesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {sequences.map((s: any) => {
+          {sequences.map((s: SequenceRow) => {
             const c = counts[s.id] || { active: 0, paused: 0, completed: 0, failed: 0 };
             return (
               <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
@@ -164,7 +209,7 @@ export default async function SequencesPage() {
                 </tr>
               </thead>
               <tbody>
-                {dueNext.map((d: any) => {
+                {dueNext.map((d: DueRow) => {
                   const seq = seqById[d.sequence_id];
                   const contact = contactById[d.contact_id];
                   return (
@@ -214,7 +259,7 @@ export default async function SequencesPage() {
               </tr>
             </thead>
             <tbody>
-              {recentRuns.map((r: any) => {
+              {recentRuns.map((r: StepRunRow) => {
                 const enr = enrollmentById[r.enrollment_id];
                 const contact = enr ? contactById[enr.contact_id] : null;
                 const seq = enr ? seqById[enr.sequence_id] : null;
@@ -244,7 +289,7 @@ export default async function SequencesPage() {
         <p className="font-semibold mb-1">📬 Compliance</p>
         <p className="text-xs">
           Every email send appends a Spam Act-compliant footer (sender identity, physical address, unsubscribe link).
-          Every SMS send auto-appends "Reply STOP to opt out" if not already in the body.
+          Every SMS send auto-appends &quot;Reply STOP to opt out&quot; if not already in the body.
           Total unsubscribes recorded: <strong>{unsubs?.[0] ? "—" : "0"}</strong>.
           The runner skips any contact with a row in <code>unsubscribes</code> for the relevant channel.
         </p>

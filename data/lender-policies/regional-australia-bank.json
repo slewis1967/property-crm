@@ -1,0 +1,141 @@
+{
+  "id": "regional-australia-bank",
+  "name": "Regional Australia Bank",
+  "legalName": "Regional Australia Bank Ltd",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "241167",
+  "abn": "21 087 650 360",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the key-attributes table row \"Minimum Deposit (no LMI) — 20%\". The TMD does not state a maximum LVR directly."
+    },
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from \"Minimum Deposit (with LMI) — 5%\". The same product covers owner-occupier and investor borrow purposes and the TMD does not distinguish the two, so the investment ceiling is unknown. The public rate card also shows a rate band for \"LVR more than 90%\"."
+    },
+    "notes": {
+      "value": "Published rate tiers on the Regional Australia Bank Home Loan product page are: LVR 60% or less, 70% or less, 80% or less, 90% or less, and more than 90% (and equivalently below 60% / 60-70% / 70-80% / 80-90% / more than 90%).",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/home-loans/regional-australia-bank-home-loan",
+      "sourceTitle": "Regional Australia Bank Home Loan — product and rates page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Page carries no publication date; as-at recorded as the date it was read."
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 500,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD key-attributes table states \"Minimum Amount — $500\". This is far below a normal home-loan minimum and is outside the plausible range for this field; it is recorded verbatim rather than adjusted. For comparison, the Basic Home Loan TMD (TMD_HL001, v3.0 eff 22.05.2024) states a Minimum Amount of $100,000, and the Partnership Advantage TMD (TMD_HL002) also states $500."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Term — 30 Years\"."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Interest Only option — Yes, up to 5 years\". The TMD does not split owner-occupied from investment."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"100% Offset Accounts — Yes (offset interest rates only)\"."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Construction Purpose — Yes\"."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Family Guarantee — Yes\". The Basic Home Loan TMD also notes the product is available to applicants aged 16 or over with a guarantor or joint borrower aged 18 or over."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme"],
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Key-attributes row \"Home Guarantee Loans — Yes\"."
+    },
+    "notes": {
+      "value": "Broker distribution is confirmed by the product TMD: \"Regional Australia Bank will distribute this product via the following channels: our website, phone, branch, off-site (mobile lenders), mortgage broker (accredited and authorised).\" Distribution is restricted to \"appropriately authorised staff and/or mortgage brokers\". Regional Australia Bank has no public broker/introducer website; accreditation appears to be arranged directly.",
+      "asAt": "2025-11-03",
+      "sourceUrl": "https://www.regionalaustraliabank.com.au/getContentAsset/d767dfb3-2c2c-42ab-a933-e9a682c20c19/3beffb48-3dfa-48f3-8905-aded8557907a/TMD_HL010.pdf?language=en",
+      "sourceTitle": "Regional Australia Bank — Home Loan Target Market Determination, v1.1, effective 03.11.2025, s6 Product distribution",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2025-11-03",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Regional Australia Bank publishes no broker/introducer website and no credit policy guide. Everything here comes from public Target Market Determinations and product pages.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate.",
+    "No published income, employment tenure, credit history, security or residency policy.",
+    "No published maximum loan amount.",
+    "The $500 'Minimum Amount' in the Home Loan TMD is implausible for a mortgage and needs broker confirmation; the Basic Home Loan TMD says $100,000.",
+    "No separate investment maximum LVR published.",
+    "Regional Australia Bank merged with Summerland Bank on 1 July 2026; Summerland Bank now trades as a brand of Regional Australia Bank Ltd and is recorded separately as 'summerland-bank'. Systems were not yet integrated as at that date, so the two brands may still run different policy."
+  ]
+}

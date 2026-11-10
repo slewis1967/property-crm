@@ -23,7 +23,7 @@ export async function PATCH(
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  const update: Record<string, any> = {};
+  const update: Record<string, unknown> = {};
   for (const f of ALLOWED_FIELDS) {
     if (f in body) update[f] = body[f];
   }

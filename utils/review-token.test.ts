@@ -100,3 +100,31 @@ describe("review-token issue + verify round-trip", () => {
     expect(verifyReviewToken("a.b.c", hash, "x@y.com").ok).toBe(false);
   });
 });
+
+describe("contentHash — brand binding (the firewall half)", () => {
+  // Reviewing as Springboard then sending as NextKey is the exact breach the
+  // brand firewall exists to prevent. Binding brand into the hash means the
+  // override token from one review cannot authorise a send as the other.
+  it("differs by brand for the same copy", () => {
+    const nk = contentHash("S", "<p>B</p>", "B", "nextkey");
+    const sb = contentHash("S", "<p>B</p>", "B", "springboard");
+    expect(nk).not.toBe(sb);
+  });
+
+  it("omitting brand hashes identically to nextkey, so existing tokens survive", () => {
+    expect(contentHash("S", "<p>B</p>", "B")).toBe(
+      contentHash("S", "<p>B</p>", "B", "nextkey"),
+    );
+    expect(contentHash("S", "<p>B</p>", "B")).toBe(
+      contentHash("S", "<p>B</p>", "B", null),
+    );
+  });
+
+  it("a Springboard token does not verify a NextKey send of the same copy", () => {
+    const sbHash = contentHash("S", "<p>B</p>", "B", "springboard");
+    const token = issueReviewToken("v", sbHash, "op@nextkey.com.au");
+    const nkHash = contentHash("S", "<p>B</p>", "B", "nextkey");
+    expect(verifyReviewToken(token, sbHash, "op@nextkey.com.au").ok).toBe(true);
+    expect(verifyReviewToken(token, nkHash, "op@nextkey.com.au").ok).toBe(false);
+  });
+});

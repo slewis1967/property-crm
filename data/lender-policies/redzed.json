@@ -1,0 +1,615 @@
+{
+  "id": "redzed",
+  "name": "RedZed",
+  "legalName": "RedZed Lending Solutions Pty Ltd",
+  "tier": "specialist_near_prime",
+  "status": "active",
+  "acl": "311128",
+  "abn": "31 123 588 527",
+  "brokerSiteUrl": "https://broker.redzed.com/",
+  "policyDocUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "RedZed does not publish an assessment buffer or floor rate in either public document. Looked in the Policy and Procedures Guide RZPPG0824 V2 (Aug 2024) 'Serviceability Guide for Debt Servicing Ratio' section and the Product and Rate Guide RZPRG0924 V1 (Sep 2024). RedZed expresses serviceability as a Debt Servicing Ratio against its own calculator rather than as a stress rate."
+    },
+    "rentShadingPct": {
+      "value": 0.85,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2, August 2024 — 'Income Consideration' p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Rental income - residential: Standard tenancy agreement shaded at 85%. Short term or holiday rental including Airbnb accepted and shaded at 80%' (Airbnb requires 6 months statements averaged). Commercial rent is shaded at 90% where the remaining lease term is more than 12 months, or 80% for 12 months or less. Rent under a private (non-agency) agreement is shaded at 80% and requires 6 months bank statements confirming the deposits."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI multiple is published. RedZed uses a Debt Servicing Ratio instead — see servicing.notes."
+    },
+    "notes": {
+      "value": "Serviceability Guide for Debt Servicing Ratio (DSR): minimum requirement greater than 1.10x; minimum greater than 1.05x where the individual borrower has investment property borrowings; minimum greater than 1.25x where the commercial LVR is above 70%. Notional rent expense of $1,000 per month is applied for borrowers living with family or friends (applicable to an individual, couple or family). Self-employed Full Doc add-backs: directors' fees or income not already counted; existing outgoing rent being replaced by the proposed loan for owner-occupiers; interest on loans being refinanced by the proposed loan; interest on loans paid out during the financial year (with statement evidence); non-recurring expenses shown in the Statement of Financial Performance; and depreciation up to a total not exceeding 25% of business net profit.",
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — 'Serviceability Guide for Debt Servicing Ratio' p8, 'Income Consideration' p7, 'Add Back Consideration'",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 85,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1, effective 24 September 2024 — 'Residential Prime Loan Products' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SE Prime: 'minimum loan $100K, 85% LVR Full Doc Only' — so 85% is FULL DOC ONLY, and the Alt Doc rate table stops at 80%. The 85% band is further capped: '$750K @ 85% LVR' and '85% LVR capped at $750K with maximum $100K cash out' in Location Category 01. The Specialist range (Reward, Recharge, Refresh) rate tables stop at 80% LVR."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — Residential Prime Interest Rate Summary p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The SE Prime Alt Doc rate column has no 85% row (shown as '-'), and the policy states 85% LVR is Full Doc only. Alt Doc therefore tops out at 80%."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 70, "maxLoanAmount": 2500000, "qualifier": "SE Prime — '$2.5M @ 70% LVR'." },
+        { "maxLvrPct": 75, "maxLoanAmount": 5000000, "qualifier": "SE Prime XL — '$5M @ 75% LVR metro Cat 1 only'; '$3.5M @ 75% LVR metro Cat 2 only'." },
+        { "maxLvrPct": 80, "maxLoanAmount": 2000000, "qualifier": "SE Prime — '$2M @ 80% LVR'." },
+        { "maxLvrPct": 85, "maxLoanAmount": 750000, "qualifier": "SE Prime, FULL DOC ONLY — '$750K @ 85% LVR'; in Location Category 01, 85% LVR is capped at $750K with maximum $100K cash out. Risk fee 1.00% at 85% LVR (0.00% at 80%)." }
+      ],
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Maximum loan / LVR %' row, Residential Prime Loan Products p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME range only (SE Prime and SE Prime XL). These are quoted verbatim from a single-line policy row, not reconstructed from a matrix. Location category overrides these: Category 03 is maximum 75% LVR and maximum loan $750K; 'Refer' locations are maximum 70% LVR and maximum loan $750K. The equivalent bands for the Specialist range (Reward / Recharge / Refresh) were not extracted."
+    },
+    "notes": {
+      "value": "RedZed charges a RISK FEE rather than third-party LMI. SE Prime risk fee: 0.00% at 80% LVR, 1.00% at 85% LVR; on SE Prime XL, 1.25% for loans over $2.5M and over $3.5M. Specialist range risk fees run 0.00-0.50% (Reward), 0.75-1.00% (Recharge) and 1.00-1.50% (Refresh) depending on LVR band and doc type. Risk fee capitalisation is allowed but cannot exceed the maximum loan size and cannot take the loan above 85% LVR. Location categories 01, 02 and 03 apply variable LVR caps — Category 02 excludes vacant land.",
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — pp3-5",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Specialist-range risk-fee percentages come from a three-product rate grid whose row alignment in the extracted text was imperfect; treat those specific percentages as indicative."
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — 'Income Consideration' p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "RedZed is a self-employed specialist; Alt Doc is a core product across the Prime and Specialist ranges."
+    },
+    "altDocEvidence": {
+      "value": "A RedZed income declaration AND EITHER an accountant declaration, OR the last 6 months business activity statements plus ATO portal, OR the last 6 months business bank trading statements plus ATO portal. RedZed adds: 'To assist with verification of the declared income, we may seek additional income verification.'",
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — Self-employed Alt Doc row, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alt Doc ABN options are '6 / 12 / 24+ months' with 'GST as required' — i.e. an ABN as young as 6 months can be considered on the appropriate product tier."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "FULL DOC: latest individual and company financials (if more than 6 months old, the 2 most recent BAS are also required) plus the ATO notice of assessment. Builders and developers must provide 2 years financials and ATO notices of assessment, and a 2-year average is used unless the most recent year is lower than the previous year. ALT DOC: RedZed income declaration plus an accountant declaration, or 6 months BAS + ATO portal, or 6 months business bank trading statements + ATO portal.",
+          "conditions": "Assessed at 100%. Full Doc ABN options: 12 or 24+ months, GST as required. Alt Doc ABN options: 6, 12 or 24+ months, GST as required. The Prime range requires a minimum ABN registration of 24 months."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per sole trader.",
+          "conditions": "Individual, company and trust applicants are all contemplated (a Trust Fee of $250 per trust and a Guarantor Fee of $250 per application appear in the fee schedule)."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per sole trader.",
+          "conditions": "As per company."
+        },
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": "Any TWO of: current payslips; group certificate; tax assessment notice; an employment letter on letterhead showing employment status and gross and net salary; a bank statement with 2 pay cycles of direct credit.",
+          "conditions": "Assessed at 100%. Hours must be evidenced as regular. Remarkably: 'No minimum employment period in current role providing evidence of previous employment history and in similar role and industry.'"
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "Grouped with full-time — hours must be evidenced as regular; no minimum period in the current role where previous employment history in a similar role and industry is evidenced."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG, plus the most recent 6 months bank statements.",
+          "conditions": "'> 6 months in current role' for casual and second job."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per casual.",
+          "conditions": "Grouped in the same row as casual — more than 6 months in the current role."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'Probation period is required to be completed prior to loan approval where there is no history of employment in a similar role or industry to the borrowers current role.' i.e. probation is acceptable ONLY where the applicant has prior same-role/same-industry history."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Copy of the current contract(s), plus the standard PAYG evidence.",
+          "conditions": "'> 12 months + copy of current contract(s)'."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Evidence of regular payment over more than 6 months, averaged over the payment periods.",
+          "conditions": "Grouped with commissions and allowances: 'Evidenced for a period > 6 months'."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Evidence of regular payment over more than 6 months, averaged over the payment periods.",
+          "conditions": "Same row as overtime and allowances."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per overtime.",
+          "conditions": "'Overtime, commissions, allowances' are a single row requiring more than 6 months of evidence."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Evidence of regular payment averaged over two years.",
+          "conditions": "'PAYG bonuses — Minimum 2 years evidence', assessed at 100%."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "A copy of the employment contract terms to support it.",
+          "conditions": "'Provided cash option evidence is available', assessed at 100%."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.85,
+          "minHistoryMonths": null,
+          "evidence": "Standard current lease, tenancy agreement, rental statement, valuation or agent's appraisal letter. Short term / Airbnb requires 6 months statements averaged.",
+          "conditions": "Standard tenancy agreement shaded at 85%; short-term or holiday rental including Airbnb shaded at 80%."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "Current commercial lease and verification of lease rental payments via 6 months bank statements.",
+          "conditions": "Shaded at 90% where the remaining lease term is more than 12 months, or 80% for 12 months or less remaining. 'Current tenancy / lease agreement noting indicative rent is not acceptable' (SMSF commercial excluded)."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement.",
+          "conditions": "Mature age pension is named. Assessed at 100% BUT with two hard limits: 'Government/Centrelink income can only make up a maximum of 40% of the overall net income being used' and it 'Cannot be the primary source of income'."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement.",
+          "conditions": "Disability pension is named, subject to the same 40%-of-net-income cap and the 'cannot be the primary source of income' rule."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement.",
+          "conditions": "'Family tax benefit (A & B) — Children up to the age of 14 only.' Subject to the 40% Centrelink cap and cannot be the primary income source."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Copy of the CSA or solicitor's executed agreement, plus a minimum 12 months of statement evidence of payment history.",
+          "conditions": "'Child maintenance will not be considered without at least 12 months evidence of payment history for children up to 14 years of age only.' Cannot be the primary source of income."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "A minimum of 2 years tax returns / financial statements, averaged, using the actual current-year figure if it is lower.",
+          "conditions": "'Investments & dividends — Minimum 2 years history. Secondary income only.'"
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Appropriate statement evidence of the SMSF balance and payments schedule.",
+          "conditions": "'Superannuation & annuities' — subject to Senior Underwriter discretion."
+        },
+        {
+          "type": "annuity",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per superannuation pension.",
+          "conditions": "Same row as superannuation; Senior Underwriter discretion."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": null,
+          "evidence": "Current payslips; group certificate; tax assessment notice; employment letter on letterhead showing employment status and gross and net salary; bank statement with 2 pay cycles of direct credit.",
+          "conditions": "VERY RESTRICTED. 'PAYG income only for an overseas worker (no overseas self-employed income, rent, or foreign pension)'; 'Must be employed by a multinational company'; 'Must be an Australian citizen only (permanent and temporary residency visa holder's ineligible)'. 'Foreign income to be converted into Australian dollars and 75% of the converted figure considered for debt servicing.' Discuss with the BDM."
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": 0,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Newstart' and 'JobKeeper' are listed under Unacceptable Income."
+        }
+      ],
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2, August 2024 — 'Income Consideration' pp6-7",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The 'Assessed' percentages are quoted from RedZed's own column. The Fact is marked medium overall because the income table is a four-column layout whose row-to-value alignment had to be partially reconstructed from the PDF text layer. RedZed's own caveat: 'The income consideration shown is a guide and we strongly encourage you to discuss the circumstances of your loan proposal with your BDM.' Also expressly UNACCEPTABLE: projected income; a family pledge or parents/relatives as guarantors; undeclared or unverifiable cash income; Newstart; JobKeeper."
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 0,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — Income Consideration, PAYG full time & part time row p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'No minimum employment period in current role providing evidence of previous employment history and in similar role and industry.' The zero is conditional on same-role/same-industry continuity being evidenced."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same-role-and-industry continuity is the mechanism that removes the current-role tenure requirement entirely, and is also what allows an applicant still on probation to be considered."
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Conditional. 'Probation period is required to be completed prior to loan approval where there is no history of employment in a similar role or industry to the borrowers current role' — so probation is only survivable with prior same-role/industry history."
+    },
+    "probationConditions": {
+      "value": "Probation must be completed prior to loan approval WHERE there is no history of employment in a similar role or industry to the borrower's current role. Where such history exists and is evidenced, there is no minimum period in the current role.",
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'> 6 months in current role' for casual and second job. Hours must be evidenced as regular."
+    },
+    "minMonthsContract": {
+      "value": 12,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'> 12 months + copy of current contract(s)' for PAYG contract income."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Minimum ABN registered (GST registration where required)' row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "24 months on the PRIME range (SE Prime and SE Prime XL). The Policy and Procedures Guide shows the wider menu across the range: Full Doc ABN options 12 or 24+ months; Alt Doc ABN options 6, 12 or 24+ months, 'GST as required'."
+    }
+  },
+  "credit": {
+    "defaultIgnoredUnderAmount": {
+      "value": 1000,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Credit Criteria / Policy Guide' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Defaults < $1,000 (unlimited)' is accepted on the PRIME range (SE Prime and SE Prime XL), as are 'Non financial defaults < $500' and 'Defaults > 2 years (unlimited)'. What Prime does NOT accept is the 'Other defaults (ie. > $1,000 and < 2yrs)' row."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Unpaid defaults: To be paid out before or at settlement. We may consider leaving defaults under payment arrangement if being met.' So an unpaid default is not a decline, but it must be cleared at settlement unless it is under a payment arrangement that is being met. Recorded as false because the default cannot simply be left outstanding; confidence medium given that carve-out."
+    },
+    "maxDefaults": {
+      "value": 1,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Residential Specialist Loan Products' p6",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This counts only 'Other defaults (ie. > $1,000 and < 2yrs)' — the impairing category. SE Prime and Reward: not accepted. RECHARGE: '1 (maximum $5K)'. REFRESH: '5'. Defaults under $1,000, non-financial defaults under $500, and defaults over 2 years old are unlimited across the range and are NOT counted here."
+    },
+    "maxArrears6Months": {
+      "value": 0,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Mortgage arrears (cumulative position within last 6 months)' p4, p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME (SE Prime and SE Prime XL): 'Paid in full within 7 days after due date' — effectively zero arrears. RECHARGE: 'Late payments > 7 days and up to 1 full payment in arrears'. Between Recharge and Refresh: 'Late payments > 7 days and > 1 and up to 2 full payments in arrears'. REFRESH: 'Late payments > 7 days and > 2 full payments (refer to RedZed BDM)'. Unsecured debt arrears on Prime: 'Late 7 days'."
+    },
+    "notes": {
+      "value": "Mortgage conduct verification: the most recent 6 months statements are required for mortgages being refinanced, and the most recent month's statement for all other mortgages held. Unsecured debt verification: the most recent statement for all facilities to be refinanced or retained, with more possibly required to prove benefit/suitability under the NCCP. The product guide has 'Bankruptcy' and 'Bankruptcy - part IX/X' rows in the credit criteria table, but the tier-by-tier values are rendered as tick glyphs that did not survive PDF text extraction — no bankruptcy fact is recorded rather than guessing.",
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — pp4, 6",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — Apartments row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Apartments (Minimum 40m2 limited to max 60% LVR, 50m2 normal lending and building complex density criteria... Apartment size is living area only and excludes balconies and car spaces)'. So 50sqm is the threshold for normal lending; 40-50sqm is possible but capped at 60% LVR; below 40sqm is unacceptable."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Land with dwelling' row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Land with dwelling (residential or rural residential zoning only, maximum land size) — 25 acres (10 hectares)'."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Land with a dwelling is accepted where zoning is 'residential or rural residential zoning only', up to 25 acres (10 hectares)."
+    },
+    "highDensityPolicy": {
+      "value": "Building complex density criteria: LOW density = 15 dwellings or fewer; MEDIUM density = more than 15 but not more than 30 dwellings; HIGH density = more than 30 dwellings, accepted in Location Category 1 and 2 locations ONLY. Exposure is limited to 4 apartments or 25% of a building complex, whichever applies.",
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — Apartments row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "maxSecurities": {
+      "value": 4,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Exposure may vary and is limited to 4 apartments or 25% of a building complex.' A per-complex concentration cap, not a per-loan cap."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Security Criteria & Locations (refer to the RedZed location guide link on page 10)' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Four tiers: Location Category 01 (variable LVR; 85% LVR capped at $750K with maximum $100K cash out), Category 02 (variable LVR; excludes vacant land), Category 03 (maximum LVR 75%, maximum loan size $750K), and 'Refer' locations (maximum LVR 70%, maximum loan size $750K). The location guide itself is linked from p10 of the product guide."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 75,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Location Category 03: 'maximum LVR 75% maximum loan size $750K'. 'Refer' locations are tighter again at 70% LVR and $750K."
+    },
+    "notes": {
+      "value": "Vacant land: no construction facility is available. On SE Prime, vacant land is accepted 'As additional security only (Cat 1)'; on SE Prime XL it is accepted to a maximum of 75% (and 70% in one column of the matrix). Location Category 02 excludes vacant land entirely. RedZed also publishes a 'Development Aspect' framework: where a residential security could be deemed to have development potential (declared intent to develop, an existing or proposed DA, a borrower who is a developer or builder, an SPV purchasing entity, a land component representing a high percentage of total value, or a valuation confirming highest-and-best-use as a development site), the file is steered to Recharge or Reward rather than SE Prime. Land component thresholds: 95% or more (Recharge, refer to BDM), more than 85% and less than 95% (Reward), less than 85% (SE Prime).",
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4; RedZed Policy and Procedures Guide RZPPG0824 V2 — 'Development Aspect' p9",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The vacant-land LVR cells sit in a three-column product matrix whose alignment in the extracted text was imperfect."
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Maximum loan / LVR %' row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'minimum loan $100K'."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SE Prime XL: '$5M @ 75% LVR metro Cat 1 only'; '$3.5M @ 75% LVR metro Cat 2 only'. SE Prime itself is capped at $2.5M (at 70% LVR). Location Category 03 and 'Refer' locations cap the loan at $750K regardless of product."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — 'Vacant land (no construction available)' row, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The vacant-land row is labelled '(no construction available)'. RedZed is a knock-out for a build."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — Offset Sub-Account key features p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Multiple offset sub-accounts, one per loan or loan split, with no additional RedZed set-up or ongoing service fees. 'Now available on all Residential and Commercial products (excluding SMSF and RedZed Solutions).' Constraints: the offset sub-account has no ATM card, EFTPOS or digital wallet; incoming payments must go to the loan account, not the OSA; and scheduled repayments must come from an external account, not the OSA."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Additional payments to the loan account can be transferred to the linked offset sub-account or retained in the loan as redraw.'"
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — cover page and SMSF section",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SMSF residential and SMSF commercial products are both offered (the guide covers 'Residential products, Commercial products, Self Managed Super Fund (SMSF) products'). SMSF serviceability can be qualified on fund income alone or on fund income plus additional member contributions, where the member's personal income, liabilities and living expenses are assessed; for Alt Doc, RedZed adopts the declared additional-contribution amount or 25% of the SMSF's overall income. Offset sub-accounts are NOT available on SMSF."
+    },
+    "notes": {
+      "value": "Residential Prime origination fees: settlement $500, legal and administration $500, split loan $350, trust fee $250 per trust, guarantor fee $250 per application, account management $15 per month per loan split, dishonour $50, discharge admin $690, disbursement $82.50, early termination $0. Residential Specialist: settlement $975, legal and administration $895, split loan $350, trust $250, guarantor $250, account management $15 per month per split, disbursement $82.50, early termination $0. Cash out is capped at a maximum of $1.5M on the Prime range (and $100K where the loan is at 85% LVR in Location Category 01). Paying out ATO debts and business-purpose lending are both contemplated purposes.",
+      "asAt": "2024-09-24",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-product-and-rate-guide-rzrpg0924-v1.pdf",
+      "sourceTitle": "RedZed Product and Rate Guide RZPRG0924 V1 — pp3-5",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Fee figures are read from two-column fee boxes; treat individual dollar amounts as indicative and confirm on the current rate card."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Only via the PAYG foreign income rule, and only where the applicant 'Must be an Australian citizen only (permanent and temporary residency visa holder's ineligible)', is employed by a multinational company, and earns PAYG income only — no overseas self-employed income, no overseas rent, no foreign pension. 75% of the AUD-converted foreign income is counted. Subject to Senior Underwriter discretion; discuss with the BDM."
+        }
+      ],
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — 'PAYG foreign income' row, p7",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This is the ONLY residency statement in either public document, and it is framed as an income rule rather than a residency policy. It says nothing about domestic applicants, so no rules are recorded for Australian citizens, permanent residents or NZ citizens — their acceptance is assumed by the rest of the policy but never stated, and inventing a rule would be worse than the gap. The one hard exclusion it does give is important: for FOREIGN-SOURCED income, permanent residents and temporary visa holders are ineligible."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.75,
+      "asAt": "2024-08-01",
+      "sourceUrl": "https://broker.redzed.com/globalassets/global-media/pdfs/redzed-policies-and-procedures-rzppg0824-v2.pdf",
+      "sourceTitle": "RedZed Policy and Procedures Guide RZPPG0824 V2 — p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Foreign income to be converted into Australian dollars and 75% of the converted figure considered for debt servicing.'"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2024-09-24",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STALENESS IS THE HEADLINE RISK. The newest RedZed documents reachable on a public, no-login URL are the Product and Rate Guide RZPRG0924 V1 (effective 24 September 2024) and the Policy and Procedures Guide RZPPG0824 V2 (August 2024) — both about 23 months old at the date of research. The broker resources page (broker.redzed.com/resources/) returns HTTP 403 to a fetcher, so a newer guide could not be located. Every value here should be re-confirmed before it is relied on, and the rate/promotion content in those guides has certainly expired.",
+    "No assessment buffer and no floor rate are published anywhere. RedZed expresses serviceability only as a Debt Servicing Ratio (>1.10x, >1.05x with investment property borrowings, >1.25x for commercial above 70% LVR) computed in its own calculator, so the matching engine cannot reproduce a RedZed assessment rate.",
+    "No DTI cap, no HEM/living-expense basis (beyond the $1,000/month notional rent for living with family or friends), and no credit-card or BNPL assessment percentage.",
+    "Bankruptcy and Part IX/X rules by product tier could not be read — those rows in the product guide's credit-criteria table are rendered as tick glyphs that do not survive PDF text extraction.",
+    "Maximum loan term and maximum interest-only period are not stated in either document.",
+    "No genuine-savings requirement, gifted-deposit policy or government-scheme participation is published.",
+    "Guarantor position is ambiguous: a 'Guarantor Fee (applied per application) $250' exists in the fee schedule, yet 'Family pledge or parents / relatives as guarantors' is listed under Unacceptable Income — so guarantors exist structurally but a family-pledge guarantee cannot be used to support servicing. No guarantorAccepted fact is recorded.",
+    "The Specialist range (Reward / Recharge / Refresh) maximum loan amounts by LVR band and location category were not extracted — only the Prime range bands are recorded.",
+    "No published maximum applicant age at maturity, exit-strategy age, minimum credit score, maximum enquiries, payday-lending policy or gambling policy.",
+    "Residency policy for domestic applicants is simply not published — only the foreign-income carve-out.",
+    "The RedZed location guide (Category 01/02/03 and Refer locations) is linked from p10 of the product guide but was not retrieved."
+  ]
+}

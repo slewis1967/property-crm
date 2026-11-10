@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 export default function AISuggestedAction({ contactId }: { contactId: string }) {
   const [state, setState] = useState<
@@ -20,13 +21,13 @@ export default function AISuggestedAction({ contactId }: { contactId: string }) 
       const json = await res.json();
       if (json.ok) setState({ phase: "ready", text: json.text });
       else setState({ phase: "error", error: json.error || "Unavailable" });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Unavailable" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Unavailable") });
     }
   };
 
   useEffect(() => {
-    fetchSuggestion();
+    queueMicrotask(() => fetchSuggestion());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactId]);
 

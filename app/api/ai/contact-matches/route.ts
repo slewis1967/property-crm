@@ -5,7 +5,52 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  email?: string | null;
+  budget_max?: string | number | null;
+  budget?: string | number | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  buyer_type?: string | null;
+  full_name?: string | null;
+  name?: string | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+  temperature?: string | null;
+  status?: string | null;
+  notes?: string | null;
+  updated_at?: string | null;
+}
+interface LeadRow {
+  email?: string | null;
+  primary_contact_id?: string | null;
+  linked_contact_ids?: string | null;
+  preferred_location?: string | null;
+  buyer_type?: string | null;
+  message?: string | null;
+  created_at?: string | null;
+}
+interface CandidateRow {
+  id?: string | null;
+  builder_name?: string | null;
+  street_address?: string | null;
+  suburb?: string | null;
+  state?: string | null;
+  total_package_price?: string | number | null;
+  house_price?: string | number | null;
+  bedrooms?: string | number | null;
+  bathrooms?: string | number | null;
+  land_size?: string | number | null;
+  house_size?: string | number | null;
+  status?: string | null;
+  property_type?: string | null;
+  sda_category?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
 const SYSTEM = `You match a property buyer to the available stock that fits them best. Sean is a property advisor at NextKey Property Strategists; you're picking which 5 properties to send this contact.
 
@@ -31,7 +76,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "contactId required" }, { status: 400 });
     }
 
-    let contact: any;
+    let contact: ContactRow;
     const { data: liveContact } = await supabase
       .from("contacts")
       .select("*")
@@ -71,7 +116,7 @@ export async function POST(req: Request) {
       const r = await nexusApi("/api/leads", { cache: "no-store" });
       if (r.ok) {
         const { leads } = await r.json();
-        const linked = (leads || []).filter((l: any) => {
+        const linked = (leads || []).filter((l: LeadRow) => {
           if (l.email && contact.email && l.email.toLowerCase() === contact.email.toLowerCase()) return true;
           if (l.primary_contact_id === contactId) return true;
           try {
@@ -80,7 +125,7 @@ export async function POST(req: Request) {
           } catch { return false; }
         });
         // Most recent first (already ordered by API but defensive)
-        linked.sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
+        linked.sort((a: LeadRow, b: LeadRow) => (b.created_at || "").localeCompare(a.created_at || ""));
         for (const l of linked) {
           if (l.preferred_location && !preferredLocation) preferredLocation = l.preferred_location;
           if (l.buyer_type && !buyerTypeFromLeads) buyerTypeFromLeads = l.buyer_type;
@@ -108,7 +153,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
 
-    const filtered = (candidates ?? []).filter((p: any) => {
+    const filtered = (candidates ?? []).filter((p: CandidateRow) => {
       const price = Number(p.total_package_price ?? p.house_price ?? 0);
       if (!price) return true;
       if (!ceiling) return true;
@@ -132,7 +177,7 @@ export async function POST(req: Request) {
       leadNotes ? `lead_notes: ${truncate(leadNotes, 400)}` : "",
       "",
       `CANDIDATES (${filtered.length}):`,
-      ...filtered.map((p: any) => {
+      ...filtered.map((p: CandidateRow) => {
         const price = Number(p.total_package_price ?? p.house_price ?? 0);
         return [
           `- id: ${p.id}`,
@@ -152,8 +197,8 @@ export async function POST(req: Request) {
       contact_state: state,
       preferred_location: preferredLocation,
       buyer_type: buyerType,
-      candidate_ids: filtered.map((p: any) => p.id).sort(),
-      candidate_updates: filtered.map((p: any) => `${p.id}:${p.updated_at ?? p.created_at}`).sort(),
+      candidate_ids: filtered.map((p: CandidateRow) => p.id).sort(),
+      candidate_updates: filtered.map((p: CandidateRow) => `${p.id}:${p.updated_at ?? p.created_at}`).sort(),
     };
 
     try {
@@ -171,15 +216,15 @@ export async function POST(req: Request) {
       });
       const parsed = parseMatches(result.text);
       return NextResponse.json({ ok: true, matches: parsed, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to find matches" },
+      { ok: false, error: errMessage(e, "Failed to find matches") },
       { status: 500 },
     );
   }

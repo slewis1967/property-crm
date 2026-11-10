@@ -1,0 +1,140 @@
+{
+  "id": "beyond-bank",
+  "name": "Beyond Bank Australia",
+  "legalName": "Beyond Bank Australia Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "237856",
+  "abn": "15 087 651 143",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://brand.beyondbank.com.au/m/459204cf15ed4883/original/Total-Home-Loan-Package-TMD.pdf",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the TMD library, the credit guide, the rates page and the full public sitemap - Beyond Bank has no public broker/introducer section and publishes no assessment buffer, floor rate, DTI cap or rent-shading figure."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published publicly. Beyond Bank's XML sitemap contains no broker page, so broker product and policy material is not publicly reachable.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.beyondbank.com.au/sitemap.xml",
+      "sourceTitle": "Beyond Bank Australia XML sitemap (retrieved 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.beyondbank.com.au/home-loans/interest-rates/",
+      "sourceTitle": "Home Loan Interest Rates | Beyond Bank (rate card as displayed 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The highest published LVR pricing band on the standard products (Variable Purple Basic, Variable Total Home Loan Package, Variable Standard Home Loan, and all Fixed Total Home Loan Package terms) is \">80 - 90% LVR\" / \"<=90% LVR\". The ONLY product priced above that is the Variable First Home Buyer Package at \"<=95% LVR\", which is tied to the Australian Government 5% Deposit Scheme. Beyond Bank does not state a maximum LVR as a policy figure anywhere public; 90 is read off the rate card's top standard band. The rates page carries no effective date, so the retrieval date is used."
+    },
+    "notes": {
+      "value": "Published LVR pricing bands: <=60%, >60-80%, >80-90% (variable home loans); <=80%, >80-90% (building loans); <=95% (First Home Buyer Package home and building loans, government-scheme linked); <=80% and <=90% (fixed 1-5 year terms). Bridging loans are priced at a single 'All' band.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.beyondbank.com.au/home-loans/interest-rates/",
+      "sourceTitle": "Home Loan Interest Rates | Beyond Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Owner occupied residential property",
+        "Investment residential property",
+        "Vacant land",
+        "Building and construction",
+        "Property under the ACT Land Rent Scheme"
+      ],
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/459204cf15ed4883/original/Total-Home-Loan-Package-TMD.pdf",
+      "sourceTitle": "Total Home Loan Package Target Market Determination (made 5 October 2021, last reviewed 1 January 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Taken from the TMD's list of permitted loan purposes: \"purchase, refinance or renovation of an owner occupied or investment property; purchase vacant land; finance building and construction; purchase of a property to which some special acquisition scheme is applied (ACT land rent scheme)\". Beyond Bank also publishes FAQs on lending against prefabricated homes. No acceptable/unacceptable security schedule, minimum unit size, postcode category list or high-density policy is published."
+    }
+  },
+  "product": {
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/459204cf15ed4883/original/Total-Home-Loan-Package-TMD.pdf",
+      "sourceTitle": "Total Home Loan Package Target Market Determination (last reviewed 1 January 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Option to link a 100% Mortgage Offset\" account. Beyond Bank also publishes a separate Mortgage Offset Account TMD."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/459204cf15ed4883/original/Total-Home-Loan-Package-TMD.pdf",
+      "sourceTitle": "Total Home Loan Package Target Market Determination (last reviewed 1 January 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD purposes include \"finance building and construction\". Beyond Bank publishes a separate Building Construction Loan TMD and prices building loans separately on the rate card (<=80% and >80-90% LVR bands; <=95% under the First Home Buyer Package)."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.beyondbank.com.au/home-loans/interest-rates/",
+      "sourceTitle": "Home Loan Interest Rates | Beyond Bank (rate card as displayed 29 July 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bridging loans are a separately priced product on the rate card and have their own TMD (https://brand.beyondbank.com.au/m/1a22ffb1810c9066/original/Bridging-Loan-TMD.pdf)."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-03-13",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/615fc9ff33c24ee0/original/Parent-Equity-Loan-TMD.pdf",
+      "sourceTitle": "Parent Equity Target Market Determination (made 5 October 2021, last reviewed 13 March 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Beyond Bank runs a dedicated Parent Equity product: \"The Parent Equity loan allows immediate family member(s) to provide guarantee ... to reduce the loan to value ratio.\" The Total Home Loan Package TMD separately lists the purpose \"require to have a guarantee provided by others supported by separate security, to qualify for a loan\". No published guarantor eligibility, security-limit or release conditions."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/1538625d0f96558f/original/First-Home-Buyer-Total-Home-Loan-Package-TMD.pdf",
+      "sourceTitle": "First Home Buyer Total Home Loan Package Target Market Determination (made 5 October 2021, last reviewed 1 January 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD product attribute: \"Customers can participate in (and are eligible for) the Australian Government 5% Deposit Scheme. Conditions apply.\" Beyond Bank is also named on Housing Australia's participating-lender list (https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders, no publication date, captured 2026-07-29). The scheme-linked First Home Buyer Package is the only Beyond Bank product priced above 90% LVR."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted. The Total Home Loan Package, Standard Home Loan, Parent Equity and First Home Buyer Package TMDs all list \"Accredited third party mortgage brokers\" as a distribution channel and state \"The Product can be distributed direct to customers by those members of our staff who are trained as home loan lenders and by mortgage brokers accredited by us\", with six-monthly distributor reporting required from brokers. Note there is NO public broker website - accreditation is not self-serve from the public site.",
+      "asAt": "2026-01-01",
+      "sourceUrl": "https://brand.beyondbank.com.au/m/459204cf15ed4883/original/Total-Home-Loan-Package-TMD.pdf",
+      "sourceTitle": "Total Home Loan Package Target Market Determination (last reviewed 1 January 2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-01-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Beyond Bank has no public broker/introducer website - the XML sitemap has no broker page - so no broker credit policy guide, servicing calculator or policy-at-a-glance could be read. Everything here comes from TMDs and the public rate card.",
+    "No maximum LVR is stated as a policy figure. The 90% recorded is the top standard rate-card band; the only >90% pricing is the government-scheme-linked First Home Buyer Package at <=95%.",
+    "No investment-specific maximum LVR is published separately from the owner-occupied bands.",
+    "The rate card carries no effective/as-at date, so the retrieval date (29 July 2026) is used for facts sourced from it.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, residency/visa rules, genuine-savings policy or LMI-waiver professions published.",
+    "Minimum and maximum loan amounts, maximum loan term and maximum interest-only term are not published in the TMDs or on the rate card.",
+    "No security policy detail: no minimum unit size, postcode category list, high-density or rural policy."
+  ]
+}

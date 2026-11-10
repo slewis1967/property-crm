@@ -6,6 +6,24 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
 
+type ConversationRow = {
+  id: string;
+  contact_id: string | null;
+  type: string | null;
+  unread_count: number;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+};
+
+type ArchiveContactRow = {
+  id: string;
+  contact_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
 const typeColor = (t: string | null) => {
   if (!t) return "bg-gray-100 text-gray-600";
   if (t.toLowerCase().includes("sms")) return "bg-green-100 text-green-700";
@@ -36,7 +54,7 @@ export default async function ConversationsPage({
   const { data, count, error } = await query;
   const total = count ?? 0;
 
-  const contactIds = Array.from(new Set((data ?? []).map((d: any) => d.contact_id).filter(Boolean)));
+  const contactIds = Array.from(new Set((data ?? []).map((d: { contact_id: string | null }) => d.contact_id).filter(Boolean)));
   let contactsById: Record<string, { name: string; email: string }> = {};
   if (contactIds.length > 0) {
     const { data: contacts } = await supabase
@@ -45,7 +63,7 @@ export default async function ConversationsPage({
       .in("id", contactIds);
     if (contacts) {
       contactsById = Object.fromEntries(
-        contacts.map((c: any) => [
+        contacts.map((c: ArchiveContactRow) => [
           c.id,
           {
             name: c.contact_name || `${c.first_name || ""} ${c.last_name || ""}`.trim() || "(unnamed)",
@@ -86,7 +104,7 @@ export default async function ConversationsPage({
               </tr>
             </thead>
             <tbody>
-              {data.map((c: any) => {
+              {data.map((c: ConversationRow) => {
                 const contact = c.contact_id ? contactsById[c.contact_id] : null;
                 return (
                   <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">

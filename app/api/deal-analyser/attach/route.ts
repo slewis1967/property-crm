@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       acknowledged_at: new Date().toISOString(),
       flagged_text: typeof ov.flagged_text === "string" ? ov.flagged_text.slice(0, 4000) : "",
       violations: Array.isArray(ov.violations)
-        ? ov.violations.slice(0, 20).map((v: any) => ({
+        ? ov.violations.slice(0, 20).map((v: { law?: string | null; severity?: string | null; snippet?: string | null }) => ({
             law: String(v?.law ?? "").slice(0, 120),
             severity: String(v?.severity ?? "").slice(0, 10),
             snippet: String(v?.snippet ?? "").slice(0, 400),

@@ -1,0 +1,236 @@
+{
+  "id": "prime-capital",
+  "name": "Prime Capital",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.primecapital.com/brokers/products/",
+  "policyDocUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "notes": {
+      "value": "No published buffer, floor rate, DTI cap or rent shading. Prime Capital advertises \"no locked-in servicing calculators\" and a hybrid automated/manual credit assessment. The only servicing test named in the public guide is a Debt Service Coverage Ratio (DSCR) — businesses that do not meet the required DSCR are listed as ineligible — but no DSCR threshold is published.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Looked in the May 2026 Loan Product Guide (16pp, includes an 'Additional lending policies' page) and the public broker product pages. No DTI cap published."
+    }
+  },
+
+  "lvr": {
+    "maxLvrConstructionPct": {
+      "value": 70,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Business Construction: \"Up to 70% GRV & 80% TDC\" (gross realisation value / total development cost). Business Renovation is up to 70% of as-complete value."
+    },
+    "notes": {
+      "value": "LVR ceilings by product (business/commercial loans only, no consumer lending): Business Basics up to 75%; Business 30 \"Up to 80% LVR\"; Business Jumbo up to 75%; Business Construction up to 70% GRV / 80% TDC; Business Renovation up to 70% of as-complete value. The guide also shows a lower LVR grid by security type (house / unit / commercial / land) — the house column is the highest and land the lowest — but the per-cell figures did not extract reliably from the PDF and are deliberately not recorded here.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 80% figure for Business 30 is stated in prose under that product's Key Features, not only in the graphic."
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Self-declared income accepted\" on Business Basics, Business Jumbo, Business Construction and Business Renovation. Business 30 instead requires an income verification document."
+    },
+    "notes": {
+      "value": "Self-declared income is accepted on every product except Business 30, which requires \"income verification document\". No specification of what documents are acceptable, no self-employed minimum trading period and no shading percentages are published. Prime Capital positions itself for \"business owners with irregular income, strong assets or fast growth\" rather than credit-impaired borrowers.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": "Prime Capital advertises \"unlimited credit impairment\", explained in the guide's FAQ as: \"It means there's no fixed limit on the level of credit impairment we can consider. If the business has recovered and can demonstrate ongoing strength, we'll take a practical view.\" Also offers \"unlimited debt consolidation\" — no cap on the number of business debts, including ATO debts, that can be rolled into one loan within the approved lending limit. No default, judgment, bankruptcy, arrears or enquiry thresholds are published.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Leasehold properties (ACT accepted)",
+        "Contaminated or environmentally impacted sites",
+        "Heritage-listed properties (exceptions may apply)",
+        "Agricultural land (Business Basics)",
+        "Commercial property or vacant land (Business 30)",
+        "Commercial property (Business Renovation)"
+      ],
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026 — 'Ineligible borrowers & securities' and per-product Key Restrictions",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The first three are lender-wide; the rest are product-level restrictions carried here because they materially limit which security can be used."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"We don't lend on: Leasehold properties (ACT accepted)\" — so ACT leasehold IS acceptable, everywhere else is not."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026 — 'Unit guidelines'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum internal sizes are: 50m² for 1-bedroom units, 70m² for 2-bedroom units.\" The 50m² figure applies to 1-bedroom stock; 2-bedroom stock must be at least 70m²."
+    },
+    "maxSecurities": {
+      "value": 10,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026 — 'Unit guidelines'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Prime Capital will fund a maximum of 10 units per building.\""
+    },
+    "notes": {
+      "value": "Business Jumbo, Business Construction and Business Renovation are S&P Metro locations only. Business Basics maximum loan size may vary by region (up to $3M in some areas). All credit approvals are subject to an independent valuation by a Prime Capital-approved valuer — valuations commissioned by the client or broker cannot be used.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 250000,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Flexible loans for SMEs, from $250k up to $25M with secured funding.\" Business Construction and Business Renovation start higher, at $1M."
+    },
+    "maxLoanAmount": {
+      "value": 25000000,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum exposure per application by product: Business 30 $3M; Business Basics $5M; Business Renovation $5M; Business Builder $10M; Business Jumbo $25M."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only Business 30 runs to 30 years (3 years IO then P&I). Every other product is a term of up to 3 years, interest-only or interest-capitalised, with a 6-month minimum term on Jumbo/Construction/Renovation and 30 days' notice to repay."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 3,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Business 30: \"3 years interest only, P&I thereafter\". Recorded for completeness only — these are business-purpose loans, not owner-occupied consumer loans."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Business Construction: $1M–$10M, up to 3 years, interest capitalised monthly, no pre-sales requirement, GST not funded, S&P Metro only."
+    },
+    "smsfLendingAvailable": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Checked the May 2026 Loan Product Guide (16pp), primecapital.com home page, /brokers/, /brokers/products/, /about-us/ and /construction/. The string 'SMSF' appears nowhere. Third-party write-ups (and Prime Capital's own 2018 insight article) describe a 'Business Investor' product for investors, non-residents and SMSFs, but that product is not in the current published range. Do NOT record Prime Capital as an SMSF lender without confirming with the lender directly."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"All guarantors are required to obtain independent legal and financial advice before signing loan documents.\""
+    },
+    "notes": {
+      "value": "CRITICAL SCOPE POINT: Prime Capital does NOT do NCCP-regulated consumer lending. Its published 'Ineligible borrowers & securities' list expressly includes \"Consumer loans governed by the National Consumer Credit Protection Act\", and \"We only lend to companies registered with ASIC. All mortgage applications must clearly demonstrate a commercial financial benefit to each applicant.\" It is a business/commercial lender secured by residential or commercial property, broker-distributed only, and should not appear on a shortlist for an owner-occupied or standard investment home loan. Cash out is unlimited for stated business purposes including consolidation of business and ATO debts. It refinances banks, non-banks, private lenders and solicitors. Approvals within 24 hours, settlement within 5 working days. Application fee 0.3% of the loan or $2,950, whichever is greater; establishment fees 0.95%–1.65% by product; a risk fee of 0.5%–1% (minimum $2,990) may apply to any product.",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://www.primecapital.com/direct-downloads/prime-product-guide/",
+      "sourceTitle": "Prime Capital Loan Product Guide, effective from May 2026 — 'Additional lending policies'",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "SMSF lending could NOT be confirmed on any current public Prime Capital source — see product.smsfLendingAvailable. This contradicts several third-party summaries; treat those as stale.",
+    "No consumer/NCCP home lending at all, so most of this taxonomy (owner-occupied LVR, income types, employment tenure, residency, genuine savings, LMI) does not apply and is deliberately empty rather than guessed.",
+    "No ACL/ABN published on the pages inspected.",
+    "No servicing buffer, floor rate, DTI cap, DSCR threshold, HEM basis or commitment treatment published.",
+    "The per-security-type LVR grid (house / unit / commercial / land) in the product guide is a graphic; the individual cell values did not extract reliably and were not recorded.",
+    "No interest rates or rate sheet published publicly — pricing is quoted per deal by the BDM.",
+    "No residency/non-resident policy published, despite third-party sources describing a non-resident product.",
+    "No credit-history thresholds published beyond the marketing phrase 'unlimited credit impairment'."
+  ]
+}

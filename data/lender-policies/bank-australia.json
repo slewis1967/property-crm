@@ -1,0 +1,1125 @@
+{
+  "id": "bank-australia",
+  "name": "Bank Australia",
+  "legalName": "Bank Australia Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.bankaust.com.au/broker-partners",
+  "policyDocUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy and Guidelines for Brokers, June 2026, s3.1.1 Assessment Rates",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Published as \"Buffer 3.00%\". \"The assessment rate used to determine servicing capacity for mortgage loans will be the higher of the floor rate or the actual interest rate + buffer.\""
+    },
+    "assessmentFloorRatePct": {
+      "value": 7.25,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.1.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Published verbatim as \"Floor Rate - Owner Occupier 7.25%\" and \"Floor Rate - Investor 7.25%\" - the same floor for both. This is materially higher than the ~5.3% floors published by Macquarie and Bendigo, and will usually be the binding constraint rather than the buffer."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.3 Acceptable Non-PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Standard residential rental income 80%. Holiday homes 70% (most recent financial year or annual statement). Commercial 80%, but only where a commercial lease has a minimum 12 months elapsed and 12 months remaining, and capped at a maximum yield of 5%. For luxury/high-value rental assets policy invites reducing reliance to 60% of gross rent."
+    },
+    "existingCommitmentTreatment": {
+      "value": "greater_of",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.2 Liability Benchmarks",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where a customers declared repayments are higher than the benchmark, the higher repayment will be adopted to determine servicing capacity.\" Benchmarks: credit card/store account/unsecured overdraft = repay the limit over 3 years P&I at 22% interest; personal loans = P&I over remaining term at 15% (default 5 years if unknown); car loans = P&I over remaining term at 7% (default 5 years); home loans = P&I over remaining term at the higher of buffered or floor rate (default 25 years); interest-only loans = P&I over the principal loan term (total term minus IO period) at the higher of buffered or floor rate; line of credit/secured overdraft = P&I over 30 years at the higher of buffered or floor rate. Debts with under 3 months remaining can be excluded if cash resources cover the remaining repayments."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.0383,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.2 Liability Benchmarks",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Bank Australia does not publish a flat monthly percentage. It publishes the RULE: \"Credit Card, Store Account, Unsecured Overdraft: Repay the limit over 3 years on a P&I basis at 22% interest.\" The 0.0383 recorded here is the monthly P&I payment factor that rule produces (36 months at 22% p.a. nominal = approximately 3.83% of the limit per month), given for engine compatibility. Prefer the published rule to this derived number where the two can differ."
+    },
+    "bnplTreatment": {
+      "value": "Pay-in-4 BNPL: where usage reflects occasional larger discretionary purchases and the borrower can clear the facility limit from savings or other credit limits, the facility limit is loaded as a liability with a contracted repayment of $0.00 so the debt still counts in DTI. Where the facility is relied on for daily expenses, or the borrower cannot clear the full limit, a monthly expense equal to 66% of the facility limit must be loaded (two thirds of the limit, being the monthly obligation on a six-week contract). Low Cost Credit Contract (LCCC) lending is treated as a personal loan - load the remaining balance, minimum contracted monthly repayment and applicable interest rate.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 66%-of-limit monthly expense for daily-reliance BNPL is one of the harshest published BNPL treatments on the panel."
+    },
+    "hecsTreatment": {
+      "value": "\"HECS/HELP repayments must be considered in the servicing assessment by adjusting the net income to cater for any deductions. The balance must be excluded from DTI calculations.\"",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The repayment hits servicing but the balance is expressly excluded from DTI - a favourable treatment for graduates with large HELP balances."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.4 Living Expenses",
+      "confidence": "high",
+      "status": "verified",
+      "note": "HEM data is subscribed from the Melbourne Institute of Applied Economic and Social Research, tiered by single/joint household, dependants, geography and gross income scaling, and updated quarterly. Capacity is determined using the HIGHER of declared living expenses, the applicable HEM figure, or living expenses verified from transaction statements. Under Verification Level 1, a declared estimate at 70% or more of HEM needs no further verification; below 70% a categorised breakdown is required and, if it stays below 70%, three months of transaction statements."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.1",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The policy DEFINES the DTI ratio - \"The ratio of the credit limit of all debts held by the borrower (excluding HECS/HELP debt), to the borrowers' gross income\" - and makes it one of three servicing calculations alongside Remaining Disposable Income and the Net Disposable Income ratio, but publishes no numeric cap or refer threshold."
+    },
+    "notes": {
+      "value": "Three calculations determine servicing capacity: Remaining Disposable Income (RDI) = combined net monthly income minus combined sensitised monthly fixed expenses minus monthly living expenses; the DTI ratio; and the Net Disposable Income (NDI) ratio = (total scaled net income minus living expenses) divided by total adjusted fixed expenses. RDI thresholds appear in the Verification Level 1 table (> $750 for a top-up or refinance-plus-cash-out under $100k, > $200 for a refinance with no cash out, > $1,500 for all other purposes). Fixed expenses that must be counted include child support/maintenance, rent or lease payments and private school fees; where a borrower boards with little or no expense, foreseeable changes in boarding circumstances must be considered.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss3.1, 3.4.1, 5.1.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1 Acceptable Property Security",
+      "confidence": "high",
+      "status": "verified",
+      "note": "95% with LMI (both QBE and Helia) on a fully serviced residential house, and on units/townhouses/low density apartments and high density apartments with a minimum 40sqm floor size. \"Where LMI is applicable, the absolute LVR ceiling is 95% plus applicable LMI premium\" - i.e. the premium may be capitalised ON TOP of 95%. Partially serviced houses cap at 80% with no LMI option."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The LVR matrix is published by PROPERTY TYPE, not by occupancy, so the same ceilings apply. Recorded at medium confidence for that reason. A separate borrower rule bites for investors: individuals owning four or more investment properties, or deriving more than 50% of income from investments, are unacceptable consumer borrowers and must be assessed under commercial credit policy (three or fewer investment properties is acceptable)."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Max LVR without LMI\" is 80% for residential houses (fully and partially serviced), vacant land/construction, units/townhouses/low density apartments and high density apartments over 40sqm. It steps down to 70% for high density apartments of 25-39sqm, serviced/holiday apartments, student/studio apartments, warehouse conversions, rural house and land under 50ha, multiple dwellings on one title, general commercial in support of residential, leasehold and company/stratum title; 65% for rural land only under 50ha; 60% for specialised commercial; and 50% for rural land over 50ha."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1, 9.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Residential Vacant Land and/or Construction (max land size 2.2ha)\": 80% without LMI, 90% with LMI (QBE or Helia). A Cost Plus Building Contract caps the LVR at 65% and requires a minimum RDI of $1,000. Owner-builder construction is restricted to land value only unless the borrower is a licensed builder, in which case maximum 50% of the To-Be-Erected valuation with a minimum RDI of $2,000."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where LMI is applicable, the absolute LVR ceiling is 95% plus applicable LMI premium. All maximum LVR's exclude LMI premium capitalisation unless stated otherwise.\""
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The premium sits OUTSIDE the stated maximum LVR - the ceiling is \"95% plus applicable LMI premium\", and maximum LVRs \"exclude LMI premium capitalisation unless stated otherwise\". This is the opposite of Macquarie/Bendigo/ING, where the premium must fit inside the cap, and is worth 2-3 percentage points of real deposit to a 95% borrower."
+    },
+    "lmiProvider": {
+      "value": ["QBE", "Helia"],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The security LVR matrix has separate columns headed \"Max LVR with LMI - QBE\" and \"Max LVR with LMI - Helia\". All LMI outcomes are \"subject to LMI Underwriting Guidelines\", and \"The LMI provider may have further LVR restrictions that apply to new apartments in certain postcodes\"."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Residential house, fully serviced (electricity/solar, drinkable water, sealed road access, max land 10ha) - without LMI. 95% with QBE or Helia LMI." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Residential house, partially serviced (electricity/solar plus EITHER drinkable water OR sealed road, max land 10ha) - no LMI option available" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Residential vacant land and/or construction, max land 2.2ha - without LMI. 90% with QBE or Helia LMI." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Units, townhouse, low density apartment, minimum floor size 40sqm - without LMI. 95% with QBE or Helia LMI." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "High density apartment (6+ floors or more than 50 units), minimum floor size 40sqm - without LMI. 95% with QBE or Helia LMI. Valuation must include two recent comparable sales outside the development." },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "High density apartment, floor size 25-39sqm - no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Serviced or holiday apartments (managed/pooled rental agreement generating a fixed yield), minimum floor size 40sqm - no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Student or studio apartment marketed to students, minimum floor size 25sqm - no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Warehouse conversion with strata title, minimum floor size 40sqm - no QBE LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Rural zoned, major use residential and not income producing - house and land under 50ha, without LMI (90% with QBE LMI)" },
+        { "maxLvrPct": 65, "maxLoanAmount": null, "qualifier": "Rural zoned - land only under 50ha, without LMI (80% with QBE LMI)" },
+        { "maxLvrPct": 50, "maxLoanAmount": null, "qualifier": "Rural zoned - properties with land size over 50ha, no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Multiple units/dwellings on one title (2 or more dwellings on a single land title, e.g. dual occupancy) - no LMI option" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Prefabricated/kit homes assembled by a registered builder - on site value, no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "General commercial (shop, factory) when used in support of a residential security - no LMI option" },
+        { "maxLvrPct": 60, "maxLoanAmount": null, "qualifier": "Specialised commercial (dairy farm, nursing home, caravan park, hotel) when used in support of a residential security - no LMI option" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "SDA securities - owner occupied loan with an approved NDIS plan meeting one of the four design categories (improved liveability, fully accessible, high physical support, robust) - no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Leasehold securities (subject to Lending Management approval; lease term must exceed the loan term by 5 years) - no LMI option" },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Company or stratum titles - no LMI option" },
+        { "maxLvrPct": 100, "maxLoanAmount": null, "qualifier": "Term deposit security - no LMI option" }
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1 Acceptable Property Security",
+      "confidence": "high",
+      "status": "verified",
+      "note": "maxLvrPct here is the 'Max LVR without LMI' column; the LMI-supported ceiling is given in the qualifier where one exists. Verified against a reading-order extraction of the source PDF. \"All maximum LVRs ... require a registered 1st mortgage. Registered 2nd mortgages against any security type are not acceptable.\" All LVRs are further subject to the valuation restrictions in s8.1 and to the postcode risk tool."
+    },
+    "notes": {
+      "value": "\"The postcode risk tool may restrict LVRs further than the above limits. In any case, the lower of the postcode risk tool or the policy LVR limits will apply.\" Bank Australia publishes a public broker postcode calculator at bankaust.com.au/broker/postcode-calculator. Valuation method also caps LVR: a contract of sale can be relied on to max 80% LVR and a max loan of $1.5m (or 90% where LMI applies and an AVM supports it with FSD under 15 and the contract price within 10% of AVM market value, settlement within 120 days, arm's length via a licensed agent); an AVM alone allows max 80% LVR at FSD under 15, 70% at FSD 16-20, and 50% at FSD 21-30, max loan $1.5m. Neither can be used for minimal-appetite postcodes, developer/builder/off-the-plan purchases, land over 10,000 sqm, vacant land, or floor size under 40sqm. A rates notice valuation allows max 80% of unimproved land value or 50% of capital improved value.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1.1, 8.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two most recent payslips, or three months' salary credits. Payslips must be computer generated, contain employee and employer name, show an ABN and a YTD breakdown. Salary credits require a minimum 3 months of credits with the employer name clear on the transaction record.",
+          "conditions": "Base income 100%: \"All of the borrowers regular base income may be used in the servicing assessment\". Probationary period must have been completed and no more than two jobs in the previous 12 months; failing that, over 12 months' continuous employment in the same industry or occupation, or a recently completed related university degree, is acceptable."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two most recent payslips or three months' salary credits.",
+          "conditions": "Same acceptable-employment test as permanent full time."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Two most recent payslips or three months' salary credits; if payments are inconsistent (e.g. fluctuating overtime), payslips are required.",
+          "conditions": "\"Probationary period has been completed and Minimum 12 months in current position.\" For borrowers with multiple jobs a maximum of 50 hours per week combined across employers can be adopted."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": "Two most recent payslips or three months' salary credits.",
+          "conditions": "Grouped with casual: probation completed and minimum 12 months in current position; combined hours across employers capped at 50 per week, with consideration of the feasibility of maintaining excessive hours over the loan term."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two most recent payslips or three months' salary credits.",
+          "conditions": "Grouped with permanent employment: probation completed and no more than two jobs in the previous 12 months. \"For contract employment, consideration must be given to the length of contract, industry stability and likelihood of renewal.\""
+        },
+        {
+          "type": "payg_probation",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Every acceptable-employment category except self-employed requires that the \"Probationary period has been completed\". The only published relief is the alternative test for permanent/contract employment: over 12 months' continuous employment within the same industry or occupation, or a recently completed related university degree."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 6,
+          "evidence": "Two most recent payslips including three months YTD income, or two most recent payslips plus the most recent PAYG Summary or Income Statement.",
+          "conditions": "80%. \"Provided the income can be evidenced over the past 6 months and is either a regular part of employment and/or reasonable to expect in an industry (e.g. emergency services). Total working hours considered for servicing are not to exceed 50 hours per week (inclusive of standard hours and overtime).\" Note there is NO separate 100% essential-services overtime category - emergency services is given only as an example of when 80% overtime is acceptable."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": "Last two years' PAYG Payment Summary, or last two years' Individual Tax Return.",
+          "conditions": "80%. \"Provided the bonuses are standard for the borrower's employment industry, are paid quarterly or annually and have been received for two consecutive years. Use the lowest of the two years.\""
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": "Last two years' PAYG Payment Summary, or last two years' Individual Tax Return.",
+          "conditions": "80%. \"Must be evidenced as received and consistent for two years from current employer and tied to a sales related position. Use the lowest of the two years.\""
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two most recent payslips or three months' salary credits.",
+          "conditions": "100%. \"Provided the allowances are either a condition of employment or reasonable to expect the industry and established to be a regular part of employment.\""
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Two most recent payslips or three months' salary credits.",
+          "conditions": "Vehicle allowance 100% \"Where the income is a condition of employment\". A fully maintained company vehicle is UNACCEPTABLE income."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Verification Level 1: last two years' ATO Notices of Assessment (full financials may be requested if personal income is insufficient). Verification Level 2: last two years' individual and business tax returns, ATO notices of assessment, business profit and loss statements and balance sheets. Under two years' trading: latest individual and business tax return, latest ATO notice, latest P&L and balance sheet, or accountant-prepared financials plus interim/BAS statements.",
+          "conditions": "\"Minimum two years trading as a sole trader, partnership, company and/or trust\" (s4.1); s4.4 says \"A minimum of two years trading is preferred\". Income trend rule: if year 2 has not increased by more than 20% over year 1, use year 2; if it increased by more than 20%, use year 1 at 120%; if it decreased by more than 20%, use year 2 with a full explanation."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed verification levels above.",
+          "conditions": "Retained company profits may be allocated to a borrower where reliable and ongoing, subject to their ownership percentage and intention to draw. Acceptable add-backs: interest on debt being refinanced or counted as a liability; directors' salaries where not already counted and the director is a co-borrower; fully explained non-recurring expenses; directors' superannuation above the minimum guarantee. \"Depreciation is not an acceptable add back.\""
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed verification levels above.",
+          "conditions": "Trust distributions are counted at 100% \"Where the borrower is both the owner and operator of the trust and the income is verified to be of a reliable and ongoing nature\". Distributions from family trusts NOT owned and operated by the borrower as part of a business are unacceptable income. Note that trusts themselves are unacceptable BORROWERS."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Most recent rental statement from a real estate agent, or a copy of the rental/lease agreement, or three months' consistent rental income credits, or an estimate of achievable rent from a current licensed valuation report or real estate agent, or the latest individual tax return. Holiday homes: most recent annual rental statement, or most recent individual tax return and ATO notice.",
+          "conditions": "Standard residential 80%. Holiday homes 70%. Luxury/high-value rental assets attract close scrutiny on location, renter pool and vacancy risk, with policy suggesting reducing reliance to 60% of gross rent where concerns are held."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 12,
+          "evidence": "Commercial lease agreement.",
+          "conditions": "80% \"Provided a commercial lease is in with a minimum tenancy of 12 months elapsed and a minimum tenancy of 12 months remaining. Capped at a maximum yield of 5%.\""
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement, or three months' credits.",
+          "conditions": "Family Tax Benefit and Parenting Payments 100% \"Where ongoing in nature, for children 12 years of age or less\"."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement, or three months' credits.",
+          "conditions": "Pensions 100% \"Where permanent in nature, including aged, veteran affairs and disability support pensions\"."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent Centrelink statement, or three months' credits.",
+          "conditions": "Included in the 100% pensions category where permanent in nature."
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Unacceptable income: \"Non-pension government payments such unemployed benefits, carers allowance etc.\""
+        },
+        {
+          "type": "government_carer_payment",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Carers allowance is named in the unacceptable income list as a non-pension government payment."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Current Services Australia letter, or three months' credits from Services Australia.",
+          "conditions": "100% \"Where registered and received via Child Services Australia for children 12 years of age or less\"."
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Most recent superannuation fund statement confirming balance and pension drawdown, or the statement plus three months' credits.",
+          "conditions": "100% \"Where either permanent in nature (defined benefit) or the income/balance is sufficient to be of an ongoing nature for the duration of the loan term or until an exit strategy is implemented\"."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": "Last two years' individual tax return, plus evidence the income producing assets will be retained.",
+          "conditions": "Investment income 80% \"Where the income can be evidenced over the last two years (use the lowest of the two years), is relatively stable and the underlying assets generating the investment income will be retained\". Dividends from private companies NOT owned and operated by the borrower as part of a business are unacceptable."
+        },
+        {
+          "type": "trust_distributions",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Self-employed verification.",
+          "conditions": "100% only where the borrower is both owner and operator of the trust and the income is verified as reliable and ongoing. Otherwise unacceptable."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "As per PAYG verification; convert to Australian dollars using the RBA website.",
+          "conditions": "90%. \"Only PAYG income or pensions can be considered (not self-employed).\" Australian tax rates apply unless the borrower is a tax resident of Brunei, Qatar, Saudi Arabia, United Arab Emirates, Dubai, Hong Kong, Oman, Singapore, Malaysia or Bahrain, in which case net income from the primary income source may be used. Foreign self-employed income is unacceptable."
+        },
+        {
+          "type": "boarder_income",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "\"Payments by boarders\" are expressly listed as unacceptable income."
+        }
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss4.1-4.6 and 5.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Shading percentages are the 'Acceptance Criteria' column of the s4.2 (PAYG) and s4.3 (non-PAYG) tables, verified against a reading-order extraction of the source PDF. Also 100%: salary packaging (where the total package is available in cash at the borrower's option, less compulsory superannuation), workers compensation (where payable for the loan term or until retirement age), NDIS income (SDA loan applications only), and household income from a non-applicant spouse (subject to five conditions and a $30,000 application cap)."
+    },
+    "altDocAvailable": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s1.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Bank Australia does not accept Self Certified Income Documentation/Low Documentation/No Documentation applications.\" Full income documentation only."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss4.1, 4.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "s4.1 sets \"Minimum two years trading as a sole trader, partnership, company and/or trust\"; s4.4 softens this to \"A minimum of two years trading is preferred\", and s5.2 publishes a separate document set for \"Self Employed (less than two years)\", so under two years is contemplated with fuller evidence."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s5.2 Income Verification",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "A distinct 'Self Employed (less than two years)' verification row exists requiring the latest individual and business tax return, latest ATO notice of assessment, latest business P&L and balance sheet, or accountant-prepared financials for the trading period if business tax returns are not available, plus interim and/or BAS statements if required. Read as an exception path rather than a standard offering, since s4.1 states a two-year minimum."
+    },
+    "notes": {
+      "value": "Unacceptable income in full: payments by boarders; distributions from family trusts and dividends from private companies not owned and operated by the borrower as part of a business; workers compensation if not considered permanent; non-pension government payments such as unemployment benefits and carers allowance; foreign self-employed income; and a fully maintained company vehicle. Any income not listed in policy may be considered as a policy exception case by case where it can be relied on and sufficiently verified. All tax file numbers must be redacted from documents as soon as practical.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss4.5, 4.6, 5.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1 Acceptable Employment",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "For permanent full time, permanent part time and contract employment there is NO months-in-job minimum. The published test is instead: \"Probationary period has been completed and No more than two jobs in the previous 12 months.\""
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where the probation criteria above is not met, applicants with over 12 month's continuous employment within the same industry or occupation, or applicants who have recently completed a related university degree, are acceptable.\""
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Over 12 months' continuous employment within the same industry or occupation is the published alternative where the probation/two-jobs test is not met."
+    },
+    "probationAccepted": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Probationary period has been completed\" is a stated minimum requirement for permanent, contract, casual, second job, employed-by-family and non-resident employment alike. The only published relief is 12+ months' continuous same-industry employment or a recently completed related university degree."
+    },
+    "probationConditions": {
+      "value": "Probation must be completed for every PAYG employment category. The published exception: \"Where the probation criteria above is not met, applicants with over 12 month's continuous employment within the same industry or occupation, or applicants who have recently completed a related university degree, are acceptable.\"",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 12,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Casual and second job: \"Probationary period has been completed and Minimum 12 months in current position.\" Verified against a reading-order extraction because the source table's rows and values are laid out in separate columns."
+    },
+    "minMonthsContract": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "Contract employment is grouped with permanent employment (probation completed, no more than two jobs in 12 months) with no separate months minimum. Policy adds: \"For contract employment, consideration must be given to the length of contract, industry stability and likelihood of renewal.\""
+    },
+    "minContractRemainingMonths": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum remaining contract term is published - it is a qualitative consideration."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum two years trading as a sole trader, partnership, company and/or trust.\" A less-than-two-years verification path exists in s5.2."
+    },
+    "notes": {
+      "value": "Employed by a family member: probation completed and a minimum 6 months in current position OR 12 months' continuous employment within the same industry, verified by the most recent individual tax return and ATO notice. Non-resident employment: probation completed and \"Must be employed by a large company, multi-national preferred\". For borrowers with multiple jobs a maximum of 50 hours per week combined across employers can be adopted, and the same 50-hour cap applies to standard hours plus overtime. Employment authenticity must be verified by payslips, three months' salary credits showing the employer name, or - where inconsistencies exist - a documented phone call to the employer on an independently sourced number.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss4.1, 5.2, 5.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "credit": {
+    "bankruptcyDischargedMinYears": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s2.2 Unacceptable Borrowers",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "\"Bankrupt borrowers\" are listed as unacceptable borrowers, but no minimum period since discharge is published, so no number of years can be sourced."
+    },
+    "maxDefaults": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The policy discusses using CCR to identify default information but publishes no numeric limit or dollar threshold for listed defaults."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s5.1.1 Mortgage Verification Levels",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum APPROVAL score is published. Credit score does gate the lighter Verification Level 1 for a home loan top-up under $100k or a refinance plus cash out under $100k: \"Joint Applicants: All borrowers > 661 and at least one borrower > 735; Single Applicants: > 735\". Failing that only means Level 2 verification, not decline, so it is recorded as a note rather than a minimum score."
+    },
+    "maxArrears6Months": {
+      "value": 0,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s5.1.1",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"No negative RHI evident on any borrowers credit report in the last 6 months\" is the condition for Verification Level 1 on 'all other purposes' applications. Strictly this is a verification-level gate, not an outright knock-out - negative repayment history in the last 6 months pushes the file to Level 2 verification (three months' transaction statements plus reasonableness checks) rather than declining it."
+    },
+    "notes": {
+      "value": "Comprehensive Credit Reporting is central: \"It is critical that the report is used to identify undisclosed liabilities, repayment history information and directorships.\" Verification Level 2 - full transaction-statement review - is MANDATORY for every application whose purpose includes debt consolidation or a first home buyer purchase, and for any application not meeting the Level 1 LVR (max 80%), RDI and credit-score/RHI tests. Applications including debt consolidation must be approved by a DLA 3 or above. For LMI applications, liability statements must cover 6 consecutive months for home and personal loans and 3 consecutive months for credit cards.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss3.3, 5.1.1, 5.5, 9.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential house - fully serviced (electricity/solar, drinkable water, sealed road access), max land size 10ha",
+        "Residential house - partially serviced (electricity/solar plus either drinkable water or sealed road access), max land size 10ha",
+        "Residential vacant land and/or construction, max land size 2.2ha",
+        "Units, townhouse, low density apartment - minimum floor size 40sqm",
+        "High density apartment (6+ floors or more than 50 accommodation units) - minimum floor size 40sqm, or 25-39sqm at reduced LVR",
+        "Serviced or holiday apartments with a managed/pooled rental agreement - minimum floor size 40sqm",
+        "Student or studio apartment - minimum floor size 25sqm",
+        "Warehouse conversion into strata-titled apartments - minimum floor size 40sqm",
+        "Rural zoned property where the major use is residential and not income producing",
+        "Multiple units/dwellings on a single title (2 or more dwellings, e.g. dual occupancy)",
+        "Prefabricated/kit homes assembled by a registered builder",
+        "General commercial (shop, factory) when used in support of a residential security",
+        "Specialised commercial (dairy farm, nursing home, caravan park, hotel) when used in support of a residential security",
+        "SDA securities for an owner occupied loan with an approved NDIS plan",
+        "Leasehold securities, subject to Lending Management approval, where the lease term exceeds the loan term by 5 years",
+        "Company or stratum titles",
+        "Term deposit"
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "All require a registered first mortgage; registered second mortgages are not acceptable against any security type. See lvr.lvrBands for the LVR attaching to each type."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Properties located outside of Australia",
+        "Mobile homes (RV, onsite caravan, converted van etc.)",
+        "Time share properties",
+        "Units in a retirement village",
+        "Units in a hotel or motel",
+        "Moiety titles and purple titles",
+        "Display homes where the display village is ongoing (not due for decommission within 2 years)",
+        "Units under 25sqm",
+        "Owner builder construction unless restricted to land value only (except where the borrower is a licensed builder)",
+        "Property subject to contamination",
+        "Registered second mortgages against any security type",
+        "'Turnkey' or 'off the plan' purchases until a certificate of occupancy has been issued"
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1, 7.1.1, 7.1.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Properties off mainland Australia can be considered on an exceptions basis, weighing island population, access, proximity to major towns and cities, borrower profile and LVR."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1, 7.1.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "40sqm is the minimum for standard LVRs on units/townhouses/low density and high density apartments, serviced/holiday apartments and warehouse conversions. Between 25 and 39sqm a high density apartment is capped at 70% LVR with no LMI, and student/studio apartments have a 25sqm minimum. \"Units under 25sqm\" are unacceptable outright. Any security with a floor size under 40sqm also requires a full licensed valuation - no contract-of-sale or AVM valuation."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "10ha is the maximum land size for a residential house (fully or partially serviced). Vacant land/construction is capped at 2.2ha. Rural-zoned residential goes further - house and land under 50ha at 70% LVR, land only under 50ha at 65%, and over 50ha at 50% - so 10ha is the residential-house ceiling, not an absolute one. Land over 10,000 sqm (1ha) forces a full licensed valuation."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1.1 Property Restrictions",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The postcode risk tool may restrict LVRs further than the above limits. In any case, the lower of the postcode risk tool or the policy LVR limits will apply.\" Policy also refers to \"minimal appetite postcodes\", in which contract-of-sale and AVM valuations cannot be used."
+    },
+    "postcodeListUrl": {
+      "value": "https://www.bankaust.com.au/broker/postcode-calculator",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankaust.com.au/broker-partners",
+      "sourceTitle": "Bank Australia Broker partners page - Calculators & tools",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bank Australia publishes a public, login-free broker postcode calculator. It returns the postcode risk outcome per postcode rather than publishing a list."
+    },
+    "highDensityPolicy": {
+      "value": "\"High density apartments are those located in a building having six or more floors or more than 50 accommodation units. The valuation must include two recent comparable sales outside of the development.\" With a minimum 40sqm floor size the LVR is 80% without LMI and 95% with QBE or Helia LMI; at 25-39sqm the LVR drops to 70% with no LMI available. \"The LMI provider may have further LVR restrictions that apply to new apartments in certain postcodes.\"",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bank Australia is unusually generous here - a 40sqm+ high density apartment reaches the same 95% LMI ceiling as a house, where most lenders cut high density LVRs."
+    },
+    "highDensityMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% without LMI (95% with QBE or Helia LMI) at a minimum 40sqm floor size; 70% and no LMI at 25-39sqm."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Property is zoned rural and the major use must be residential (not income producing).\""
+    },
+    "ruralMaxLvrPct": {
+      "value": 70,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rural house and land under 50ha: 70% without LMI, 90% with QBE LMI. Rural land only under 50ha: 65% without LMI, 80% with QBE LMI. Land size over 50ha: 50%, no LMI. (The Helia column for the rural rows was ambiguous in extraction and is not relied on.)"
+    },
+    "companyTitleAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Company or Stratum Titles: 70%\" maximum LVR, no LMI option. Notably more accommodating than most of the panel, which declines company title outright."
+    },
+    "leaseholdAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1, 7.1.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "70% maximum LVR, no LMI. \"Subject to Lending Management approval. Includes leasehold securities other than crown lease properties. The term of the lease holding must exceed the loan term by 5 years.\" Crown lease properties are separately acceptable on the same 5-year lease-term-over-loan-term test."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Units, townhouses and low density apartments at 40sqm+ reach 80% without LMI / 95% with LMI. Strata insurance is accepted in place of a building certificate of currency on real estate securities."
+    },
+    "offThePlanAccepted": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Proposed securities that are 'turnkey' or 'off the plan' purchases are not acceptable as security until a certificate of occupancy has been issued. A licensed valuation is required and must be dated within 90 days of the certificate of occupancy.\" So off the plan can complete, but cannot be taken as security before the certificate of occupancy - a hard no for pre-approval on an OTP contract."
+    },
+    "servicedApartmentAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Serviced or holiday apartments (managed and/or pooled rental agreement generating a fixed yield regardless of occupancy) are accepted at 70% LVR with no LMI, minimum floor size 40sqm, and always require a licensed valuation. Units in a hotel or motel remain unacceptable."
+    },
+    "studentAccommodationAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Student or Studio Apartment - Marketed to students where there is a high density of similar accommodation units\": 70% LVR, no LMI, minimum floor size 25sqm."
+    },
+    "displayHomeLeasebackAccepted": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s7.1.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable: \"Display homes where the display village is ongoing (e.g. not due for decommission within 2 years)\" - so a display home is acceptable only where the village is due for decommission within two years."
+    },
+    "sdaNdisAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss4.3, 7.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% LVR (no LMI). \"Acceptable as security for an owner occupied loan with an approved NDIS plan for SDA accommodation meeting one of the four design categories; improved liveability, fully accessible, high physical support, robust.\" NDIS income is counted at 100% but only for SDA loan applications in conjunction with an approved plan where the loan is secured by SDA specialist accommodation."
+    },
+    "maxSecurities": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No maximum number of securities per facility is published. A related borrower limit does exist: individuals owning four or more investment properties, or deriving more than 50% of income from investments, are unacceptable consumer borrowers."
+    },
+    "notes": {
+      "value": "\"Securities must be in prime condition. Where a valuation demonstrates a property is in less than prime condition, discretion should be applied to limit the LVR to an acceptable level.\" A licensed valuation is ALWAYS required for construction loans, favourable purchases, multiple dwellings on a single title, serviced apartments, purchases from a developer or builder or off the plan, land over 10,000 sqm, and floor sizes under 40sqm. Valuations must be by a panel valuer instructed by and addressed to the bank, in Australian Property Institute format. Valuations with high risk ratings are reviewed and accepted only on an exceptions basis.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss7.1.1, 8.1, 8.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s9.1 Acceptable Loan Terms",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Mortgage loan, principal and interest: \"Maximum 30 years\", for owner occupied and investment."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s9.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Interest only is INVESTMENT and CONSTRUCTION only in the s9.1 parameters column - it is not offered for owner occupied. \"LVR below 70%, maximum 5 years; LVR above 70%, maximum 3 years; Construction, maximum 12 months.\""
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s9.1",
+      "confidence": "medium",
+      "status": "not_found",
+      "note": "The s9.1 loan-term table lists Owner occupied and Investment against Principal and Interest, but only Investment and Construction against Interest Only - implying owner-occupied interest only is not offered. Because this is read from a column layout rather than an explicit sentence, no value is asserted; confirm with a BDM."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss3.2, 9.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum term 12 months. Available for owner occupied purchase and owner occupied construction. \"Peak and end LVR must not exceed 80%\"; where the LVR is above 75% at origination, approval is by exception only. Servicing is assessed on the residual debt at the end of year one and year two, allowing for accrued interest in both years and a sale price reduced by 10% in year two."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s9.2 Construction Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Fixed Price Building Contract, or Cost Plus Building Contract at a maximum 65% LVR with a minimum RDI of $1,000. Construction must be completed by a registered builder; if not, it is treated as owner builder. Non-industry-standard progress payment schedules by exception. Interest only during construction is capped at 12 months. Required documents include a signed fixed price building contract, a full 'As If Complete' valuation, council approved stamped plans and specifications, a council approved building permit and a builders indemnity insurance certificate, then a certificate of insurance and certificate of occupancy at completion."
+    },
+    "smsfLendingAvailable": {
+      "value": false,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss2.2, 9.3.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Self-Managed Superannuation Funds are listed as unacceptable borrowers, and \"Lending to Self-Managed Superannuation Funds\" is an unacceptable loan purpose."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankaust.com.au/broker-partners",
+      "sourceTitle": "Bank Australia - home loan range (Basic Home Loan, Offset Home Loan, Clean Energy Home Loan, Bridging Loan)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Bank Australia's published home loan range includes a dedicated 'Offset Home Loan'. The offset mechanics are not described in the underwriting policy, which is silent on product features."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s6.2 Genuine Savings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Where the LVR is above 90%, the borrower must provide at least 5% of the purchase price from genuine savings unless they are participating in a Government backed Scheme (and the bank is an approved lender), in which case the Scheme's minimum genuine savings requirements will apply.\""
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s6.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Genuine savings is only required above 90% LVR."
+    },
+    "genuineSavingsMinMonths": {
+      "value": 3,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s6.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Genuine savings is defined as a demonstrable savings pattern established over a minimum period of 3 months in the name of at least one borrower prior to the loan application being received.\" Acceptable sources include accumulated savings, sale proceeds of shares or other tradeable instruments (including cryptocurrency or micro-investments) net of tax, managed funds, equity in real estate or borrowed funds against an existing property (with the borrowing counted in servicing), non-preserved superannuation contributions accessible in cash, and redrawable additional loan repayments."
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s6.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"For first home buyers, 6 months rental history where the rent paid supports an ability to service the new loan\" is an acceptable form of genuine savings. First home buyers only, 6 months. Note that a rental DISCOUNT is separately unacceptable."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss6.2.1, 6.3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Gifts are accepted as funds to complete but are expressly NOT genuine savings (\"Unacceptable Genuine Savings: Government grants/rebates (including First Home Owner's Grant), Gifts, Inheritance ...\"). So a gift can fund the deposit, but cannot satisfy the 5% genuine savings test above 90% LVR."
+    },
+    "giftedDepositConditions": {
+      "value": "\"Where funds from a gift are being received to complete a purchase, the gift must be from an acceptable source and evidenced by a letter stating that payment is non-repayable and the giver has no interest in the property being purchased.\" Acceptable sources: spouse or de facto partner; parents, step parents or children; siblings; grandparents or grandchildren; aunts or uncles. A favourable purchase from an immediate family member (or their estate) counts as 'gifted equity' - a licensed valuation is required referring to both the nature of the sale and the sale price, the LVR is set on the valuation amount, and enquiry must confirm the gifted equity or discount is non-repayable.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss6.3, 6.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss2.3.2-2.3.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Both Family Guarantees and Security Guarantees are offered. A SERVICING guarantee (a non-spouse party guaranteeing serviceability) is expressly NOT accepted: \"The bank will not accept a servicing guarantee to replace or mitigate any weakness in the borrower(s) ability to repay.\""
+    },
+    "guarantorConditions": {
+      "value": "The guarantee must be limited to the amount required to avoid LMI (Family Guarantees) or to the loan amount (Security Guarantees), and the guarantor must obtain Independent Legal Advice before accepting it. Family Guarantee: only from the parent/s or step parent/s of the borrower/s, only to assist the purchase of a family home; the total loan cannot exceed purchase price plus costs and cannot include consolidation of other borrowings or acquisition of other assets; not accepted where the guarantor receives a pension or superannuation benefits unless the mortgaged asset is supplementary to their family home or they hold significant other convertible investments; where the guarantor's property is the sole security, approval is required at Executive Lending Group level; the guarantor must be of sufficient means that giving the mortgage would not create hardship on default and repossession. A guarantor may be released once the loan liability reduces to the borrower's acceptable LVR using a valuation no older than 12 months.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss2.3.2, 2.3.3, 2.3.4",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme",
+        "Australian Government Help to Buy Scheme"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankaust.com.au/broker-partners/forms-and-resources",
+      "sourceTitle": "Bank Australia Broker partners - Forms & resources (Government schemes section); home loan schemes navigation",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Bank Australia publishes both schemes under 'Home loan schemes' and carries a Government section on the broker forms and resources page. The underwriting policy separately confirms scheme participation matters: above 90% LVR the 5% genuine savings requirement is displaced by the Scheme's own minimum \"unless they are participating in a Government backed Scheme (and the bank is an approved lender)\"."
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 55,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.5.1 Retirement Strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "An exit strategy is required if any borrower will reach or surpass age 67 during the loan term AND is aged 55 or over. It is ALSO required for borrowers aged between 50 and 55 where the Remaining Disposable Income is under $1,000 - so the trigger drops to 50 for tight-servicing files."
+    },
+    "maxAgeAtMaturity": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s3.5.1",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No hard maximum age at maturity - age 67 during the loan term triggers an exit strategy requirement rather than a decline."
+    },
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published in the underwriting policy. The policy does cap valuation-method reliance at a $1.5m maximum loan for contract-of-sale and AVM valuations, and caps household-income support at a $30,000 application."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "notes": {
+      "value": "Unacceptable loan purposes: reverse mortgages; lending to Self-Managed Superannuation Funds; general living expenses; lending to support fossil fuels, intensive animal farming, live export, gambling, arms or tobacco industries; and the purchase of new internal combustion engine vehicles (including low emission and hybrid). The last two are ethical-lending exclusions specific to Bank Australia as a B Corp and are genuine knock-outs a broker must screen for. Acceptable purposes include purchase, refinance, refinance of a land loan for construction, multiple investments (three or fewer investment properties), bridging finance, consumer purchase of durables, debt consolidation (DLA 3 approval and mandatory Level 2 verification), home improvements/renovations, personal investment and personal expenditure.",
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss9.3, 9.3.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Acceptable borrowers are individuals working and living in Australia, aged 18 or older, who are a citizen or permanent resident of Australia or New Zealand."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Australian permanent residents working and living in Australia are acceptable. But \"Australian and New Zealand permanent residency visa holders living in a country other than Australia\" are expressly unacceptable borrowers."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens are named alongside Australian citizens as acceptable borrowers. \"New Zealand Citizens living and working in Australia are acceptable borrowers and are not considered 'non-residents'.\" The subclass 444 visa is not named specifically."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Exception basis only. An acceptable non-resident borrower is an Australian or New Zealand CITIZEN living outside Australia who is a tax resident either of a country with a Double Taxation Agreement with Australia, or of Brunei, Qatar, United Arab Emirates, Dubai, Hong Kong, Bahrain or Macau. \"This borrower can be considered on an exception only basis.\" Non-residents who are self-employed overseas are unacceptable, and foreign self-employed income is unacceptable income. Non-resident employment additionally requires the probationary period to be completed and employment by a large company, multi-national preferred. Australian/NZ PERMANENT RESIDENTS (as opposed to citizens) living overseas are unacceptable."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"An applicant who is both a non-citizen and non-permanent resident is not an acceptable form of borrower.\""
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Same basis - neither a citizen nor a permanent resident of Australia or New Zealand."
+        },
+        {
+          "status": "temporary_visa_partner_309_820",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not separately addressed; falls within \"An applicant who is both a non-citizen and non-permanent resident is not an acceptable form of borrower.\""
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Overseas nationals (unless granted approval on an exception only basis)\" are listed as unacceptable borrowers."
+        }
+      ],
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, ss2.1.1, 2.1.2, 2.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Employees of the Department of Foreign Affairs working in an Australian Embassy or Consulate are acceptable borrowers and are not considered non-residents."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.9,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Foreign income 90% - notably more generous than the 80% typical of the panel. Convert to Australian dollars using the RBA website. Only PAYG income or pensions can be considered, not self-employed income. Australian tax rates apply unless the borrower is a tax resident of one of the listed low-tax jurisdictions."
+    },
+    "acceptedForeignCurrencies": {
+      "value": null,
+      "asAt": "2026-06-01",
+      "sourceUrl": "https://cdn.bfldr.com/1R31Y8GR/as/rpcnhswxscj3hwktvkkzv4r7/Credit_Underwriting_Policy",
+      "sourceTitle": "Bank Australia Consumer Credit Underwriting Policy, June 2026, s4.2",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No currency list is published - conversion is simply done at RBA rates. Policy instead lists TAX JURISDICTIONS whose net income may be used: Brunei, Qatar, Saudi Arabia, United Arab Emirates, Dubai, Hong Kong, Oman, Singapore, Malaysia, Bahrain."
+    },
+    "firbRequiredNote": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "FIRB is not mentioned - consistent with overseas nationals being unacceptable borrowers other than by exception."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-06-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No numeric DTI cap is published, even though DTI is one of Bank Australia's three named servicing calculations.",
+    "No credit-history knock-outs beyond 'bankrupt borrowers are unacceptable' - nothing on defaults (count, age or dollar threshold), judgments, writs, Part IX, or years since bankruptcy discharge.",
+    "No minimum or maximum loan amount is published anywhere in the underwriting policy.",
+    "Product features (offset mechanics, redraw, fees, split limits) are not in the underwriting policy and were only partially confirmed from the public home loan range.",
+    "The credit card assessment is published as a rule (repay the limit over 3 years P&I at 22%) rather than a monthly percentage; the 3.83% recorded is derived from that rule, not quoted.",
+    "Whether owner-occupied interest only is offered at all is ambiguous - the s9.1 loan-term table lists only Investment and Construction against Interest Only.",
+    "The Helia LMI column for the rural security rows extracted ambiguously and is not relied on; only the QBE figures and the no-LMI figures are recorded for rural.",
+    "The postcode risk tool overrides policy LVRs but its outputs are only available per-postcode through the public broker postcode calculator, not as a list.",
+    "Bank Australia's ACL and ABN are not stated in the underwriting policy and were not sourced.",
+    "Bank Australia is a B Corp with hard ethical exclusions (no fossil fuels, intensive animal farming, live export, gambling, arms or tobacco lending; no new internal combustion engine vehicle purchases). These are real knock-outs that most matching engines will not model."
+  ]
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { errMessage } from "../../utils/errors";
 
 type Contact = {
   id: string;
@@ -32,9 +33,31 @@ type Contact = {
 
 type Pipeline = { id: string; name: string; stages: string[]; color: string };
 
+// Shape passed to onCreated: the API response spread together with the form
+// values the parent re-reads to build a board card. All fields optional/nullable
+// since callers may ignore the payload entirely.
+type CreatedLead = {
+  id?: string;
+  lead_id?: string;
+  full_name?: string | null;
+  email?: string | null;
+  buyer_type?: string | null;
+  state?: string | null;
+  budget?: string | null;
+  score?: number | null;
+  temperature?: string | null;
+  _stage?: string;
+  match_status?: string | null;
+  top_match_name?: string | null;
+  top_match_price?: string | null;
+  created_at?: string | null;
+  pipeline_id?: string | null;
+  tags?: string | null;
+};
+
 type Props = {
   onClose: () => void;
-  onCreated: (lead: any) => void;
+  onCreated: (lead: CreatedLead) => void;
   prefillContact?: Contact | null;
   pipelines?: Pipeline[];
   defaultPipelineId?: string;
@@ -88,8 +111,9 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
 
   // Optional appointment to schedule alongside the opportunity (POST /api/appointments).
   // Hidden by default so the existing flow stays one-screen; expanding reveals a quick
-  // scheduler that creates a Google Calendar event (+ invite) and a Supabase appointments
-  // row in one go. Falls back to CRM-only if Google Calendar isn't connected.
+  // scheduler that writes the Supabase appointments row, mints a self-hosted
+  // LiveKit video link and emails the attendee a branded invite with an .ics
+  // attachment. (Google Calendar was removed from this flow in 2026-07.)
   const [apptOpen,      setApptOpen]      = useState(false);
   const [apptTitle,     setApptTitle]     = useState("");
   const [apptStartTime, setApptStartTime] = useState(""); // <input type="datetime-local"> value
@@ -121,18 +145,17 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
 
   // Filter primary dropdown
   useEffect(() => {
-    if (!contactQuery.trim()) { setFilteredContacts([]); setShowDropdown(false); return; }
+    if (!contactQuery.trim()) { queueMicrotask(() => { setFilteredContacts([]); setShowDropdown(false); }); return; }
     const q = contactQuery.toLowerCase();
     const matches = allContacts.filter((c) =>
       [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q))
     ).slice(0, 8);
-    setFilteredContacts(matches);
-    setShowDropdown(matches.length > 0);
+    queueMicrotask(() => { setFilteredContacts(matches); setShowDropdown(matches.length > 0); });
   }, [contactQuery, allContacts]);
 
   // Filter additional contacts dropdown (exclude already-linked + primary)
   useEffect(() => {
-    if (!addQuery.trim()) { setAddFiltered([]); setShowAddDropdown(false); return; }
+    if (!addQuery.trim()) { queueMicrotask(() => { setAddFiltered([]); setShowAddDropdown(false); }); return; }
     const q = addQuery.toLowerCase();
     const excludeIds = new Set([
       ...(primaryContact ? [primaryContact.id] : []),
@@ -142,8 +165,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       .filter((c) => !excludeIds.has(c.id))
       .filter((c) => [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)))
       .slice(0, 8);
-    setAddFiltered(matches);
-    setShowAddDropdown(matches.length > 0);
+    queueMicrotask(() => { setAddFiltered(matches); setShowAddDropdown(matches.length > 0); });
   }, [addQuery, allContacts, primaryContact, linkedContacts]);
 
   // Close dropdowns on outside click
@@ -200,12 +222,43 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
     setSaving(true);
     setError(null);
 
-    const linkedIds = [
-      ...(primaryContact ? [primaryContact.id] : []),
-      ...linkedContacts.map((c) => c.id),
-    ];
-
     try {
+      // Everything downstream — the opportunity's primary_contact_id, the
+      // appointment, the task — hangs off a contact row. A brand-new person
+      // typed straight into this form has none, so create one first rather
+      // than build an opportunity that can never be scheduled against.
+      // Idempotent on email, so a retry after a failure won't duplicate them.
+      let resolvedContactId = (primaryContact ?? prefillContact)?.id ?? null;
+      let contactError: string | null = null;
+      if (!resolvedContactId) {
+        try {
+          const cRes = await fetch("/api/contacts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              full_name: fullName.trim(),
+              email: email.trim().toLowerCase(),
+              phone: phone.trim() || null,
+              buyer_type: buyerType || null,
+              preferred_state: state || null,
+              timeframe: timeframe || null,
+              temperature,
+              source: "crm_manual",
+            }),
+          });
+          const cData = await cRes.json().catch(() => ({}));
+          if (cRes.ok && cData.contact_id) resolvedContactId = cData.contact_id as string;
+          else contactError = cData.error || `HTTP ${cRes.status}`;
+        } catch (cErr) {
+          contactError = errMessage(cErr, "request failed");
+        }
+      }
+
+      const linkedIds = [
+        ...(resolvedContactId ? [resolvedContactId] : []),
+        ...linkedContacts.map((c) => c.id),
+      ];
+
       // Personal / employment / financial come straight from the prefilled
       // contact (if any). User can override them later via edit modal.
       const carryFromContact = prefillContact ?? primaryContact ?? null;
@@ -225,7 +278,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           ghl_stage:   stage,
           temperature,
           source:      "crm_manual",
-          primary_contact_id: primaryContact?.id || null,
+          primary_contact_id: resolvedContactId,
           linked_contact_ids: linkedIds.length > 0 ? linkedIds : null,
           pipeline_id: pipelineId || null,
           tags:        tags.length > 0 ? tags : null,
@@ -253,15 +306,27 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
       // Both are best-effort — the opp is already saved at this point, so a
       // sub-step failure is a soft warning rather than a rollback.
       const warnings: string[] = [];
-      const contactForExtras = primaryContact ?? prefillContact ?? null;
 
-      if (apptOpen && apptStartTime && contactForExtras?.id) {
+      // Both extras hang off the contact resolved above. It is only missing if
+      // creating it failed, and then the operator has to be told — a meeting
+      // silently not booked is worse than useless on a call: you hang up
+      // believing the client has an invite.
+      const extrasBlocked = !resolvedContactId;
+      if (extrasBlocked && ((apptOpen && apptStartTime) || (taskOpen && taskTitle.trim()))) {
+        warnings.push(
+          `The contact record could not be created (${contactError || "unknown error"}), so ${
+            apptOpen && apptStartTime ? "the meeting was NOT booked and no invite was sent" : "the task was NOT created"
+          }.`,
+        );
+      }
+
+      if (apptOpen && apptStartTime && resolvedContactId) {
         try {
           const apptRes = await fetch("/api/appointments", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              contact_id: contactForExtras.id,
+              contact_id: resolvedContactId,
               contact_email: email.trim().toLowerCase(),
               contact_name: fullName.trim(),
               title: apptTitle.trim() || `Meeting with ${fullName.trim()}`,
@@ -276,19 +341,19 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           } else if (apptData.calendar_warning) {
             warnings.push(`Appointment: ${apptData.calendar_warning}`);
           }
-        } catch (apptErr: any) {
-          warnings.push(`Appointment: ${apptErr.message || "request failed"}.`);
+        } catch (apptErr) {
+          warnings.push(`Appointment: ${errMessage(apptErr, "request failed")}.`);
         }
       }
 
-      if (taskOpen && taskTitle.trim() && contactForExtras?.id) {
+      if (taskOpen && taskTitle.trim() && resolvedContactId) {
         try {
           const taskRes = await fetch("/api/tasks", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               title: taskTitle.trim(),
-              contact_id: contactForExtras.id,
+              contact_id: resolvedContactId,
               due_date: taskDueDate || null,
               source: "opportunity_modal",
             }),
@@ -297,8 +362,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           if (!taskRes.ok) {
             warnings.push(`Task: ${taskData.error || `HTTP ${taskRes.status}`}.`);
           }
-        } catch (taskErr: any) {
-          warnings.push(`Task: ${taskErr.message || "request failed"}.`);
+        } catch (taskErr) {
+          warnings.push(`Task: ${errMessage(taskErr, "request failed")}.`);
         }
       }
 
@@ -323,8 +388,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
           created_at: new Date().toISOString(),
         });
       }, warnings.length > 0 ? 3000 : 800);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errMessage(err));
       setSaving(false);
     }
   };
@@ -528,8 +593,8 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
               {requiresPreferredLocation && (
                 <p className="text-[11px] text-gray-400 mt-1.5">
                   For owner-occupiers and first-home buyers, the matchmaker biases
-                  property suggestions toward this location (or the contact's current
-                  state if blank). Write a city, suburb, region, or "{state || "anywhere"}".
+                  property suggestions toward this location (or the contact&apos;s current
+                  state if blank). Write a city, suburb, region, or &quot;{state || "anywhere"}&quot;.
                 </p>
               )}
             </div>
@@ -640,7 +705,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                       onChange={(e) => setApptStartTime(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Defaults to a 60-minute slot. Google Meet link auto-attached.</p>
+                    <p className="text-xs text-gray-400 mt-1">Defaults to a 60-minute slot. A video meeting link is attached automatically.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes (optional)</label>
@@ -710,7 +775,7 @@ export default function NewOpportunityModal({ onClose, onCreated, prefillContact
                       onChange={(e) => setTaskDueDate(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact's detail page.</p>
+                    <p className="text-xs text-gray-400 mt-1">Leave blank for an open-ended task. Visible on /tasks and on the contact&apos;s detail page.</p>
                   </div>
                 </div>
               )}

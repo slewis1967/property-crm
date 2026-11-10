@@ -1,0 +1,275 @@
+{
+  "id": "rate-money",
+  "name": "Rate Money",
+  "legalName": "Rate Money Pty Ltd",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "519912",
+  "abn": "92 632 468 056",
+  "brokerSiteUrl": "https://ratemoney.com.au/lets-go",
+  "policyDocUrl": "https://ratemoney.com.au/alt-doc-loans",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on ratemoney.com.au (product pages, FAQ, referral-partner pages)."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/choose-your-loan",
+      "sourceTitle": "Rate Money — Choose your loan (Full Doc Home Loan)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Full Doc Home Loan tile states 'Up to 80%' LVR, and the Alt Doc Loans page states 'Max LVR: 80%' with 'No LMI and no risk fee at 80%'. CONFLICT: the consumer FAQ answers 'How much can I borrow?' with 'Up to 98% of the purchase price. But this really depends on your circumstances, what property you want to buy and how much documentation you can provide', and 'How much deposit will I need?' with 'We do have loans that start with deposits from as little as just 5%'. 80 is recorded because it is the figure attached to a named product; the 98% claim is heavily qualified and unattached to any product. Needs a broker to confirm which is the real ceiling."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published separately from owner-occupied."
+    },
+    "maxLvrCashOutPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/choose-your-loan",
+      "sourceTitle": "Rate Money — Choose your loan (Full Doc Home Loan)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Full Doc Home Loan: 'Cash-out up to 80% LVR'. Commercial Alt Doc is described as 'Self declaration and exit strategy only' for cash-out purposes."
+    },
+    "notes": {
+      "value": "Rate Money charges neither LMI nor a risk fee. FAQ: 'Do you charge Lenders Mortgage Insurance (LMI) or a Risk Fee?' — 'No we don't. We think they're unfair. Rate Money provides the Self-Employed with the home loans they need (full doc, low doc and all in between) without any LMI or Risk Fees.' The Alt Doc Loans page repeats: 'No LMI and no risk fee at 80%'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/faq",
+      "sourceTitle": "Rate Money — Frequently Asked Questions",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Live pages with no publication date — as-at is the date accessed."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Alt doc: 'BAS statements', 'business account statements', an 'accountant's declaration'. Full doc: 'last two tax returns'. FAQ: 'the more documentation the better' for the sharpest rates.",
+          "conditions": "'Low doc loans are available to all our Self-Employed customers. As long as you have an ABN and are operating a viable business, you'll be fine.' Time self-employed: 'Usually for at least 24 months. Although with Rate Money, we can always work around the \"usual\" if your circumstances allow us.' The Alt Doc Loans page adds 'Short term ABN accepted'."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As for sole traders — BAS statements, business account statements, accountant's declaration, or last two tax returns.",
+          "conditions": "Same alt-doc / full-doc verification set. Rate Money's whole proposition is self-employed lending; a lending manager who is themselves self-employed is assigned to each application."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As for sole traders.",
+          "conditions": "Not separately addressed on the public site; covered by the general self-employed statements."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/faq",
+      "sourceTitle": "Rate Money — Frequently Asked Questions and Alt Doc Loans page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rate Money publishes nothing about PAYG, casual, overtime, bonus, commission, rental, government or foreign income — the public material is entirely self-employed. Live pages with no publication date — as-at is the date accessed."
+    },
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/alt-doc-loans",
+      "sourceTitle": "Rate Money — Alt Doc Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rate Money describes itself as 'first to market with Alt Doc no-risk fee options'. Residential and commercial alt doc products are both published."
+    },
+    "altDocEvidence": {
+      "value": "Income verified through bank statements, BAS statements, or an accountant's declaration rather than tax returns. Commercial Alt Doc: 'Self declaration and exit strategy only'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/alt-doc-loans",
+      "sourceTitle": "Rate Money — Alt Doc Loans",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/alt-doc-loans",
+      "sourceTitle": "Rate Money — Alt Doc Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential Alt Doc: 'Max LVR: 80%', 'No LMI and no risk fee at 80%'. Commercial Alt Doc: 'Up to 80% LVR'."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/faq",
+      "sourceTitle": "Rate Money — Frequently Asked Questions",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Usually for at least 24 months. Although with Rate Money, we can always work around the \"usual\" if your circumstances allow us.' The Alt Doc Loans page separately advertises 'Short term ABN accepted', so 2 years is a norm rather than a hard floor."
+    }
+  },
+
+  "employment": {
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/faq",
+      "sourceTitle": "Rate Money — Frequently Asked Questions",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Usually for at least 24 months', explicitly flexible ('we can always work around the \"usual\"'), and the Alt Doc product advertises 'Short term ABN accepted'."
+    }
+  },
+
+  "credit": {
+    "notes": {
+      "value": "Impaired credit is accommodated. Alt Doc Loans page: 'Impaired credit options available'. FAQ: 'if you've had a few little hiccups in your past...we can usually work our way around the \"blips\" and still find you a great home loan deal.' No numeric default, arrears, bankruptcy-discharge, enquiry or credit-score criteria are published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/alt-doc-loans",
+      "sourceTitle": "Rate Money — Alt Doc Loans and FAQ",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "security": {
+    "notes": {
+      "value": "The Full Doc Home Loan is advertised with 'Unique properties considered'. No acceptable/unacceptable security list, minimum unit size, postcode matrix, high-density or rural policy is published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/",
+      "sourceTitle": "Rate Money — home page product tiles",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/choose-your-loan",
+      "sourceTitle": "Rate Money — Choose your loan",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Alt Doc Home Loan and Full Doc Home Loan are both advertised at 'Loans up to $5m'. CONFLICT: the Alt Doc Loans page states residential alt doc 'Up to $3.5M'. Other products: SMSF $5m residential / $10m commercial; Commercial $10m; Construction $2.5m; Commercial Alt Doc 'Loans up to $6m'."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/",
+      "sourceTitle": "Rate Money — home page, SMSF Loan tile",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "'Terms up to 30 years' is stated only for the SMSF Loan. No maximum term is published for the Alt Doc or Full Doc home loans."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/",
+      "sourceTitle": "Rate Money — home page, Alt Doc Home Loan tile",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'100% offset account available' on the Alt Doc Home Loan. FAQ qualifies: offset accounts are available on most, but not all, loans."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/choose-your-loan",
+      "sourceTitle": "Rate Money — Choose your loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Construction Loan: variable from 7.69% p.a., loans up to $2.5m, flexible income verification, with a 0.20% green discount for 7-star NatHERS homes."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/choose-your-loan",
+      "sourceTitle": "Rate Money — Choose your loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SMSF Loan: loans up to $5m residential or $10m commercial, terms up to 30 years, 'no ongoing fees or revaluations'."
+    },
+    "notes": {
+      "value": "'No application or valuation fees' on residential alt doc; 'No ongoing fees or annual reviews' and 'No revaluation requirements' on commercial alt doc. Advertised turnaround: conditional approval in 2 days and formal approval in 5 days on average. Pre-approvals valid up to 90 days. Repayment frequency weekly, fortnightly or monthly.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://ratemoney.com.au/alt-doc-loans",
+      "sourceTitle": "Rate Money — Alt Doc Loans and FAQ",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No residency, citizenship, visa, expat or non-resident policy is published on ratemoney.com.au."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Rate Money publishes no credit policy guide or broker policy document. Everything here comes from consumer-facing product tiles, the Alt Doc Loans page and the FAQ; there is no dated policy artefact, so every as-at is the date the live page was accessed.",
+    "TWO PUBLISHED CONFLICTS that a broker should resolve before relying on this record: (1) maximum LVR — product pages say 80% (with no LMI and no risk fee), the FAQ says 'Up to 98% of the purchase price' and 'deposits from as little as just 5%'; (2) alt doc maximum loan — 'Loans up to $5m' on the product tiles versus 'Up to $3.5M' on the Alt Doc Loans page.",
+    "No servicing policy: no assessment buffer, floor rate, DTI cap, HEM basis, rental shading or credit-card assessment rate.",
+    "The income section is self-employed-only by design, but even there no shading percentages, minimum trading periods per evidence type, GST-registration requirement or BAS-period count are published. Nothing at all is published on PAYG, casual, contract, overtime, bonus, commission, rental, government or foreign income.",
+    "No employment tenure rules for PAYG or casual applicants.",
+    "Credit policy is qualitative only ('impaired credit options available', 'we can usually work our way around the blips') — no default, arrears, bankruptcy or discharge-period numbers.",
+    "No security or postcode policy, and no residency/visa policy at all.",
+    "The funder / wholesale funding source behind Rate Money's products is not disclosed on the public site."
+  ]
+}

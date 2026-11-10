@@ -1,0 +1,462 @@
+{
+  "id": "ing-australia",
+  "name": "ING Australia",
+  "legalName": "ING Bank (Australia) Limited",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "229823",
+  "abn": "24 000 893 292",
+  "brokerSiteUrl": "https://broker.ing.com.au/home-loans.html",
+  "policyDocUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "ING does not publish its assessment buffer. The broker product sheets refer credit questions to the 'Residential Mortgage Underwriting Guidelines', which are not available on the public introducer site (broker.ing.com.au), and the broker portal's serviceability calculator sits behind login."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on the public ING introducer site."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap is published in ING's product sheets or Target Market Determinations."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No rental income shading percentage is published publicly."
+    },
+    "creditCardAssessmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "negativeGearingAddBack": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "ING publicly announced a change to its negative gearing serviceability assessment for investor home loan applications following the 2026-27 Budget of 12 May 2026, but the change was communicated to accredited brokers rather than published on the public introducer site, so no value can be sourced here."
+    },
+    "notes": {
+      "value": "ING's credit policy is the 'Residential Mortgage Underwriting Guidelines'. Both broker product sheets say verbatim \"Credit policy (Refer to Residential Mortgage Underwriting Guidelines for full details)\" but that document is not published on the public introducer site, so no servicing parameters could be sourced. Everything recorded in this file comes from the publicly downloadable Mortgage Simplifier and Orange Advantage product sheets (effective March 2026) and the published Target Market Determinations.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26, effective March 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Credit policy LVR table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Owner occupied (Purchase) P&I: 95% (inc. LMI)\". Owner-occupied REFINANCE is capped lower at 90% (inc. LMI). Owner-occupied interest only is capped at 80%. The identical table appears in the Orange Advantage product sheet."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Credit policy LVR table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Investment purchase and refinance are both 90% (inc. LMI) on P&I, and the LVR table also shows 90% (inc. LMI) for investment interest only. Note the product sheet separately carries the line \"I/O repayment type not available where LVR exceeds 80%\" under Repayment type, which sits in tension with the 90% investment IO figure in its own LVR table - confirm with a BDM before relying on investment IO above 80%."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), disclaimer",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"If your client applies to borrow more than 80% of the property value, they will be required to obtain Lenders Mortgage Insurance.\""
+    },
+    "maxLvrRefinancePct": {
+      "value": 90,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Credit policy LVR table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner occupied (Refinance) P&I 90% (inc. LMI), IO 80%. Investment (Refinance) 90% (inc. LMI) on both P&I and IO. Note this is 5 percentage points below the 95% available on an owner-occupied PURCHASE."
+    },
+    "maxLvrCashOutPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No separate cash-out / equity-release LVR ceiling is published. The Mortgage Simplifier TMD does list debt consolidation, renovation and personal investment among acceptable purposes."
+    },
+    "maxLvrConstructionPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Construction lending is not described in ING's public broker product sheets; loan purpose is stated only as \"The purchase or refinance of residential property\"."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Every LVR in the credit policy table is stated as \"(inc. LMI)\", i.e. the capitalised premium must fit inside the cap."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "ING does not name its LMI provider in public broker material."
+    },
+    "lmiWaiverProfessions": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No professional LMI waiver list is published."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Owner occupied purchase, principal & interest (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Owner occupied refinance, principal & interest (inclusive of LMI)" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Owner occupied purchase or refinance, interest only" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Investment purchase or refinance, principal & interest (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Investment purchase or refinance, interest only (inclusive of LMI) - but see the product sheet note that I/O is not available above 80% LVR" }
+      ],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Credit policy LVR table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Identical table published in the Orange Advantage product sheet (ING IMOAPS 04/26). Bands cap LVR by purpose and repayment type, not loan amount, so maxLoanAmount is null throughout."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [],
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "ING publishes no income-type rules on its public introducer site. Income treatment lives in the Residential Mortgage Underwriting Guidelines, which are login-only. The only public statement bearing on income is in the Mortgage Simplifier TMD, which says the product is clearly unsuitable for, among others, \"someone who does not have a steady income\"."
+    },
+    "selfEmployedMinYears": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "altDocAvailable": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No alt-doc/low-doc product appears in ING's public introducer product range (Mortgage Simplifier, Orange Advantage, Fixed Rate Home Loan)."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. ING's TMD does require that eligible borrowers \"Work and reside in Australia\", but states no tenure minimum."
+    },
+    "probationAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "credit": {
+    "notes": {
+      "value": "No credit-history knock-outs are published on ING's public introducer site. The only public statement is in the Mortgage Simplifier TMD: the product would not suit customers \"who do not meet ING's credit lending guidelines\" or \"who have expenses that indicate they cannot afford the loan\".",
+      "asAt": "2025-10-03",
+      "sourceUrl": "https://www.ing.com.au/pdf/ING_Home_Loan_MS_TMD.pdf",
+      "sourceTitle": "ING Mortgage Simplifier Target Market Determination, dated 3 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential property under a registered first mortgage",
+        "Second mortgages accepted only as collateral security",
+        "A guarantee supported by residential property, in some circumstances and subject to ING's credit lending guidelines"
+      ],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Security; and Mortgage Simplifier TMD",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Product sheet verbatim: \"Registered first mortgage, residential security only / Second mortgages may be accepted only as collateral security.\" The guarantee wording comes from the TMD."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No postcode category list or restricted-postcode policy is published on ING's public introducer site."
+    },
+    "highDensityPolicy": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Loan details",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum loan amount $50,000\" - same figure in the Orange Advantage product sheet. NOTE a conflict with ING's own consumer-facing Mortgage Simplifier TMD (3 October 2025), which says \"loan amounts from $20,000 to $5 million\". The broker product sheet is the more recent document (effective March 2026) and is the introducer-channel figure, so $50,000 is recorded here. The broker.ing.com.au home loans page separately states \"Total borrowings $150,000+\" as a condition for certain advertised variable rates - that is a pricing tier, not a minimum loan size."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26), Loan details",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"$5,000,000 for total facility subject to ING's credit approval criteria. Higher amounts may be available on a case by case basis and at ING's discretion.\""
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan term: Up to 30 years\", confirmed in the TMD (\"Term of loan up to 30 years\")."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-10-03",
+      "sourceUrl": "https://www.ing.com.au/pdf/ING_Home_Loan_MS_TMD.pdf",
+      "sourceTitle": "ING Mortgage Simplifier Target Market Determination, dated 3 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"the customer may request to make interest only payments for a maximum of 5 years for owner occupier loans and a maximum of 10 years for investor loans.\" Owner-occupied interest only is separately capped at 80% LVR."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2025-10-03",
+      "sourceUrl": "https://www.ing.com.au/pdf/ING_Home_Loan_MS_TMD.pdf",
+      "sourceTitle": "ING Mortgage Simplifier Target Market Determination, dated 3 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"a maximum of 10 years for investor loans\". This is materially longer than most of the panel and is a genuine differentiator for ING."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/IMOAPS_Product%20Sheet_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Orange Advantage product sheet (ING IMOAPS 04/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Orange Advantage ONLY, via a linked Orange Everyday transaction account in the same names as the home loan - 100% interest offset, $299 non-refundable annual fee. Maximum of two borrowers per Orange Advantage and a maximum of two Orange Advantage home loans per customer. The Mortgage Simplifier product sheet states plainly \"No offset facility is available with a Mortgage Simplifier Loan.\""
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/MMMS_Prod_Spec_Mortg%20Simplifier_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Mortgage Simplifier product sheet (ING MMMS 04/26)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Yes, no minimum redraw amount\", available via BPAY and ING online/phone banking, on both Mortgage Simplifier and Orange Advantage."
+    },
+    "constructionAvailable": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not described in the public broker product sheets, whose stated loan purpose is only \"The purchase or refinance of residential property\". The TMD adds renovation, debt consolidation and personal investment as acceptable purposes but does not describe a progress-draw construction facility."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-10-03",
+      "sourceUrl": "https://www.ing.com.au/pdf/ING_Home_Loan_MS_TMD.pdf",
+      "sourceTitle": "ING Mortgage Simplifier Target Market Determination, dated 3 October 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"In some circumstances a guarantee (subject to ING's credit lending guidelines) supported by residential property will also be considered.\" The conditions are not published."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. ING does publish a 'Gift Policy Statutory Declaration' form on the introducer site (INGDIM25509-08GiftPolicyStatutoryDeclaration), which confirms gifted funds are contemplated, but the genuine-savings rule itself is not public."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/home-loans.html",
+      "sourceTitle": "ING Broker Portal - Home Loans, forms list (Gift Policy Statutory Declaration, INGDIM25509-08)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from ING publishing a dedicated 'Gift Policy Statutory Declaration' form for introducer use; the substantive conditions of the gift policy are not published."
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No scheme list is published, though the introducer site links the NSW Revenue First Home Owner Grant application form."
+    },
+    "notes": {
+      "value": "Two main variable products through the introducer channel. Mortgage Simplifier: no application fee, $350 settlement fee, $350 variation fee, no monthly or annual account keeping fees, $250 discharge fee per security plus legal and third party costs; no offset. Orange Advantage: no application fee, $350 settlement fee, no ING variation fee, $299 non-refundable annual fee charged in advance and on settlement anniversary, $250 discharge fee per security; 100% offset. A Fixed Rate home loan is available for one to five year terms, with a 0.10% p.a. fixed rate discount for owner occupier borrowings where the Orange Advantage is split with a Fixed Rate home loan. Repayments are monthly or fortnightly only (interest only must be monthly).",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://broker.ing.com.au/assets/pdf/IMOAPS_Product%20Sheet_0426_WEB%20SEC.pdf",
+      "sourceTitle": "ING Orange Advantage + Mortgage Simplifier product sheets (04/26, effective March 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be 18 or older, work and reside in Australia, meet ING's credit lending guidelines and the identification requirements."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Australian permanent residents are expressly eligible. Must work and reside in Australia."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens are expressly named as eligible borrowers alongside Australian citizens and permanent residents. Must work and reside in Australia. The TMD does not distinguish the subclass 444 visa specifically."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The eligibility list is closed to Australian citizens, New Zealand citizens and Australian permanent residents, and the TMD names \"customers who are not an Australian resident\" among those for whom the product is clearly unsuitable."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Same basis - not within the closed eligibility list."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Eligibility requires that the borrower \"Work and reside in Australia\", which an Australian citizen living and working overseas does not satisfy."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"customers who are not an Australian resident\" are named as clearly unsuitable in the TMD."
+        }
+      ],
+      "asAt": "2025-10-03",
+      "sourceUrl": "https://www.ing.com.au/pdf/ING_Home_Loan_MS_TMD.pdf",
+      "sourceTitle": "ING Mortgage Simplifier Target Market Determination, dated 3 October 2025 (customer profile/eligibility requirements)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim eligibility: the product \"is only available to individuals who: are 18 years of age or older; are an Australian citizen, New Zealand citizen or Australian permanent resident; Work and reside in Australia; meet ING's credit lending guidelines; and meet the identification requirements.\" The product sheets add \"Eligible borrowers: Personal borrowers only\" - i.e. no company or trust borrowers."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published - consistent with borrowers being required to work and reside in Australia."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-04-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "ING's actual credit policy - the 'Residential Mortgage Underwriting Guidelines' - is not published. Both broker product sheets point to it by name but it is not downloadable from broker.ing.com.au without accreditation, so NO servicing parameters (buffer, floor, DTI, rental shading, credit card assessment, HEM treatment) could be sourced.",
+    "No income-type rules at all (casual, overtime, bonus, commission, self-employed, Centrelink, rental) are public.",
+    "No employment tenure minimums, probation policy, or self-employed trading history minimum are public.",
+    "No credit-history knock-outs (defaults, bankruptcy, arrears, credit score) are public.",
+    "No security restrictions beyond 'residential security only, registered first mortgage' - nothing on minimum unit size, high density, rural, or postcode categories.",
+    "No genuine savings rule, cash-out LVR ceiling, or construction lending policy is public.",
+    "ING announced a change to its investor negative-gearing serviceability treatment after the 12 May 2026 Budget, but the detail went to accredited brokers and is not on the public site - this is the single most likely field to be stale/missing for investor scenarios.",
+    "The Mortgage Simplifier product sheet contradicts itself on investment interest-only above 80% LVR ('I/O not available where LVR exceeds 80%' under Repayment type vs '90% (inc. LMI)' in the LVR table). Needs BDM confirmation.",
+    "The minimum loan amount differs between the broker product sheet ($50,000) and the consumer TMD ($20,000)."
+  ]
+}

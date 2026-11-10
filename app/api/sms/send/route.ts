@@ -15,6 +15,7 @@ import { supabase } from "../../../../utils/supabase";
 import { sendSms, toE164AU } from "../../../../utils/sms";
 import { requireAuth } from "../../../../utils/cf-access";
 import { withObservability } from "../../../../utils/observability";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
 
 async function handler(req: Request) {
@@ -29,7 +30,7 @@ async function handler(req: Request) {
     }
 
     let phone: string | null = null;
-    let contactId: string | null = body.contactId ?? null;
+    const contactId: string | null = body.contactId ?? null;
 
     if (body.phone) {
       phone = toE164AU(body.phone);
@@ -61,9 +62,9 @@ async function handler(req: Request) {
       provider_msg_id: result.provider_msg_id,
       cost: result.cost,
     });
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to send" },
+      { ok: false, error: errMessage(e, "Failed to send") },
       { status: 500 },
     );
   }

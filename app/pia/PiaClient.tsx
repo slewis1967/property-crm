@@ -694,7 +694,7 @@ function PlainEnglish({ inputs, result }: { inputs: PiaInputs; result: ReturnTyp
         <p className="text-gray-700">
           A <strong>{fmtCurrency(inputs.purchasePrice)}</strong> property at{" "}
           <strong>${inputs.weeklyRent}/week</strong> rent ({fmtPct(result.grossYield)} gross yield, {fmtPct(result.netYield)} net of operating).
-          You're financing <strong>{fmtCurrency(inputs.loanAmount)}</strong> at <strong>{lvr.toFixed(1)}% LVR</strong>{" "}
+          You&apos;re financing <strong>{fmtCurrency(inputs.loanAmount)}</strong> at <strong>{lvr.toFixed(1)}% LVR</strong>{" "}
           on a <strong>{inputs.interestRate}%</strong> loan
           {inputs.ioYears > 0 ? <> with <strong>{inputs.ioYears} years interest-only</strong> before principal repayments kick in</> : <> on full P&I from day one</>}.
         </p>
@@ -703,7 +703,7 @@ function PlainEnglish({ inputs, result }: { inputs: PiaInputs; result: ReturnTyp
       <div>
         <h3 className="font-semibold text-base mb-2">Initial cash required</h3>
         <p className="text-gray-700">
-          You'll need <strong>{fmtCurrency(result.initialCashRequired)}</strong> at settlement —{" "}
+          You&apos;ll need <strong>{fmtCurrency(result.initialCashRequired)}</strong> at settlement —{" "}
           {fmtCurrency(inputs.purchasePrice - inputs.loanAmount)} deposit plus {fmtCurrency(result.totalAcquisitionCost)} of acquisition costs
           (stamp duty, legal, inspection, lender setup).
         </p>
@@ -714,7 +714,7 @@ function PlainEnglish({ inputs, result }: { inputs: PiaInputs; result: ReturnTyp
         {isCashflowNegative ? (
           <p className="text-gray-700">
             This is a <span className="text-red-700 font-semibold">negatively-geared</span> position over the holding period
-            — you'll be putting <strong>{fmtCurrency(Math.abs(result.netCashOverHolding))}</strong> into the property in net terms
+            — you&apos;ll be putting <strong>{fmtCurrency(Math.abs(result.netCashOverHolding))}</strong> into the property in net terms
             (after rent, expenses, loan, depreciation tax shield).
             {breakeven ? <> Cashflow turns positive in <strong>year {breakeven}</strong>.</> : <> It stays negative across the entire holding period at current assumptions.</>}{" "}
             The case for negative gearing rests on capital growth offsetting holding costs — see the equity progression below.
@@ -750,7 +750,7 @@ function PlainEnglish({ inputs, result }: { inputs: PiaInputs; result: ReturnTyp
         <p className="text-gray-700">
           After-tax holding cashflow + ending equity − initial cash − CGT on sale ≈{" "}
           <strong className="text-gray-900">{fmtCurrency(result.totalReturn)}</strong>{" "}
-          on initial cash of {fmtCurrency(result.initialCashRequired)}. That's an approximate compounded return of{" "}
+          on initial cash of {fmtCurrency(result.initialCashRequired)}. That&apos;s an approximate compounded return of{" "}
           <strong>{fmtPct(result.irrApprox)}</strong> per year over {inputs.holdingYears} years.
         </p>
       </div>

@@ -1,0 +1,249 @@
+{
+  "id": "cba",
+  "name": "Commonwealth Bank",
+  "legalName": "Commonwealth Bank of Australia",
+  "tier": "major_bank",
+  "status": "active",
+  "acl": "234945",
+  "abn": "48 123 123 124",
+  "brokerSiteUrl": "https://www.commbroker.com.au/",
+  "policyDocUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+  "funder": null,
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/home-loans/residential-broker.html",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public CommBank page. The CommBroker serviceability calculator and credit policy require a broker login (commbroker.com.au returns a login form).",
+      "sourceTitle": "CommBank residential brokers",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/home-loans/residential-broker.html",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly; CommBroker login required.",
+      "sourceTitle": "CommBank residential brokers",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "refinanceBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/home-loans/residential-broker.html",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Trade press reported in June 2026 that CommBank would assess eligible refinancers with a 1.00 percentage point buffer from 23 June 2026, but this is not stated on any public CommBank page - no lender-published source was found, so no value is recorded.",
+      "sourceTitle": "CommBank residential brokers",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/home-loans/residential-broker.html",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published on a public CommBank page.",
+      "sourceTitle": "CommBank residential brokers",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/home-loans/residential-broker.html",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "CommBank residential brokers",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.commbank.com.au/home-loans/standard-variable-rate.html",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan",
+      "note": "Derived from the published Standard Variable Rate with Wealth Package rate card, whose highest LVR tier is 'LVR 90.01% to 95%'. CommBank does not state a maximum LVR in words on a public page. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'When buying a property, you generally require a deposit of at least 20% of the purchase price ... If you don't have the full deposit amount required, you may need to pay Lenders Mortgage Insurance (LMI) or Low Deposit Premium (LDP).' The word 'generally' is the lender's.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "LMI provider(s) not published.",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 10000,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "Standard Variable Rate home loan: 'Minimum loan amount $10,000'.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "medium",
+      "status": "not_found",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "Fact sheet states the maximum loan amount is 'Based on the security property and your borrowing capacity' - no dollar cap is published.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "Loan term: '1 to 30 years'.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'The maximum total Interest Only period over the life of the loan is: 5 years for an owner occupied home loan'. Interest Only payments are not available within the last 5 years of the contracted loan term.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 15,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'15 years for an investment home loan (maximum of 5 years at any one time)'.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "Everyday Offset; multiple offset accounts can be linked to a Standard Variable Rate home loan. An offset feature fee applies.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'Fee free redraws' - the loan has a redraw facility for additional repayments.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'Building and construction loans' listed under what the loan can be used for.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "note": "'Bridging Loan' listed under what the loan can be used for.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme (Home Guarantee Scheme)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Listed as 'Commonwealth Bank' on the Housing Australia participating lender list. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Eligibility: available to Individuals, non-trading Companies and/or Family/Unit/Hybrid Trusts. Permitted purposes include owner occupied or investment purchase, refinance, renovations, consolidation of personal debt, off the plan purchases, purchase of land, bridging loan, building and construction loans, personal needs and personal investments other than cryptocurrency or digital assets. Not available for business purposes. Annual Package Fee $395.",
+      "asAt": "2026-03-14",
+      "sourceUrl": "https://www.commbank.com.au/content/dam/commbank/personal/home-loans/fact-sheets/Standard_Variable_Rate.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "CommBank Standard Variable Rate Home Loan guide (003-371 140326)",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-03-14",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "CommBroker (commbroker.com.au) is entirely behind a broker login, so no CommBank-published serviceability buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis could be sourced.",
+    "No published income-type table (casual, overtime, bonus, commission, self-employed, Centrelink, rental), employment tenure minimums, or credit-history knock-outs.",
+    "No published security/postcode category list, high-density apartment policy or minimum unit size.",
+    "No published residency/visa rules.",
+    "Maximum owner-occupied LVR is inferred from the top LVR band of the published rate card (90.01%-95%), not from a policy statement; maximum investment LVR could not be sourced at all.",
+    "Investor-specific and construction-specific LVR ceilings not published."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

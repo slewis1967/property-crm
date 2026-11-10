@@ -3,9 +3,55 @@ import { supabase } from "../../../../utils/supabase";
 import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { stripHtml } from "../../../../utils/archive-helpers";
+import { errMessage } from "../../../../utils/errors";
 
 import { requireAuth } from "../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget?: string | null;
+  budget_min?: string | number | null;
+  budget_max?: string | number | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+  temperature?: string | null;
+  lead_score?: number | null;
+  status?: string | null;
+  source?: string | null;
+  tags?: string[] | null;
+  notes?: string | null;
+  ghl_contact_id?: string | null;
+  updated_at?: string | null;
+}
+interface NoteRow {
+  body: string | null;
+  date_added: string | null;
+}
+interface ConversationRow {
+  type: string | null;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+}
+interface TaskRow {
+  title: string | null;
+  due_date: string | null;
+  completed: boolean | null;
+  date_added: string | null;
+}
+interface OpportunityRow {
+  name: string | null;
+  status: string | null;
+  monetary_value: number | null;
+  date_added: string | null;
+}
 
 const SYSTEM = `You are an AI brief writer for a property advisor's CRM. The advisor (Sean, NextKey Property Strategists) opens a contact's page and needs to know in 5 seconds: who is this person, where are they in their journey, and what should I focus on with them.
 
@@ -26,7 +72,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch live contact (or fall back to GHL archive)
-    let contact: any;
+    let contact: ContactRow;
     const { data: liveContact } = await supabase
       .from("contacts")
       .select("*")
@@ -77,7 +123,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as NoteRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_conversations")
@@ -85,7 +131,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("last_message_date", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as ConversationRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_tasks")
@@ -93,7 +139,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as TaskRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_opportunities")
@@ -101,7 +147,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as OpportunityRow[] }),
     ]);
 
     // Build a compact context block
@@ -137,23 +183,28 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to generate brief" },
+      { ok: false, error: errMessage(e, "Failed to generate brief") },
       { status: 500 },
     );
   }
 }
 
 function buildContactContext(
-  contact: any,
-  extras: { notes: any[]; conversations: any[]; tasks: any[]; opportunities: any[] },
+  contact: ContactRow,
+  extras: {
+    notes: NoteRow[];
+    conversations: ConversationRow[];
+    tasks: TaskRow[];
+    opportunities: OpportunityRow[];
+  },
 ): string {
   const lines: string[] = [];
   lines.push("=== CONTACT ===");
@@ -213,12 +264,12 @@ function truncate(s: string | null | undefined, n: number) {
   if (!s) return "";
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
-function latestDate(rows: any[] | null | undefined, field: string): string | null {
+function latestDate(rows: readonly unknown[] | null | undefined, field: string): string | null {
   if (!rows || rows.length === 0) return null;
   let max: string | null = null;
   for (const r of rows) {
-    const v = r?.[field];
-    if (v && (!max || v > max)) max = v;
+    const v = (r as Record<string, unknown>)?.[field];
+    if (v && (!max || (v as string) > max)) max = v as string;
   }
   return max;
 }

@@ -262,7 +262,7 @@ export default function SignatureEditor({
         <Field label="Title" value={fields.title} onChange={(v) => update("title", v)} placeholder="Director, NextKey Property Strategists" />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Email" value={fields.email} onChange={(v) => update("email", v)} placeholder="sean.l@nextkey.com.au" type="email" />
-          <Field label="Phone" value={fields.phone} onChange={(v) => update("phone", v)} placeholder="0477 007 785" />
+          <Field label="Phone" value={fields.phone} onChange={(v) => update("phone", v)} placeholder="0477 201 245" />
         </div>
         <Field label="Web" value={fields.web} onChange={(v) => update("web", v)} placeholder="nextkey.com.au" />
         <label className="block">
@@ -354,7 +354,7 @@ function renderSignatureHtml(f: SignatureFields): string {
     ? `<div style="margin-bottom:12px;"><img src="${escapeHtml(f.logo_url)}" alt="${escapeHtml(f.name)}" style="height:${logoH}px;width:auto;display:block;" /></div>`
     : "";
   return `
-<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;color:#374151;line-height:1.5;">
+<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#374151;line-height:1.5;">
   ${logoBlock}
   <p style="margin:0 0 4px;font-weight:600;color:#111827;">${escapeHtml(f.name)}</p>
   <p style="margin:0 0 6px;color:#6b7280;">${escapeHtml(f.title)}</p>

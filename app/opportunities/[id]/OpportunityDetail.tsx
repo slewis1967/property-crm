@@ -1,36 +1,31 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import CallRecordingNote from "../../components/CallRecordingNote";
+import { CALL_OUTCOMES, type CallOutcome, type NoteEntry as CallNoteEntry } from "../../../utils/call-outcome";
 import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 import EditRecordModal from "../../components/EditRecordModal";
+import RequestDocumentsButton from "../../components/RequestDocumentsButton";
+import DocumentProgress from "../../components/DocumentProgress";
 import OpportunityAppointments from "./OpportunityAppointments";
 import OpportunityCalculations from "./OpportunityCalculations";
 import OpportunityPiaReports from "./OpportunityPiaReports";
 import ScheduleMeetingModal from "./ScheduleMeetingModal";
 import AddTaskModal from "./AddTaskModal";
+import OpportunityDocuments, { type OpportunityDoc } from "./OpportunityDocuments";
+import OpportunitySupportingDocuments, { type SupportingDoc, type UploadTarget } from "./OpportunitySupportingDocuments";
+import OpportunityIncomeCheck, { type IncomeCheckState } from "./OpportunityIncomeCheck";
+import OpportunityEmailActivity from "./OpportunityEmailActivity";
+import type { EmailMessage } from "../../../utils/email-events";
+import OpportunityTasks, { type LiveTask } from "./OpportunityTasks";
+import { useOpportunityDocs } from "./useOpportunityDocs";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
 
 const STAGES = [
   "New Lead", "Qualified", "Matched", "Contacted",
   "Proposal Sent", "Negotiating", "Closed Won", "Closed Lost",
-];
-
-// Hosts who can schedule meetings from the CRM. Email is the key —
-// the server looks up the corresponding refresh_token in
-// public.calendar_credentials. Add a new entry once that host has
-// connected their calendar via Settings → Calendar connections.
-const SCHEDULING_HOSTS: Array<{ label: string; email: string; bookingPageUrl: string }> = [
-  {
-    label: "Sean",
-    email: "sean.l@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/19ocFJGhcTHSFKBg7",
-  },
-  {
-    label: "Glenn",
-    email: "glenn.m@nextkey.com.au",
-    bookingPageUrl: "https://calendar.app.google/tyLLhLCA7k686t5L9",
-  },
 ];
 
 const stageStyle: Record<string, string> = {
@@ -117,10 +112,24 @@ export default function OpportunityDetail({
   lead: initialLead,
   ghlArchive = { notes: [], conversations: [], tasks: [], appointments: [] },
   ghlContactId = null,
+  documents = [],
+  supportingDocuments = [],
+  uploadTargets = [],
+  incomeCheck,
+  emailActivity = [],
+  liveTasks = [],
+  opportunityId,
 }: {
   lead: Lead;
   ghlArchive?: GhlArchive;
   ghlContactId?: string | null;
+  documents?: OpportunityDoc[];
+  supportingDocuments?: SupportingDoc[];
+  uploadTargets?: UploadTarget[];
+  incomeCheck?: IncomeCheckState;
+  emailActivity?: EmailMessage[];
+  liveTasks?: LiveTask[];
+  opportunityId: string;
 }) {
   const router = useRouter();
   // Local lead state — used so edits via the modal reflect immediately
@@ -129,8 +138,10 @@ export default function OpportunityDetail({
   const [lead, setLead] = useState(initialLead);
   const [showEdit, setShowEdit] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleKind, setScheduleKind] = useState<"video" | "phone">("video");
   const [showAddTask, setShowAddTask] = useState(false);
   const [showBookingLinks, setShowBookingLinks] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const bookingLinkRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!showBookingLinks) return;
@@ -145,6 +156,24 @@ export default function OpportunityDetail({
   const [stage, setStage] = useState(lead.ghl_stage || "New Lead");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Fact Find / Needs Analysis / Credit Authorisation — open (or create) this
+  // borrower's compliance documents, linked to their primary contact. The
+  // open-or-create logic (reuse the contact's most-recent doc; the Fact Find
+  // also prefills from the opportunity's saved borrowing calc) lives in the
+  // shared useOpportunityDocs hook so these top buttons and the buttons in the
+  // Calculations panel can't drift.
+  const {
+    openFactFind,
+    factFindLoading,
+    factFindError,
+    openNeedsAnalysis,
+    needsAnalysisLoading,
+    needsAnalysisError,
+    openCreditAuthorisation,
+    creditAuthLoading,
+    creditAuthError,
+  } = useOpportunityDocs({ opportunityId: lead.lead_id, contactId: lead.primary_contact_id });
 
   // Pipeline switcher — load available pipelines, allow moving the
   // opportunity between them. Stage buttons below now reflect whichever
@@ -164,6 +193,18 @@ export default function OpportunityDetail({
 
   const activePipeline = pipelines.find((p) => p.id === pipelineId);
   const activeStages = activePipeline?.stages?.length ? activePipeline.stages : STAGES;
+
+  // Back button — return to the specific pipeline this opportunity lives in,
+  // built from its own pipeline_id so it's correct on a fresh load / shared
+  // link (not reliant on browser history). Falls back to the default
+  // opportunities view when the opportunity has no pipeline. The label uses the
+  // pipeline's name once the pipelines list has loaded.
+  const backHref = pipelineId
+    ? `/opportunities?pipeline=${encodeURIComponent(pipelineId)}`
+    : "/opportunities";
+  const backLabel = activePipeline?.name
+    ? `← Back to ${activePipeline.name}`
+    : "← Back to pipeline";
 
   const updatePipeline = async (newPipelineId: string | null) => {
     const prevPipelineId = pipelineId;
@@ -186,7 +227,7 @@ export default function OpportunityDetail({
   };
 
   // Notes feed
-  type NoteEntry = { text: string; created_at: string };
+  type NoteEntry = CallNoteEntry;
   const parseNotes = (raw: string | null): NoteEntry[] => {
     if (!raw) return [];
     try { return JSON.parse(raw); }
@@ -195,6 +236,31 @@ export default function OpportunityDetail({
   const [noteEntries, setNoteEntries] = useState<NoteEntry[]>(() => parseNotes(lead.notes));
   const [newNote, setNewNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [savingCall, setSavingCall] = useState(false);
+  const [callStatus, setCallStatus] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Same route as the phone page: the server prepends to the lead's current notes,
+  // so a page opened a while ago can't overwrite notes added since. The Springboard
+  // ads agent reads these `call` entries to judge which ads bring leads who answer.
+  const logCall = async (outcome: CallOutcome) => {
+    setSavingCall(true);
+    setCallStatus(null);
+    try {
+      const res = await fetch(`/api/opportunities/${lead.lead_id}/call`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcome }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (Array.isArray(data.notes)) setNoteEntries(data.notes);
+      setCallStatus({ ok: true, text: `Logged: ${CALL_OUTCOMES[outcome]}` });
+    } catch (e) {
+      setCallStatus({ ok: false, text: `Call not logged: ${e instanceof Error ? e.message : "unknown error"}` });
+    } finally {
+      setSavingCall(false);
+    }
+  };
 
   // Tags
   const parseTags = (raw: string | null): string[] => { try { return raw ? JSON.parse(raw) : []; } catch { return []; } };
@@ -225,10 +291,8 @@ export default function OpportunityDetail({
     try { return lead.linked_contact_ids ? JSON.parse(lead.linked_contact_ids) : []; }
     catch { return []; }
   });
-  const [linkedContacts, setLinkedContacts] = useState<Contact[]>([]);
   const [allContacts, setAllContacts] = useState<Contact[]>([]);
   const [contactQuery, setContactQuery] = useState("");
-  const [filtered, setFiltered] = useState<Contact[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [savingContacts, setSavingContacts] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -240,20 +304,36 @@ export default function OpportunityDetail({
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!allContacts.length) return;
-    setLinkedContacts(allContacts.filter((c) => linkedIds.includes(c.id)));
-  }, [allContacts, linkedIds]);
+  // Both of these are pure functions of state we already hold, so they are
+  // derived during render rather than mirrored into state from an effect —
+  // which cost an extra render pass on every keystroke.
+  const linkedContacts = useMemo(
+    () => allContacts.filter((c) => linkedIds.includes(c.id)),
+    [allContacts, linkedIds],
+  );
 
-  useEffect(() => {
-    if (!contactQuery.trim()) { setFiltered([]); setShowDropdown(false); return; }
+  // The co-applicant on a joint deal: the first linked contact that isn't the
+  // primary. Used to pre-fill applicant 2 in the document request.
+  const coApplicant = useMemo(
+    () => linkedContacts.find((c) => c.id !== lead.primary_contact_id) ?? null,
+    [linkedContacts, lead.primary_contact_id],
+  );
+
+  // The primary applicant's email so the document request can auto-send: prefer
+  // the opportunity's own email, fall back to the linked primary contact's.
+  const primaryEmail = useMemo(() => {
+    if (lead.email && lead.email.trim()) return lead.email.trim();
+    const pc = allContacts.find((c) => c.id === lead.primary_contact_id);
+    return pc?.email || undefined;
+  }, [lead.email, lead.primary_contact_id, allContacts]);
+
+  const filtered = useMemo(() => {
+    if (!contactQuery.trim()) return [];
     const q = contactQuery.toLowerCase();
-    const matches = allContacts
+    return allContacts
       .filter((c) => !linkedIds.includes(c.id))
       .filter((c) => [c.name, c.full_name, c.email, c.phone].some((v) => v?.toLowerCase().includes(q)))
       .slice(0, 8);
-    setFiltered(matches);
-    setShowDropdown(matches.length > 0);
   }, [contactQuery, allContacts, linkedIds]);
 
   useEffect(() => {
@@ -337,16 +417,21 @@ export default function OpportunityDetail({
   return (
     <div className="flex flex-col h-full -mx-8 -my-8 bg-gray-50">
 
-      {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+      {/* Top bar — breadcrumb on the first row, actions wrap onto a second row
+          so the buttons get full width instead of squashing beside the name. */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex flex-col gap-2.5 flex-shrink-0">
         <div className="flex items-center gap-2 text-sm">
-          <button onClick={() => router.push("/opportunities")} className="text-gray-400 hover:text-gray-700 transition">
-            ← Opportunities
+          <button
+            onClick={() => router.push(backHref)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-white shadow-sm transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#0F4C5C]"
+            style={{ backgroundColor: "#0F4C5C" }}
+          >
+            {backLabel}
           </button>
           <span className="text-gray-300">/</span>
           <span className="text-gray-700 font-medium">{name}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <button
             onClick={() => setShowEdit(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
@@ -354,10 +439,19 @@ export default function OpportunityDetail({
             ✏️ Edit
           </button>
           <button
-            onClick={() => setShowSchedule(true)}
+            onClick={() => { setScheduleKind("video"); setShowSchedule(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
           >
             📅 Schedule meeting
+          </button>
+          {/* Sits next to Schedule meeting — the common case Glenn described is
+              calling a client back and wanting a confirmation email rather than
+              a video-meeting link. */}
+          <button
+            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📞 Phone call
           </button>
           <button
             onClick={() => setShowAddTask(true)}
@@ -365,6 +459,68 @@ export default function OpportunityDetail({
           >
             ✅ Add task
           </button>
+          <button
+            onClick={openFactFind}
+            disabled={factFindLoading}
+            title={factFindError || "Open this borrower's Fact Find"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            📋 {factFindLoading ? "Opening…" : "Fact Find"}
+          </button>
+          {factFindError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={factFindError}>
+              {factFindError}
+            </span>
+          )}
+          <a
+            href={`/eoi?opportunity=${encodeURIComponent(lead.lead_id)}${
+              lead.primary_contact_id ? `&contact=${encodeURIComponent(lead.primary_contact_id)}` : ""
+            }`}
+            title="Create an Expression of Interest prefilled from this opportunity"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          >
+            📝 EOI
+          </a>
+          <RequestDocumentsButton
+            applicantName={lead.full_name}
+            applicantEmail={primaryEmail}
+            applicantPhone={lead.phone}
+            opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
+            // A joint application carries the co-applicant as a linked contact —
+            // use the first one as applicant 2, and default to 2 applicants when
+            // there's a linked contact or a partner income on file.
+            applicant2Name={coApplicant?.full_name || coApplicant?.name || undefined}
+            applicant2Email={coApplicant?.email || undefined}
+            applicantCount={coApplicant || lead.partner_annual_income ? 2 : 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          />
+          <button
+            onClick={openNeedsAnalysis}
+            disabled={needsAnalysisLoading}
+            title={needsAnalysisError || "Open this borrower's NCCP Needs Analysis"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            🧭 {needsAnalysisLoading ? "Opening…" : "Needs Analysis"}
+          </button>
+          {needsAnalysisError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={needsAnalysisError}>
+              {needsAnalysisError}
+            </span>
+          )}
+          <button
+            onClick={openCreditAuthorisation}
+            disabled={creditAuthLoading}
+            title={creditAuthError || "Open this borrower's Credit File Authorisation"}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          >
+            🔏 {creditAuthLoading ? "Opening…" : "Credit Authorisation"}
+          </button>
+          {creditAuthError && (
+            <span className="text-xs font-medium text-red-600 max-w-[16rem] truncate" title={creditAuthError}>
+              {creditAuthError}
+            </span>
+          )}
           <div ref={bookingLinkRef} className="relative">
             <button
               onClick={() => setShowBookingLinks((s) => !s)}
@@ -375,19 +531,39 @@ export default function OpportunityDetail({
               <span className="text-gray-400 text-[10px]">▾</span>
             </button>
             {showBookingLinks && (
-              <div className="absolute right-0 mt-1.5 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
-                {SCHEDULING_HOSTS.map((host) => (
-                  <a
-                    key={host.email}
-                    href={host.bookingPageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setShowBookingLinks(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    📅 Book with {host.label}
-                  </a>
-                ))}
+              <div className="absolute right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1">
+                <p className="px-3 py-1.5 text-[11px] text-gray-400">Copy a self-book link to send the lead:</p>
+                {SCHEDULING_HOSTS.map((host) => {
+                  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/book/${host.slug}`;
+                  return (
+                    <button
+                      key={host.email}
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          setCopiedSlug(host.slug);
+                          setTimeout(() => setCopiedSlug((s) => (s === host.slug ? null : s)), 1500);
+                        } catch {
+                          window.open(url, "_blank", "noopener");
+                        }
+                      }}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-2">📅 Book with {host.label}</span>
+                      <span className={`text-[11px] ${copiedSlug === host.slug ? "text-green-600" : "text-gray-400"}`}>
+                        {copiedSlug === host.slug ? "Copied!" : "Copy"}
+                      </span>
+                    </button>
+                  );
+                })}
+                <a
+                  href="/book/sean"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-3 py-1.5 text-[11px] text-teal-700 hover:underline"
+                >
+                  Preview a booking page →
+                </a>
               </div>
             )}
           </div>
@@ -422,6 +598,7 @@ export default function OpportunityDetail({
           lead={lead}
           hosts={SCHEDULING_HOSTS}
           contactId={lead.primary_contact_id}
+          defaultKind={scheduleKind}
           onClose={() => setShowSchedule(false)}
           onCreated={() => router.refresh()}
         />
@@ -509,6 +686,13 @@ export default function OpportunityDetail({
               <p className="text-sm font-semibold text-gray-700">{linkedContacts.length} contact{linkedContacts.length > 1 ? "s" : ""}</p>
             </div>
           )}
+
+          {/* Document collection progress — both applicants */}
+          <DocumentProgress
+            opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
+            applicant2Name={coApplicant?.full_name || coApplicant?.name || undefined}
+          />
 
           {/* Timestamps */}
           <div className="px-6 py-4">
@@ -613,6 +797,27 @@ export default function OpportunityDetail({
             </div>
           </div>
 
+          {/* Borrower compliance documents (Fact Find / Needs Analysis / EOI / Credit Auth) */}
+          <OpportunityDocuments documents={documents} />
+
+          {/* Supporting documents the client uploaded through their portal */}
+          <OpportunitySupportingDocuments
+            opportunityId={opportunityId}
+            documents={supportingDocuments}
+            uploadTargets={uploadTargets}
+          />
+
+          {/* Do the numbers INSIDE those documents support what was declared?
+              Sits directly under the document list because that list is where
+              the false confidence comes from — every row can read "Accepted"
+              while the file is being assessed on income nobody reconciled. */}
+          {incomeCheck && <OpportunityIncomeCheck state={incomeCheck} />}
+
+          <OpportunityEmailActivity messages={emailActivity} />
+
+          {/* Live tasks (the "Add task" TODOs) — also shown in the War Room */}
+          <OpportunityTasks tasks={liveTasks} onAddTask={() => setShowAddTask(true)} />
+
           {/* Linked Contacts */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -663,10 +868,13 @@ export default function OpportunityDetail({
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="＋ Search to add a contact…"
                 value={contactQuery}
-                onChange={(e) => setContactQuery(e.target.value)}
+                onChange={(e) => {
+                  setContactQuery(e.target.value);
+                  setShowDropdown(e.target.value.trim().length > 0);
+                }}
                 onFocus={() => filtered.length > 0 && setShowDropdown(true)}
               />
-              {showDropdown && (
+              {showDropdown && filtered.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
                   {filtered.map((c) => (
                     <button
@@ -744,6 +952,7 @@ export default function OpportunityDetail({
           {/* War Room calculator scenarios */}
           <OpportunityCalculations
             opportunityId={lead.lead_id}
+            contactId={lead.primary_contact_id}
             lead={{
               annual_income: lead.annual_income,
               partner_annual_income: lead.partner_annual_income,
@@ -758,6 +967,31 @@ export default function OpportunityDetail({
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-700">Notes</h2>
               {savingNote && <span className="text-xs text-gray-400">Saving…</span>}
+            </div>
+
+            {/* Log a call */}
+            <div className="px-5 pt-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">How did the call go?</h3>
+                {callStatus && (
+                  <span role="status" className={`text-xs ${callStatus.ok ? "text-green-600" : "text-red-600"}`}>
+                    {callStatus.text}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(Object.keys(CALL_OUTCOMES) as CallOutcome[]).map((outcome) => (
+                  <button
+                    key={outcome}
+                    type="button"
+                    disabled={savingCall}
+                    onClick={() => logCall(outcome)}
+                    className="px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition"
+                  >
+                    {CALL_OUTCOMES[outcome]}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Add new note */}
@@ -793,6 +1027,7 @@ export default function OpportunityDetail({
                       {new Date(n.created_at).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })}
                     </p>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{n.text}</p>
+                    <CallRecordingNote leadId={lead.lead_id} recordingPath={n.recording_path} transcript={n.transcript} />
                   </div>
                 ))}
                 {lead.message && (

@@ -1,0 +1,95 @@
+{
+  "id": "australian-mutual-bank",
+  "name": "Australian Mutual Bank",
+  "legalName": "Teachers Mutual Bank Limited, trading as Australian Mutual Bank",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": "238981",
+  "abn": "30 087 650 459",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+  "funder": "Teachers Mutual Bank Limited",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {},
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "Teachers Mutual Bank Limited — Your Way Home Loan (Owner Occupied) Standard Variable Rate Target Market Determination, 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"six months to 30 years loan term\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "TMBL — Your Way Home Loan (Owner Occupied) Standard Variable Rate TMD, 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw is available on the fully funded loan only."
+    },
+    "offsetAvailable": {
+      "value": false,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "TMBL — Your Way Home Loan (Owner Occupied) Standard Variable Rate TMD, 23 May 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD says the loan \"might not be suitable for consumers seeking an offset facility\". A separate 'Offset Facility' product page and a 'Your Way Plus' product exist, so an offset is available elsewhere in the range — this false applies only to the Standard Variable product."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "TMBL — Your Way Home Loan (Owner Occupied) Standard Variable Rate TMD, 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"ability to have Third Party Guarantor to secure the loan (subject to approval)\"."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "TMBL — Your Way Home Loan (Owner Occupied) Standard Variable Rate TMD, 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Named likely need: \"fund construction on residential property used or to be used for owner occupied purposes\"."
+    },
+    "notes": {
+      "value": "THE BROKER CHANNEL EXPLICITLY EXCLUDES THIS BRAND. The product TMD lists distribution channels as: \"Staff assisted channels including via our branches, call centre, video and with a mobile lender; Online channels including our websites; accredited brokers (excluding Australian Mutual Bank)\". Teachers Mutual Bank Limited operates under several brands (Teachers Mutual Bank, Australian Mutual Bank, Health Professionals Bank, Firefighters Mutual Bank and UniBank) and the broker channel carve-out names Australian Mutual Bank specifically. Product eligibility is also membership-gated: \"Available to consumers, 18 years of age and over, who are eligible for TMBL membership\".",
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://australianmutual.bank/reusable-documents/disclosure-documents/tmbl-disclosures/tmds/owner-occupied-standard-variable-rate-home-loan/",
+      "sourceTitle": "TMBL — Your Way Home Loan (Owner Occupied) Standard Variable Rate TMD, 23 May 2026, s B Distribution conditions and restrictions",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-23",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STATUS SET TO 'withdrawn' BECAUSE THE AUSTRALIAN MUTUAL BANK BRAND IS EXPRESSLY EXCLUDED FROM TEACHERS MUTUAL BANK LIMITED'S BROKER CHANNEL — the TMD distribution list reads 'accredited brokers (excluding Australian Mutual Bank)'. Brokers can place business with TMBL's other brands (Teachers Mutual Bank, Health Professionals Bank, Firefighters Mutual Bank, UniBank) but not this one. Verify with a TMBL BDM before relying on it.",
+    "There is no Australian Mutual Bank broker site (/broker/, /brokers/, /about-us/brokers/ all 404) and no credit policy guide.",
+    "No maximum LVR (owner-occupied or investment), maximum LVR without LMI, LMI provider or LVR band table is published — the TMD says only that LMI and/or an acceptable guarantor may be required 'based on the member's deposit size and security'.",
+    "No published minimum or maximum loan amount.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate.",
+    "No published income, employment tenure, credit history, security or residency policy.",
+    "Only the owner-occupied standard variable TMD was read; the basic variable, fixed, 'Your Way Plus' and the four investor TMDs are also published and may differ."
+  ]
+}

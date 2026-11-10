@@ -1,19 +1,18 @@
 "use client";
 
 /**
- * In-CRM appointment scheduler. POSTs to /api/appointments — the unified
- * orchestrator route that BOTH creates a Google Calendar event (with
- * Meet link + attendee invite, via the host's stored refresh token) AND
- * writes a Supabase `appointments` row so the booking shows up in the
- * opp's Appointments list, the /appointments page, and contact panels.
- * Previously this modal hit /api/calendar/events directly, which left
- * the calendar event un-tracked in the CRM.
+ * In-CRM appointment scheduler. POSTs to /api/appointments, which writes the
+ * Supabase `appointments` row (the CRM's own calendar — no Google), mints a
+ * self-hosted LiveKit video link for the meeting, and emails the attendee a
+ * branded invite with an .ics attachment.
  *
- * Calendar step is best-effort: if the host hasn't connected their
- * calendar yet (or OAuth env isn't configured), the appointment is
- * still saved to the CRM and the modal surfaces a soft warning.
+ * The invite email is best-effort: if it can't be sent, the meeting is still
+ * saved and the modal surfaces that the attendee wasn't notified so it can be
+ * followed up manually.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { errMessage } from "../../../utils/errors";
+import { roomForContact } from "../../../utils/livekit-rooms";
 
 type Lead = {
   lead_id: string;
@@ -66,6 +65,7 @@ export default function ScheduleMeetingModal({
   lead,
   hosts,
   contactId,
+  defaultKind = "video",
   onClose,
   onCreated,
 }: {
@@ -75,17 +75,26 @@ export default function ScheduleMeetingModal({
    * /api/appointments insert. If null (lead with no matched contact),
    * scheduling is disabled with a soft message. */
   contactId: string | null;
+  /** Pre-selects the meeting type — e.g. the "📞 Phone call" quick action
+   * opens straight into the phone flow instead of making the operator
+   * switch it every time. */
+  defaultKind?: "video" | "phone";
   onClose: () => void;
   /** Optional: called after a successful save so the parent can refresh
    * the appointments panel without a full page reload. */
   onCreated?: () => void;
 }) {
-  const def = useMemo(defaultStart, []);
+  const def = useMemo(() => defaultStart(), []);
+  const [kind, setKind] = useState<"video" | "phone">(defaultKind);
   const [hostEmail, setHostEmail] = useState(hosts[0]?.email ?? "");
   const [date, setDate] = useState(def.date);
   const [time, setTime] = useState(def.time);
   const [duration, setDuration] = useState(30);
-  const [title, setTitle] = useState(`Meeting — ${lead.full_name || "NextKey lead"}`);
+  const [title, setTitle] = useState(
+    defaultKind === "phone"
+      ? `Phone call — ${lead.full_name || "NextKey lead"}`
+      : `Meeting — ${lead.full_name || "NextKey lead"}`,
+  );
   const [attendeeEmail, setAttendeeEmail] = useState(lead.email ?? "");
   const [description, setDescription] = useState(() =>
     [
@@ -100,8 +109,12 @@ export default function ScheduleMeetingModal({
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null); // calendar_warning from API
-  const [success, setSuccess] = useState<{ htmlLink?: string; hangoutLink?: string } | null>(null);
+  const [warning, setWarning] = useState<string | null>(null); // invite_warning from API
+  const [success, setSuccess] = useState<{
+    videoLink?: string | null;
+    inviteRequested: boolean;
+    inviteSent: boolean;
+  } | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,10 +131,8 @@ export default function ScheduleMeetingModal({
       endDate.setMinutes(endDate.getMinutes() + duration);
       const end = endDate.toISOString().replace(/\.\d{3}Z$/, "+00:00"); // ISO + offset
 
-      // Unified appointment endpoint: creates the Google Cal event (with Meet
-      // link + attendee invite) AND inserts the Supabase appointments row, so
-      // the booking surfaces in the opp's Appointments panel without waiting
-      // on any external sync.
+      // Books the meeting in the CRM's own calendar, mints the LiveKit video
+      // link, and emails the attendee an invite (with .ics) via Brevo.
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,23 +149,26 @@ export default function ScheduleMeetingModal({
           attendees: attendeeEmail
             ? [{ email: attendeeEmail, displayName: lead.full_name || undefined }]
             : [],
-          sendUpdates: sendInvite ? "all" : "none",
+          send_invite: sendInvite,
+          meeting_kind: kind,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || `Failed (${res.status})`);
       }
-      // Soft warning surfaces when the calendar leg couldn't run (no host
-      // creds, OAuth not configured, etc.) — the Supabase row still landed.
-      if (data.calendar_warning) setWarning(data.calendar_warning);
+      // Surfaces when the invite email couldn't be sent — the meeting still
+      // landed in the CRM, but if we promised the attendee an invite, nobody
+      // got one. The result panel says so.
+      if (data.invite_warning) setWarning(data.invite_warning);
       setSuccess({
-        htmlLink: data.calendar_event?.htmlLink,
-        hangoutLink: data.calendar_event?.hangoutLink,
+        videoLink: data.video_link,
+        inviteRequested: !!data.invite_requested,
+        inviteSent: !!data.invite_sent,
       });
       onCreated?.();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -164,34 +178,68 @@ export default function ScheduleMeetingModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-10">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">📅 Schedule meeting</h2>
+          <h2 className="text-lg font-bold text-gray-900">
+            {kind === "phone" ? "📞 Log phone call" : "📅 Schedule meeting"}
+          </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 text-lg leading-none">✕</button>
         </div>
 
         {success ? (
           <div className="p-6 space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-              {success.htmlLink
-                ? <>✓ Meeting scheduled. Invite sent to {attendeeEmail || "you only"}.</>
-                : <>✓ Saved to CRM. Calendar invite was NOT sent — see below.</>}
-            </div>
+            {success.inviteSent ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                {kind === "phone"
+                  ? `✓ Call logged. Confirmation emailed to ${attendeeEmail}.`
+                  : `✓ Meeting scheduled. Invite emailed to ${attendeeEmail}.`}
+              </div>
+            ) : success.inviteRequested ? (
+              // The row saved, but we told the user we'd email the attendee and
+              // didn't. Never dress this as a success — it needs manual follow-up.
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <div className="font-semibold">
+                  {kind === "phone" ? "Confirmation NOT sent" : "Invite NOT sent"} to {attendeeEmail}.
+                </div>
+                <div className="mt-1 text-xs">
+                  {kind === "phone"
+                    ? "The call is saved in the CRM calendar, but the confirmation email didn't go out. Follow up with the attendee manually."
+                    : <>The meeting is saved in the CRM calendar, but the invite email
+                    didn&rsquo;t go out. Send the join link below to the attendee
+                    manually, or reschedule.</>}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
+                {kind === "phone"
+                  ? "✓ Call added to the calendar. No confirmation was sent, as requested."
+                  : "✓ Meeting added to the calendar. No invite was sent, as requested."}
+              </div>
+            )}
             {warning && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
                 ⚠ {warning}
               </div>
             )}
-            {(success.htmlLink || success.hangoutLink) && (
+            {success.videoLink && (
               <div className="flex flex-col gap-2 text-sm">
-                {success.htmlLink && (
-                  <a href={success.htmlLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    Open in Google Calendar →
+                {/* Two different doors on purpose: you join at the authed room
+                    page, the client uses the guest link below. Clicking the
+                    guest link yourself puts you in the call under the client's
+                    name. */}
+                {contactId && (
+                  <a
+                    href={`/video/${roomForContact(contactId)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-700 hover:underline font-medium"
+                  >
+                    📹 Join the video meeting →
                   </a>
                 )}
-                {success.hangoutLink && (
-                  <a href={success.hangoutLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    Join via Google Meet →
-                  </a>
-                )}
+                <p className="text-xs text-gray-500">
+                  Link sent to the attendee:
+                  <br />
+                  <span className="break-all">{success.videoLink}</span>
+                </p>
               </div>
             )}
             <button
@@ -204,7 +252,32 @@ export default function ScheduleMeetingModal({
         ) : (
           <form onSubmit={submit} className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Host calendar</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Type</label>
+              <div className="flex gap-2">
+                {(["video", "phone"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold border transition ${
+                      kind === k
+                        ? "bg-blue-100 text-blue-700 border-blue-300"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {k === "video" ? "🎥 Video call" : "📞 Phone call"}
+                  </button>
+                ))}
+              </div>
+              {kind === "phone" && (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  No video link is sent — just a confirmation email for the call.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Meeting host</label>
               <select
                 value={hostEmail}
                 onChange={(e) => setHostEmail(e.target.value)}
@@ -272,7 +345,7 @@ export default function ScheduleMeetingModal({
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-              Send invite email to attendee
+              {kind === "phone" ? "Send confirmation email to attendee" : "Send invite email to attendee"}
             </label>
 
             {error && (
@@ -288,7 +361,9 @@ export default function ScheduleMeetingModal({
               </button>
               <button type="submit" disabled={submitting}
                 className="flex-1 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition">
-                {submitting ? "Scheduling…" : "Schedule meeting"}
+                {submitting
+                  ? (kind === "phone" ? "Logging…" : "Scheduling…")
+                  : (kind === "phone" ? "Log call" : "Schedule meeting")}
               </button>
             </div>
           </form>

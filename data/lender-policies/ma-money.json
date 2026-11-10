@@ -1,0 +1,553 @@
+{
+  "id": "ma-money",
+  "name": "MA Money",
+  "legalName": "MA Money Financial Services Pty Ltd",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "522267",
+  "abn": "ACN 639 174 315",
+  "brokerSiteUrl": "https://www.mamoney.com.au/brokers/",
+  "policyDocUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The Residential & Vacant Land Rate & Product Guide (29 July 2026) publishes no assessment buffer or floor rate. Looked through all 9 pages of that guide; serviceability is only referenced for bridging ('End Debt: Serviceability assessment on End Debt based on MA Money Home Loan Policy'), and the MA Money Home Loan Policy itself is not on a public no-login URL."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential & Vacant Land Rate & Product Guide, 29 July 2026 — Residential Loans Product Guide, Loan Features p2",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "MA Money publishes the ABSENCE of a cap as a feature: 'No credit score, CCR or DTI'. Recorded as not_found with a null value because there is no cap to apply — do NOT treat this as an unresearched field, and do not knock a client out of MA Money on DTI."
+    },
+    "notes": {
+      "value": "Headline servicing-relevant features from p2 of the guide: '48-hour SLA to conditional'; 'All income types accepted'; 'Genuine savings not required'; 'No credit score, CCR or DTI'; 'Cash out for any purpose'; 'Common debt reducer'; 'Up to 6 borrowers'; 'Up to 4 loan splits'; 'Up to 4 offset accounts per loan (1 per split)'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Max LVR Residential' row p2 and 'Residential Maximum Loan Amounts' matrix p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 90% Full Doc, 85% Alt Doc. NEAR PRIME and NEAR PRIME PLUS: 85%. SPECIALIST: 80%. Corroborated by the maximum-loan matrix, where only the Prime column has a 90% row ($1m) and only Prime, Near Prime and Near Prime Plus have an 85% row. Risk fee at 90% Prime is 2.00%."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The 'Max LVR' row is not split by occupancy — the guide says 'Owner Occupied or Investment' as a single product feature and applies an investor RATE loading (0.30% up to $2.5m, 0.00% over $2.5m) rather than an LVR restriction. Confidence medium because the equality is read from the absence of a split."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 65, "maxLoanAmount": 15000000, "qualifier": "Prime (Full Doc and Alt Doc) $15m. Near Prime $3m; Near Prime Plus $2m; Specialist $2m Full Doc / $1.5m Alt Doc." },
+        { "maxLvrPct": 70, "maxLoanAmount": 10000000, "qualifier": "Prime $10m. Near Prime $3m; Near Prime Plus $2m; Specialist $2m Full Doc / $1.5m Alt Doc." },
+        { "maxLvrPct": 75, "maxLoanAmount": 7500000, "qualifier": "Prime $7.5m. Near Prime $3m; Near Prime Plus $1.5m; Specialist $1.5m Full Doc / $1m Alt Doc." },
+        { "maxLvrPct": 80, "maxLoanAmount": 2000000, "qualifier": "Prime $2m. Near Prime $1.75m; Near Prime Plus $1.25m; Specialist $1m." },
+        { "maxLvrPct": 85, "maxLoanAmount": 1500000, "qualifier": "Prime $1.5m. Near Prime $1.25m; Near Prime Plus $1m. Specialist not available above 80%." },
+        { "maxLvrPct": 90, "maxLoanAmount": 1000000, "qualifier": "PRIME FULL DOC ONLY, $1m, risk fee 2.00%. Not available on Alt Doc or on any other product tier." }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Residential Maximum Loan Amounts' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "maxLoanAmount is the PRIME figure for each band; other tiers are named in the qualifier. The postcode category overrides all of these: Category 1 max $15m (at 65% LVR) and max 90% LVR; Category 2 max $1.5m and max 80% LVR; Category 3 max $500k and max 70% LVR. Minimum loan amount $100,000."
+    },
+    "notes": {
+      "value": "MA Money charges a FACILITY RISK FEE rather than LMI. Prime: nil to 80% LVR, 1.00% at 85%, 2.00% at 90% (loans to $2.5m); 1.00% flat on MA Money More ($5m-$15m). Near Prime: 0% to 75%, 0.50% at 80% and 85% (to $2m), 1.50% above; the $2m-$3m column is 0% to 75% and 1.25% at 80-85%. Near Prime Plus: 0.50%/1.00% at 65%, rising to 2.00% at 80%. Specialist: 0.75% Full Doc / 1.50% Alt Doc at 65%, 1.50% across 70-80%. A 'Risk Fee Reducer' lets a risk fee of up to 1.00% be traded for a higher rate on residential loans up to 80% LVR — 'apply 50% of the Risk Fee to the base interest rate' — but MA Money warns this increases total interest and costs over the life of the loan. Excludes loans over $2.5m.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Residential Facility Risk Fees' p3, 'Risk Fee Reducer' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Risk-fee percentages are read from a multi-column grid whose alignment in the extracted text was imperfect; treat the individual percentages as indicative and confirm on the live rate card."
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Full Doc or Alt Doc' is a headline feature; Alt Doc pricing exists on Prime, MA Money More, Near Prime, Near Prime Plus and Specialist. Alt Doc is NOT available on the Non-Resident product (Full Doc only) and is Full Doc only for the 100%-of-net-income concession on Expat."
+    },
+    "altDocEvidence": {
+      "value": "Self-Employed Alt Doc: a Declaration of Financial Position AND ONE of an Accountant Letter, OR the last 2 BAS, OR 6 months business bank statements.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Verification Documents, p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "One income document plus the declaration — one of the lightest alt-doc requirements on this panel."
+    },
+    "altDocMaxLvrPct": {
+      "value": 85,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Max LVR Residential' p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'90% Full Doc / 85% Alt Doc' on Prime — the 90% band is Full Doc only. Near Prime and Near Prime Plus are 85% for both doc types; Specialist 80%."
+    },
+    "selfEmployedMinYears": {
+      "value": 1,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Verification Documents, p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Full Doc requires only ONE year: '1 Year Company / Trust Tax Return(s) AND 1 Year Personal Tax Return AND corresponding Personal Notice of Assessment (NOA), none older than 21 months.' Note the separate ABN tenure gate (24 months on Prime) which is the binding constraint for a newer business."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "One year is the STANDARD Full Doc requirement, not an exception — a significant point of difference against lenders requiring two years."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "Last 2 payslips.",
+          "conditions": "That is the entire published PAYG verification requirement across Prime, Near Prime, Near Prime Plus and Specialist. No shading percentage or employment-tenure minimum is published in this guide."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "FULL DOC: 1 year company/trust tax return(s) AND 1 year personal tax return AND the corresponding personal Notice of Assessment, none older than 21 months. SIMPLIFIED SELF-EMPLOYED (company directors only): 3 months payslips AND the last financial year's ATO income statement. ALT DOC: Declaration of Financial Position AND one of an accountant letter, last 2 BAS, or 6 months business bank statements.",
+          "conditions": "ABN and GST tenure gates by tier: PRIME ABN > 24 months and GST > 12 months; NEAR PRIME ABN > 12 months and GST > 6 months; NEAR PRIME PLUS ABN > 6 months and GST > 6 months."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed company (the 'Simplified Self-Employed' 3-months-payslips route is company directors only).",
+          "conditions": "Same ABN/GST tenure gates by tier."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed company — trust tax returns are expressly named.",
+          "conditions": "Borrower types accepted: 'Individual, Company or Trust'. Up to 6 borrowers."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Expat: PAYG last 2 payslips; self-employed 1 year tax return AND corresponding personal NOA (personal tax return no older than 21 months). Non-Resident: PAYG last 2 payslips; self-employed evidence of company registration AND 2 of either the latest business tax return, latest personal tax return or 1 year business financials.",
+          "conditions": "REMARKABLE: 'PAYG or Self-Employed 100% of net income used (Full Doc only) once converted to AUD' — MA Money applies NO shading to foreign income on both the Expat and Non-Resident products, provided it is Full Doc. Restricted to an acceptable-country list (see residency.rules); for Qatar, Saudi Arabia and the UAE it is PAYG income only."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Verification Documents p2, Expat p7, Non-Resident p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "MA Money's headline claim is 'All income types accepted' (p2), but this guide publishes NO per-income-type shading table — no percentages for casual, overtime, bonus, commission, rental, Centrelink, child support or dividends. Those rules live in the MA Money Home Loan Policy, which is not on a public no-login URL. Rather than invent shadings, only the income types the guide actually documents are recorded here."
+    }
+  },
+  "employment": {
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'ABN & GST' row p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME 'ABN > 24 months'. NEAR PRIME 'ABN > 12 months'. NEAR PRIME PLUS 'ABN > 6 months'. The Specialist column is blank in this row — assume it follows Near Prime Plus but confirm."
+    },
+    "minMonthsGstRegistered": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME 'GST > 12 months'. NEAR PRIME and NEAR PRIME PLUS both 'GST > 6 months'."
+    }
+  },
+  "credit": {
+    "defaultIgnoredUnderAmount": {
+      "value": 500,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Credit Impairments' rows p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 'Paid defaults up to $500 (on aggregate) considered' — note the AGGREGATE test, which is tighter than a per-listing threshold. The equivalent threshold on Near Prime and below is $3,000 with 'Unlimited (paid or unpaid)' listings tolerated."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime: paid defaults to $500 aggregate. Near Prime: over $3,000, 'Unlimited when listed > 12 months (paid). Unlimited when listed > 24 months (paid or unpaid).' Near Prime Plus: 'Unlimited when listed > 12 months'. Specialist: '1 credit event listed < 12 months. Unlimited when listed > 12 months.'"
+    },
+    "unpaidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "NEAR PRIME AND BELOW ONLY. Impairments up to $3,000 are 'Unlimited (paid or unpaid)'; above $3,000, unpaid listings need to be more than 24 months old (paid listings only 12 months). PRIME requires the default to be paid and no more than $500 in aggregate."
+    },
+    "paidDefaultMinAgeMonths": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "For impairments OVER $3,000 on Near Prime: paid and listed more than 12 months ago. Unpaid needs 24 months. Impairments up to $3,000 have no age test on Near Prime and below."
+    },
+    "maxDefaults": {
+      "value": 1,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Specialist column p2",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This counts only RECENT (under 12 months old) impairments over $3,000: SPECIALIST accepts '1 credit event listed < 12 months'. MA Money's credit-event definition: 'any single event that caused an adverse credit bureau listing or listings. A single credit event can consist of multiple bureau listings, provided the borrower can demonstrate that all listings were caused by that single event and the period over which the listings were reported does not exceed 6 months.' Impairments older than 12 months are unlimited on Specialist, so this is not a general default cap."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": 0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Bankruptcy' row p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Discharged from bankruptcy > 1 day' across Near Prime, Near Prime Plus and Specialist — no waiting period after discharge. The PRIME column shows a dash, i.e. bankruptcy is not accepted on Prime."
+    },
+    "maxArrears6Months": {
+      "value": 0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Arrears' rows p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "MORTGAGE arrears. PRIME: none (dash). NEAR PRIME: 'Up to 1 month within the last 6 months'. NEAR PRIME PLUS: 'Up to 2 months within the last 6 months'. SPECIALIST: 'Unlimited within the last 6 months'. OTHER arrears are separate: Prime none; Near Prime up to 3 months within the last 3 months; Near Prime Plus up to 6 months within the last 6 months; Specialist unlimited within the last 6 months."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Loan Features p2",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "MA Money publishes the absence as a feature: 'No credit score, CCR or DTI'. There is no minimum score to meet — this is an affirmative 'no such rule', not an unresearched gap."
+    },
+    "notes": {
+      "value": "MA Money's arrears definition: 'any late payment or arrears on a credit account (credit card, personal loan, mortgage) where the minimum repayment has not been made within 14 days since the credit contract due date.' Debt consolidation is allowed up to maximum LVR, but 'ATO debt and Private Loan debt cannot be consolidated for Prime Loans'. Cash out is allowed for any purpose up to maximum LVR (Specialist capped at $100,000), and cash out from private lenders is capped at $200k.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p2 footnotes",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Completed property only",
+        "Zoned residential or rural residential, up to 25 acres",
+        "Apartments/units of at least 50sqm including balcony and car space, OR 40sqm living area with no balcony or car space",
+        "Properties in Mixed Use zoning, provided the residence is on a separate title (usually retail on the ground floor with residences above)",
+        "Vacant land as sole security (Vacant Land Loan product only)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Acceptable Security' p4, Vacant Land p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'If car space is on separate title mortgages are required to be taken over both titles.' Development sites with DA approval are NOT acceptable for Vacant Land loans."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 50,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Apartment/Unit Minimum property size' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The rule is two-limbed and the measurement basis differs between them: 'Minimum 50m2 INCLUDING balcony and car space, or 40m2 LIVING AREA with no balcony or car space.' 50 is recorded as the headline; a 42sqm apartment with no balcony or car space still qualifies."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Acceptable Security' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The guide states 'Up to 25 acres'. 25 acres is 10.12 hectares; 10 is recorded as the conservative hectare equivalent. Confidence medium only because the unit conversion is ours, not the lender's."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Zoned residential/rural residential. Up to 25 acres.'"
+    },
+    "highDensityPolicy": {
+      "value": "High density apartments — defined as 40 or more units in one complex — are restricted to 80% LVR. Separately, a maximum of 6 residential properties on one title is accepted.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Restricted security type' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Note the definition is by UNIT COUNT (40+ units), not by number of floors — different from Firstmac and Brighten, which use a >6 floors test."
+    },
+    "highDensityMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'High density apartments (40+ units in one complex) are restricted to 80% LVR.'"
+    },
+    "maxSecurities": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Restricted security type' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Max 6 residential properties on one title.' This is a per-title limit, not a per-application limit."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Postcode Categories' pp4-8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential: Category 1 max loan $15m (at 65% LVR) and max 90% LVR; Category 2 max $1.5m and max 80% LVR; Category 3 max $500k and max 70% LVR. Different tables apply per product — Vacant Land: Cat 1 $5m (70% LVR) / 75% max LVR, Cat 2 $1.5m / 70%, Cat 3 70%. Bridging: Cat 1 $5m / 80%, Cat 2 $5m / 70%, Cat 3 $2m / 70%. Expat: Cat 1 $5m / 80%, Cat 2 $1.5m / 80%, Cat 3 $500k / 70%. Non-Resident: Cat 1 $2m / 80%, Cat 2 $1.5m / 80%, Cat 3 $500k / 70%. MA Money provides a 'Postcode Lookup Tool for maximum loan amounts and LVRs for each of our loan products'."
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 70,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Postcode Categories' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Category 3 residential: max LVR 70% and max loan $500k. Category 2 is 80% and $1.5m. Confidence medium because the postcode-category box is a small three-row table whose label/value alignment in the extracted text required reconstruction."
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — pp2, 4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Loan Size: $100,000 to $15m'; 'Minimum loan amount: $100,000' on residential, vacant land, expat and non-resident. BRIDGING is higher at $200,000."
+    },
+    "maxLoanAmount": {
+      "value": 15000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — pp2, 4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$15m is the PRIME / MA Money More ceiling and only at 65% LVR in a Category 1 postcode. Near Prime tops out at $3m, Near Prime Plus and Specialist at $2m. Vacant land, bridging and expat cap at $5m; non-resident at $2m."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Loan Features p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Loan Term: 5 to 40 years' with a hard qualifier: '31-40 year loan term available for purchase applications where all applicants are aged 40 years or under. Not available for loans over $2.5m and not applicable to Non-Resident, Expat or SMSF Loans.' So 30 years is the effective maximum outside that carve-out. Expat and Non-Resident terms are 5-30 years."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — footnote p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'IO up to 10 years for Residential Prime Investor 80% - POA (max 5 years for all other loans)' — the 10-year option is investor-only, so owner-occupied is capped at 5 years. An interest-only rate loading of 0.20% applies."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — footnote p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'IO up to 10 years for Residential Prime Investor 80% - POA' — Prime product only, investor only, to 80% LVR, and priced on application. Everything else is 5 years."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Loan Features p2, Fee Summary p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Up to 4 offset accounts per loan (1 per split)'. A Monthly Offset Account Fee of $10 per account per month applies. NOT available on the Non-Resident product ('Redraw/Offset: Not available')."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Features p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw facility listed among standard features. NOT available on the Non-Resident product."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Acceptable Security' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Read from 'Completed property only' in the acceptable-security rule, and from the absence of any construction product in a guide that otherwise itemises residential, vacant land, bridging, expat and non-resident. MA Money does offer a Vacant Land loan (up to 75% LVR, land as sole security) but development sites with DA approval are not acceptable. Confidence medium — this is an absence-based inference; confirm with the BDM before ruling MA Money out on a construction file."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — 'Bridging Residential Loan' p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bridging Prime and Bridging Near Prime. Loans to $5m (Near Prime $2m), 6 to 12 month terms, interest-only up to 12 months with interest, facility risk fee and application fee capitalised, no clawbacks, minimum loan $200,000, max 80% LVR (risk fee 1.25%). 'No end debt: Full payout of capitalised bridging loan amount. End debt: Residual debt after partial payout (from sale proceeds).' 'No End Debt: No serviceability required. Max peak debt limits must be met (Bridging calc). End Debt: Serviceability assessment on End Debt based on MA Money Home Loan Policy.'"
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Loan Features p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Genuine savings not required' — stated as a headline feature, with no LVR qualifier, including at the 90% Prime band."
+    },
+    "notes": {
+      "value": "Fees (excluding GST): application fee $500 Prime Full Doc / $599 Prime Alt Doc and Near Prime / $899 Near Prime Plus and Specialist; non-resident $499. Annual loan administration fee $0 on residential, vacant land, expat and bridging; $499 on non-resident. Monthly offset account fee $10 per account. Valuation fees at cost, paid before the valuation is ordered via Property Hub (AVM and desktop available subject to eligibility). Legal fee from $400; discharge fee from $550. 'No clawbacks' on MA Money More, vacant land and bridging.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Fee Summary p9",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Fee figures are read from a multi-column fee summary; treat individual amounts as indicative."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": 90,
+          "conditions": "Standard residential products. Bridging expressly names 'Australian citizens or Permanent Residents, New Zealand citizens residing in Australia'."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": 90,
+          "conditions": "Standard residential products; expressly named as eligible for bridging."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": 90,
+          "conditions": "'New Zealand citizens residing in Australia' are named as eligible bridging borrowers; New Zealand is also on the expat and non-resident acceptable-country lists."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "MA Money Expat Loan. Eligible: 'Australian citizens or Australian Permanent Visa holders living and working overseas' and 'Australian citizens or Australian Permanent Resident Visa holders living in Australia and earning income in overseas currency'. Loans $100,000 to $5m, maximum 80% LVR, term 5-30 years, interest only maximum 5 years, cash out to maximum LVR, individual/company/trust. PAYG or self-employed income at 100% of net income once converted to AUD (Full Doc only). Acceptable countries: Canada, China, Finland, France, Germany, Hong Kong, Italy, Japan, New Zealand, Norway, Qatar (PAYG only), Saudi Arabia (PAYG only), Singapore, Spain, Sweden, UK, United Arab Emirates (PAYG only), USA. For countries not on the list, speak to the BDM. Credit: Expat Prime paid defaults up to $500 aggregate; Expat Near Prime unlimited (paid or unpaid) up to $3,000, unlimited listed >12 months (paid) or >24 months (paid/unpaid), mortgage arrears up to 1 month in the last 6 months, other arrears up to 3 months in the last 3 months."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": 80,
+          "conditions": "MA Money Non-Resident Loan (Prime only). Eligible: 'Any applicant that does not hold Australian Citizenship or Australian Permanent Residency'. Loans $100,000 to $2m, maximum 80% LVR, term 5-30 years, interest only maximum 5 years, cash out to maximum LVR, individual/company/trust, purchase/investment/refinance/cash out. Income at 100% of net once converted to AUD (Full Doc only): PAYG last 2 payslips; self-employed evidence of company registration AND 2 of the latest business tax return, latest personal tax return or 1 year business financials. Credit: aggregate paid defaults up to $500 considered. REDRAW AND OFFSET ARE NOT AVAILABLE. Annual loan administration fee $499. Risk fee 1.00% at 80% LVR. Acceptable countries: Australia, Canada, China, France, Germany, Hong Kong, India, Japan, Malaysia, New Zealand, Philippines, Qatar (PAYG only), Saudi Arabia (PAYG only), Singapore, South Africa, South Korea, Switzerland, Taiwan, UK, United Arab Emirates (PAYG only), USA, Vietnam."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Bridging p6, Expat p7, Non-Resident p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Temporary work and student visa holders resident in Australia are not addressed as a category — a temporary visa holder without Australian citizenship or PR would fall into the Non-Resident product by MA Money's own definition. No separate rule is recorded for them rather than assuming standard-policy treatment."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 1.0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Expat p7, Non-Resident p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'PAYG or Self-Employed 100% of net income used (Full Doc only) once converted to AUD' — stated as a headline loan feature on BOTH the Expat and Non-Resident products. No shading, which is materially more generous than the 75-90% applied by most of this panel. Note it is NET income, not gross, and Full Doc only."
+    },
+    "acceptedForeignCurrencies": {
+      "value": [
+        "Canada", "China", "Finland", "France", "Germany", "Hong Kong", "Italy", "Japan", "New Zealand", "Norway", "Qatar (PAYG income only)", "Saudi Arabia (PAYG income only)", "Singapore", "Spain", "Sweden", "UK", "United Arab Emirates (PAYG income only)", "USA"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.mamoney.com.au/brokers/resources/rate-product-information/residential-guide/",
+      "sourceTitle": "MA Money Residential Rate & Product Guide 29 Jul 2026 — Expat 'Acceptable Countries' p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "These are MA Money's acceptable COUNTRIES for the Expat product, not currency codes — recorded here because that is where the field maps. The Non-Resident list is different and wider: Australia, Canada, China, France, Germany, Hong Kong, India, Japan, Malaysia, New Zealand, Philippines, Qatar, Saudi Arabia, Singapore, South Africa, South Korea, Switzerland, Taiwan, UK, UAE, USA, Vietnam. 'For countries not included on this list, speak to your BDM.'"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "NO SERVICING PARAMETERS ARE PUBLISHED. The Rate & Product Guide contains no assessment buffer, no floor rate, no rental shading, no credit-card assessment percentage and no HEM/living-expense basis. These live in the 'MA Money Home Loan Policy', which the guide references but which is not on a public no-login URL. The matching engine cannot estimate an MA Money max loan without them.",
+    "No per-income-type shading table. MA Money claims 'All income types accepted' but publishes no percentages for casual, overtime, bonus, commission, rental, Centrelink, child support or dividends — only the verification documents for PAYG, self-employed and foreign income.",
+    "No employment tenure requirements are published for PAYG (only 'Last 2 payslips'), so minMonthsCurrentJob, casual, contract and probation rules are all unknown.",
+    "The ABN/GST tenure row is blank in the Specialist column — assumed to follow Near Prime Plus (ABN > 6 months, GST > 6 months) but not recorded as a fact.",
+    "No unacceptable-security-types list is published beyond the positive acceptable-security rule and the two restricted types (40+ unit complexes, 6 properties per title).",
+    "No guarantor policy, gifted-deposit policy, government first-home-scheme participation, maximum age at maturity or exit-strategy age.",
+    "No payday-lending or gambling-transaction policy.",
+    "Construction availability is inferred from 'Completed property only' and the absence of a construction product — not stated as a decline. Confirm before ruling MA Money out on a build.",
+    "SMSF loans are referenced in a loan-term exclusion footnote but no SMSF product parameters appear in this residential guide (there is a separate Commercial Rate & Product Guide).",
+    "The postcode Category 1/2/3 lists sit behind MA Money's Postcode Lookup Tool, so a specific postcode's category cannot be cited from a public source.",
+    "Risk fee and fee-summary percentages/amounts are read from multi-column grids with imperfect text-layer alignment and should be confirmed against the live rate card."
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "id": "easy-street",
+  "name": "Easy Street",
+  "legalName": "Easy Street is a division of Community First Credit Union Limited",
+  "tier": "non_bank",
+  "status": "research_only",
+  "acl": "231204",
+  "abn": "80 087 649 938",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+  "funder": "Community First Credit Union Limited (trading as Community First Bank)",
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 80,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Target market: retail clients who \"have a maximum LVR of 80%\". The standard (non-special) Street Smart Variable TMD dated 4 June 2025 carries the identical 80% statement, so this is the product ceiling, not a promo restriction."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 80,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The same TMD covers clients who \"are owner occupiers and/or investors\" under one 80% maximum LVR. Easy Street advertises the same rate for owner-occupiers and investors."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the fact that the product ceiling is 80% LVR and no LMI is mentioned anywhere in the TMD, product page or fee schedule — i.e. Easy Street appears not to lend above 80% at all. Not stated as an LMI policy in those words."
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {
+    "notes": {
+      "value": "Must provide a registered first mortgage over real property (or other acceptable security). No property-type, unit-size, postcode, high-density or rural policy is published.",
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"new loan amounts of minimum $50,000 or top ups to existing loans of at least $50,000\". The 4 June 2025 standard TMD says \"loan amounts from $50,000\"."
+    },
+    "maxLoanAmount": {
+      "value": 1000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://easystreet.com.au/home-loans",
+      "sourceTitle": "Easy Street — Home Loans Online",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Available for home loans with a maximum exposure of $1 million.\" asAt is the retrieval date — the page carries no publication date, and the sentence sits in the fine print attached to the current rate offer, so it may be an offer condition rather than a permanent product cap."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"loan terms of up to 30 years\"."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Optional 100% mortgage offset account\" (without card access). The product page describes up to two offset accounts per loan at no extra cost."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"a redraw facility to redraw advance repayments\"."
+    },
+    "notes": {
+      "value": "NOT AVAILABLE THROUGH BROKERS. The Street Smart Variable Home Loan TMD states the product is distributed by the issuer through \"call centre\" and \"online\" only, and adds \"There are no other distributors for this product.\" Easy Street is the direct, digital-only arm of Community First Credit Union Limited (Community First Bank) — no branch network, application by phone or online. Only two home loan products exist: Street Smart Variable and Street Smart Fixed, with the same advertised rate for owner-occupiers and investors, no monthly or annual fees, and a $500 application fee (includes standard valuation and legal fees). Interest-only is available on the standard variable product for approved purposes.",
+      "asAt": "2026-06-22",
+      "sourceUrl": "https://cms.easystreet.com.au/wp-content/uploads/2026/06/ES-TMD-Street-Smart-Variable-Home-Loan-special-Jun26.pdf",
+      "sourceTitle": "Easy Street Target Market Determination — Street Smart Variable Home Loan New Money Special, 22 June 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Status is recorded as research_only rather than active for this reason: a broker cannot lodge to Easy Street."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-06-22",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Easy Street has no broker channel at all (TMD: 'There are no other distributors for this product'), so it cannot be used on a broker panel — hence status research_only. Confirm with Community First Bank before ever shortlisting it.",
+    "Tier is recorded as non_bank per the research tranche's assignment, but Easy Street is legally a DIVISION of Community First Credit Union Limited, a customer-owned mutual — mutual_bank would arguably be the more accurate tier.",
+    "No servicing buffer, floor rate, DTI cap, rent shading, HEM basis or commitment treatment published.",
+    "No income-type, employment-tenure, credit-history or residency policy published.",
+    "No LMI policy published; the 80% ceiling suggests none is offered but this is not stated.",
+    "No genuine savings, gifted deposit, guarantor or government-scheme participation published.",
+    "The $1M maximum exposure appears in offer fine print rather than the TMD — treat as offer-conditional until confirmed.",
+    "Community First Bank (the parent brand) may have a separate broker-distributed home loan range that was not researched in this tranche."
+  ]
+}

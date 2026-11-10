@@ -1,0 +1,202 @@
+{
+  "id": "bankwest",
+  "name": "Bankwest",
+  "legalName": "Bankwest, a division of Commonwealth Bank of Australia",
+  "tier": "major_bank",
+  "status": "active",
+  "acl": "234945",
+  "abn": "48 123 123 124",
+  "brokerSiteUrl": "https://www.bankwest.com.au/brokers",
+  "policyDocUrl": null,
+  "funder": "Commonwealth Bank of Australia",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankwest.com.au/brokers/help-centre",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly. The Bankwest Broker Portal hosts 'Policy Search' behind a login; the public broker help centre only offers a retail credit hotline for policy questions.",
+      "sourceTitle": "Bankwest broker help centre",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankwest.com.au/brokers/help-centre",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly; broker portal login required.",
+      "sourceTitle": "Bankwest broker help centre",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankwest.com.au/brokers/help-centre",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published publicly.",
+      "sourceTitle": "Bankwest broker help centre",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankwest.com.au/brokers/help-centre",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "Bankwest broker help centre",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Derived from the published owner-occupied P&I rate table, whose tiers run 'Up to 60% LVR', 'Up to 80% LVR', 'Up to 90% LVR including LMI', 'Up to 95% LVR including LMI' and a further 'Up to 98% LVR including LMI' tier. 95% is recorded as the base ceiling on the reading that the 98% tier reflects capitalised LMI on top of a 95% LVR; Bankwest does not state a maximum LVR in words. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Derived from the published investment P&I rate table, whose highest tier is 'Up to 95% LVR including LMI' (there is no 98% investment tier). Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "The rate tables switch from 'Up to 80% LVR' to 'Up to 90% LVR including LMI' - i.e. LMI first appears above 80% LVR. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Rate tiers above 80% are labelled 'including LMI'. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Owner-occupied P&I rate tiers published as at 2026-07-29: up to 60% LVR, up to 80% LVR, up to 90% LVR including LMI, up to 95% LVR including LMI, up to 98% LVR including LMI. Investment P&I tiers: up to 60%, up to 80%, up to 90% including LMI, up to 95% including LMI.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Bankwest Simple Home Loan: 'Minimum loan $20,000'. The Complete Variable Home Loan has a minimum loan of $200,000. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "'Maximum loan term 30 years' for both the Simple Home Loan and the Complete Variable Home Loan. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "Product comparison row: 'Interest only - Up to 5 years available' for both products. The page does not distinguish owner-occupied from investment interest-only terms. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "100% offset available on both products; Simple Home Loan charges $10 per offset account per month, Complete Variable Home Loan allows up to nine offset accounts with no monthly offset fee. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankwest.com.au/home-loans/variable-rate",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bankwest variable rate home loans (product comparison and rate tables)",
+      "note": "'Redraw Available', $0 redraw fee, on both products. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "medium",
+      "status": "not_found",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Bankwest does not appear on the Housing Australia participating lender list as at 2026-07-29. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Bankwest publishes no public credit policy: the broker site's 'Policy Search' is inside the Broker Portal login, and the public broker help centre only lists customer-facing PDS/information sheets (most dated 2014-2022) plus a retail credit hotline.",
+    "No published assessment buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis.",
+    "Maximum LVRs are inferred from published rate-card tiers, not from a policy statement; whether the 98% owner-occupied tier is a genuine 98% LVR or 95% plus capitalised LMI could not be confirmed.",
+    "No published income-type table, employment tenure minimums, credit knock-outs, LMI waiver professions, security/postcode restrictions or residency/visa rules."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

@@ -2,6 +2,34 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { log } from "./utils/logger";
+import {
+  BOOK_HOST_HEADER,
+  isSpringboardBookHost,
+  springboardBookRobots,
+  springboardBookRoute,
+} from "./utils/springboard-book-host";
+import { MARKETING_HOME, marketingMayAccess, roleForEmail, type CrmRole } from "./utils/roles";
+
+/**
+ * Role gate (see utils/roles.ts). Runs after identity is established. Returns
+ * a response to send instead of the page/API, or null to let it through.
+ * API calls get a 403; page loads are sent to the marketing home page.
+ */
+function roleGate(req: NextRequest, role: CrmRole): NextResponse | null {
+  if (role !== "marketing") return null;
+  const { pathname } = req.nextUrl;
+  if (marketingMayAccess(pathname, req.method)) return null;
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Forbidden: not available to your role" }, { status: 403 });
+  }
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+  const home = req.nextUrl.clone();
+  home.pathname = MARKETING_HOME;
+  home.search = "";
+  return NextResponse.redirect(home, 307);
+}
 
 /**
  * Cloudflare Access auth gate + CSRF origin filter for the Property CRM
@@ -152,6 +180,172 @@ const PUBLIC_PATHS = new Set<string>([
   // room dashboard requires Sean to be authenticated.
 ]);
 
+// Public e-signature routes. External signers reach these WITHOUT a
+// Cloudflare Access identity, so they must be exempt from the CF Access
+// gate. Prefix-matched (dynamic `<token>` segment) rather than added to the
+// exact-match PUBLIC_PATHS set. The token itself is the unguessable bearer
+// credential; each handler still validates it. The CSRF origin check above
+// still applies to the mutating `/api/sign/` POSTs (they're same-origin).
+export function isPublicSignRoute(pathname: string): boolean {
+  // Public signer page: `/sign/<token>` (and a bare `/sign`).
+  if (pathname === "/sign" || pathname.startsWith("/sign/")) return true;
+  // Public token APIs `/api/sign/<token>/*`. The authed advisor routes now live
+  // at `/api/signature-requests` (moved out from under this prefix so the CF
+  // Access bypass on `/api/sign/*` no longer strips their auth header), so they
+  // are already excluded here — `/api/signature-requests` does not start with
+  // `/api/sign/`. The `/api/sign/requests` guard below is a now-moot belt-and-
+  // suspenders check kept in case that legacy path is ever reintroduced.
+  if (pathname.startsWith("/api/sign/") && !pathname.startsWith("/api/sign/requests")) {
+    return true;
+  }
+  return false;
+}
+
+// Public guest video-call routes. A client joins a call WITHOUT a Cloudflare
+// Access identity, so these must be exempt from the CF Access gate — same model
+// as the signing routes above. Trust is the signed, expiring guest token: the
+// /join page is an empty shell without one, and the guest-token API validates
+// the JWT before minting anything. Must mirror the CF Access bypass apps
+// (crm.nextkey.com.au/join/* + /api/livekit/guest-token) EXACTLY: the guest-token
+// exemption is the single exact path, NOT all of /api/livekit/*, so the authed
+// sibling routes (token, record, calls, guest-link) keep their CF Access auth
+// header. The CSRF origin check above still applies to the mutating guest-token
+// POST (it's same-origin from the /join page). The SFU's own webhook is
+// machine-to-machine and has its own exemption below — deliberately NOT folded
+// in here, so a guest-facing change can never widen it.
+export function isPublicGuestRoute(pathname: string): boolean {
+  if (pathname === "/join" || pathname.startsWith("/join/")) return true;
+  if (pathname === "/api/livekit/guest-token") return true;
+  return false;
+}
+
+// LiveKit SFU -> CRM webhook. The SFU (deploy/livekit/livekit.yaml) POSTs call
+// lifecycle events here from a Fly machine that has no Cloudflare Access
+// identity, so the gate has to let it through — same machine-caller model as the
+// cron route below.
+//
+// This is what made the call timeline permanently empty: the route was written
+// machine-to-machine ("the request is NOT behind Cloudflare Access") but every
+// POST was in fact bounced at the edge, so `video_call_events` never took a
+// single row while calls themselves ran fine. LiveKit logs a redirect as a
+// successful send, so the failure was invisible from both ends.
+//
+// Trust is NOT this exemption — it's the signed webhook JWT in the Authorization
+// header, verified against the LiveKit API secret by `receiver.receive()` before
+// the handler touches Supabase; an unsigned POST gets 401 from the route itself.
+// Exact path only, mirroring the CF Access bypass app, so the authed siblings
+// keep their auth header. The CSRF origin check above still applies, and a
+// server-to-server POST sends no Origin header, so it passes.
+export function isLivekitWebhookRoute(pathname: string): boolean {
+  return pathname === "/api/livekit/webhook";
+}
+
+// Public self-book routes. A lead picks a meeting time WITHOUT a Cloudflare
+// Access identity, so the booking page and its API must be exempt — same model
+// as the signing + guest-video routes. Trust: the host slug is public (like a
+// Calendly link), the booking API re-validates every slot against live busy
+// times, and the honeypot + slot-grid check bound abuse. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/book/* + /api/book/*) EXACTLY. The CSRF
+// origin check above still applies to the mutating booking POST (same-origin
+// from the /book page).
+export function isPublicBookingRoute(pathname: string): boolean {
+  if (pathname === "/book" || pathname.startsWith("/book/")) return true;
+  if (pathname.startsWith("/api/book/")) return true;
+  return false;
+}
+
+// Public client document-portal routes. A borrower uploads their Preliminary
+// Assessment documents WITHOUT a Cloudflare Access identity, so these must be
+// exempt from the CF Access gate — same model as the signing, guest-call and
+// booking routes above. Trust is the unguessable 256-bit token in the path:
+// only its SHA-256 hash is stored, and every handler re-resolves the token
+// itself rather than trusting any caller-supplied id. Must mirror the CF Access
+// bypass app (crm.nextkey.com.au/portal/* + /api/portal/*) EXACTLY.
+//
+// Note this exempts ALL of /api/portal/*, which is safe because every route
+// under it is token-scoped by construction. The REP-side routes that create and
+// manage document requests deliberately live at /api/document-requests instead,
+// so they keep their CF Access auth header — the same separation the signing
+// routes had to make when /api/sign/requests moved to /api/signature-requests.
+// The CSRF origin check above still applies to the mutating portal POSTs
+// (same-origin from the /portal page).
+export function isPublicPortalRoute(pathname: string): boolean {
+  if (pathname === "/portal" || pathname.startsWith("/portal/")) return true;
+  if (pathname.startsWith("/api/portal/")) return true;
+  return false;
+}
+
+// Public introducer-portal routes. An introducer is an EXTERNAL party who must
+// never hold a Cloudflare Access identity — one over-broad CF policy would
+// otherwise put a third party inside the whole CRM — so the portal carries its
+// own session instead (utils/introducer-auth.ts: one-time code, hashed session
+// token, httpOnly cookie) and sits outside the CF gate here. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/introducer/* + /api/introducer/*)
+// EXACTLY.
+//
+// THE TRAILING SLASH IS LOAD-BEARING. `"/introducers".startsWith("/introducer")`
+// is true, so a bare prefix test would silently exempt any future staff route
+// whose name merely begins with "introducer". Matching "/introducer" exactly
+// plus "/introducer/" keeps the exemption to this one subtree — the same
+// discipline the /portal and /book carve-outs above use.
+//
+// The STAFF side deliberately lives at /admin/introducers and
+// /api/admin/introducers — a different subtree entirely — so it keeps its CF
+// Access auth header no matter how this function is edited later. Every route
+// under /api/introducer/* is session-scoped by construction: each one resolves
+// the session cookie through requireIntroducer() and filters on the introducer
+// id from that session, never from the request. The CSRF origin check above
+// still applies to the mutating portal POSTs (same-origin from the portal
+// pages).
+export function isPublicIntroducerRoute(pathname: string): boolean {
+  if (pathname === "/introducer" || pathname.startsWith("/introducer/")) return true;
+  if (pathname.startsWith("/api/introducer/")) return true;
+  return false;
+}
+
+// Public channel-partner portal routes. Same reasoning, and the same shape, as
+// the introducer carve-out above: partners are external firms selling our stock,
+// must never hold a Cloudflare Access identity, and carry their own session
+// (utils/partner-auth.ts). Must mirror the CF Access bypass app
+// (crm.nextkey.com.au/partner + /api/partner) EXACTLY.
+//
+// Trailing slash load-bearing again: `"/partners".startsWith("/partner")` is
+// true. The staff side lives at /admin/partners and /api/admin/partners, and
+// the recruitment list at /channel-partners — neither can match here. Every
+// route under /api/partner/* resolves the session through requirePartner() and
+// filters on the partner id from that session, never from the request.
+export function isPublicPartnerRoute(pathname: string): boolean {
+  if (pathname === "/partner" || pathname.startsWith("/partner/")) return true;
+  if (pathname.startsWith("/api/partner/")) return true;
+  return false;
+}
+
+// Public client property-shortlist routes. A client opens the properties a
+// consultant picked for them WITHOUT a Cloudflare Access identity — same model
+// as the document portal: the 256-bit token in the path is the credential, only
+// its SHA-256 is stored, and every handler re-resolves it. Must mirror the CF
+// Access bypass app (crm.nextkey.com.au/shortlist/* + /api/shortlist/*) EXACTLY.
+//
+// Trailing slash load-bearing: "/shortlists".startsWith("/shortlist") is true.
+// The staff side lives at /property-shortlists and /api/property-shortlists — a
+// different subtree, so it keeps its CF Access auth header.
+export function isPublicShortlistRoute(pathname: string): boolean {
+  if (pathname === "/shortlist" || pathname.startsWith("/shortlist/")) return true;
+  if (pathname.startsWith("/api/shortlist/")) return true;
+  return false;
+}
+
+// External-cron trigger route. Netlify's scheduled functions stopped executing,
+// so the Fly nexus-api supercronic fleet drives the sweeps over HTTP instead — a
+// machine caller with no Cloudflare Access identity. Exempt from the CF Access
+// gate here; re-secured by a shared secret INSIDE the route (Authorization:
+// Bearer CRON_SECRET, constant-time compared). Must mirror the CF Access bypass
+// app (crm.nextkey.com.au/api/cron/*) EXACTLY. The CSRF origin check above still
+// applies, but a server-to-server POST sends no Origin, so it passes.
+export function isCronRoute(pathname: string): boolean {
+  return pathname === "/api/cron" || pathname.startsWith("/api/cron/");
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -176,8 +370,88 @@ function originAllowed(origin: string | null): boolean {
   }
 }
 
+// book.springboardhomes.com.au — the Springboard booking page on its own
+// hostname (see utils/springboard-book-host.ts). That host is a Netlify domain
+// alias with NO Cloudflare Access in front of it, so it gets its own branch,
+// decided before anything else: an exact allow-list, a 404 for everything else.
+// It never reaches the CF Access gate below and never redirects to the CRM.
+function plainText(body: string, status: number, extra: Record<string, string> = {}): NextResponse {
+  return new NextResponse(body, {
+    status,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "x-content-type-options": "nosniff",
+      ...extra,
+    },
+  });
+}
+
+function springboardBookHostResponse(req: NextRequest, requestHeaders: Headers): NextResponse {
+  const { pathname } = req.nextUrl;
+
+  // CSRF, scoped to this host: a mutation must come from this host's own page
+  // (or carry no Origin at all). The CRM's TRUSTED_HOSTS list is deliberately
+  // NOT widened — a page on this host can never POST to the CRM host.
+  if (MUTATING_METHODS.has(req.method)) {
+    const origin = req.headers.get("origin");
+    if (origin) {
+      let originHost = "";
+      try {
+        originHost = new URL(origin).hostname;
+      } catch {
+        /* unparseable (e.g. "null") — rejected below */
+      }
+      if (!isSpringboardBookHost(originHost)) {
+        return NextResponse.json({ error: "Forbidden: untrusted origin" }, { status: 403 });
+      }
+    }
+  }
+
+  const decision = springboardBookRoute(pathname, req.method);
+  if (decision.kind === "not_found") {
+    return plainText("Not found", 404, { "x-robots-tag": "noindex", "cache-control": "no-store" });
+  }
+  if (decision.kind === "robots") {
+    return plainText(springboardBookRobots(), 200, { "cache-control": "public, max-age=3600" });
+  }
+
+  // Allowed: tag it public (chromeless, no sidebar queries) and as this host.
+  requestHeaders.set("x-public-route", "1");
+  requestHeaders.set(BOOK_HOST_HEADER, "1");
+  if (decision.kind === "rewrite") {
+    const url = req.nextUrl.clone();
+    url.pathname = decision.pathname;
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+  }
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Prepare request headers for downstream with sanitisation of any client-forgeable flags.
+  const requestHeaders = new Headers(req.headers);
+  // NEVER trust client-supplied public-route flags — strip before we decide.
+  requestHeaders.delete("x-public-route");
+  requestHeaders.delete(BOOK_HOST_HEADER);
+  // Same for the role flag — only this proxy may set it.
+  requestHeaders.delete("x-crm-role");
+
+  // Every host signal, so a request is restricted if ANY of them names the
+  // booking host. Matching only ever narrows what a caller can reach.
+  if (
+    isSpringboardBookHost(
+      req.nextUrl.hostname,
+      req.headers.get("host"),
+      req.headers.get("x-forwarded-host"),
+    )
+  ) {
+    return springboardBookHostResponse(req, requestHeaders);
+  }
+
+  // /favicon.ico is in the matcher only so the booking host above can swap in
+  // the Springboard icon. Everywhere else it passes straight through, exactly
+  // as it did when the matcher excluded it.
+  if (pathname === "/favicon.ico") return NextResponse.next();
 
   // Normalise duplicate slashes ("//path" → "/path"). A stale bookmark or
   // a Cloudflare Access redirect_url concatenation can produce URLs like
@@ -209,11 +483,32 @@ export async function proxy(req: NextRequest) {
     ? "tunnel"
     : (process.env.AUTH_MODE ?? "local").toLowerCase();
   if (mode !== "tunnel") {
-    return NextResponse.next();
+    // Local/dev passthrough — still tag the request explicitly as NOT public.
+    requestHeaders.set("x-public-route", "0");
+    // Dev: DEV_USER_EMAIL set to a marketing address previews that role.
+    const devRole = roleForEmail(process.env.DEV_USER_EMAIL);
+    const blocked = roleGate(req, devRole);
+    if (blocked) return blocked;
+    requestHeaders.set("x-crm-role", devRole);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (PUBLIC_PATHS.has(pathname)) {
-    return NextResponse.next();
+  const isPublic =
+    PUBLIC_PATHS.has(pathname) ||
+    isPublicSignRoute(pathname) ||
+    isPublicGuestRoute(pathname) ||
+    isLivekitWebhookRoute(pathname) ||
+    isPublicBookingRoute(pathname) ||
+    isPublicPortalRoute(pathname) ||
+    isPublicIntroducerRoute(pathname) ||
+    isPublicPartnerRoute(pathname) ||
+    isPublicShortlistRoute(pathname) ||
+    isCronRoute(pathname);
+
+  if (isPublic) {
+    // Tag trusted public routes for downstream server components/layouts.
+    requestHeaders.set("x-public-route", "1");
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const email = req.headers.get("cf-access-authenticated-user-email");
@@ -234,14 +529,24 @@ export async function proxy(req: NextRequest) {
     );
   }
 
-  // Pass-through with the user email exposed for downstream server components.
-  const res = NextResponse.next();
+  // Role gate: a marketing user only reaches the allowlist in utils/roles.ts.
+  const role = roleForEmail(email);
+  const blocked = roleGate(req, role);
+  if (blocked) return blocked;
+
+  // Pass-through with explicit "NOT public" tag for downstream.
+  requestHeaders.set("x-public-route", "0");
+  requestHeaders.set("x-crm-role", role);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  // Expose user email to API routes that read it directly (dev-only override honoured downstream).
   res.headers.set("x-user-email", email);
   return res;
 }
 
 export const config = {
   // Apply to everything except Next's static assets and image-optimisation
-  // pipeline. API routes ARE matched — they need the same gate.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // pipeline. API routes ARE matched — they need the same gate. /favicon.ico is
+  // matched (it used to be excluded) so the Springboard booking host can serve
+  // its own icon; on every other host proxy() passes it straight through.
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

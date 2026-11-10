@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 import { executeAndAudit } from "../../../../../utils/advisor-actions";
+import { remember, slugify } from "../../../../../utils/memory";
 
 import { requireAuth } from "../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const action = body.action;
 
-  const update: Record<string, any> = {};
+  const update: Record<string, string | null> = {};
   const now = new Date().toISOString();
 
   if (action === "apply" || action === "complete") {
@@ -92,5 +93,31 @@ export async function POST(
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
+
+  // Feed dismissals into long-term memory so the Veteran advisor recalls them
+  // PERMANENTLY and stops re-suggesting — recommendation_log's own dedupe only
+  // looks back ~14 days, so anything dismissed earlier resurfaces without this.
+  // Upsert by a deterministic slug so re-dismissing the same rec updates (not
+  // duplicates). Best-effort: a memory hiccup must never fail the dismiss.
+  if (action === "dismiss" && data) {
+    try {
+      await remember({
+        kind: "learning",
+        slug: `advisor-dismissed-${slugify(data.title)}`,
+        title: `Dismissed advisor rec: ${data.title}`,
+        body:
+          `Sean dismissed this Veteran-advisor recommendation. ` +
+          `Reason: ${update.dismissed_reason}. ` +
+          `Do not re-suggest this or close variants of it.`,
+        source: "advisor-feedback",
+        tags: ["advisor", "dismissed"],
+        confidence: 0.9,
+        createdBy: typeof auth === "string" ? auth : "advisor",
+      });
+    } catch (e) {
+      console.error("[advisor] dismissal→memory write failed (non-fatal):", e);
+    }
+  }
+
   return NextResponse.json({ ok: true, recommendation: data });
 }

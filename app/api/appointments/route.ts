@@ -1,62 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { requireAuth, userEmailFromRequest } from "../../../utils/cf-access";
-import {
-  createCalendarEvent,
-  getOAuthConfig,
-  refreshAccessToken,
-} from "../../../utils/google-oauth";
+import { findHost, SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
+import { errMessage } from "../../../utils/errors";
+import { roomForContact, livekitConfigured } from "../../../utils/livekit";
+import { signGuestToken } from "../../../utils/guest-token";
+import { sendMeetingInvite } from "../../../utils/meeting-invite";
+import { sendBrevoEmail } from "../../../utils/brevo";
+import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS, appointmentIcsUid } from "../../../utils/appointments";
+import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
+import { meetingSmsBody } from "../../../utils/meeting-sms";
+import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
+import { guestJoinOrigin } from "../../../utils/springboard-book-host";
 
 /**
- * Create an appointment from inside the CRM.
+ * Appointments API — the CRM's own calendar. No Google.
  *
- * Callers:
- *   - NewOpportunityModal "+ Schedule appointment" inline section
- *   - OpportunityDetail's "📅 Schedule meeting" button (ScheduleMeetingModal)
+ * POST — create a meeting:
+ *   1. Mint a self-hosted LiveKit video link (`/join/<guest-token>`) reusing the
+ *      contact's room, so scheduled meetings and ad-hoc "Video call" clicks land
+ *      in the same room + on the contact's video timeline.
+ *   2. Insert the Supabase `appointments` row — this IS the calendar. It's the
+ *      authoritative record read by /calendar, /appointments, and the contact /
+ *      opportunity detail panels. We write BOTH column conventions in the schema
+ *      (title+appointment_status AND event_title+status) so every read path sees
+ *      it.
+ *   3. Email the attendee a branded invite via Brevo with the join link + an
+ *      .ics attachment, so the meeting lands in whatever calendar they use.
+ *      Best-effort: a failed send never loses the booking, but IS reported so
+ *      the UI can tell the operator to follow up (we promised an invite).
  *
- * Orchestrates two writes:
- *   1. Google Calendar event on the host's primary calendar — gets a
- *      Google Meet link auto-attached and (if attendees are present)
- *      sends a calendar invite to them via sendUpdates.
- *   2. Supabase `appointments` row so the appointment shows up in the
- *      CRM's /appointments view + contact/opportunity detail panels
- *      alongside Cal.com-synced bookings. We write BOTH column-name
- *      conventions used in the codebase (title+appointment_status AND
- *      event_title+status) so reads from either side see the row.
+ * GET — list meetings in a date range (for the calendar grid):
+ *   ?from=ISO&to=ISO[&contact_id=]  → { appointments: [...], hosts: [...] }
  *
- * The Google Calendar step is best-effort. If GOOGLE_OAUTH_CLIENT_ID is
- * not set, or this host hasn't connected their calendar from /settings,
- * we still insert the Supabase row and return a `calendar_warning`. The
- * CRM-side record is the primary artefact; the calendar event is an
- * enrichment.
- *
- * Failure to insert the Supabase row is hard-error (the calendar event,
- * if created, is left orphaned — acceptable trade since the row is what
- * the rest of the CRM reads).
+ * Google Calendar was removed from this flow (2026-07). The old
+ * calendar_credentials / OAuth path is gone; the .ics attachment replaces the
+ * "add to my calendar" function Google used to provide.
  */
 
 type Attendee = { email: string; displayName?: string };
 
 type Body = {
-  // Linkage (CRM-side)
-  contact_id: string;
-  contact_email: string;
+  // Linkage (CRM-side). Omit both for a diary entry with no client.
+  contact_id?: string;
+  contact_email?: string;
   contact_name?: string;
+  /** Optional: overrides the contact record when sending the confirmation SMS. */
+  contact_phone?: string;
 
-  // Calendar event details
+  // Meeting details
   title: string;
   start_time: string;       // ISO datetime (with or without offset)
   end_time?: string;        // ISO; defaults to start + DEFAULT_DURATION_MIN if omitted
   description?: string;     // primary body text; falls back to `notes`
   notes?: string;           // legacy alias accepted for backward compat
-  location?: string;
-  timeZone?: string;        // forwarded to Google Cal (defaults Australia/Brisbane in helper)
+  location?: string;        // physical location; ignored when a video link is minted
+  timeZone?: string;        // IANA tz used to render the invite's human time
+  meeting_kind?: "video" | "phone"; // default "video" — "phone" skips the LiveKit link
 
   // Host / attendees
-  host_email?: string;      // calendar owner; defaults to current authenticated user
-  invite_contact?: boolean; // default true — adds contact_email as attendee
+  host_email?: string;      // meeting owner; defaults to current authenticated user
+  invite_contact?: boolean; // default true — invites contact_email
   attendees?: Attendee[];   // explicit override; replaces invite_contact-derived list
-  sendUpdates?: "all" | "externalOnly" | "none"; // override; otherwise derived from attendees
+  send_invite?: boolean;    // default true when there's an attendee — email the invite
 };
 
 const DEFAULT_DURATION_MIN = 60;
@@ -77,10 +83,14 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Validate ---
-  if (!body.contact_id || !UUID_RE.test(body.contact_id)) {
-    return NextResponse.json({ error: "Valid contact_id (UUID) is required" }, { status: 400 });
+  // A diary entry with no client (internal meeting, site visit, personal
+  // block-out) is allowed: no contact → no video link, no invite, no SMS.
+  // contact_email is NOT NULL on this table, so it's stored as "".
+  const personal = !body.contact_id;
+  if (!personal && !UUID_RE.test(body.contact_id!)) {
+    return NextResponse.json({ error: "contact_id must be a UUID" }, { status: 400 });
   }
-  if (!body.contact_email || !EMAIL_RE.test(body.contact_email)) {
+  if (!personal && (!body.contact_email || !EMAIL_RE.test(body.contact_email))) {
     return NextResponse.json({ error: "Valid contact_email is required" }, { status: 400 });
   }
   const title = (body.title || "").trim();
@@ -100,102 +110,261 @@ export async function POST(req: NextRequest) {
   const startISO = new Date(startMs).toISOString();
   const endISO = new Date(endMs).toISOString();
   const description = (body.description ?? body.notes ?? "").trim() || undefined;
-  const location = body.location?.trim() || undefined;
+  const meetingKind: "video" | "phone" = body.meeting_kind === "phone" ? "phone" : "video";
+  const location = body.location?.trim() || (meetingKind === "phone" ? "Phone call" : undefined);
   const host_email = (body.host_email && EMAIL_RE.test(body.host_email)) ? body.host_email : currentUser;
+  const knownHost = findHost(host_email);
+  const host = knownHost ?? {
+    email: host_email,
+    displayName: host_email,
+    brand: "nextkey" as const,
+  };
 
   // Resolve attendees: explicit override > invite_contact toggle > default invite the contact.
   let attendees: Attendee[] | undefined;
   if (body.attendees && Array.isArray(body.attendees)) {
     attendees = body.attendees.filter((a) => a?.email && EMAIL_RE.test(a.email));
-  } else if (body.invite_contact !== false) {
-    attendees = [{ email: body.contact_email, displayName: body.contact_name }];
+  } else if (!personal && body.invite_contact !== false) {
+    attendees = [{ email: body.contact_email!, displayName: body.contact_name }];
   }
-  const sendUpdates: "all" | "externalOnly" | "none" =
-    body.sendUpdates ?? (attendees && attendees.length > 0 ? "all" : "none");
+  const hasAttendee = !!(attendees && attendees.length > 0);
+  const wantInvite = (body.send_invite ?? true) && hasAttendee;
 
-  // --- Step 1: Google Calendar (best-effort) ---
-  let calendarId: string | null = null;
-  let calendarLink: string | null = null;
-  let hangoutLink: string | null = null;
-  let calendarWarning: string | null = null;
-
-  try {
-    // Throws if OAuth env vars aren't set — caught below
-    getOAuthConfig();
-
-    const { data: cred, error: credErr } = await supabase
-      .from("calendar_credentials")
-      .select("refresh_token")
-      .eq("host_email", host_email)
-      .maybeSingle();
-
-    if (credErr) throw new Error(`credentials lookup failed: ${credErr.message}`);
-    if (!cred) {
-      calendarWarning = `Google Calendar not connected for ${host_email} — connect it from /settings to enable invites. Appointment saved to CRM only.`;
-    } else {
-      const { accessToken } = await refreshAccessToken(cred.refresh_token);
-      const event = await createCalendarEvent(accessToken, {
-        summary: title,
-        description,
-        location,
-        start: startISO,
-        end: endISO,
-        timeZone: body.timeZone,
-        attendees,
-        sendUpdates,
-      });
-      calendarId = event.id;
-      calendarLink = event.htmlLink;
-      hangoutLink = event.hangoutLink ?? null;
+  // --- Step 1: self-hosted LiveKit video link for this meeting ---
+  // Reuses the contact's room so scheduled meetings and ad-hoc "Video call"
+  // clicks share it and both land on the contact's video timeline. The guest
+  // link is a signed, expiring token with a TTL that comfortably covers the
+  // meeting. Best-effort: if LiveKit isn't configured or signing fails, the
+  // meeting is still booked, just without a video link.
+  let videoLink: string | null = null;
+  if (!personal && meetingKind !== "phone" && livekitConfigured()) {
+    try {
+      const room = roomForContact(body.contact_id!);
+      const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
+      const ttlHours = Math.max(24, hoursUntilEnd + 6);
+      const guestToken = await signGuestToken({ room, name: body.contact_name, ttlHours });
+      // A Springboard host's meeting gives the lead a Springboard join link
+      // (book.springboardhomes.com.au), matching the Springboard invite email.
+      videoLink = `${guestJoinOrigin(host.brand, req.nextUrl.origin, false)}/join/${encodeURIComponent(guestToken)}`;
+    } catch {
+      videoLink = null;
     }
-  } catch (e: any) {
-    // Don't fail the request — fall back to CRM-only and report the warning
-    calendarWarning = `Google Calendar step failed (${e.message || "unknown"}). Appointment saved to CRM only.`;
   }
 
-  // --- Step 2: Supabase appointments row (authoritative for the CRM) ---
-  // Populates BOTH column-name conventions in use across the codebase so a
-  // row written here shows up in every read path:
-  //   - title + appointment_status — used by /appointments page, contact &
-  //     opportunity detail pages, ContactDetail's appointments prop, etc.
-  //   - event_title + status — used by OpportunityAppointments (the panel
-  //     directly under the opp summary) which queries Cal.com-shaped rows.
-  const insertRow: Record<string, unknown> = {
-    contact_id: body.contact_id,
-    contact_email: body.contact_email,
-    title,
-    event_title: title,
-    start_time: startISO,
-    end_time: endISO,
-    notes: description ?? null,
-    location: location ?? hangoutLink ?? null,
-    appointment_status: "scheduled",
-    status: "scheduled",
-    host_name: host_email,
-    calendar_id: calendarId,
-  };
-
+  // --- Step 2: Supabase appointments row (authoritative — this IS the calendar) ---
+  // The table is the legacy Cal.com shape (event_title / status / additional_notes
+  // / NOT-NULL cal_uid); buildAppointmentRow is the single source of truth for
+  // that shape so this can't drift into non-existent columns again.
   const { data: inserted, error: insertErr } = await supabase
     .from("appointments")
-    .insert(insertRow)
-    .select(
-      "id,title,event_title,start_time,end_time,appointment_status,status," +
-      "calendar_id,location,notes,host_name,contact_id,contact_email",
-    )
+    .insert(buildAppointmentRow({
+      contactId: personal ? null : body.contact_id!,
+      contactEmail: personal ? "" : body.contact_email!,
+      contactName: body.contact_name ?? null,
+      hostEmail: host_email,
+      hostName: host.displayName ?? host_email,
+      title,
+      startISO,
+      endISO,
+      location: videoLink ?? location ?? null,
+      notes: description ?? null,
+    }))
+    .select("id")
     .single();
 
   if (insertErr) {
     return NextResponse.json(
-      { error: `Failed to save appointment: ${insertErr.message}`, calendar_event_id: calendarId },
+      { error: `Failed to save appointment: ${insertErr.message}` },
       { status: 500 },
     );
   }
 
+  // --- Step 3: Brevo invite with .ics (best-effort, but reported) ---
+  let inviteSent = false;
+  let inviteWarning: string | null = null;
+  if (wantInvite) {
+    // EVERY attendee gets an invite, not just the first. This used to send to
+    // attendees[0] only, so a second applicant — or anyone else added to the
+    // meeting — silently received nothing while the UI reported the invite as
+    // sent. One .ics uid across all copies, so their calendars treat it as the
+    // same meeting rather than one each.
+    // Brand-aware like the self-book route, so a later update/cancel
+    // (app/api/appointments/[id]) rebuilds the same uid via appointmentIcsUid.
+    const uid = appointmentIcsUid((inserted as unknown as { id: string }).id, host.brand);
+    const roster = attendees!.map((a) => ({ email: a.email, name: a.displayName }));
+    const results = await Promise.all(
+      attendees!.map((a) =>
+        sendMeetingInvite({
+          to: { email: a.email, name: a.displayName },
+          host,
+          title,
+          description,
+          start: startISO,
+          end: endISO,
+          joinUrl: videoLink,
+          location,
+          uid,
+          tz: body.timeZone,
+          attendees: roster,
+          medium: meetingKind,
+        }),
+      ),
+    );
+    // Partial success is the dangerous case: reporting a flat "sent" when two
+    // of three bounced is how someone turns up to a meeting alone. Name whoever
+    // missed out so the operator can follow up with that person specifically.
+    const failed = results
+      .map((r, i) => (r.ok ? null : { email: attendees![i].email, error: r.error }))
+      .filter((x): x is { email: string; error: string } => x !== null);
+    inviteSent = failed.length === 0;
+    if (failed.length > 0) {
+      const who = failed.map((f) => `${f.email} (${f.error})`).join("; ");
+      inviteWarning =
+        failed.length === results.length
+          ? `Invite email could not be sent to ${who}. The meeting is saved — follow up manually.`
+          : `The meeting is saved and ${results.length - failed.length} of ${results.length} invites went out, but these failed: ${who}. Follow up with them manually.`;
+    }
+  }
+
+  // --- Step 4: SMS confirmation (second channel) ---
+  //
+  // The invite email is a single point of failure. On 25 July one was delivered
+  // to a client's inbox, never opened — filed to spam or Promotions, which is
+  // what an .ics from a near-unknown sender attracts — and she missed a 9am
+  // meeting believing nothing had been sent. An SMS is read within minutes and
+  // costs a few cents.
+  //
+  // Best-effort and REPORTED, exactly like the invite: a failed text must never
+  // lose a saved booking, but the person who booked it has to know the attendee
+  // wasn't reached. Gated on MEETING_SMS_ENABLED so it can be switched off
+  // without a deploy, and it honours the SMS opt-out list (Spam Act).
+  let smsSent = false;
+  let smsWarning: string | null = null;
+  if (!personal && process.env.MEETING_SMS_ENABLED === "true") {
+    const phone = toE164AU(await contactPhone(body.contact_id, body.contact_phone));
+    if (phone) {
+      if (await isOptedOut(phone)) {
+        smsWarning = "Attendee has opted out of SMS — email only.";
+      } else {
+        const res = await sendSms({
+          contactId: body.contact_id ?? null,
+          phone,
+          body: meetingSmsBody({
+            firstName: body.contact_name ?? null,
+            startISO,
+            hostName: host.displayName ?? "Springboard Homes",
+          }),
+          campaign: "meeting-confirmation",
+        });
+        smsSent = res.ok;
+        if (!res.ok) smsWarning = `Confirmation SMS could not be sent (${res.error}).`;
+      }
+    } else {
+      smsWarning = "No valid mobile on file — email only.";
+    }
+  }
+
+  // --- Step 5: heads-up to the host, when someone else booked on their behalf ---
+  //
+  // The host dropdown lets any operator book a meeting under a different
+  // person's name (e.g. Sean booking on Glenn's behalf). Steps 3-4 only ever
+  // notify the attendee — the host otherwise finds out by opening the
+  // calendar. Best-effort and unreported, same as the self-book flow's
+  // equivalent notify (app/api/book/[host]/route.ts) — a failed heads-up
+  // must never affect the saved booking or its response. Only fires for a
+  // recognised SchedulingHost — an arbitrary host_email has no notify list.
+  if (currentUser && knownHost && host_email.toLowerCase() !== currentUser.toLowerCase()) {
+    const recipients = bookingNotifyRecipients(knownHost).filter(
+      (email) => email.toLowerCase() !== currentUser.toLowerCase(),
+    );
+    if (recipients.length > 0) {
+      const whenLabel = new Intl.DateTimeFormat("en-AU", {
+        weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit",
+        timeZone: "Australia/Brisbane",
+      }).format(new Date(startMs));
+      await sendBrevoEmail({
+        to: recipients.map((email) => ({
+          email,
+          name: email === knownHost.email ? knownHost.displayName : email,
+        })),
+        subject: `New meeting booked for you: ${title} — ${whenLabel}`,
+        // A personal entry (no contact, since #303) has nobody to name, so the
+        // "With" line is left out rather than printing "undefined".
+        // Everything typed by a person (names, notes) is escaped: a client
+        // name or note containing "<" would otherwise be read as HTML.
+        html: `<p>${esc(currentUser)} booked a meeting for you.</p>
+          <p><strong>When:</strong> ${esc(whenLabel)} (AEST)${personal ? "" : `<br>
+          <strong>With:</strong> ${esc(body.contact_name || body.contact_email || "")}`}</p>
+          ${videoLink ? `<p><a href="${esc(videoLink)}">Join the video meeting</a></p>` : ""}
+          ${description ? `<p><strong>Notes:</strong> ${esc(description)}</p>` : ""}`,
+        tags: ["appointment-host-notify"],
+      }).catch(() => undefined);
+    }
+  }
+
   return NextResponse.json({
     appointment: inserted,
-    calendar_event: calendarId
-      ? { id: calendarId, htmlLink: calendarLink, hangoutLink }
-      : null,
-    calendar_warning: calendarWarning,
+    video_link: videoLink,
+    invite_requested: wantInvite,
+    invite_sent: inviteSent,
+    invite_warning: inviteWarning,
+    sms_sent: smsSent,
+    sms_warning: smsWarning,
   });
+}
+
+/** Escape text for an HTML email body or attribute. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** The attendee's mobile: whatever the caller supplied, else the contact record. */
+async function contactPhone(
+  contactId: string | null | undefined,
+  supplied: string | null | undefined,
+): Promise<string | null> {
+  if (supplied) return supplied;
+  if (!contactId) return null;
+  const { data } = await supabase.from("contacts").select("phone").eq("id", contactId).maybeSingle();
+  return (data as { phone?: string | null } | null)?.phone ?? null;
+}
+
+/**
+ * List meetings in a date range for the calendar grid. Range is required so a
+ * month view can't accidentally pull the whole table; capped at ~100 days.
+ */
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
+  const { searchParams } = req.nextUrl;
+  const fromMs = Date.parse(searchParams.get("from") ?? "");
+  const toMs = Date.parse(searchParams.get("to") ?? "");
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs <= fromMs) {
+    return NextResponse.json({ error: "from and to (ISO) are required, to > from" }, { status: 400 });
+  }
+  if (toMs - fromMs > 100 * 86_400_000) {
+    return NextResponse.json({ error: "range too wide (max 100 days)" }, { status: 400 });
+  }
+  const contactId = searchParams.get("contact_id");
+
+  let q = supabase
+    .from("appointments")
+    .select(APPOINTMENT_READ_COLUMNS)
+    .gte("start_time", new Date(fromMs).toISOString())
+    .lt("start_time", new Date(toMs).toISOString())
+    .order("start_time", { ascending: true })
+    .limit(1000);
+  if (contactId && UUID_RE.test(contactId)) q = q.eq("contact_id", contactId);
+
+  const { data, error } = await q;
+  if (error) {
+    return NextResponse.json({ error: errMessage(error) }, { status: 500 });
+  }
+  return NextResponse.json({ appointments: data ?? [], hosts: SCHEDULING_HOSTS });
 }

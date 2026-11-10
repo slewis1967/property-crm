@@ -1,0 +1,114 @@
+{
+  "id": "northern-inland-credit-union",
+  "name": "Northern Inland Credit Union",
+  "legalName": "Northern Inland Credit Union Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.nicu.com.au/",
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-05-11",
+      "sourceUrl": "https://www.nicu.com.au/home-loans",
+      "sourceTitle": "Northern Inland Credit Union - Home loans product cards",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Each product card publishes its own LVR condition. Smart Home Loan (variable and 1/2/3 year fixed): \"LVR 90% or below\". Dream Home Loan variable P&I: \"LVR 80% or below\"; Dream Home Loan variable interest only: \"LVR 90% or below\". Value Home Loan: \"LVR 80% or below\". 90% is the highest LVR published on any product; NICU does not publish a policy maximum LVR. asAt is the page's HTTP Last-Modified date (11 May 2026) - the page carries no effective date.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Published LVR conditions by product: Dream Home Loan variable P&I 5.99% p.a. - \"LVR 80% or below\"; Dream Home Loan variable interest only 6.44% p.a. - \"LVR 90% or below\"; Smart Home Loan (2 year fixed 6.39%, variable 7.44%, 1 year fixed 6.29%, 3 year fixed 6.59%) - \"LVR 90% or below\"; Value Home Loan (variable 5.94%, 1 year fixed 5.99%) - \"LVR 80% or below\". No LMI arrangement, LMI provider or above-90% option is published.",
+      "asAt": "2026-05-11",
+      "sourceUrl": "https://www.nicu.com.au/home-loans",
+      "sourceTitle": "Northern Inland Credit Union - Home loans",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No credit-history policy is published on nicu.com.au."
+    }
+  },
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 150000,
+      "asAt": "2026-05-11",
+      "sourceUrl": "https://www.nicu.com.au/home-loans",
+      "sourceTitle": "Northern Inland Credit Union - Home loans product cards",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The lowest published minimum is on the Dream Home Loan interest-only card: \"Minimum $150,000 except when offers apply\". Two discounted products carry a much higher minimum: Dream Home Loan variable P&I \"Minimum loan amount - $500,000 (new mortgages only)\" and Value Home Loan variable \"New loans only, minimum loan $500,000\". So $150,000 is the general floor and $500,000 is a condition of the two sharpest rates, not a policy minimum. asAt is the page's HTTP Last-Modified date.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-11",
+      "sourceUrl": "https://www.nicu.com.au/home-loans",
+      "sourceTitle": "Northern Inland Credit Union - Home loans product cards",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Dream Home Loan: \"100% offset account available\". Smart Home Loan: \"100% offset account included\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-11",
+      "sourceUrl": "https://www.nicu.com.au/home-loans",
+      "sourceTitle": "Northern Inland Credit Union - Home loans product cards",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Free redraw\" across the range; the Dream Home Loan states a $500 minimum redraw.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Northern Inland Credit Union is an independent member-owned mutual headquartered in Tamworth NSW, formed from the 1988 merger of Oxley Mutual Credit Union, Tamworth & District Community Credit Union and Namoi Credit Union. It has around 14,000 members and branches at Tamworth, Gunnedah and Narrabri plus a Newcastle office. MEMBERSHIP IS OPEN, NOT OCCUPATION-RESTRICTED: \"Once you open an account or take out a loan with us you automatically become a Member.\" It remains independent - it has NOT merged with Regional Australia Bank (RAB's own merger history lists Peel Valley, Orana, Hunter Mutual, Holiday Coast, Macquarie Credit Union, Summerland Bank and a proposed SWSbank merger, but not NICU). NO BROKER CHANNEL WAS FOUND: nicu.com.au has no broker page, aggregator list, accreditation form or third-party lending guide.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.nicu.com.au/about",
+      "sourceTitle": "Northern Inland Credit Union - About us",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-11",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No broker channel could be found - no broker page, aggregator panel or accreditation process is published. NICU appears to be direct-to-member only.",
+    "No credit policy document, lending guide or serviceability calculator is published: nothing on assessment buffer, floor rate, DTI cap, rent shading, HEM or credit card assessment.",
+    "No policy maximum LVR is published - the 90% recorded here is the highest LVR appearing as a product-card condition, not a stated ceiling. Whether NICU lends above 90% with LMI is unknown.",
+    "LMI provider and LMI arrangements are not published.",
+    "No maximum loan amount and no maximum loan term is published (the comparison rate is illustrated on a 25 year term, which is not a maximum).",
+    "No income-type, employment tenure, credit-history, security/property or residency policy is published.",
+    "The home loans page carries no 'rates effective' date; asAt values are the page's HTTP Last-Modified date (11 May 2026).",
+    "NICU's ABN and Australian Credit Licence number were not captured from a public page in this pass."
+  ]
+}

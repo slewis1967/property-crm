@@ -1,8 +1,62 @@
+import Link from "next/link";
 import { supabase } from "../utils/supabase";
 import WarRoomCalculators from "./components/WarRoomCalculators";
 import AIDashboardBrief from "./components/AIDashboardBrief";
+import WarRoomTasks, { type WarRoomTask } from "./components/WarRoomTasks";
 
 export const dynamic = "force-dynamic";
+
+// Row shapes read from the dashboard queries below.
+type LeadRow = {
+  name: string | null;
+  email: string | null;
+  state: string | null;
+  buyer_type: string | null;
+  triage_score: number | null;
+  match_status: string | null;
+  created_at: string | null;
+  notes: string | null;
+};
+type ContactRow = {
+  name: string | null;
+  email: string | null;
+  buyer_type: string | null;
+  temperature: string | null;
+  lead_score: number | null;
+  status: string | null;
+  preferred_state: string | null;
+  created_at: string | null;
+};
+// Hot-leads query selects a narrower column set than recentContacts.
+type HotContactRow = {
+  name: string | null;
+  email: string | null;
+  temperature: string | null;
+  lead_score: number | null;
+  status: string | null;
+};
+
+// Supabase types an embedded resource as an array even for a many-to-one FK;
+// at runtime task→contact is a single object. Accept both and normalise.
+type ContactEmbed = { name: string | null; email: string | null };
+type RawTaskRow = {
+  id: string;
+  title: string | null;
+  due_date: string | null;
+  contact: ContactEmbed | ContactEmbed[] | null;
+};
+
+// property_leads has no top-level `temperature` column — it's stashed in the
+// free-text `notes` blob (a JSON-encoded string) alongside triage metadata.
+const leadTemperature = (notes: string | null): string | null => {
+  if (!notes) return null;
+  try {
+    const parsed = JSON.parse(notes);
+    return typeof parsed?.temperature === "string" ? parsed.temperature : null;
+  } catch {
+    return null;
+  }
+};
 
 const tempColor = (t: string | null) => {
   if (t === "hot") return "bg-red-100 text-red-700";
@@ -19,7 +73,8 @@ const statusColor = (s: string | null) => {
 
 export default async function Home() {
   let leadsCount = 0, propertiesCount = 0, contactsCount = 0;
-  let hotLeads: any[] = [], recentLeads: any[] = [], recentContacts: any[] = [];
+  let hotLeads: HotContactRow[] = [], recentLeads: LeadRow[] = [], recentContacts: ContactRow[] = [];
+  let openTasks: WarRoomTask[] = [];
   let dataFetchError = false;
 
   try {
@@ -28,8 +83,11 @@ export default async function Home() {
       supabase.from("global_stock_pool").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("*", { count: "exact", head: true }),
       supabase.from("contacts").select("name,email,temperature,lead_score,status").eq("temperature", "hot").order("created_at", { ascending: false }).limit(5),
-      supabase.from("property_leads").select("full_name,email,state,buyer_type,temperature,score,match_status,created_at").order("created_at", { ascending: false }).limit(8),
+      supabase.from("property_leads").select("name,email,state,buyer_type,triage_score,match_status,created_at,notes").order("created_at", { ascending: false }).limit(8),
       supabase.from("contacts").select("name,email,buyer_type,temperature,lead_score,status,preferred_state,created_at").order("created_at", { ascending: false }).limit(10),
+      // Open live tasks (the "Add task" TODOs), soonest due first, with the
+      // contact they're on so the War Room shows what needs doing and for whom.
+      supabase.from("tasks").select("id,title,due_date,completed,created_at,contact:contacts(name,email)").eq("completed", false).order("due_date", { ascending: true, nullsFirst: false }).limit(12),
     ]);
 
     leadsCount = results[0].count ?? 0;
@@ -38,6 +96,15 @@ export default async function Home() {
     hotLeads = results[3].data ?? [];
     recentLeads = results[4].data ?? [];
     recentContacts = results[5].data ?? [];
+    openTasks = ((results[6].data ?? []) as RawTaskRow[]).map((t) => {
+      const c = Array.isArray(t.contact) ? t.contact[0] : t.contact;
+      return {
+        id: String(t.id),
+        title: t.title || "(untitled task)",
+        due_date: t.due_date ?? null,
+        contactName: c?.name || c?.email || null,
+      };
+    });
   } catch (error) {
     console.error("Failed to fetch dashboard data:", error);
     dataFetchError = true;
@@ -90,18 +157,23 @@ export default async function Home() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Contacts (CRM)</h3>
           <p className="text-3xl font-bold mt-2">{contactsCount ?? 0}</p>
-          <a href="/contacts" className="text-xs text-blue-600 mt-2 block hover:underline">View contacts →</a>
+          <Link href="/contacts" className="text-xs text-blue-600 mt-2 block hover:underline">View contacts →</Link>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Stock Pool</h3>
           <p className="text-3xl font-bold mt-2">{propertiesCount ?? 0}</p>
-          <a href="/properties" className="text-xs text-blue-600 mt-2 block hover:underline">View properties →</a>
+          <Link href="/properties" className="text-xs text-blue-600 mt-2 block hover:underline">View properties →</Link>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Hot Leads</h3>
           <p className="text-3xl font-bold mt-2 text-red-600">{hotLeads?.length ?? 0}</p>
           <a href="/leads?filter=hot" className="text-xs text-red-500 mt-2 block hover:underline">View hot leads →</a>
         </div>
+      </div>
+
+      {/* Open live tasks set on opportunities */}
+      <div className="mb-6">
+        <WarRoomTasks tasks={openTasks} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -113,22 +185,25 @@ export default async function Home() {
           </div>
           {recentLeads && recentLeads.length > 0 ? (
             <div className="space-y-3">
-              {recentLeads.map((l: any, i: number) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{l.full_name || "—"}</p>
-                    <p className="text-xs text-gray-400">{l.buyer_type || "—"} · {l.state || "—"}</p>
+              {recentLeads.map((l, i) => {
+                const temperature = leadTemperature(l.notes);
+                return (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{l.name || "—"}</p>
+                      <p className="text-xs text-gray-400">{l.buyer_type || "—"} · {l.state || "—"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {temperature && (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(temperature)}`}>
+                          {temperature}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400">#{l.triage_score ?? "—"}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {l.temperature && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${tempColor(l.temperature)}`}>
-                        {l.temperature}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-400">#{l.score ?? "—"}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-400 text-sm">No leads yet.</p>
@@ -139,11 +214,11 @@ export default async function Home() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Hot Contacts</h2>
-            <a href="/contacts" className="text-sm text-blue-600 hover:underline">View all</a>
+            <Link href="/contacts" className="text-sm text-blue-600 hover:underline">View all</Link>
           </div>
           {hotLeads && hotLeads.length > 0 ? (
             <div className="space-y-3">
-              {hotLeads.map((c: any, i: number) => (
+              {hotLeads.map((c, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium">{c.name || "—"}</p>
@@ -168,7 +243,7 @@ export default async function Home() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Recent Contacts</h2>
-          <a href="/contacts" className="text-sm text-blue-600 hover:underline">View all</a>
+          <Link href="/contacts" className="text-sm text-blue-600 hover:underline">View all</Link>
         </div>
         {recentContacts && recentContacts.length > 0 ? (
           <div className="overflow-x-auto">
@@ -185,7 +260,7 @@ export default async function Home() {
                 </tr>
               </thead>
               <tbody>
-                {recentContacts.map((c: any, i: number) => (
+                {recentContacts.map((c, i) => (
                   <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-2 pr-4 font-medium">{c.name || "—"}</td>
                     <td className="py-2 pr-4 text-gray-500">{c.email || "—"}</td>

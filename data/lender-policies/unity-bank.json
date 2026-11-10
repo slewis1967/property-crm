@@ -1,0 +1,121 @@
+{
+  "id": "unity-bank",
+  "name": "Unity Bank",
+  "legalName": "Unity Bank Limited",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": "238311",
+  "abn": "72 087 650 637",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) Target Market Determination, effective 1 July 2025 (ref UB_TMD_14_0626)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"maximum Loan-to-Value Ratio (LVR) of 80% without Lenders Mortgage Insurance (LMI)\"."
+    },
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"maximum of 95% with LMI for owner-occupied\"."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"maximum of 90% with LMI for investment\"."
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"loan terms of up to 30 years\"."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"flexibility of an optional 100% mortgage offset account\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme (Home Guarantee Scheme)",
+        "Boost to Buy (Queensland)",
+        "Get Ahead Start guarantor option"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://unity.bank/home-loans/affordable-home-pathways/",
+      "sourceTitle": "Unity Bank — Affordable home pathways",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Re-sourced 2026-07-29 after the site dropped the www. host. The live Affordable Home Pathways page names these three; \"Shared Equity Home Buyer Helper (NSW)\" was recorded by an earlier pass but is NOT on the current page and has been removed rather than carried forward unconfirmed."
+    },
+    "notes": {
+      "value": "The Advantage Home Loan TMD states \"no minimum loan amount (minimum loan amount applies for existing home loan members)\" — i.e. Unity does not publish a minimum loan amount for new borrowers. Distribution channels named in the TMD are: online through the Unity Bank website; online through relevant third-party comparison sites; targeted advertising; phone or email through the Contact Centre; mobile lenders and relationship managers; and in person through Service Centres. Mortgage brokers are NOT a named distribution channel.",
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025, Distribution Conditions",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "residency": {
+    "notes": {
+      "value": "The Advantage Home Loan TMD states that all applicants must be \"aged 18 years or older; a permanent resident of Australia; and able to meet our identity verification requirements\" and the credit assessment criteria. Temporary-visa and non-resident borrowers are therefore outside the stated eligibility.",
+      "asAt": "2025-07-01",
+      "sourceUrl": "https://unity.bank/reusable-documents/disclosure-documents/target-market-determination/post-merge-2025/tmd-advantage-home-loan/",
+      "sourceTitle": "Unity Bank — Advantage Home Loan (L34) TMD, effective 1 July 2025, Distribution Conditions",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Recorded as a note rather than a rules table because the TMD's wording ('permanent resident of Australia') does not map cleanly onto the citizen/PR/visa vocabulary."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-07-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STATUS SET TO 'withdrawn' BECAUSE UNITY BANK DOES NOT APPEAR TO LEND THROUGH MORTGAGE BROKERS. Its home loan Target Market Determination lists six distribution channels and mortgage brokers are not among them; there is no broker page anywhere on unity.bank or unitybank.com.au (/broker/ and /brokers/ both 404). Trade coverage of the G&C merger reported that neither Unity nor G&C sourced new business through mortgage brokers. Confirm with the bank before treating this as final.",
+    "Unity Bank Limited absorbed G&C Mutual Bank on 7 March 2025 (see the 'g-and-c-mutual-bank' record); gcmutual.bank now redirects to unity.bank. Reliance Bank also operates under the Unity Bank licence.",
+    "No credit policy guide, servicing buffer, floor rate, DTI cap, rent shading, HEM basis or credit-card assessment rate is published.",
+    "No published minimum (for new borrowers) or maximum loan amount.",
+    "No published income, employment tenure, credit history or security policy.",
+    "Only the Advantage Home Loan TMD was read; Momentum, Fixed Rate, Essential Worker, First Home Buyer, Bridging, Construction, Retirees Access and Reverse Mortgage TMDs are also published and may carry different LVR caps.",
+    "Sources were re-pointed on 2026-07-29 from www.unity.bank (now 404) to the apex unity.bank, and every value was re-read against the live Advantage Home Loan TMD. Note the apex host serves an incomplete TLS chain, so Node cannot fetch it and the automated source check reports it as unverifiable; browsers and curl load it fine. Unity does NOT list mortgage brokers as a distribution channel for this product."
+  ]
+}

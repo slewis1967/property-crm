@@ -15,6 +15,7 @@
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
+import { publishPropertyUpsert } from "../../../../../utils/propchannel";
 
 import { requireAuth } from "../../../../../utils/cf-access";
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ const NUMERIC_FIELDS = new Set([
   "expected_rent_weekly",
 ]);
 
-function coerceNumeric(v: any): number | null {
+function coerceNumeric(v: unknown): number | null {
   if (v == null || v === "") return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   const cleaned = String(v).replace(/[^0-9.\-]/g, "");
@@ -92,7 +93,7 @@ export async function POST(
 
   if (action === "approve") {
     const merged = { ...item.raw_extraction, ...(body.edited_extraction ?? {}) };
-    const row: Record<string, any> = {
+    const row: Record<string, unknown> = {
       pipeline_status: "active",
       confidence_score: 1.0, // human-approved
       ingestion_run_id: item.ingestion_run_id,
@@ -103,6 +104,28 @@ export async function POST(
       if (f in merged) {
         row[f] = NUMERIC_FIELDS.has(f) ? coerceNumeric(merged[f]) : merged[f];
       }
+    }
+
+    // PRICE GUARD: total_package_price is the generated column
+    // COALESCE(house_price,0)+COALESCE(land_price,0). If both components are
+    // empty the listing publishes at $0 — a broken, misleading entry on the
+    // live sales feed. Approving with no price was the exact leak that put
+    // ~27 $0 listings (One Park Lane units, partial SPM rows) onto the feed.
+    // Block it: the reviewer must supply a house_price and/or land_price.
+    const houseP = Number(row.house_price) || 0;
+    const landP = Number(row.land_price) || 0;
+    if (houseP + landP <= 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Cannot approve: no price. The displayed total is computed from " +
+            "house_price + land_price and both are empty, so this would publish " +
+            "a $0 listing. Edit the price (house_price for a single bundled " +
+            "figure, or land_price + build_price for House & Land) and re-approve.",
+        },
+        { status: 422 },
+      );
     }
 
     // UPSERT not INSERT — global_stock_pool has a unique constraint on
@@ -131,6 +154,11 @@ export async function POST(
         proposed_property_id: inserted.id,
       })
       .eq("id", id);
+
+    // Notify PropChannel of new/updated property
+    publishPropertyUpsert(inserted.id).catch(() => {
+      /* logged in util */
+    });
 
     return NextResponse.json({ ok: true, action: "approved", property_id: inserted.id });
   }

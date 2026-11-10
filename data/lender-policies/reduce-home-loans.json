@@ -1,0 +1,219 @@
+{
+  "id": "reduce-home-loans",
+  "name": "Reduce Home Loans",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "research_only",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+  "funder": "BC Securities Pty Ltd (ACN 609 155 688, ACL 482240) for the RHL Capitalizer range",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the Reduce TMD index and the Capitalizer Full Doc / Alt Doc / Ezy Reduce TMDs — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR: 80% without LMI / 95% with LMI\"."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD covers owner occupied and investment residential property under one LVR attribute and does not split the cap by purpose."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "notes": {
+      "value": "LVR ceilings differ sharply by product: Capitalizer Full Doc 80% without LMI / 95% with LMI; Capitalizer Alt Doc 80%; Ezy Reduce Full Doc 80% (the TMD names consumers who \"need to borrow greater than 80% Loan to Valuation Ratio\" as an excluded class).",
+      "asAt": "2025-01-01",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2025/02/Target-Market-Determination-Ezy-Reduce-Full-Doc.pdf",
+      "sourceTitle": "Ezy Reduce Full Doc Target Market Determination, target market determination date 1 January 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Alt-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Alt Doc (Variable Rate & Fixed Rate) Target Market Determination, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Alt Doc TMD is designed for self-employed consumers and names consumers who \"are not self-employed\" as an excluded class."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Alt-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Alt Doc Target Market Determination, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR 80%\" on the Alt Doc product."
+    },
+    "notes": {
+      "value": "The Capitalizer Full Doc target market covers self-employed applicants, salaried employees, Australian registered companies, and trustees of Australian family or unit trusts (with the beneficiary and trustee meeting individual/company eligibility).",
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "employment": {},
+  "credit": {},
+  "security": {
+    "notes": {
+      "value": "Security must be residential, held by first registered real property mortgage. Metro, non-metro and regional security locations are all considered.",
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, Key Attributes",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same $100,000 minimum on the Alt Doc product."
+    },
+    "maxLoanAmount": {
+      "value": 2500000,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum single borrower exposure is separately capped at $5,000,000."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "40 years on Capitalizer Full Doc (a 30+ year premium and an upfront waiver fee apply); 30 years on Capitalizer Alt Doc and Ezy Reduce Full Doc."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum IO period 5 years\" (stated once for the product, not split by purpose)."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Offset account: Yes / Offset account premium: No\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Redraw: Yes, within facility limit\"."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/target-market-determinations/",
+      "sourceTitle": "Reduce Home Loans — Target Market Determinations index (Capitalizer SMSF Residential and SMSF Commercial TMDs)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Dedicated SMSF residential and SMSF commercial TMDs are published; their contents were not read, so no SMSF LVR or loan-size figure is recorded."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2025-01-01",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2025/02/Target-Market-Determination-Ezy-Reduce-Full-Doc.pdf",
+      "sourceTitle": "Ezy Reduce Full Doc Target Market Determination, dated 1 January 2025",
+      "confidence": "low",
+      "status": "verified",
+      "note": "Only established for the Ezy Reduce Full Doc product, whose excluded class includes consumers who \"are borrowing to construct a dwelling\". Construction availability across the wider Reduce range is not published — treat as product-specific, not a lender-wide rule."
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Eligibility criteria require \"being an Australian resident\" with a satisfactory credit rating."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Capitalizer Full Doc TMD names \"Australian non-resident and/or Expat customers\" as consumers for whom the product may not be suitable."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Same exclusion."
+        }
+      ],
+      "asAt": "2024-03-31",
+      "sourceUrl": "https://www.reduceloans.com.au/wp-content/uploads/2024/11/Reduce_TMD_Caplitalizer-Full-Doc_20240331.pdf",
+      "sourceTitle": "RHL Capitalizer Full Doc Target Market Determination v3.0, dated 31 March 2024",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The exclusion is stated for the Capitalizer range only. Permanent residents and temporary-visa holders are not addressed, so no rule is recorded for them."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2024-03-31",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Reduce Home Loans is a direct-to-consumer lender and mortgage manager that also operates its own in-house brokerage (\"access to over 40 lenders\"); no third-party broker accreditation channel is published. Status recorded as research_only.",
+    "Reduce's published TMD index mixes its own products (Capitalizer, Ezy Reduce, Eco) with third-party lender TMDs it distributes (Heritage/People's Choice, Macquarie, BOQ, Bank of Sydney). The 'Discount Variable' link on the Reduce TMD page resolves to a Heritage Bank TMD, so nothing from those third-party documents has been recorded against Reduce.",
+    "No servicing parameters published at all.",
+    "No income-type table or shading percentages; alt-doc income evidence requirements are not published.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published, although the Ezy Reduce TMD notes that terms and LVR 'will vary depending on ... credit history. E.g., discharged bankrupt or defaults', implying near-prime appetite that is not quantified publicly.",
+    "No minimum unit size, high-density, postcode or rural policy published.",
+    "Reduce's own ABN and ACL were not established from the pages read; only the funder BC Securities Pty Ltd (ACL 482240) is named.",
+    "The primary Capitalizer TMDs are dated 31 March 2024 and may read as stale.",
+    "Source documents (reduceloans.com.au TMD PDFs) sit behind a bot filter returning HTTP 403 to automated clients, so they cannot be re-verified on a schedule. All four URLs were confirmed present on the live Target Market Determinations index by hand on 2026-07-29, but the PDF CONTENTS were not re-read at that time — re-open them before relying on the LVR and loan-size figures."
+  ]
+}

@@ -45,10 +45,27 @@ function b64url(buf: Buffer): string {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/** Stable hash of the exact reviewed copy. */
-export function contentHash(subject: string, htmlBody: string, textBody: string): string {
+/**
+ * Stable hash of the exact reviewed copy, including the brand it was reviewed as.
+ *
+ * Brand is part of the bound content, not metadata beside it. Without it an
+ * operator could review copy as Springboard — under Springboard's regulatory
+ * identity, with Springboard's assumed facts — take the resulting override
+ * token, and send the same words as NextKey. That is precisely the brand-firewall
+ * breach this is meant to stop.
+ *
+ * Omitting `brand`, or passing "nextkey", hashes exactly as before, so tokens
+ * already in flight and the existing tests are unaffected.
+ */
+export function contentHash(
+  subject: string,
+  htmlBody: string,
+  textBody: string,
+  brand?: string | null,
+): string {
+  const base = `${subject}\n${htmlBody}\n${textBody}`;
   return createHash("sha256")
-    .update(`${subject}\n${htmlBody}\n${textBody}`)
+    .update(brand && brand !== "nextkey" ? `${base}\n@${brand}` : base)
     .digest("hex");
 }
 

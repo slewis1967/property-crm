@@ -5,7 +5,27 @@ import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 import { orSafe } from "../../../../utils/postgrest-safe";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface CandidateRow {
+  id?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget?: string | number | null;
+  budget_min?: string | number | null;
+  budget_max?: string | number | null;
+  temperature?: string | null;
+  lead_score?: number | null;
+  status?: string | null;
+  timeframe?: string | null;
+  finance_status?: string | null;
+  updated_at?: string | null;
+}
 
 const SYSTEM = `You match a property to the contacts in a CRM who are most likely to want it. Sean is a property advisor at NextKey Property Strategists; you're helping him decide who to pitch this property to.
 
@@ -61,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     // In-memory budget filter (DB filter complex due to nullable fields)
-    const filtered = (candidates ?? []).filter((c: any) => {
+    const filtered = (candidates ?? []).filter((c: CandidateRow) => {
       if (!propPrice) return true;
       const ceiling = c.budget_max || c.budget;
       if (!ceiling) return true; // unknown budget — let AI decide
@@ -83,7 +103,7 @@ export async function POST(req: Request) {
       `status: ${property.status || "—"}`,
       "",
       `CANDIDATES (${filtered.length}):`,
-      ...filtered.map((c: any) =>
+      ...filtered.map((c: CandidateRow) =>
         [
           `- id: ${c.id}`,
           `  name: ${c.full_name || c.name || "(unnamed)"}`,
@@ -99,8 +119,8 @@ export async function POST(req: Request) {
     const fingerprintInput = {
       v: 1,
       property_updated: property.updated_at ?? property.created_at ?? null,
-      candidate_ids: filtered.map((c: any) => c.id).sort(),
-      candidate_updates: filtered.map((c: any) => `${c.id}:${c.updated_at}`).sort(),
+      candidate_ids: filtered.map((c: CandidateRow) => c.id).sort(),
+      candidate_updates: filtered.map((c: CandidateRow) => `${c.id}:${c.updated_at}`).sort(),
     };
 
     try {
@@ -118,15 +138,15 @@ export async function POST(req: Request) {
       });
       const parsed = parseMatches(result.text);
       return NextResponse.json({ ok: true, matches: parsed, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: errMessage(e, "AI request failed") },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to find matches" },
+      { ok: false, error: errMessage(e, "Failed to find matches") },
       { status: 500 },
     );
   }

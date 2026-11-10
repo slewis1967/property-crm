@@ -1,0 +1,728 @@
+{
+  "id": "bank-of-sydney",
+  "name": "Bank of Sydney",
+  "legalName": "Bank of Sydney Ltd",
+  "tier": "foreign_bank",
+  "status": "active",
+  "acl": "243444",
+  "abn": "44 093 488 629",
+  "brokerSiteUrl": "https://www.banksyd.com.au/broker/",
+  "policyDocUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Residential Lending Guidelines v2025.4 states only that 'The Bank's serviceability calculator must be used' and requires a minimum Cash Flow Ratio of 1.00. No buffer or floor rate is published on the public broker site."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published in the public Residential Lending Guidelines; servicing is calculator-driven."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines Version 2025.4, November 2025 — 'Rental Income - Residential Investment'",
+      "confidence": "high",
+      "status": "verified",
+      "note": "20.00% discount for Metropolitan postcodes (i.e. 80% counted). Regional postcodes 30.00% discount (0.70); National postcodes (Standard) 50.00% discount (0.50); National postcodes (high density) 'Not accepted'. Postcode categories align to the QBE LMI Location Guide."
+    },
+    "rentShadingBasis": {
+      "value": "Discount 'against expected receipts to provide adequate allowances for non-occupancy and investment property-related fees and expenses' — i.e. instead of itemised holding costs.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Rental Income",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "existingCommitmentTreatment": {
+      "value": "unknown",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Verifying Other Commitments",
+      "confidence": "low",
+      "status": "verified",
+      "note": "Guide says: 'Commitments will be based on Comprehensive Credit Reporting (CCR) data or if data not available via CRR the banks carded rates will apply for serviceability purposes.' Does not map cleanly onto the taxonomy values."
+    },
+    "creditCardAssessmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Guide refers to 'the banks carded rates' where CCR data is unavailable but publishes no percentage."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Living Expenses",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Living expenses will be calculated at the higher of: Customer declared living expense, or The Household Expenditure Measure (HEM)'."
+    },
+    "dtiCap": {
+      "value": 7.0,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Servicing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum DTI of 7.0.' Note: 'DTI exceeding 7.0 may be considered on a case-by-case basis.'"
+    },
+    "notes": {
+      "value": "Minimum Cash Flow Ratio outcome of at least 1.00 is required in all cases to evidence affordability. Board (living with friends/family or sublet) assessed at a minimum of $650 per month per borrower or the amount advised by the client, whichever is higher.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Servicing / Verifying Other Commitments",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Residential Property Owner Occupied (P&I) — Metro Postcodes Freehold, First Ranking Charge — 95% (LVR above 80% to be covered by LMI)'. Interest-only owner occupier is capped at 80% (LMI above 75%)."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The Security Types & Maximum LVR table in the PDF is a multi-column layout that does not extract unambiguously — investment P&I appears grouped with owner occupied at 95% metro / 90% regional, but the row-to-criteria alignment could not be read with confidence. Investment interest-only is shown at 80% (LMI above 75%). Needs a human read of page 12 of the guide."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'LVR above 80% to be covered by LMI' on standard residential P&I. Excludes the No LMI (select professions) policy, which is recorded separately as an LMI waiver."
+    },
+    "maxLvrCashOutPct": {
+      "value": 80,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Cash Out and Debt Consolidation",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum LVR of 80%'. Cash out <= $250,000 needs no formal evidence of purpose; > $250,000 requires reasonable evidence of purpose."
+    },
+    "lmiProvider": {
+      "value": ["QBE Lenders Mortgage Insurance Limited (QBELMI)"],
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Rental Income note",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The Bank has adopted the terminology of Metropolitan, Regional and National postcodes to align with the methodology of its Lenders Mortgage Insurer, QBE Lenders Mortgage Insurance Limited (QBELMI).'"
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Medical Professionals (Medical Board, Chiropractic, Dental, Medical Radiation Practice, Nursing and Midwifery, Optometry, Occupational Therapy, Osteopathy, Paramedicine, Pharmacy, Physiotherapy, Podiatry, Psychology Boards; also Pathologists, Veterinarians, Psychiatrists)",
+        "Registered Accountants, Actuaries or Financial Analysts (CA, CPA, FIAA, CFA)",
+        "Financial Planner (holds valid AFSL)",
+        "Registered Solicitors",
+        "Barristers",
+        "Registered Engineers",
+        "Geologists, Geophysicists & Hydrogeologists",
+        "Commercial Pilots & Air Traffic Controllers",
+        "Construction Project Managers",
+        "Registered Quantity Surveyors",
+        "Registered Planners",
+        "Land Surveyors",
+        "Accredited Cyber Security Professionals",
+        "Registered Architects",
+        "Registered Teachers",
+        "Police Officers",
+        "Firefighters",
+        "Defence Force Personnel"
+      ],
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — No LMI Policy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'No LMI Policy for Select Professionals' (previously 'Professionals Package'). The Bank's CRO has discretion to approve other professions on an individual application basis."
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 90,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — No LMI Policy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The Bank may, by exception, approve an LVR up to a maximum of 90% for borrowers earning at least 50% of their assessable income from the professions noted below, with a minimum of three years' experience in the relevant field aligned to their qualification.' Applies to owner occupied P&I; regional postcodes cap the No LMI policy at 80%."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 6,
+          "evidence": "Two of the three most recent electronically issued pay slips showing borrower name, employer name, ABN, and a minimum 3 months year-to-date income. Handwritten pay slips not accepted.",
+          "conditions": "100% of gross base income where applicant can demonstrate minimum 6 months in current role or 12 months in the same field/line of work, and completion of any probationary period."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Completion of any probationary period (however if they have been in the same field of employment they can be considered on an exception basis. Call your RM to clarify individual eligibility)'."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 12,
+          "evidence": "Evidence of at least 12 months in current role or at least 2 years in same field. Two years' tax returns if with current employer on a casual basis for less than 12 months.",
+          "conditions": "'Casual employment income from borrowers will only be accepted when applying for a loan jointly with a full-time salaried or self-employed applicant i.e. applicants whose sole income is casual will not be acceptable.'"
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 12,
+          "evidence": "Details of current employment contract including salary, conditions, term and expiry date. Last 2 years' tax returns and NOA where employed on contract less than 12 months.",
+          "conditions": "Minimum 12 months in current role or at least 12 months in the same field. 'Acceptance of contracts with less than six months to expiry subject to approving officer's assessment of renewal prospects.'"
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Last two years tax returns and Notice of Assessment; tax status confirmed via ATO Tax Portals and Integrated Client Account Portal; confirmation the business has been established for at least two full financial years.",
+          "conditions": "Business income calculated from 'taxable income' — the average of the last two years, or only the most recent year if the borrower qualifies under the Bank's No LMI policy. Depreciation in the most recent tax return may be added back."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Corporate/Trusts — last two years tax returns and accountant-prepared financial statements.",
+          "conditions": "'Income from self-employed borrowers operating an incorporated business should be referred through to your RM.' Subject to the loan amount being $2 million and for consumer purposes, a company guarantee is not required for self-employed borrowers."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Current lease agreement, rental receipts, rental valuation or agent letter, managing agent statements, or a tax return no more than 6 months old.",
+          "conditions": "20.00% discount Metropolitan postcodes; 30.00% Regional; 50.00% National (Standard); National high-density rental income not accepted. The Bank may apply further discounts at its discretion."
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 6,
+          "evidence": "Evidence of regular receipt over a minimum period of 6 months, or a contract of employment outlining the conditions.",
+          "conditions": "100% where the applicant is in the Essential Service Industry — Ambulance, Police, Fire Service, Medical Nursing, Medical Doctors, Defence Force and Corrective Services."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": 6,
+          "evidence": "Evidence of payment over a minimum of 6 months.",
+          "conditions": "75% where it is not a condition of employment; 100% if confirmed by the employer in writing as a permanent condition of employment."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": 6,
+          "evidence": "Evidence of payment over a minimum of 6 months.",
+          "conditions": "Grouped with overtime and penalties: 75% where not a condition of employment, 100% if a written permanent condition of employment."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 24,
+          "evidence": "Contract of employment outlining commission conditions, OR last 2 years PAYG payment summaries showing consistent payments, OR last 2 years tax returns and NOAs.",
+          "conditions": "100% of the average of last two years. Applicant must have been in their job or similar role for at least 2 years. 'Discretion should be exercised if the industry in which applicant is employed is subject to volatility e.g. Real Estate.'"
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 24,
+          "evidence": "As for commission income.",
+          "conditions": "100% of the average of last two years; applicant in the job or similar role for at least 2 years."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 0.5,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'50% of a borrowers' vehicle allowance may be added to the net income figure available for servicing, provided it is a condition of employment.' 100% of any corresponding lease or hire purchase must be included as a commitment. Separately, a fully maintained company vehicle available for unrestricted private use adds $5,000 per annum to net income (PAYG borrowers only)."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": 24,
+          "evidence": "Last 2 years tax returns and Notices of Assessment plus evidence of current investments held.",
+          "conditions": "75% of the average payment over the last 2 years (grouped as Investment Income — trust distributions, interest or dividends)."
+        },
+        {
+          "type": "trust_distributions",
+          "accepted": true,
+          "shadingPct": 0.75,
+          "minHistoryMonths": 24,
+          "evidence": "Recurrent distributions for at least two financial years supported by taxation returns for both the trust/company and the individual applicant.",
+          "conditions": "Investment income (trust distributions, interest or dividends) at 75% of the 2-year average. Where the borrower is a beneficiary of a trust or material shareholder of a private company, the guide states the 'Average of the last two years' taxable income'."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": "Statement from Centrelink or Family Assistance Office.",
+          "conditions": "100% of payments where the payment is determined to be available for a minimum of 5 years from the date of loan assessment or approval. Should be less than 50% of total income on the application."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": null,
+          "evidence": "Statement from Centrelink or Family Assistance Office.",
+          "conditions": "100% of payments (listed as 'Government Pensions e.g. Veteran Affairs, Centrelink Disability'). Applicants whose government/other benefits collectively comprise greater than 50% of total income 'will be deemed to have not met the Bank's eligibility criteria'."
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Some government payments such as Invalid pensions, Unemployment benefits, Sickness/accident benefits and Workers compensation are not acceptable.'"
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1.0,
+          "minHistoryMonths": 3,
+          "evidence": "Child Support Agency Assessment showing the amount payable and the names and dates of birth of the eligible children, AND 3 months current bank statements confirming receipt.",
+          "conditions": "100% of income; must be paid through the Child Support Agency and be available for a minimum of 5 years. 'Private arrangements are not acceptable under any circumstances.'"
+        }
+      ],
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines Version 2025.4, November 2025 — Acceptable Income / Additional Sources of Income / Income Documentation",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Self Employed / Income Documentation",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Individual - last two years tax returns and Notice of Assessment' and 'confirmation that the business has been established for at least two full financial years'."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Self Employed (Sole Traders)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only within the No LMI policy: income may be calculated using 'Only the most recent year's taxable income, if the borrower qualifies under the requirements of the Bank's No LMI policy previously known as Professionals Package.' Two years of tax returns are still required as documents."
+    },
+    "notes": {
+      "value": "Maternity leave: maximum LVR 80.00%; income consideration limited to 75% of gross employer maternity and government paid parental leave payments received within the 12-month period from application, supported by documentation. All maternity leave income from applicants unable to provide documentary evidence of return-to-work terms is excluded.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Maternity Leave Policy",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — PAYG Salary and Wages (Permanent)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 6 months in current role or 12 months in the same field/line of work'."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Permanent Employment",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — PAYG Salary and Wages (Permanent)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "For permanent PAYG. Casual requires at least 2 years in the same field/line of employment; contract requires at least 12 months."
+    },
+    "probationAccepted": {
+      "value": false,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — PAYG Salary and Wages (Permanent)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Requires 'Completion of any probationary period', with an exception path: 'however if they have been in the same field of employment they can be considered on an exception basis. Call your RM to clarify individual eligibility.'"
+    },
+    "probationConditions": {
+      "value": "Completion of any probationary period is required. Applicants who have not been in their current role for at least 6 months or in the same field/line of employment for at least one year must have completed any probationary period in their current position. Same-field applicants may be considered on an exception basis via the RM.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Permanent Employment",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "minMonthsCasual": {
+      "value": 12,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Casual Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 12 months in current role or at least 2 years in the same field/line of employment.' Under 12 months requires 2 years' tax returns."
+    },
+    "minMonthsContract": {
+      "value": 12,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Contractual Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 12 months in current role or at least 12 months in the same field/line of work.'"
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Self Employed (Income Documentation)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Expressed as 'the business has been established for at least two full financial years' — financial years, not calendar months; 24 is the closest faithful expression."
+    }
+  },
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The public Residential Lending Guidelines v2025.4 contains no credit-history section — no default, judgment, bankruptcy, arrears, credit score or enquiry rules are published. Only that commitments are assessed off Comprehensive Credit Reporting data."
+    }
+  },
+
+  "security": {
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Property zoned rural or rural residential that does not meet the Bank's acceptable criteria",
+        "Strata Title Hotel, Motel, Resort style dwellings",
+        "Time-share properties that cannot be occupied on a permanent basis",
+        "Properties with restricted market appeal e.g. aged care complexes",
+        "Student accommodation",
+        "Split contract arrangement",
+        "Any property that cannot be effectively mortgaged using usual bank security documents e.g. Vic Stratum Security",
+        "Unit developments held as security on one title where the number of dwellings exceeds 4 units",
+        "Any property where any valuation risk rating is rated as '5'",
+        "Residential units less than 40 m2",
+        "More than 4 units/apartments on one property site, whether on one title or separate strata titles",
+        "Mixed use properties on a single title",
+        "Convertible Units and Dual Key Apartments",
+        "Properties with no legal street access (land locked)",
+        "Any partially constructed dwellings",
+        "Mobile or Temporary homes (dwellings not permanently affixed to site)",
+        "Security in WA regional area, NT, Tasmanian regional area",
+        "Serviced apartments (0% LVR); high density, serviced apartments and dwellings in regional QLD"
+      ],
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Unacceptable Security",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Unacceptable Security",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Residential units less than 40 m2' are unacceptable security. Studio / 1 bedroom units between 40m2 and 50m2 in Metro postcodes are capped at 70% LVR. BOS 'presently has NO appetite for serviced apartments or dwellings < 50sqm in QLD, regardless of postcode'."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — BOS Location Guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The BOS Location Guide is based on the QBE LMI Postcodes and lists all the acceptable postcodes for metropolitan and regional areas... All postcodes NOT listed in the BOS Location Guide are considered as National. National postcodes may in certain cases be allowable for servicing income but never acceptable for security purposes.' The Location Guide itself sits on the BOSbroker site under 'Resources' — no public direct URL found."
+    },
+    "highDensityPolicy": {
+      "value": "High density = any security located in a building having 6 or more floors or more than 50 accommodation units. Maximum exposure of 10% of units with a maximum of 5 units in a development, AND unit must be >50sqm. High density, serviced apartments and dwellings in regional QLD are not acceptable. Rental income from high density properties in National postcodes is not accepted.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Serviced apartments — 0%' maximum LVR."
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Unacceptable Security",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "notes": {
+      "value": "Security must be zoned for residential use, fully developed with road access and services (electricity, water, sewerage). Full valuation required showing sales evidence with a marketing period of six months or less. Income produced from the property must not be the primary source of income to service the debt. The Bank does not accept Tasmanian, NT or WA properties in Regional areas as security. In QLD, LVR is restricted to a maximum of 70% for Brisbane postcodes 4000-4006, 4009-4010, 4101, 4169 and Gold Coast 4215-4218, and to a maximum of 70% for residential properties in Regional QLD. Bank of Sydney will consider securities in NSW, ACT, VIC, QLD, SA, WA, TAS, NT.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security / State restrictions / Location Guide",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published in the Residential Lending Guidelines or on the public broker home-loans product page."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published as a hard cap. The guide references '$2 million' only in the context of company guarantees for self-employed borrowers."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Mature Aged Borrowers",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the worked example: 'The term of the loan is to be limited to the maximum age of 80 years i.e. for a borrower aged 50, the maximum term would be 30 years for owner occupied home loans.' The guide does not state a standalone maximum term."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Genuine Savings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'5% genuine equity if mortgage insurance is required'. May include funds in a bank account or term deposit held 3 months or more, equity in residential property owned for at least 3 months, or shares held for at least 3 months."
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 80,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Genuine Savings / Non-Genuine Savings",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Genuine savings are triggered by LMI ('if mortgage insurance is required'), and LMI is required above 80% LVR on standard residential P&I. Non-genuine savings (gifts, inheritance, sale of assets, tax refund) are capped at a maximum LVR of 80%."
+    },
+    "genuineSavingsMinMonths": {
+      "value": 3,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Genuine Savings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Funds held in a Bank Account or Term Deposit for 3 months or more'."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Non-Genuine Savings (Maximum LVR 80%)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The non-genuine savings contribution may consist of: Gifts, Inheritance, sale of assets, tax refund; Validation must be provided.' Maximum LVR 80%. Borrowers must hold sufficient funds to cover government fees, duties and charges; borrowed funds for these are not acceptable."
+    },
+    "smsfLendingAvailable": {
+      "value": false,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Unacceptable Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SMSFs are listed under 'Unacceptable Borrowers'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Residential Construction including Vacant land (First Ranking Charge)' is a listed security type; funding via progress payments with 'as is' and 'on completion' panel valuations, a fixed price builders contract, council approved plans and builder's insurance required."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Security Types & Maximum LVR",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Bridging Loan: Residential Property — Metro Postcodes' appears in the security table with a maximum 18 months term shown in the same row group."
+    },
+    "maxAgeAtMaturity": {
+      "value": 80,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Mature Aged Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'The term of the loan is to be limited to the maximum age of 80 years... This is not applicable for investment loans.'"
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 50,
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Mature Aged Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Where the applicant is over the age of 50, an acceptable signed exit strategy from the applicant is to be provided... A signed exit strategy is not required if each mature age applicant on the application has a net asset position greater than or equal to $500,000.'"
+    },
+    "notes": {
+      "value": "Pre-approvals valid 90 days; conditional approvals 30 days; formal approvals 60 days from the date of approval. Applications submitted via Loanapp or Apply Online; electronic signature accepted except for Verification of Identity.",
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines v2025.4 — Approvals / Submitting an Application",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Individuals/PAYG employees and self-employed individuals are acceptable borrowers. The restriction applies only to applicants who are not Australian or New Zealand citizens with permanent residency status residing in Australia."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "'Restrictions apply to applicants who are not Australian or New Zealand citizens with permanent residency status residing in Australia' — i.e. permanent residents residing in Australia fall outside the restriction."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens are named alongside Australian citizens in the borrower restriction wording. The guide does not separately address subclass 444."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "Unstated. Listed only via the blanket 'Restrictions apply to applicants who are not Australian or New Zealand citizens with permanent residency status residing in Australia' under Unacceptable Borrowers. The restrictions themselves are not published."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "Unstated — covered only by the blanket restriction on applicants who are not Australian/NZ citizens or permanent residents residing in Australia."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "'Note: Expats can be considered on a case-by-case basis.' No LVR or income-shading terms are published."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "Unstated. The guide restricts applicants who are not Australian or New Zealand citizens with permanent residency status residing in Australia, but does not publish the resulting non-resident terms."
+        }
+      ],
+      "asAt": "2025-11-01",
+      "sourceUrl": "https://www.banksyd.com.au/globalassets/documents/pdfs/broker/2025.11bosbroker-lending-guidelines.pdf",
+      "sourceTitle": "Residential Lending Guidelines Version 2025.4, November 2025 — Acceptable / Unacceptable Borrowers",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The guide states the restriction but not its content; only the expat case-by-case note is explicit."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The Residential Lending Guidelines contain no foreign-currency income section."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-11-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No assessment buffer or floor rate is published — the guide only mandates use of the Bank's serviceability calculator and a minimum Cash Flow Ratio of 1.00.",
+    "Investment maximum LVR could not be read reliably: the Security Types & Maximum LVR table on page 12 is a multi-column layout whose row-to-criteria alignment does not survive text extraction. Needs a human read.",
+    "No credit-history policy at all is published — nothing on defaults, judgments, bankruptcy, arrears, credit score or enquiries.",
+    "Minimum and maximum loan amounts are not published on the broker site or in the guide.",
+    "Non-resident and temporary-visa terms are referenced ('restrictions apply') but the restrictions themselves are not published; only 'Expats can be considered on a case-by-case basis'.",
+    "No foreign-currency income shading or accepted-currency list is published, despite Bank of Sydney's foreign-bank positioning.",
+    "The BOS Location Guide (acceptable metro/regional postcodes, based on QBE LMI postcodes) is stated to live on the BOSbroker site under 'Resources' — no public direct URL was found.",
+    "Credit card / BNPL / HECS assessment percentages are not published; the guide says commitments come from CCR data or 'the banks carded rates'.",
+    "The public product page (banksyd.com.au/broker/products/home-loans/) still shows rates dated 17 November 2023 and carries no policy parameters."
+  ]
+}

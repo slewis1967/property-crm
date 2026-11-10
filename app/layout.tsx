@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { supabase } from "../utils/supabase";
+import { brisbaneToday, summarise, type PaidService } from "../utils/paid-services";
 import VoiceAssistant from "./components/VoiceAssistant";
 import AppShell from "./components/AppShell";
+import PublicRouteGate from "./components/PublicRouteGate";
+import Sidebar from "./components/Sidebar";
+import HelpButton from "./components/HelpButton";
+import { headers as nextHeaders } from "next/headers";
+import { BOOK_HOST_HEADER } from "../utils/springboard-book-host";
+import type { CrmRole } from "../utils/roles";
 
 // PWA + mobile viewport. theme_color matches the brand teal so the
 // chrome on iOS/Android tints to match the app on the home screen.
@@ -13,9 +20,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  // Without a base, relative og:image URLs render as http://localhost:3000/…
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://crm.nextkey.com.au"),
   title: "Property Marketer CRM",
   description: "The War Room for Property Marketers",
-  manifest: "/manifest.json",
+  // NOTE: the PWA manifest link is emitted manually in <head> below with
+  // crossOrigin="use-credentials" — Next's `metadata.manifest` can't set that,
+  // and without it Cloudflare Access blocks the (uncredentialed) manifest fetch.
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -50,168 +61,116 @@ export const metadata: Metadata = {
 };
 
 // Sidebar shows badges with the count of items needing attention. Single
-// HEAD count(*) per badge — Postgres handles this in milliseconds, and
-// missing the badge isn't worth a layout-fail so we swallow errors.
-async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number }> {
-  const out = { pendingReview: 0, draftBuilders: 0, dealPackets: 0 };
-  try {
-    const { count } = await supabase
+// HEAD count(*) per badge, all issued at once: this runs on every staff page
+// render, and the functions (us-east-2) sit a Pacific round trip from the
+// database (Seoul), so five sequential queries cost ~1s of every page load.
+// Missing a badge isn't worth a layout-fail, so a failed query reads as 0.
+async function getSidebarCounts(): Promise<{ pendingReview: number; draftBuilders: number; dealPackets: number; amlReports: number; paidAccounts: number; overdueInvoices: number }> {
+  const [pendingReview, draftBuilders, dealPackets, amlReports, paidAccounts, overdueInvoices] = await Promise.allSettled([
+    supabase
       .from("property_review_queue")
       .select("id", { count: "exact", head: true })
-      .eq("status", "pending");
-    out.pendingReview = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .eq("status", "pending"),
     // Auto-deactivated drafts (e.g. Netlify newsletters) have draft=true
     // AND active=false — those are noise. Surface only the ones still
     // active, which is what Sean needs to confirm or reject. Each draft
     // here blocks future ingestion runs from that sender.
-    const { count } = await supabase
+    supabase
       .from("builders")
       .select("id", { count: "exact", head: true })
       .eq("draft", true)
-      .eq("active", true);
-    out.draftBuilders = count ?? 0;
-  } catch { /* swallow */ }
-  try {
+      .eq("active", true),
     // Packets awaiting operator action: rent still needed, or rent supplied but
     // reports not yet generated. reports_generated / failed drop off the badge.
-    const { count } = await supabase
+    supabase
       .from("deal_packets")
       .select("id", { count: "exact", head: true })
-      .in("status", ["needs_rent_input", "ready"]);
-    out.dealPackets = count ?? 0;
-  } catch { /* swallow */ }
-  return out;
+      .in("status", ["needs_rent_input", "ready"]),
+    // AUSTRAC reports (SMR/TTR/IFTI) not yet lodged — each has a statutory
+    // deadline, so surface the outstanding count as a compliance nudge.
+    supabase
+      .from("aml_reports")
+      .select("id", { count: "exact", head: true })
+      .neq("status", "lodged"),
+    // Paid accounts needing attention (payment due/overdue, card expiring,
+    // prepaid balance dry). Unlike the others this can't be a count(*) — the
+    // rules are date arithmetic in utils/paid-services.ts, and duplicating them
+    // in SQL is how the badge and the email start disagreeing. The register is
+    // tens of rows, so read the few columns the rules need and count in code.
+    supabase
+      .from("paid_services")
+      .select(
+        "id,name,category,criticality,status,cost,currency,billing_cycle,next_due_date,auto_renew,payment_method,card_expiry,balance_remaining,balance_unit,low_balance_threshold,alert_lead_days,snoozed_until,purpose,plan",
+      )
+      .limit(500),
+    // Issued invoices past their due date. Same rule as invoiceState() in
+    // utils/invoices.ts: "issued" means money is still owing.
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "issued")
+      .lt("due_date", brisbaneToday()),
+  ]);
+  const count = (r: PromiseSettledResult<{ count: number | null }>) =>
+    r.status === "fulfilled" ? r.value.count ?? 0 : 0;
+  let paid = 0;
+  if (paidAccounts.status === "fulfilled" && paidAccounts.value.data) {
+    try {
+      paid = summarise(paidAccounts.value.data as unknown as PaidService[], brisbaneToday()).needingAttention;
+    } catch { /* swallow */ }
+  }
+  return {
+    pendingReview: count(pendingReview),
+    draftBuilders: count(draftBuilders),
+    dealPackets: count(dealPackets),
+    amlReports: count(amlReports),
+    paidAccounts: paid,
+    overdueInvoices: count(overdueInvoices),
+  };
 }
 
+const EMPTY_COUNTS = { pendingReview: 0, draftBuilders: 0, dealPackets: 0, amlReports: 0, paidAccounts: 0, overdueInvoices: 0 };
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const counts = await getSidebarCounts();
+  // Trusted public-route signal from the edge proxy (see proxy.ts). This header is
+  // set by the proxy AFTER stripping any client-supplied value, so it is not forgeable.
+  const h = await nextHeaders();
+  const isPublic = h.get("x-public-route") === "1";
+  // book.springboardhomes.com.au, same trusted-header model. There the URL is
+  // "/" (rewritten to /book/springboard), so the pathname-based chrome checks
+  // in AppShell / PublicRouteGate can't see it is the booking page; this flag
+  // makes those pages chromeless from the server render on, and drops the
+  // NextKey CRM manifest (which also 404s on that host).
+  const isBookHost = h.get(BOOK_HOST_HEADER) === "1";
+  // Only fetch sidebar counts for authenticated/staff routes. Public routes render
+  // chromeless and must not execute sidebar DB queries or serialize staff routes.
+  // Role flag set by proxy.ts (client-sent values are stripped there).
+  const role: CrmRole = h.get("x-crm-role") === "marketing" ? "marketing" : "staff";
+  const isMarketing = role === "marketing";
+  // Marketing users get no badge counts (review queue, AML reports, paid accounts).
+  const counts = isPublic ? null : isMarketing ? EMPTY_COUNTS : await getSidebarCounts();
   return (
     <html lang="en">
+      <head>
+        {/* The manifest is same-origin, behind Cloudflare Access. Browsers fetch
+            manifests WITHOUT credentials by default, so CF Access blocks
+            /manifest.json (503 / login redirect). use-credentials sends the CF
+            Access cookie, so the manifest loads for signed-in users (the whole
+            app is behind Access anyway). */}
+        {!isBookHost && <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />}
+      </head>
       <body className="bg-gray-50 text-gray-900 h-screen overflow-hidden">
         <AppShell
-          sidebar={<>
-          <div className="p-6 border-b border-gray-800 hidden lg:block">
-            <div className="text-xl font-bold text-white">NextKey CRM</div>
-            <div className="text-xs text-gray-400 mt-1">Powered by Elvis AI</div>
-          </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-2 pb-1">Command</p>
-            <a href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🎯</span> War Room
-            </a>
-            <a href="/advisor" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🎩</span> Advisor
-            </a>
-            <a href="/search" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔍</span> Smart Search
-            </a>
-            <a href="/analytics" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📊</span> Analytics
-            </a>
-            <a href="/activity" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>⚡</span> Activity Feed
-            </a>
-            <a href="/pia" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📊</span> PIA Modeller
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">CRM</p>
-            <a href="/opportunities" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗂️</span> Opportunities
-            </a>
-            <a href="/deal-analyser" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📑</span>
-              <span className="flex-1">Deal Analyser</span>
-              {counts.dealPackets > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold" title={`${counts.dealPackets} packet(s) awaiting reports`}>
-                  {counts.dealPackets}
-                </span>
-              )}
-            </a>
-            <a href="/leads" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔥</span> Leads Pipeline
-            </a>
-            <a href="/contacts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>👥</span> Contacts
-            </a>
-            <a href="/appointments" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📅</span> Appointments
-            </a>
-            <a href="/inbox" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>✉️</span> Inbox
-            </a>
-            <a href="/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📣</span> Broadcast
-            </a>
-            <a href="/conversations" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>💬</span> Conversations (archive)
-            </a>
-            <a href="/notes" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📝</span> Notes (archive)
-            </a>
-            <a href="/tasks" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📌</span> Tasks
-            </a>
-            <a href="/media" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗃️</span> Media Library
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Stock</p>
-            <a href="/properties" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🏘️</span> Aggregator Feed
-            </a>
-            <a href="/aggregator/review" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🔍</span>
-              <span className="flex-1">Review Queue</span>
-              {counts.pendingReview > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold">
-                  {counts.pendingReview}
-                </span>
-              )}
-            </a>
-            <a href="/aggregator/runs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📜</span> Ingestion Runs
-            </a>
-            <a href="/aggregator/builders" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🏗️</span>
-              <span className="flex-1">Builders</span>
-              {counts.draftBuilders > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold" title={`${counts.draftBuilders} draft(s) blocking ingestion`}>
-                  {counts.draftBuilders}
-                </span>
-              )}
-            </a>
-            <a href="/suburbs" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>🗺️</span> Suburb Intelligence
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">System</p>
-            <a href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>⚙️</span> Settings
-            </a>
-
-            <p className="text-xs text-gray-500 uppercase font-semibold px-3 pt-4 pb-1">Elvis</p>
-            <a href="/approvals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>✅</span> Approval Queue
-            </a>
-            <a href="/social" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📱</span> Social History
-            </a>
-            <a href="/sequences" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition text-sm">
-              <span>📨</span> Sequences
-            </a>
-
-          </nav>
-          <div className="p-4 border-t border-gray-800">
-            <div className="text-xs text-gray-500">NEXUS API: localhost:8765</div>
-          </div>
-          </>}
+          sidebar={isPublic ? null : <Sidebar counts={counts!} role={role} />}
+          help={isPublic || isMarketing ? null : <HelpButton />}
+          standalone={isBookHost}
         >
           {children}
         </AppShell>
-        <VoiceAssistant />
+        <PublicRouteGate hidden={isBookHost}>
+          {/* The voice assistant reads contacts and sends SMS/email — staff only. */}
+          {!isMarketing && <VoiceAssistant />}
+        </PublicRouteGate>
       </body>
     </html>
   );

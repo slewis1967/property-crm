@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 /**
  * Settings editor for the voice assistant's custom instructions. Free text the
@@ -33,8 +34,8 @@ export default function AiInstructionsEditor({ initial }: { initial: string }) {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Save failed");
       setStatus({ kind: "ok", msg: value.trim() ? "Saved" : "Cleared" });
-    } catch (e: any) {
-      setStatus({ kind: "err", msg: e.message ?? "Save failed" });
+    } catch (e) {
+      setStatus({ kind: "err", msg: errMessage(e, "Save failed") });
     } finally {
       setSaving(false);
     }

@@ -34,7 +34,7 @@ async function loadTypes(): Promise<PropertyType[]> {
     .select("value")
     .eq("key", "property_types")
     .maybeSingle();
-  const list = (data?.value as any)?.types;
+  const list = (data?.value as { types?: unknown } | null | undefined)?.types;
   if (Array.isArray(list) && list.length > 0) return list as PropertyType[];
   return DEFAULTS;
 }

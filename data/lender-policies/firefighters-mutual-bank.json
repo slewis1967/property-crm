@@ -1,0 +1,798 @@
+{
+  "id": "firefighters-mutual-bank",
+  "name": "Firefighters Mutual Bank",
+  "legalName": "Teachers Mutual Bank Limited",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "238981",
+  "abn": "30 087 650 459",
+  "brokerSiteUrl": "https://www.fmbank.com.au/broker",
+  "policyDocUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+  "funder": "Teachers Mutual Bank Limited",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3,
+      "asAt": "2026-07-10",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/channels/websites/common-assets/broker/servicing-calculator-for-up-to-four.xlsm",
+      "sourceTitle": "TMBL broker serviceability calculator (up to four applicants), .xlsm",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Read from the product rate table inside the publicly downloadable broker servicing calculator: column 'BufferRate' = 3 on every home loan product row, and 'Assessment Rate' = product rate + 3. Not stated as a buffer in the Lending Reference Guide, which only says 'a standard assessment rate with an appropriate buffer above the actual loan interest rate'. asAt is the file's last-modified date (10 Jul 2026).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "assessmentFloorRatePct": {
+      "value": 6,
+      "asAt": "2026-07-10",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/channels/websites/common-assets/broker/servicing-calculator-for-up-to-four.xlsm",
+      "sourceTitle": "TMBL broker serviceability calculator (up to four applicants), .xlsm",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Column 'AssessmentFloorRate' = 6 on every home loan product row of the calculator's rate table. asAt is the file's last-modified date.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel (current as at October 2025), p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Residential Rental 80% - Lower of actual gross or current market residential rental\". Commercial rental is 50%; NRAS properties 80% of actual rent paid by tenant.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "existingCommitmentTreatment": {
+      "value": "greater_of",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p7 (Expenditure)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Repayments for existing credit facilities are to be the greater of either: the actual home loan repayment stated by the applicant, or the repayment amount assessed by the Bank based on the current loan limit ... plus an appropriate buffer\". Personal loans are taken at actual repayment.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "bnplTreatment": {
+      "value": "3.8% of the BNPL limit. If the facility has no limit, the actual repayment amount stated by the borrower.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p7",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "hecsTreatment": {
+      "value": "Minimum repayment as per ATO Study Repayment Calculator",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p7",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-07-10",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/channels/websites/common-assets/broker/servicing-calculator-for-up-to-four.xlsm",
+      "sourceTitle": "TMBL broker serviceability calculator - 'HEM Living Expenses' / 'HEM Postcodes' worksheets",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The broker calculator floors declared living expenses against a HEM table keyed on postcode/family type ('Surplus taking HEM into account'). The Lending Reference Guide itself does not name the benchmark.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "dtiCap": {
+      "value": 7,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p7 (Serviceability)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Debt to Income Ratio (DTI): Maximum DTI ≤7 times\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "interestOnlyAssessment": {
+      "value": "All interest only loans have serviceability assessed over the remaining P&I term (e.g. 30 year total term with 3 year IO term is assessed over 27 years). Every IO application must state the applicant's reason for choosing IO over P&I.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p8",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Other commitment treatments (p7): overdrafts 2% of the limit; margin/equity loans at limit x actual rate + 3% buffer / 12; credit cards calculated over a three year term using the Bank's credit card benchmark rate; notional rental expense of $650 per month added where a borrower buying/refinancing an investment property lives rent free or at unusually low rent. All applications must show a positive monthly surplus. All debt commitments must be verified with the last 2 statements (min 60 days).",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p7",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10 (Maximum LVRs with LMI)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 95% including the capitalisation of LMI and any bank fees, where applicable, EXCEPT where the purpose is for construction of an owner occupied dwelling, then up to 90% prior to the capitalisation of LMI\". Up to 98% under the Australian Government 5% Deposit Scheme.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Up to 95% including the capitalisation of LMI and any bank fees ... EXCEPT where the purpose is for construction of an investment dwelling, then up to 90% prior to the capitalisation of LMI\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp10-11 (Maximum LVRs without LMI or 5% Deposit Scheme)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% is the top of the no-LMI matrix and applies to Metro and Regional/Rural securities valued up to $2m (owner occupied and investment alike). It steps down by location and security value - see lvr.notes for the full matrix.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p1 (Acceptable Purposes - Cash Out)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"0 - ≤85% LVR: No limit applicable to cash out component. >85% - ≤90% LVR: cash out component limited to up to 20% of the security value. >90% LVR: No cash out allowed.\"",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "90% prior to the capitalisation of LMI and any bank fees, for construction of either an owner occupied or an investment dwelling.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLvrCompanyTrustPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not applicable / not published - the guide states \"Companies & Trusts: The Bank does not lend to these entities\" (p1) and the product matrix states \"Borrowing entity: Personal names only (no companies or trusts)\"."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p8 (LMI Premium)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"LMI Premium: Capitalised on all loans\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 95% ceiling is \"including the capitalisation of LMI and any bank fees\" - i.e. the premium sits inside the stated maximum LVR (the construction 90% is the exception, measured prior to capitalisation).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "lmiProvider": {
+      "value": [
+        "Helia"
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"LMI Provider: Helia. Note Helia may have some requirements or restrictions that are additional to this guide\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "No-LMI maximum LVR matrix (identical for owner occupied and investment), by security location x security value: Metro - 80% (≤$1m), 80% (>$1m-≤$2m), 80% (>$2m-≤$4m), 70% (>$4m). Regional - 80%, 80%, 70%, 60%. Rural - 80%, 80%, 70%, 60%. Not Elsewhere Classified - 80%, 70%, 60%, 50%. The maximum LVR is based on the individual value of each acceptable security; where more than one security is taken no single security can exceed the maximum for its location. Other LVR restrictions: four or more dwellings on one title - max 60%; Company Title - max 80% where the security is >10km outside a capital city CBD; time share allowing permanent owner occupancy - max 80%.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp10-11",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Two most recent payslips, or 3 months of bank statements showing salary continuity",
+          "conditions": "All other applicants - PAYG: \"Full Time 100% - Minimum 6 months in the job or 12 months in the industry\". Applicants employed in eligible Education and Essential Services occupations (which include Commissioned Fire Officer, Senior Fire Fighter, Fire Fighter, Commissioned Police Officer, Supervisor Police Officer, Police Officer, Ambulance Officer and Intensive Care Ambulance Paramedic) are accepted at 100% with \"No minimum time in employment required\"."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "conditions": "\"Regular Part Time 100% - Minimum 6 months in the job or 12 months in the industry\". Irregular part time income is Nil. Eligible Education/Essential Services occupations: permanent/regular part time 100% with no minimum time in employment."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "conditions": "\"Regular Casual 100% - Minimum 6 months in current employment\". Irregular casual is Nil. Eligible Education/Essential Services occupations: regular casual or relief 100% with a minimum 3 months in employment."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "conditions": "Stated only in the Education/Essential Services table: \"Fixed Term Contract 100% - Must be full time position under contract\". Not addressed for other applicants."
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 3,
+          "conditions": "Eligible Education/Essential Services occupations: \"Regular Overtime 100% - Proven over three months as evidenced by taxation records, employment contract or payslips\". Irregular overtime is Nil."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "conditions": "Recorded at the conservative rate. \"Regular Overtime 80% - Must be a condition of employment, or proven over 2 years\". 100% is allowed instead, proven over three months, for named employee types: airline workers, mining sector workers, child care workers, aged care and disabled care workers, public transport operators, medical practitioners (e.g. doctors, surgeons), construction trades workers, protective service workers. Irregular overtime is Nil."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "conditions": "Recorded at the conservative rate. \"Regular Shift Allowance 80% - Must be a condition of employment, or proven over 2 years\". 100% (proven over three months) for the same named employee types as overtime, and 100% for eligible Education/Essential Services occupations proven over three months. Irregular shift allowance is Nil."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "conditions": "\"Commission/Bonuses 80% of average of last 2 years - Proven over 2 years as evidenced by taxation records, employment contract or payslips\"."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "conditions": "\"Commission/Bonuses 80% of average of last 2 years - Proven over 2 years\"."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "conditions": "\"Vehicle Allowance 100% - Added to gross taxable income. Note: If a fully maintained vehicle is provided with no reciprocal cash flow benefit, $5,000 can be added to the net income\"."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Latest two full years of personal and business tax returns plus the latest year's Tax Assessment Notice; interim financials are unacceptable",
+          "conditions": "\"Proven over 2 years as evidenced by personal and business taxation records. Where income has increased over the last two years by ≤ 20% the latest year's income can be used. Where income has increased over the last two years by >20%, then maximum of 120% of previous year's income is to be used.\" Allowable add-backs at 100%: interest on loans being refinanced by the Bank, superannuation contributions above SGL, non-recurring expenses; depreciation add-back is the lesser of the actual depreciation amount or 20% of NPBT."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Two years personal and business tax returns plus a current balance sheet and profit and loss statement",
+          "conditions": "Same 2-year rule and add-backs as sole traders. Note the Bank will not lend TO a company or trust - the borrower must be a natural person."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "conditions": "Same 2-year rule and add-backs. The Bank does not lend to trusts as borrowing entities."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "conditions": "\"Residential Rental 80% - Lower of actual gross or current market residential rental\". NRAS properties 80% of actual rent paid by tenant."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.5,
+          "conditions": "\"Commercial Rental Property 50% - Lower of actual gross or current market rental, as per rental lease agreement or rental appraisal by real estate agent\"."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "conditions": "\"Investment (i.e. interest & dividend income only) 80% of average of last two years - Confirmation of current ownership of investment\"."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "conditions": "\"Government and Non-Government Pensions 100% - If considered permanent for the next 5 years\"."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "conditions": "\"Government Paid Parenting/Family Allowance 100% - If considered permanent for the next 5 years, except for Family Tax Benefit where acceptable for dependents up to and including 15 years\"."
+        },
+        {
+          "type": "government_parenting_payment",
+          "accepted": true,
+          "shadingPct": 1,
+          "conditions": "\"Government Paid Parenting/Family Allowance 100% - If considered permanent for the next 5 years\"."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "evidence": "Child Support Agency Assessment showing the amount payable and eligible children, plus 6 months of consistent payments on bank statements",
+          "conditions": "\"Other Income e.g. child support payments, workers compensation 100% - If considered permanent for the next 5 years\"."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.7,
+          "conditions": "\"Overseas Income - All currencies 70%. Overseas income is acceptable only from the following income types: PAYG income, Rental income\"."
+        }
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel (current as at October 2025), pp2-6 (Acceptable Income)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The guide runs two separate income tables - one for applicants employed in eligible Education and Essential Services occupations (which is where most Health Professionals Bank members sit) and one for all other applicants. Where they differ, the 'all other applicants' figure is recorded as the value and the essential-services concession is stated in conditions. Guarantor income is \"Not acceptable\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp4 and 7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Proven over 2 years as evidenced by personal and business taxation records\"; standard verification is \"the latest two full years of personal and business taxation returns\" and \"Interim financials are unacceptable\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Simplified self-employed verification is available where the applicant has paid themselves a regular salary for at least six months, business income is NOT required for servicing, and the business has traded at least two years - verified from six months of salary credits or two consecutive payslips, plus an accountant's letter confirming trading start date, sufficient profits and ability to continue paying the declared salary.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p6",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Full Time 100% - Minimum 6 months in the job or 12 months in the industry\" for all other applicants. Nil minimum applies to applicants in the eligible Education and Essential Services occupation list (includes Commissioned Fire Officer, Senior Fire Fighter, Fire Fighter, police officers, ambulance officers and ICU paramedics).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The tenure test is \"Minimum 6 months in the job OR 12 months in the industry\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p3",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Regular Casual 100% - Minimum 6 months in current employment\". 3 months for eligible Education/Essential Services occupations (regular casual or relief).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Proven over 2 years as evidenced by personal and business taxation records\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "probationAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Probation is not mentioned anywhere in the public TMBL 3rd Party Lending Reference Guide or product matrix."
+    }
+  },
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "TMBL publishes no credit-history policy in its public broker material. The 3rd Party Lending Reference Guide (Oct 2025), product matrix (May 2026) and broker forms/fact sheets pages contain no rules on defaults, judgments, bankruptcy, arrears, credit score or enquiries."
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential use properties only",
+        "Freehold Title",
+        "Strata, Group, Cluster or Community Title",
+        "Survey Strata",
+        "Company Title",
+        "99 Year Leasehold",
+        "Stratum Title",
+        "Residential Area Right and Residential Licence (only applicable in Victoria)"
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp9-10 (Acceptable Securities / Acceptable Title)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Also: first ranking financial institution charge only; located in Australia; dwellings must be a private, self contained (bathing and cooking facilities) immobile structure; must be serviced by power, water, utilities and vehicular access.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Contaminated property",
+        "Property with a known flood height above floor level",
+        "Property subject to land slip",
+        "Property subject to mine subsidence",
+        "Time share or serviced apartment which does not allow for permanent owner occupancy",
+        "Property generating primary production income (hobby farms excepted)",
+        "Off the plan purchase"
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p9 (Property Exclusions)",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 60,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Two thresholds are published: \"Minimum size for two or more bedroom units, excluding car space and balconies, is 60m2. Minimum size for studio or one bedroom units, excluding car space and balconies, is 30m2\". The stricter 60m2 is recorded as the value; a studio or one-bedroom unit may go to 30m2.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "maxLandSizeHa": {
+      "value": 40,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum land area of 40 hectares (100 acres)\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2024-08-21",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/real-property-classifications.pdf",
+      "sourceTitle": "TMBL Real Property Classifications, effective 21 Aug 2024",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The Bank classifies the location of real properties into categories based on their postcode. The categories are: Metro, Regional, Rural, Not Elsewhere Classified (NEC).\" 57 pages of postcode-to-category mappings; the category drives the no-LMI maximum LVR matrix.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "postcodeListUrl": {
+      "value": "https://www.fmbank.com.au/content/dam/documents/collateral/real-property-classifications.pdf",
+      "asAt": "2024-08-21",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/real-property-classifications.pdf",
+      "sourceTitle": "TMBL Real Property Classifications, effective 21 Aug 2024",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp10-11",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Rural\" is one of the four published location categories and carries its own no-LMI LVR row (80% up to $2m, 70% >$2m-≤$4m, 60% >$4m). Property generating primary production income is excluded, hobby farms excepted, and land area is capped at 40ha.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "companyTitleAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp10-11",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Company Title is on the acceptable title list; \"Maximum LVR is 80% when the security property is located >10kms outside a capital city CBD\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "leaseholdAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"99 Year Leasehold\" is listed as an acceptable title.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p10",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "offThePlanAccepted": {
+      "value": false,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p9 (Property Exclusions)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Property ... Is an off the plan purchase\" is listed under Property Exclusions.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "LVR restrictions by security type: four or more dwellings on one title - maximum LVR 60%; Company Title - maximum 80% where >10km outside a capital city CBD; time share allowing permanent owner occupancy - maximum 80%. Valuation types: Contract of Sale (purchase, LVR ≤60%), Valuer General/Council Rates Notice (already owned, LVR ≤60%), AVM, Desktop Valuation. Building insurance is required on all securities noting Teachers Mutual Bank Limited as mortgagee. Construction: no owner builders, no kit homes or relocatable dwellings, no strata-titled properties, no refinance where construction is in progress, and no more than two properties on one title; fixed price building contracts only.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp10-12",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/product-matrix.pdf",
+      "sourceTitle": "TMBL Product Matrix, effective 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Repayment term: Min 6 months and max 30 years\" for both Your Way Home Loan and Your Way Plus Home Loan.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/product-matrix.pdf",
+      "sourceTitle": "TMBL Product Matrix, effective 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Your Way Plus Home Loan only: \"100% offset across up to 8 eligible linked offset accounts. Available on both variable and fixed rate home loans.\" The base Your Way Home Loan has no offset.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/product-matrix.pdf",
+      "sourceTitle": "TMBL Product Matrix, effective 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Your Way: fee free, variable rate only. Your Way Plus: fee free, includes both variable and fixed rate loans.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/product-matrix.pdf",
+      "sourceTitle": "TMBL Product Matrix, effective 23 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Construction loans: Yes - variable rate loans only\" on both products. Progressive drawdown for construction or major renovations only.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p8 (Savings/Deposit Funds)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"LMI Loans - When LVR ≤ 90%: No evidence of savings/deposit funds required. When LVR > 90%: Evidence of savings/deposit funds required.\" For loans with family guarantors the threshold is 80% (above 80% the Bank does not generate the business).",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p9",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "giftedDepositConditions": {
+      "value": "\"Gifted funds to the applicant should be supported by a letter from the provider of the fund clearly stating that the funds are a gift and are not repayable.\" Gifts count as acceptable savings/deposit funds, but \"if application requires LMI the gift must be from an immediate family member\". Gifts are NOT acceptable towards the minimum deposit contribution for Australian Government 5% Deposit Scheme loans. Borrowed funds (e.g. proceeds of personal loans) are never acceptable.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme - General Stream",
+        "Australian Government 5% Deposit Scheme - Single Parent Stream",
+        "First Home Owner Grant (accepted as deposit funds)",
+        "First Home Super Saver Scheme (accepted as deposit funds)"
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "5% Deposit Scheme requires at least 5% genuine savings (General Stream) or 2% (Single Parent Stream) held or accumulated for a minimum of three months; gifts and other non-saved funds do not count towards that minimum. LVR up to 98% including capitalisation of bank fees.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp1 and 9",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "guarantorConditions": {
+      "value": "Guarantor must be the applicant's partner (spouse/de facto) or a family member (parent, child, sibling, grandparent or grandchild), be a permanent resident or citizen of Australia, be at least 18, be financially acceptable to the Bank, and complete a Guarantor Information Form. \"Guarantee will be limited to a specified amount and must be supported by a first ranking charge over a security property acceptable to the Bank.\" Third party (parental) security allows borrowing 100% of the purchase price and associated costs. Guarantor income is not acceptable for servicing. On family-guarantee loans: LVR ≤80% no evidence of savings required; LVR >80% \"Not available (the Bank does not generate this business)\".",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp1, 5 and 9",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "notes": {
+      "value": "Firefighters Mutual Bank is a division of Teachers Mutual Bank Limited (ABN 30 087 650 459, AFSL/ACL 238981), alongside Teachers Mutual Bank, UniBank and Health Professionals Bank; all four share one credit policy and one broker accreditation. Membership is restricted: an applicant must be an Australian citizen or permanent resident AND either \"employed in, retired from, or volunteer in the Australian emergency services sector\" or \"immediate family to a Firefighters Mutual Bank member\". Applicants must be at least 18 and \"a member of the Bank or eligible for membership of the Bank\". BORROWING ENTITY IS PERSONAL NAMES ONLY - \"Companies & Trusts: The Bank does not lend to these entities\" - so company, trust and SMSF borrowers are out of scope. Two products only: Your Way Home Loan ($600 establishment fee, no offset) and Your Way Plus Home Loan (annual package fee, waived for eligible essential-worker first home buyers - the essential-worker list includes Commissioned Fire Officer, Senior Fire Fighter and Fire Fighter; 100% offset across up to 8 accounts). Both allow owner occupied, investment and construction. Fixed rate lock up to 90 days for 0.10% of the applied amount. An exit strategy is required where the contractual loan term will exceed the applicant's expected income stream.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, pp1 and 8; TMBL Product Matrix eff. 23 May 2026; Firefighters Mutual Bank 'Why join us' eligibility page (https://www.fmbank.com.au/about/why-join-us)",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Applicant \"Must be ... Permanent resident or citizen of Australia\" and at least 18 years of age."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Applicant \"Must be ... Permanent resident or citizen of Australia\"."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The guide requires applicants (and guarantors) to be a permanent resident or citizen of Australia; temporary visa holders are not provided for."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The guide requires applicants to be a permanent resident or citizen of Australia."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The guide requires applicants to be a permanent resident or citizen of Australia."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "Not addressed. Subclass 444 holders are neither citizens nor permanent residents, and the guide is silent - confirm with the Bank."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": null,
+          "maxLvrPct": null,
+          "conditions": "Not addressed directly. Overseas income is accepted at 70% from PAYG and rental sources only, which implies some overseas-based applicants are contemplated, but no expat rule is published."
+        }
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p1 (Applicant Types) and p5 (Overseas Income)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only the citizen/PR requirement is published explicitly; the 'false' entries are the direct consequence of that requirement rather than separately stated exclusions.",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.7,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Overseas Income - Currency: All currencies 70%. Overseas income is acceptable only from the following income types: PAYG income, Rental income\".",
+      "updatedBy": "research:claude-opus-5"
+    },
+    "acceptedForeignCurrencies": {
+      "value": [
+        "All currencies"
+      ],
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.fmbank.com.au/content/dam/documents/collateral/lending-reference-guide.pdf",
+      "sourceTitle": "TMBL Home Loan Lending Reference Guide - 3rd Party Channel, p5",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-10-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Assessment buffer (3.00) and assessment floor rate (6.00) come from the product rate table inside the public broker servicing calculator (.xlsm), not from a policy statement - the Lending Reference Guide only says 'a standard assessment rate with an appropriate buffer'. Worth a BDM confirmation.",
+    "Credit card assessment: the Lending Reference Guide (Oct 2025) says cards are 'calculated over a three year term using the Bank's credit card benchmark rate' while the broker calculator still carries a 3% of limit monthly percentage. The two conflict, so no creditCardAssessmentPct is recorded. The credit card benchmark rate itself is not published.",
+    "No credit-history policy is published at all - nothing on defaults, judgments, writs, bankruptcy/Part IX, arrears, credit score or number of enquiries.",
+    "No minimum or maximum loan amount is published (only a minimum term of 6 months and maximum of 30 years).",
+    "Maximum interest-only term is not published for either owner occupied or investment loans.",
+    "Probation policy is not published.",
+    "No maximum age at maturity is published; the guide only requires an exit strategy 'where the contractual loan term will exceed an applicant's expected income stream'.",
+    "No refinance-specific reduced buffer, negative-gearing add-back or depreciation add-back rule is published.",
+    "High-density / inner-city apartment concentration policy is not published (only a 60% cap for four or more dwellings on one title).",
+    "SMSF and bridging lending are not mentioned; company/trust borrowing is explicitly excluded, which makes SMSF lending very unlikely, but no source states it.",
+    "The Real Property Classifications postcode list is dated 21 Aug 2024 and may have been superseded.",
+    "Firefighters Mutual Bank shares one credit policy with Teachers Mutual Bank, UniBank and Health Professionals Bank - no FMB-specific credit variation was found. The only brand-level difference is membership eligibility."
+  ]
+}

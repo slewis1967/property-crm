@@ -16,9 +16,19 @@ async function getSuburbs() {
   return { suburbs: [], error: "NEXUS API offline" };
 }
 
+type SuburbRow = {
+  suburb: string;
+  state: string;
+  price_growth_pct: number | null;
+  median_price: number | string | null;
+  population: number | string | null;
+  last_updated: string | null;
+  key_infrastructure: string | null;
+};
+
 export default async function SuburbsPage() {
   const data = await getSuburbs();
-  const suburbs: any[] = data.suburbs || [];
+  const suburbs: SuburbRow[] = data.suburbs || [];
 
   return (
     <div>
@@ -41,7 +51,7 @@ export default async function SuburbsPage() {
 
       {suburbs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {suburbs.map((s: any, i: number) => (
+          {suburbs.map((s: SuburbRow, i: number) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <div className="flex justify-between items-start mb-3">
                 <div>

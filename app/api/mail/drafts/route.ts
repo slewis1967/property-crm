@@ -10,8 +10,17 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 import { userEmailFromRequest } from "../../../../utils/cf-access";
+import { isMailIdentityKey, DEFAULT_IDENTITY_KEY } from "../../../../utils/mailIdentities";
 
 export const dynamic = "force-dynamic";
+
+/** True when the error is a missing-column error (from_identity not migrated
+ * yet) rather than a genuine failure — lets us retry the write without it. */
+function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST204" || error.code === "42703") return true;
+  return (error.message ?? "").toLowerCase().includes("from_identity");
+}
 
 export async function GET(req: Request) {
   const owner = await userEmailFromRequest(req);
@@ -40,6 +49,10 @@ export async function POST(req: Request) {
   const owner = await userEmailFromRequest(req);
   const body = await req.json().catch(() => ({}));
 
+  const fromIdentity = isMailIdentityKey(body.from_identity)
+    ? body.from_identity
+    : DEFAULT_IDENTITY_KEY;
+
   const row = {
     owner_user_email: owner,
     to_addresses: asArray(body.to ?? body.to_addresses),
@@ -50,13 +63,18 @@ export async function POST(req: Request) {
     reply_to_email_id: body.reply_to_email_id ?? null,
     thread_id: body.thread_id ?? null,
     attachments: Array.isArray(body.attachments) ? body.attachments : [],
+    from_identity: fromIdentity,
   };
 
-  const { data, error } = await supabase
-    .from("email_drafts")
-    .insert(row)
-    .select("*")
-    .single();
+  let { data, error } = await supabase.from("email_drafts").insert(row).select("*").single();
+  // Graceful degradation: if the from_identity column hasn't been migrated
+  // yet, retry the insert without it (draft still saves; identity defaults to
+  // nextkey on read).
+  if (error && isMissingColumn(error)) {
+    const { from_identity: _drop, ...rest } = row;
+    void _drop;
+    ({ data, error } = await supabase.from("email_drafts").insert(rest).select("*").single());
+  }
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, draft: data });
 }

@@ -1,8 +1,11 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { supabase } from "../../utils/supabase";
-import { log, errInfo } from "../../utils/logger";
+import { log } from "../../utils/logger";
 import PropertyGrid from "./PropertyGrid";
-import { ALLOWED_PAGE_SIZES, DEFAULT_PAGE_SIZE, type PageSize } from "../../utils/pagination";
+import { DEFAULT_PAGE_SIZE, coercePropertiesPageSize } from "../../utils/pagination";
+import { interleaveByBuilder } from "../../utils/feed-order";
+import { fetchAllRows } from "../../utils/supabase-paginate";
 
 // The Aggregator Feed must reflect live stock on every load — without this,
 // Next.js serves a cached build snapshot, so withdrawn/edited rows (e.g. the
@@ -32,14 +35,11 @@ const DEFAULT_PROPERTY_TYPES = [
  *
  * In Next 16 the cookies() helper is async.
  */
-async function pageSizeFromCookies(): Promise<PageSize> {
+async function pageSizeFromCookies(): Promise<number> {
   try {
     const jar = await cookies();
     const raw = jar.get("properties_pageSize")?.value;
-    if (raw) {
-      const n = Number(raw);
-      if ((ALLOWED_PAGE_SIZES as readonly number[]).includes(n)) return n as PageSize;
-    }
+    if (raw) return coercePropertiesPageSize(raw);
   } catch {
     // cookies() throws if called from a context where it isn't
     // available; treat that as "no preference" and use the default.
@@ -54,7 +54,7 @@ async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string |
       .select("value")
       .eq("key", "property_types")
       .maybeSingle();
-    const list = (data?.value as any)?.types;
+    const list = (data?.value as { types?: Array<{ name: string; icon?: string | null }> } | null)?.types;
     if (Array.isArray(list) && list.length > 0) return list;
   } catch {
     // fall through to defaults
@@ -69,34 +69,71 @@ async function getPropertyTypes(): Promise<Array<{ name: string; icon?: string |
 export default async function PropertiesPage() {
   const pageSize = await pageSizeFromCookies();
 
-  const { data: firstPage, count, error } = await supabase
-    .from("global_stock_pool")
-    .select(
-      // Same projection the API route uses. Kept here as a single
-      // source of truth — if you add a column to the list view,
-      // update both.
-      "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
-        "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
-        "land_price,build_price,house_price,total_package_price," +
-        "status,pipeline_status,titled,created_at,updated_at," +
-        "brochure_url,confidence_score",
-      { count: "exact" },
-    )
-    .neq("pipeline_status", "withdrawn")
-    .neq("pipeline_status", "legacy")
-    .order("created_at", { ascending: false })
-    .range(0, pageSize - 1);
+  // Same projection the API route uses. Kept here as a single source of truth —
+  // if you add a column to the list view, update both.
+  const BASE_COLS =
+    "id,builder_name,estate_name,lot_number,street_address,suburb,state," +
+    "property_type,bedrooms,bathrooms,car_spaces,land_size,house_size," +
+    "land_price,build_price,house_price,total_package_price," +
+    "status,pipeline_status,titled,created_at,updated_at," +
+    "brochure_url,confidence_score";
+
+  // Fetch the whole active set so we can interleave builders for the first page
+  // — otherwise a single bulk import (e.g. 200+ rows added the same day) floods
+  // newest-first and buries every other builder. The "Load more" API applies
+  // the same interleave for subsequent pages.
+  //
+  // PAGED, not one request: PostgREST returns at most 1,000 rows per request no
+  // matter what .range()/.limit() asks for. A single range(0, 2999) silently
+  // stopped at 1,000 once the feed passed that (1,186 rows on 2026-09-15), so
+  // the oldest lots vanished from the feed and the builder dropdown. `id` breaks
+  // created_at ties so page boundaries don't shift between batches.
+  const runQuery = (cols: string) =>
+    fetchAllRows((from, to) =>
+      supabase
+        .from("global_stock_pool")
+        .select(cols)
+        .neq("pipeline_status", "withdrawn")
+        .neq("pipeline_status", "legacy")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
+
+  // Request contract_type, but fall back to the base projection if the column
+  // hasn't been added yet (ALTER pending) — keeps the page working either way.
+  let { data: firstPage, error } = await runQuery(BASE_COLS + ",contract_type");
+  if (error && /contract_type/i.test(error)) {
+    ({ data: firstPage, error } = await runQuery(BASE_COLS));
+  }
 
   if (error) {
-    log.error("properties.page.query_failed", errInfo(error));
-    return <div className="text-red-600 p-4">Error: {error.message}</div>;
+    log.error("properties.page.query_failed", { error });
+    return <div className="text-red-600 p-4">Error: {error}</div>;
   }
 
   const propertyTypes = await getPropertyTypes();
 
   // Normalise field names so PropertyGrid's `??` fallbacks line up
-  // with the snake_case columns Supabase returns.
-  const properties = (firstPage ?? []).map((p: any) => ({
+  // with the snake_case columns Supabase returns. `firstPage` is typed as
+  // Supabase's GenericStringError[] because the projection is a runtime string;
+  // the raw rows are real records, so narrow to the fields we read here.
+  type RawRow = {
+    id: string;
+    builder_name?: string | null;
+    total_package_price?: number | null;
+    house_price?: number | null;
+    price_total?: number | null;
+    street_address?: string | null;
+    address_street?: string | null;
+    suburb?: string | null;
+    address_suburb?: string | null;
+    state?: string | null;
+    address_state?: string | null;
+    brochure_url?: string | null;
+    image_url?: string | null;
+  };
+  const allNormalised = ((firstPage ?? []) as unknown as RawRow[]).map((p) => ({
     ...p,
     price_total: p.total_package_price ?? p.house_price ?? p.price_total,
     address_street: p.street_address ?? p.address_street,
@@ -105,15 +142,32 @@ export default async function PropertiesPage() {
     image_url: p.brochure_url ?? p.image_url,
   }));
 
-  const total = count ?? 0;
+  // First page = the interleaved set sliced to pageSize (builder variety).
+  const properties = interleaveByBuilder(allNormalised).slice(0, pageSize);
+  // Full builder list for the dropdown, so every builder is selectable even
+  // when its stock isn't on the current page.
+  const allBuilders = Array.from(
+    new Set(allNormalised.map((p) => (p.builder_name || "").toString().trim()).filter(Boolean)),
+  ).sort();
+
+  // Every matching row is fetched above, so the row count IS the total.
+  const total = allNormalised.length;
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-3">
         <h1 className="text-3xl font-bold">Aggregator Feed</h1>
-        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
-          Live Connection Active
-        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/properties/map"
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
+          >
+            📍 Map view
+          </Link>
+          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">
+            Live Connection Active
+          </span>
+        </div>
       </div>
 
       {/* We pass the first page + total to the client component. The
@@ -121,6 +175,7 @@ export default async function PropertiesPage() {
       <PropertyGrid
         properties={properties}
         propertyTypes={propertyTypes}
+        allBuilders={allBuilders}
         initialTotal={total}
         initialPageSize={pageSize}
       />

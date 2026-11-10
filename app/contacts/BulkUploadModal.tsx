@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { errMessage } from "../../utils/errors";
 
 const CRM_FIELDS = [
   { key: "full_name",       label: "Full Name" },
@@ -81,7 +82,7 @@ function parseVCard(text: string): { headers: string[]; rows: RawRow[] } {
     //   item1.TEL;type=CELL:+61400000000
     //   item1.X-ABLabel:_$!<Mobile>!$_
     // Strip the prefix so TEL/EMAIL/ADR show up under their canonical names.
-    let propRaw = segments[0].toUpperCase().replace(/^ITEM\d+\./, "");
+    const propRaw = segments[0].toUpperCase().replace(/^ITEM\d+\./, "");
     const types: string[] = [];
     const params: Record<string, string> = {};
     for (let i = 1; i < segments.length; i++) {
@@ -186,7 +187,7 @@ function parseCSV(text: string): { headers: string[]; rows: RawRow[] } {
   return { headers, rows };
 }
 
-function applyMapping(rows: RawRow[], mapping: Record<string, string>): any[] {
+function applyMapping(rows: RawRow[], mapping: Record<string, string>): Record<string, string | null>[] {
   return rows.map(row => {
     const out: Record<string, string> = {};
 
@@ -218,7 +219,7 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [mappingMethod, setMappingMethod] = useState<"ai" | "heuristic" | null>(null);
   const [mappingLoading, setMappingLoading] = useState(false);
-  const [previewRows, setPreviewRows] = useState<any[]>([]);
+  const [previewRows, setPreviewRows] = useState<Record<string, string | null>[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
@@ -255,9 +256,9 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
       const XLSX = await import("xlsx");
       const wb = XLSX.read(new Uint8Array(buffer), { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }) as unknown[][];
       if (data.length < 2) return;
-      h = (data[0] as any[]).map(v => String(v).trim()).filter(Boolean);
+      h = (data[0] as unknown[]).map(v => String(v).trim()).filter(Boolean);
       rows = data.slice(1).map(row => {
         const r: RawRow = {};
         h.forEach((col, i) => { r[col] = String(row[i] ?? "").trim(); });
@@ -361,8 +362,8 @@ export default function BulkUploadModal({ onClose, onUploaded }: Props) {
         } else {
           done += d.inserted;
         }
-      } catch (e: any) {
-        errs.push(`Batch ${Math.floor(i / BATCH) + 1}: ${e.message}`);
+      } catch (e) {
+        errs.push(`Batch ${Math.floor(i / BATCH) + 1}: ${errMessage(e)}`);
       }
       setProgress(Math.round(Math.min(i + BATCH, prepared.length) / prepared.length * 100));
     }

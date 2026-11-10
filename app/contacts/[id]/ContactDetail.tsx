@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import NewOpportunityModal from "../../opportunities/NewOpportunityModal";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
+import { formatDateTime } from "../../../utils/datetime";
 import AIBrief from "../../components/AIBrief";
 import AISuggestedAction from "../../components/AISuggestedAction";
 import AISmartReply from "../../components/AISmartReply";
@@ -12,8 +13,18 @@ import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
+import StartVideoCallButton from "../../components/StartVideoCallButton";
+import GuestLinkButton from "../../components/GuestLinkButton";
+import RequestDocumentsButton from "../../components/RequestDocumentsButton";
+import DocumentProgress from "../../components/DocumentProgress";
 import EditRecordModal from "../../components/EditRecordModal";
+import ScheduleMeetingModal from "../../opportunities/[id]/ScheduleMeetingModal";
+import { SCHEDULING_HOSTS } from "../../../utils/scheduling-hosts";
+import DeleteReasonModal from "../../components/DeleteReasonModal";
 import ContactEmailHistory, { type EmailRow } from "./ContactEmailHistory";
+import ContactVideoCalls from "../../components/ContactVideoCalls";
+import ContactPreliminaryAssessment from "../../components/ContactPreliminaryAssessment";
+import ContactShortlists from "../../components/ContactShortlists";
 
 type Contact = {
   id: string;
@@ -175,13 +186,23 @@ export default function ContactDetail({
   const [noteSaved, setNoteSaved] = useState(false);
   const [savingNote, setSavingNote] = useState(false);
   const [showOpportunityModal, setShowOpportunityModal] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleKind, setScheduleKind] = useState<"video" | "phone">("video");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [buyerType, setBuyerType] = useState(contact.buyer_type || "");
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailRefreshKey, setEmailRefreshKey] = useState(0);
   const [replyContext, setReplyContext] = useState<EmailRow | null>(null);
+  // `now` is state, kept fresh on a 60s tick, so the appointment "past" badge
+  // stays a pure render (no Date.now() call during render).
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const openReply = (email: EmailRow) => {
     setReplyContext(email);
@@ -191,7 +212,9 @@ export default function ContactDetail({
     setReplyContext(null);
     setShowEmailModal(true);
   };
-  const noteRef = useRef(contact.notes || "");
+  // Baseline of the last-saved notes. State (not a ref) because it drives the
+  // Save-button visibility during render.
+  const [savedNotes, setSavedNotes] = useState(contact.notes || "");
 
   const handleAssignType = async (type: string) => {
     setShowTypeMenu(false);
@@ -203,11 +226,23 @@ export default function ContactDetail({
     });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (reason: string, name: string) => {
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await fetch(`/api/contacts/${contact.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/contacts/${contact.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, deleter_name: name }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error || "Failed to delete. Please try again.");
+        return;
+      }
       router.push("/contacts");
+    } catch {
+      setDeleteError("Failed to delete. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -219,7 +254,7 @@ export default function ContactDetail({
   const budget = fmt(contact.budget_max || contact.budget);
 
   const saveNote = async () => {
-    if (noteText === noteRef.current) return;
+    if (noteText === savedNotes) return;
     setSavingNote(true);
     try {
       await fetch(`/api/contacts/${contact.id}`, {
@@ -227,7 +262,7 @@ export default function ContactDetail({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: noteText }),
       });
-      noteRef.current = noteText;
+      setSavedNotes(noteText);
       setNoteSaved(true);
       setTimeout(() => setNoteSaved(false), 2000);
     } finally {
@@ -238,26 +273,16 @@ export default function ContactDetail({
   return (
     <div className="flex flex-col h-full -mx-8 -my-8 bg-gray-50">
 
-      {/* Confirm delete */}
-      {confirmDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
-            <div className="text-3xl mb-3 text-center">🗑️</div>
-            <h3 className="text-base font-bold text-gray-900 text-center mb-1">Delete {name}?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">This cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
-                Cancel
-              </button>
-              <button onClick={handleDelete} disabled={deleting}
-                className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-60 transition">
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm delete — requires a reason + the user's name */}
+      <DeleteReasonModal
+        open={confirmDelete}
+        entityLabel={name}
+        entityType="contact"
+        busy={deleting}
+        error={deleteError}
+        onCancel={() => { setConfirmDelete(false); setDeleteError(null); }}
+        onConfirm={handleDelete}
+      />
 
       {/* ── Top bar ── */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
@@ -287,6 +312,41 @@ export default function ContactDetail({
               📱 Call
             </a>
           )}
+          <StartVideoCallButton
+            contactId={contact.id}
+            label="🎥 Video call"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          />
+          {/* Sits next to Call on purpose: the common case is booking the next
+              meeting while still on the phone, from the page you dialled from. */}
+          <button
+            onClick={() => { setScheduleKind("video"); setShowSchedule(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
+            📅 Schedule meeting
+          </button>
+          {/* The other common case: called this contact back and want to send
+              a confirmation email rather than a video-meeting link. */}
+          <button
+            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
+            📞 Phone call
+          </button>
+          <GuestLinkButton
+            contactId={contact.id}
+            guestName={contact.name || undefined}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+          />
+          <RequestDocumentsButton
+            applicantName={contact.full_name || contact.name}
+            applicantEmail={contact.email}
+            applicantPhone={contact.phone}
+            contactId={contact.id}
+            // Stamp the opportunity only when there's exactly one — a contact can
+            // have several, and guessing the wrong one is worse than none.
+            opportunityId={leads.length === 1 ? leads[0]!.lead_id : undefined}
+            applicantCount={contact.partner_annual_income ? 2 : 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+          />
           <button
             onClick={() => setShowOpportunityModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -332,10 +392,33 @@ export default function ContactDetail({
         />
       )}
 
+      {showSchedule && (
+        <ScheduleMeetingModal
+          // The modal is lead-shaped because it grew up on the opportunity
+          // page; a contact has no lead_id, so its own id stands in (it is only
+          // used to key the form) and the lead-only qualifiers stay null.
+          lead={{
+            lead_id: contact.id,
+            full_name: contact.full_name || contact.name || null,
+            email: contact.email || null,
+            buyer_type: contact.buyer_type || null,
+            state: null,
+            budget: null,
+            timeframe: null,
+            message: null,
+          }}
+          hosts={SCHEDULING_HOSTS}
+          contactId={contact.id}
+          defaultKind={scheduleKind}
+          onClose={() => setShowSchedule(false)}
+          onCreated={() => router.refresh()}
+        />
+      )}
+
       {showEdit && (
         <EditRecordModal
           kind="contact"
-          record={contact as unknown as Record<string, any>}
+          record={contact as unknown as Record<string, unknown>}
           patchUrl={`/api/contacts/${contact.id}`}
           onClose={() => setShowEdit(false)}
           onSaved={(updated) => setContact(updated as unknown as Contact)}
@@ -370,7 +453,12 @@ export default function ContactDetail({
               {name[0]?.toUpperCase() || "?"}
             </div>
             <h1 className="text-xl font-bold text-gray-900">{name}</h1>
-            {contact.email && <p className="text-sm text-gray-400 mt-0.5 break-all">{contact.email}</p>}
+            {contact.email && (
+              <p className="text-sm text-gray-400 mt-0.5 break-all inline-flex items-center justify-center gap-1">
+                {contact.email}
+                <CopyButton text={contact.email} />
+              </p>
+            )}
             {contact.phone && <p className="text-sm text-gray-500 mt-0.5">{contact.phone}</p>}
 
             {/* Status + temp badges */}
@@ -489,6 +577,9 @@ export default function ContactDetail({
             </div>
           )}
 
+          {/* Document collection progress */}
+          <DocumentProgress contactId={contact.id} />
+
           {/* Timestamps */}
           <div className="px-6 py-4">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Timeline</p>
@@ -565,13 +656,30 @@ export default function ContactDetail({
                 {/* AI matchmaker — properties that fit this contact */}
                 <AIContactMatches contactId={contact.id} />
 
+                {/* The PA back from YLA + the call it is presented on (only renders once one exists) */}
+                <ContactPreliminaryAssessment contactId={contact.id} />
+
+                {/* Video-call history (only renders once calls exist) */}
+                <ContactVideoCalls contactId={contact.id} />
+
+                {/* Property shortlists sent to this client + their responses */}
+                <ContactShortlists contactId={contact.id} />
+
                 {/* Summary card */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <h2 className="text-sm font-semibold text-gray-700 mb-4">Contact Summary</h2>
                   <div className="grid grid-cols-2 gap-4">
+                    {contact.email && (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-gray-400 font-medium">Email</span>
+                        <span className="text-sm text-gray-900 font-semibold inline-flex items-center gap-1.5">
+                          {contact.email}
+                          <CopyButton text={contact.email} />
+                        </span>
+                      </div>
+                    )}
                     {[
                       { label: "Full Name",    value: name },
-                      { label: "Email",        value: contact.email },
                       { label: "Phone",        value: contact.phone },
                       { label: "Buyer Type",   value: contact.buyer_type },
                       { label: "State",        value: contact.preferred_state || contact.state },
@@ -728,7 +836,7 @@ export default function ContactDetail({
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-2">
                       {liveAppointments.map((a) => {
                         const start = a.start_time ? new Date(a.start_time) : null;
-                        const isPast = start && start.getTime() < Date.now();
+                        const isPast = start && start.getTime() < now;
                         const statusBadge =
                           a.status === "cancelled" ? "bg-red-100 text-red-700"
                           : a.status === "rescheduled" ? "bg-amber-100 text-amber-700"
@@ -744,7 +852,7 @@ export default function ContactDetail({
                                 </span>
                               </div>
                               <p className="text-gray-500 mt-0.5">
-                                {start ? start.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "—"}
+                                {formatDateTime(start)}
                                 {a.host_name ? ` · with ${a.host_name}` : a.host_email ? ` · with ${a.host_email}` : ""}
                               </p>
                               {a.location && (a.location.startsWith("http") ? (
@@ -859,7 +967,7 @@ export default function ContactDetail({
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 className="text-sm font-semibold text-gray-700">Notes</h2>
-                    {noteText !== noteRef.current && (
+                    {noteText !== savedNotes && (
                       <button
                         onClick={saveNote}
                         disabled={savingNote}
@@ -1052,7 +1160,7 @@ function PipelinesAndOpportunitiesPanel({
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">Pipelines &amp; opportunities</h2>
         <p className="text-xs text-gray-400">
-          This contact isn't in any opportunity yet. Click "+ New Opportunity" above to create one.
+          This contact isn&apos;t in any opportunity yet. Click &quot;+ New Opportunity&quot; above to create one.
         </p>
       </div>
     );
@@ -1152,6 +1260,41 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
       <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
       <span className="text-xs font-medium text-gray-800 text-right">{value}</span>
     </div>
+  );
+}
+
+function CopyButton({ text, className = "" }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard access denied or unavailable — no-op
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={copied ? "Copied!" : "Copy email"}
+      aria-label={copied ? "Copied" : "Copy email"}
+      className={`inline-flex items-center justify-center text-gray-400 hover:text-indigo-600 transition flex-shrink-0 ${className}`}
+    >
+      {copied ? (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-green-500">
+          <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+          <path d="M7.5 3.375c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 013.75 3.75v1.875C13.5 8.161 14.34 9 15.375 9h1.875A3.75 3.75 0 0121 12.75v3.375C21 17.16 20.16 18 19.125 18h-9.75A1.875 1.875 0 017.5 16.125V3.375z" />
+          <path d="M15 5.25a5.23 5.23 0 00-1.279-3.434 9.768 9.768 0 016.963 6.963A5.23 5.23 0 0017.25 7.5h-1.875A.375.375 0 0115 7.125V5.25zM4.875 6H6v10.125A3.375 3.375 0 009.375 19.5H16.5v1.125c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 013 20.625V7.875C3 6.839 3.84 6 4.875 6z" />
+        </svg>
+      )}
+    </button>
   );
 }
 

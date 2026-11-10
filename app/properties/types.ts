@@ -17,6 +17,10 @@
 export type PropertyGridItem = {
   id: string;
   // Supabase row + normalised aliases. Field access is loose because
-  // the source is dynamic and columns come and go.
+  // the source is dynamic and columns come and go. `any` is retained
+  // deliberately: narrowing the index signature to a primitive union
+  // breaks ~12 downstream call sites in PropertyGrid (arithmetic, string
+  // methods, next/image src) that a mechanical change can't safely fix.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };

@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import NewOpportunityModal from "./NewOpportunityModal";
 import NewPipelineModal from "./NewPipelineModal";
+import DeleteReasonModal from "../components/DeleteReasonModal";
 import { log, errInfo } from "../../utils/logger";
+import { errMessage } from "../../utils/errors";
+import { normaliseStage } from "../../utils/pipeline-stage";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +40,13 @@ export type Lead = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// How often the board re-checks for stage changes made elsewhere. Every mounted
+// board is its own polling client and each tick pulls the whole lead table
+// (~150 KB), so this used to be 8s with no visibility check — an abandoned tab
+// polled all night and that traffic was most of what starved the NEXUS API's
+// DuckDB lock (188 gunicorn worker timeouts on /api/leads, May–Jul 2026).
+const POLL_MS = 30_000;
+
 const STAGE_PALETTE = [
   { color: "bg-gray-100",   accent: "border-gray-400",   dot: "bg-gray-400"   },
   { color: "bg-blue-50",    accent: "border-blue-400",   dot: "bg-blue-400"   },
@@ -58,22 +68,6 @@ function buildStages(names: string[]) {
   }));
 }
 
-function normaliseStage(raw: string | null, stages: string[]): string {
-  if (!raw) return stages[0] || "New Lead";
-  // Exact match first
-  if (stages.includes(raw)) return raw;
-  // Fuzzy fallback for legacy data
-  const s = raw.toLowerCase();
-  if (s.includes("won"))      return stages.find(x => x.toLowerCase().includes("won"))  || stages[stages.length - 2] || stages[0];
-  if (s.includes("lost"))     return stages.find(x => x.toLowerCase().includes("lost")) || stages[stages.length - 1] || stages[0];
-  if (s.includes("qualif"))   return stages.find(x => x.toLowerCase().includes("qualif")) || stages[1] || stages[0];
-  if (s.includes("match"))    return stages.find(x => x.toLowerCase().includes("match")) || stages[0];
-  if (s.includes("contact"))  return stages.find(x => x.toLowerCase().includes("contact")) || stages[0];
-  if (s.includes("proposal") || s.includes("sent")) return stages.find(x => x.toLowerCase().includes("proposal") || x.toLowerCase().includes("sent")) || stages[0];
-  if (s.includes("negotiat")) return stages.find(x => x.toLowerCase().includes("negotiat")) || stages[0];
-  return stages[0];
-}
-
 const tempBadge = (t: string | null) => {
   if (t === "hot")  return "bg-red-100 text-red-700";
   if (t === "warm") return "bg-yellow-100 text-yellow-700";
@@ -93,23 +87,52 @@ function parseTags(raw: string | null): string[] {
   try { return JSON.parse(raw); } catch { return []; }
 }
 
+// Reserved tag used to soft-hide unqualified leads from the board without a
+// hard delete (rides the existing `tags` field + PATCH proxy — no schema change).
+const DNQ_TAG = "DNQ";
+const isDnq = (l: Pick<Lead, "tags">) => parseTags(l.tags).includes(DNQ_TAG);
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function KanbanBoard({
   initialLeads,
   initialPipelines,
+  docCounts = {},
 }: {
   initialLeads: Lead[];
   initialPipelines: Pipeline[];
+  /** opportunity lead_id -> count of the contact's compliance documents. */
+  docCounts?: Record<string, number>;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Pipelines
   const [pipelines, setPipelines] = useState<Pipeline[]>(initialPipelines);
-  const [activePipelineId, setActivePipelineId] = useState<string>(initialPipelines[0]?.id || "");
+  // The active pipeline is URL-addressable via ?pipeline=<id> so a deep link
+  // (e.g. the back button on an opportunity card) opens the right pipeline and
+  // survives refresh. Fall back to the first pipeline when the param is absent
+  // or points at a pipeline we don't have.
+  const [activePipelineId, setActivePipelineId] = useState<string>(() => {
+    const param = searchParams.get("pipeline");
+    if (param && initialPipelines.some((p) => p.id === param)) return param;
+    return initialPipelines[0]?.id || "";
+  });
   const [showNewPipeline, setShowNewPipeline] = useState(false);
   const [deletingPipelineId, setDeletingPipelineId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Switch the active pipeline and mirror it into the URL (?pipeline=<id>) with
+  // replaceState so the view is shareable, survives refresh, and doesn't spam
+  // the history stack. An empty id clears the param.
+  const selectPipeline = useCallback((id: string) => {
+    setActivePipelineId(id);
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    if (id) params.set("pipeline", id);
+    else params.delete("pipeline");
+    const qs = params.toString();
+    router.replace(qs ? `/opportunities?${qs}` : "/opportunities", { scroll: false });
+  }, [router, searchParams]);
 
   const deletePipeline = async (pipelineId: string) => {
     setDeletingPipelineId(pipelineId);
@@ -120,7 +143,7 @@ export default function KanbanBoard({
       if (!res.ok) { setDeleteError(data.error || "Failed to delete"); return; }
       const remaining = pipelines.filter(p => p.id !== pipelineId);
       setPipelines(remaining);
-      if (activePipelineId === pipelineId) setActivePipelineId(remaining[0]?.id || "");
+      if (activePipelineId === pipelineId) selectPipeline(remaining[0]?.id || "");
     } finally {
       setDeletingPipelineId(null);
     }
@@ -145,7 +168,7 @@ export default function KanbanBoard({
 
   // Re-normalise when pipeline changes
   useEffect(() => {
-    setLeads(prev => prev.map(l => ({ ...l, _stage: normaliseStage(l.ghl_stage, activePipeline?.stages || ["New Lead"]) })));
+    queueMicrotask(() => setLeads(prev => prev.map(l => ({ ...l, _stage: normaliseStage(l.ghl_stage, activePipeline?.stages || ["New Lead"]) }))));
   }, [activePipelineId]);
 
   // Tags
@@ -165,6 +188,8 @@ export default function KanbanBoard({
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  // Gate: deleting opportunities requires a reason + the user's name.
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const toggleSelect = (leadId: string) => {
     setSelected(prev => {
@@ -176,6 +201,41 @@ export default function KanbanBoard({
 
   const clearSelection = () => setSelected(new Set());
 
+  // DNQ (Do Not Qualify) — soft-hide via tag rather than delete. Reversible:
+  // "Restore" just PATCHes the tag back off.
+  const [showDnq, setShowDnq] = useState(false);
+  const [dnqBusy, setDnqBusy] = useState(false);
+  const [dnqError, setDnqError] = useState<string | null>(null);
+
+  const setDnqForLeads = async (ids: string[], dnq: boolean) => {
+    if (ids.length === 0) return;
+    setDnqBusy(true);
+    setDnqError(null);
+    const failed: string[] = [];
+    await Promise.all(ids.map(async id => {
+      const lead = leads.find(l => l.lead_id === id);
+      if (!lead) return;
+      const current = parseTags(lead.tags);
+      const next = dnq
+        ? Array.from(new Set([...current, DNQ_TAG]))
+        : current.filter(t => t !== DNQ_TAG);
+      try {
+        const res = await fetch(`/api/opportunities/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tags: JSON.stringify(next) }),
+        });
+        if (!res.ok) throw new Error();
+        setLeads(prev => prev.map(l => l.lead_id === id ? { ...l, tags: JSON.stringify(next) } : l));
+      } catch {
+        failed.push(id);
+      }
+    }));
+    setDnqBusy(false);
+    clearSelection();
+    if (failed.length > 0) setDnqError(`${failed.length} of ${ids.length} failed to update.`);
+  };
+
   // Add new stage (column) to the active pipeline
   const [addingStage, setAddingStage] = useState(false);
   const [newStageName, setNewStageName] = useState("");
@@ -186,7 +246,8 @@ export default function KanbanBoard({
   // Default position to end whenever the form opens or the pipeline changes
   useEffect(() => {
     if (addingStage) {
-      setNewStagePosition(activePipeline?.stages.length ?? 0);
+      const v = activePipeline?.stages.length ?? 0;
+      queueMicrotask(() => setNewStagePosition(v));
     }
   }, [addingStage, activePipelineId, activePipeline?.stages.length]);
 
@@ -216,9 +277,9 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to delete stage");
+      setStageError(errMessage(e, "Failed to delete stage"));
     } finally {
       setDeletingStage(null);
     }
@@ -253,16 +314,23 @@ export default function KanbanBoard({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to save stage");
       }
-    } catch (e: any) {
+    } catch (e) {
       setPipelines(prev);
-      setStageError(e.message || "Failed to save stage");
+      setStageError(errMessage(e, "Failed to save stage"));
     }
   };
 
-  const bulkDelete = async () => {
+  // Open the reason+name gate. The actual delete runs in performBulkDelete once
+  // the user supplies a reason and their name.
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    setBulkError(null);
+    setShowDeleteModal(true);
+  };
+
+  const performBulkDelete = async (reason: string, name: string) => {
     const ids = Array.from(selected);
-    if (ids.length === 0) return;
-    if (!window.confirm(`Delete ${ids.length} opportunit${ids.length === 1 ? "y" : "ies"}? This can't be undone.`)) return;
+    if (ids.length === 0) { setShowDeleteModal(false); return; }
     setBulkDeleting(true);
     setBulkError(null);
     setBulkProgress({ done: 0, total: ids.length });
@@ -270,7 +338,11 @@ export default function KanbanBoard({
     let done = 0;
     await Promise.all(ids.map(async id => {
       try {
-        const res = await fetch(`/api/opportunities/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/opportunities/${id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason, deleter_name: name }),
+        });
         if (!res.ok) failed.push(id);
       } catch { failed.push(id); }
       done += 1;
@@ -281,6 +353,7 @@ export default function KanbanBoard({
     setSelected(new Set(failed));
     setBulkDeleting(false);
     setBulkProgress(null);
+    setShowDeleteModal(false);
     if (failed.length > 0) setBulkError(`${failed.length} of ${ids.length} failed to delete — they're still selected.`);
   };
 
@@ -312,8 +385,17 @@ export default function KanbanBoard({
   }, [activePipeline]);
 
   useEffect(() => {
-    const t = setInterval(poll, 8000);
-    return () => clearInterval(t);
+    // Only poll while someone is actually looking at the board. A hidden tab
+    // has nothing to repaint, so the fetch would be pure load.
+    const t = setInterval(() => { if (!document.hidden) poll(); }, POLL_MS);
+    // Returning to a backgrounded tab shouldn't mean staring at stale cards
+    // for up to POLL_MS — refresh straight away instead.
+    const onVisibilityChange = () => { if (!document.hidden) poll(); };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [poll]);
 
   // Drag handlers
@@ -344,14 +426,23 @@ export default function KanbanBoard({
     }
   };
 
-  // Filtered leads for current pipeline + tag
+  // Filtered leads for current pipeline + tag. DNQ-tagged leads are hidden
+  // from the normal board view; the DNQ toggle flips this to show only them.
   const visibleLeads = leads.filter(l => {
     const inPipeline = activePipeline
       ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
       : true;
     const hasTag = tagFilter ? parseTags(l.tags).includes(tagFilter) : true;
-    return inPipeline && hasTag;
+    const dnqOk = showDnq ? isDnq(l) : !isDnq(l);
+    return inPipeline && hasTag && dnqOk;
   });
+
+  const dnqCount = leads.filter(l => {
+    const inPipeline = activePipeline
+      ? (l.pipeline_id === activePipeline.id || (!l.pipeline_id && pipelines.indexOf(activePipeline) === 0))
+      : true;
+    return inPipeline && isDnq(l);
+  }).length;
 
   const byStage = (stageId: string) => visibleLeads.filter(l => l._stage === stageId);
 
@@ -371,7 +462,7 @@ export default function KanbanBoard({
           <h2 className="text-lg font-bold text-gray-900 mb-2">No pipelines yet</h2>
           <p className="text-sm text-gray-500 mb-5">
             Create your first pipeline to start tracking opportunities. The Sales Pipeline auto-creates
-            on first contact with the API — if you're seeing this and the API is up, try a hard refresh.
+            on first contact with the API — if you&apos;re seeing this and the API is up, try a hard refresh.
           </p>
           <button
             onClick={() => setShowNewPipeline(true)}
@@ -386,7 +477,7 @@ export default function KanbanBoard({
             onClose={() => setShowNewPipeline(false)}
             onCreated={(p) => {
               setPipelines(prev => [...prev, { ...p, created_at: new Date().toISOString() }]);
-              setActivePipelineId(p.id);
+              selectPipeline(p.id);
               setShowNewPipeline(false);
             }}
           />
@@ -408,7 +499,7 @@ export default function KanbanBoard({
           return (
             <div key={p.id} className="flex items-center gap-1">
               <button
-                onClick={() => setActivePipelineId(p.id)}
+                onClick={() => selectPipeline(p.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition border ${
                   isActive
                     ? "bg-white border-gray-300 text-gray-900 shadow-sm"
@@ -465,11 +556,28 @@ export default function KanbanBoard({
           <div className="flex items-center gap-2">
             <button
               onClick={clearSelection}
-              disabled={bulkDeleting}
+              disabled={bulkDeleting || dnqBusy}
               className="px-3 py-1 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-700 transition disabled:opacity-50"
             >
               Cancel
             </button>
+            {showDnq ? (
+              <button
+                onClick={() => setDnqForLeads(Array.from(selected), false)}
+                disabled={dnqBusy}
+                className="px-3 py-1 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition disabled:opacity-50"
+              >
+                {dnqBusy ? "Restoring…" : `Restore ${selected.size}`}
+              </button>
+            ) : (
+              <button
+                onClick={() => setDnqForLeads(Array.from(selected), true)}
+                disabled={dnqBusy}
+                className="px-3 py-1 rounded-lg text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-50"
+              >
+                {dnqBusy ? "Marking…" : `Mark DNQ ${selected.size}`}
+              </button>
+            )}
             <button
               onClick={bulkDelete}
               disabled={bulkDeleting}
@@ -481,11 +589,29 @@ export default function KanbanBoard({
         </div>
       )}
 
+      {/* Delete gate — requires a reason + the user's name */}
+      <DeleteReasonModal
+        open={showDeleteModal}
+        entityLabel={`${selected.size} opportunit${selected.size === 1 ? "y" : "ies"}`}
+        entityType="opportunity"
+        busy={bulkDeleting}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={performBulkDelete}
+      />
+
       {/* Bulk error toast */}
       {bulkError && (
         <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
           <span>{bulkError}</span>
           <button onClick={() => setBulkError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
+        </div>
+      )}
+
+      {/* DNQ error toast */}
+      {dnqError && (
+        <div className="mb-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-sm text-red-700">
+          <span>{dnqError}</span>
+          <button onClick={() => setDnqError(null)} className="text-red-400 hover:text-red-600 ml-4">✕</button>
         </div>
       )}
 
@@ -531,6 +657,19 @@ export default function KanbanBoard({
             </div>
           )}
 
+          {/* DNQ tab — toggles between the normal board and the DNQ-tagged leads */}
+          <button
+            onClick={() => { setShowDnq(v => !v); clearSelection(); }}
+            title={showDnq ? "Back to board" : "Show leads marked Do Not Qualify"}
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
+              showDnq
+                ? "bg-amber-500 text-white"
+                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            }`}
+          >
+            🚫 DNQ{dnqCount > 0 ? ` (${dnqCount})` : ""}
+          </button>
+
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition shadow-sm"
@@ -539,6 +678,12 @@ export default function KanbanBoard({
           </button>
         </div>
       </div>
+
+      {showDnq && (
+        <div className="mb-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-sm text-amber-800">
+          Showing {dnqCount} lead{dnqCount === 1 ? "" : "s"} marked Do Not Qualify — hidden from the normal board. Select and restore to bring them back.
+        </div>
+      )}
 
       {/* Modals */}
       {showModal && (
@@ -644,6 +789,7 @@ export default function KanbanBoard({
                   const isSaving    = saving.has(lead.lead_id);
                   const isDragging  = dragId === lead.lead_id;
                   const tags        = parseTags(lead.tags);
+                  const docCount    = docCounts[lead.lead_id] || 0;
 
                   const isSelected = selected.has(lead.lead_id);
                   return (
@@ -737,6 +883,14 @@ export default function KanbanBoard({
                         {lead.created_at && !isAutoMoved && !isSaving && (
                           <span className="text-xs text-gray-300">
                             {new Date(lead.created_at).toLocaleDateString("en-AU")}
+                          </span>
+                        )}
+                        {docCount > 0 && (
+                          <span
+                            className="ml-auto flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-full px-1.5 py-0.5"
+                            title={`${docCount} compliance document${docCount === 1 ? "" : "s"} on file — open the opportunity to view`}
+                          >
+                            📄 {docCount}
                           </span>
                         )}
                         {lead.match_status === "matched" && !isAutoMoved && (

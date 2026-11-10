@@ -1,6 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  MAIL_IDENTITY_KEYS,
+  MAIL_IDENTITY_LABELS,
+  DEFAULT_IDENTITY_KEY,
+  type MailIdentityKey,
+} from "../../utils/mailIdentities";
 
 interface TagCount {
   tag: string;
@@ -43,6 +49,9 @@ export default function BroadcastClient({
   const [htmlBody, setHtmlBody] = useState("");
   const [textBody, setTextBody] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  // One control decides two things that must never disagree: the regulatory
+  // identity the copy is reviewed under, and the address it is sent from.
+  const [brand, setBrand] = useState<MailIdentityKey>(DEFAULT_IDENTITY_KEY);
   const [confirmAll, setConfirmAll] = useState(false);
   const [violations, setViolations] = useState<Violation[] | null>(null);
   const [reviewFailed, setReviewFailed] = useState<string | null>(null);
@@ -81,6 +90,7 @@ export default function BroadcastClient({
           html_body: htmlBody,
           text_body: textBody,
           tag: selectedTag,
+          brand,
           review_token: tokenForRequest,
         }),
       });
@@ -103,6 +113,11 @@ export default function BroadcastClient({
       setResult(body as SendResult);
       setViolations(null);
       setReviewToken(null);
+      // Nudge the history section (sibling component) to refetch so the
+      // just-queued broadcast shows up as pending without a page reload.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("broadcast:sent"));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -144,8 +159,9 @@ export default function BroadcastClient({
             send: <strong>~{result.eta_minutes} min</strong>.
           </p>
           <p className="text-xs text-green-700 mt-3">
-            Live progress is on <a href="/sequences" className="underline">/sequences</a> (recent
-            step activity panel).
+            Watch it drain from pending to sent in <strong>Broadcast history</strong> below (hit
+            Refresh), or see live step activity on{" "}
+            <a href="/sequences" className="underline">/sequences</a>.
           </p>
         </div>
         <button
@@ -171,12 +187,35 @@ export default function BroadcastClient({
       <p className="text-gray-500 text-sm mb-6">
         Send a one-off email to every eligible contact (or a tagged subset). Runs through AU
         compliance review before any DB writes. The runner applies the Spam-Act footer +
-        unsubscribe filter on every send — you don't need to add either to the body.
+        unsubscribe filter on every send — you don&apos;t need to add either to the body.
       </p>
 
       {/* Audience picker */}
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
         <h2 className="font-semibold mb-3">Audience</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <select
+            value={brand}
+            onChange={(e) => {
+              setBrand(e.target.value as MailIdentityKey);
+              // The review token is bound to the brand as well as the copy, so
+              // switching business invalidates it. Drop it now rather than
+              // letting the server reject it later.
+              setReviewToken(null);
+              setViolations(null);
+              setAckViolations(false);
+            }}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            aria-label="Sending business"
+          >
+            {MAIL_IDENTITY_KEYS.map((k) => (
+              <option key={k} value={k}>
+                Send as {MAIL_IDENTITY_LABELS[k]}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex items-center gap-2 mb-3">
           <select
             value={selectedTag ?? "__all__"}
@@ -280,7 +319,7 @@ export default function BroadcastClient({
               checked={ackViolations}
               onChange={(e) => setAckViolations(e.target.checked)}
             />
-            I'll skip the automated compliance review for this send.
+            I&apos;ll skip the automated compliance review for this send.
           </label>
           {ackViolations && (
             <button
@@ -314,7 +353,7 @@ export default function BroadcastClient({
                     {v.severity}
                   </span>
                 </div>
-                <p className="text-xs italic mb-1">"{v.snippet}"</p>
+                <p className="text-xs italic mb-1">&ldquo;{v.snippet}&rdquo;</p>
                 <p className="text-xs mb-1">
                   <strong>Why:</strong> {v.reason}
                 </p>
@@ -330,7 +369,7 @@ export default function BroadcastClient({
               checked={ackViolations}
               onChange={(e) => setAckViolations(e.target.checked)}
             />
-            I've read these warnings and want to send anyway.
+            I&apos;ve read these warnings and want to send anyway.
           </label>
           <div className="flex gap-2 mt-3">
             <button
@@ -361,7 +400,7 @@ export default function BroadcastClient({
             {sending ? "Reviewing..." : `Review & send to ${audienceCount.toLocaleString()}`}
           </button>
           <p className="text-xs text-gray-400">
-            Runs through compliance review first — you'll see flags before any send fires.
+            Runs through compliance review first — you&apos;ll see flags before any send fires.
           </p>
         </div>
       )}

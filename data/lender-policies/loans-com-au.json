@@ -1,0 +1,195 @@
+{
+  "id": "loans-com-au",
+  "name": "loans.com.au",
+  "legalName": "Firstmac Limited",
+  "tier": "non_bank",
+  "status": "research_only",
+  "acl": "290600",
+  "abn": "59 094 145 963",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+  "funder": "Firstmac Limited",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the loans.com.au TMD set (Bare, Smart, Construction, Green, SMSF) and the public product pages — no assessment buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan to Value Ratio (LVR) of 90%, with Lenders Mortgage Insurance or Lenders Risk Fee applicable when the LVR exceeds 80%.\" The Smart Home Loan TMD states the same 90% ceiling."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Bare Home Loan TMD states a single 90% LVR ceiling and says the product is \"Available for owner occupied or investment purposes\"; it does not split the cap by purpose. A footnote warns that LVR sub-limits may apply based on security location, security type and repayment type."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "LMI or a Lenders Risk Fee applies above 80% LVR."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-construction-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Construction Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "notes": {
+      "value": "TMD footnote: \"Loan amount and LVR sub-limits may apply based on security location, security type and/or repayment type.\" The sub-limit matrix itself is not published.",
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "notes": {
+      "value": "Applicants must have \"an acceptable credit rating, ongoing and stable employment\" and demonstrate capacity to repay. The product is stated to be unsuitable for consumers who \"do not have ongoing income or employment\". No income-type table is published.",
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, Key Eligibility",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same $50,000 minimum stated in the Smart Home Loan and Construction Home Loan TMDs."
+    },
+    "maxLoanAmount": {
+      "value": 2000000,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$2,000,000 on the Bare and Smart Home Loans; the Construction Home Loan is capped at $1,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum loan term of 15 years and maximum loan term of 30 years.\""
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2023-10-03",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/TMD-LCA-Smart-Home-Loan.pdf",
+      "sourceTitle": "loans.com.au Smart Home Loan Target Market Determination, dated 03/10/2023",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Offset sub-account and debit card are Smart Home Loan features. The Bare Home Loan explicitly has no offset sub-account."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-construction-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Construction Home Loan Target Market Determination, effective 07 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Separate Construction Home Loan product; the Bare Home Loan itself excludes construction."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Living and working in Australia or New Zealand."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens living and working in Australia or New Zealand."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be living and working in Australia."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "TMD lists consumers who \"are not an Australian or New Zealand citizen or resident\" as those for whom the product is not appropriate."
+        }
+      ],
+      "asAt": "2026-02-07",
+      "sourceUrl": "https://www.loans.com.au/media/documents/tmd/home-loans/tmd-lca-bare-home-loan-feb2026.pdf",
+      "sourceTitle": "loans.com.au Bare Home Loan Target Market Determination, Key Eligibility",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quoted: \"Are Australian or New Zealand citizens who are living & working in Australia or New Zealand, or living and working in Australia and have permanent residency status.\""
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-02-07",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "loans.com.au does NOT accept broker-originated loans. Its TMDs state the products are \"designed to be distributed to consumers exclusively through loans.com.au by internal sales staff\" — no third-party or broker channel is listed. Status recorded as research_only. (Firstmac, the same issuer, runs a separate broker-facing brand; that is a different panel entry.)",
+    "No servicing parameters published — buffer, floor rate, DTI cap, rent shading, credit-card assessment, HEM treatment.",
+    "No income-type table (casual, overtime, bonus, commission, rental, self-employed, Centrelink) and no shading percentages.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published (defaults, bankruptcy, arrears).",
+    "No security policy published — property types, minimum unit size, high-density, rural, postcode categories. The TMD only warns that LVR and loan-amount sub-limits exist by security location and type without publishing them.",
+    "No genuine savings, gifted deposit or guarantor policy published.",
+    "The SMSF TMD (tmd-lca-smsf-loan.pdf) could not be parsed from the public link, so SMSF availability has not been recorded."
+  ]
+}

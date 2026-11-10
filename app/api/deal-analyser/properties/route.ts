@@ -19,7 +19,20 @@ const num = (v: unknown): number | null => {
   return isFinite(n) && n > 0 ? n : null;
 };
 
-function buildProperty(input: any): DealPacketProperty {
+type PropertyInput = {
+  bedrooms?: number | string | null;
+  per_room?: boolean | null;
+  is_co_living?: boolean | null;
+  room_rent?: number | string | null;
+  weekly_rent?: number | string | null;
+  suburb?: string | null;
+  address?: string | null;
+  total_price?: number | string | null;
+  land_size_m2?: number | string | null;
+  bathrooms?: number | string | null;
+};
+
+function buildProperty(input: PropertyInput): DealPacketProperty {
   const beds = num(input?.bedrooms);
   const perRoom = !!input?.per_room || !!input?.is_co_living && !!input?.room_rent;
   const roomRent = num(input?.room_rent);
@@ -57,7 +70,21 @@ function buildProperty(input: any): DealPacketProperty {
   };
 }
 
-function buildFromStock(row: any): DealPacketProperty {
+type StockRow = {
+  suburb?: string | null;
+  street_address?: string | null;
+  total_package_price?: number | null;
+  house_price?: number | null;
+  land_size?: number | null;
+  house_size?: number | null;
+  state?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  car_spaces?: number | null;
+  builder_name?: string | null;
+};
+
+function buildFromStock(row: StockRow): DealPacketProperty {
   return {
     suburb: row.suburb ?? null,
     address: row.street_address ?? null,

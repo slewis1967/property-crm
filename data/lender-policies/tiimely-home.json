@@ -1,0 +1,269 @@
+{
+  "id": "tiimely-home",
+  "name": "Tiimely Home (Tiimely Own)",
+  "legalName": null,
+  "tier": "neobank_digital",
+  "status": "research_only",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+  "funder": "Bendigo and Adelaide Bank (per Tiimely public statements)",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked tiimelyhome.com.au eligibility, FAQ and serviceability guide pages — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Deposit — You have at least 10% deposit (or 25% deposit for loans over $2m).\" So 90% max LVR generally, 75% max LVR where the loan exceeds $2m. Page is undated; asAt is the date read."
+    },
+    "notes": {
+      "value": "Deposit requirement steps up with loan size: minimum 10% deposit (90% LVR), rising to a minimum 25% deposit (75% LVR) for loans over $2m. Cash-out / equity release is not available on loans over $2m.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": "Digital validation of bank accounts, or manually uploaded transaction statements.",
+          "conditions": "6 months in the current job, or 12 months of continuous service in the same industry."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "6 months in the current job, or 12 months of continuous service in the same industry."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "Casual PAYG is named alongside full-time, permanent part-time and dependent contractor roles under the same 6-month / 12-month-same-industry rule."
+        },
+        {
+          "type": "payg_contractor_abn",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "\"Dependent contractor\" roles are treated with the PAYG tenure rule."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 12,
+          "evidence": null,
+          "conditions": "\"you've traded for 1 year, and meet our other self-employment criteria\"."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility, FAQ \"How long do I have to be employed before I apply?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tiimely publishes tenure by employment basis, not shading percentages. No shading figure is published for any income type, so shadingPct is left null throughout rather than assumed. Undated page; asAt is the date read."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"You're currently employed (PAYG or self-employed), with an employment length of 6 months (PAYG)\"."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — FAQ \"How long do I have to be employed before I apply?\"",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — FAQ \"How long do I have to be employed before I apply?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"you've held your job for 6 months, or had 12 months of continuous service in the same industry\"."
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — FAQ \"How long do I have to be employed before I apply?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Casual PAYG is listed in the same tenure group as full-time and permanent part-time."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"a minimum of 1 year (self-employed)\" / \"you've traded for 1 year\"."
+    }
+  },
+
+  "credit": {},
+
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"buying or refinancing an existing property that measures over 40m/sq\"."
+    },
+    "highDensityPolicy": {
+      "value": "High-density is defined in Tiimely policy as complexes with more than 50 units/apartments, or more than 5 storeys (excluding car parking). High-density securities cannot be valued by AVM and require a full valuation.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — FAQ \"What is considered high-density housing or development?\"",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "offThePlanAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"an existing property ... (not off-the-plan or under construction)\"."
+    },
+    "notes": {
+      "value": "Security must be in a capital city or major regional centre. Established property only — off-the-plan and under-construction securities are not eligible.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "No postcode list is published; the location test is described only as \"a capital city or major regional centre\"."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 150000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"You want to borrow at least $150K, but not more than $7.5M.\""
+    },
+    "maxLoanAmount": {
+      "value": 7500000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Eligible securities are existing properties only, \"not off-the-plan or under construction\"."
+    },
+    "guarantorAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"You only need simple features (e.g. no split or guarantor loans).\""
+    },
+    "notes": {
+      "value": "Individual borrowers only, alone or jointly — company and trust applicants are not eligible for a Tiimely Own home loan. Split loans are not available. Pre-approval is valid for 60 days and may be renewed once.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must live in Australia."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must live in Australia."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://tiimelyhome.com.au/home-loans/home-loan-eligibility",
+      "sourceTitle": "Tiimely Home — Home loan eligibility (Tiimely Own)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"You're an Australian citizen or permanent resident who lives in Australia.\" Temporary-visa and non-resident cases are not addressed on the page, so no rule has been recorded for them rather than inferring a decline."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Tiimely Own is a direct-to-consumer digital product. No third-party broker accreditation channel is published — the \"Tiimely Home broker\" service is Tiimely's own in-house brokerage placing loans with a 30+ lender panel, not a channel for external brokers to submit to Tiimely Own. Status recorded as research_only for that reason.",
+    "No servicing parameters published — buffer, floor rate, DTI cap, rent shading, credit-card assessment and HEM treatment are all absent.",
+    "No income shading percentages published for overtime, bonus, commission, rental or Centrelink income; no statement on whether those income types are accepted at all.",
+    "No credit-history policy published (defaults, bankruptcy, arrears, enquiries).",
+    "The eligibility page is undated, so every asAt on this record is the date the page was read (2026-07-29) rather than a stated policy effective date.",
+    "No published postcode / location list behind the \"capital city or major regional centre\" test.",
+    "Maximum loan term, interest-only availability and offset/redraw features are not stated on the eligibility page."
+  ]
+}

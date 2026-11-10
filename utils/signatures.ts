@@ -1,0 +1,158 @@
+/**
+ * Pure types + logic for the e-signature flow, shared by the server routes, the
+ * print/PDF components and the signing UI. NO server imports (no supabase, no
+ * react-dom, no node:crypto) so it stays unit-testable and safe to pull into a
+ * "use client" component.
+ *
+ * A `SignatureMark` is the rendered evidence of one signer: the captured
+ * signature image (base64 PNG data URI), the name they signed under, and the
+ * date. Print documents accept an array of these indexed by applicant (0-based:
+ * signer_index 1 → index 0).
+ */
+
+import type { ComplianceDocType } from "./compliance-audit";
+import { BUSINESS_TIME_ZONE } from "./datetime";
+
+/** The signable documents (a subset of ComplianceDocType — aml_case is not one). */
+export const SIGN_DOC_TYPES: ComplianceDocType[] = [
+  "fact_find",
+  "needs_analysis",
+  "credit_authorisation",
+  "eoi",
+  "introducer_nda",
+  "introducer_agreement",
+  "introducer_schedule",
+  "referral_consent",
+  "preliminary_assessment",
+];
+
+export function isSignDocType(v: unknown): v is ComplianceDocType {
+  return typeof v === "string" && (SIGN_DOC_TYPES as string[]).includes(v);
+}
+
+/** Friendly, customer-facing name for each document (safe to show a signer). */
+export const DOC_TYPE_LABEL: Record<ComplianceDocType, string> = {
+  fact_find: "Borrower Fact Find",
+  needs_analysis: "Needs Analysis",
+  credit_authorisation: "Credit File Authorisation",
+  // aml_case reuses the compliance audit/lock infra but is NOT part of the
+  // e-signature flow (it never appears in SIGN_DOC_TYPES). This entry only
+  // satisfies the exhaustive Record; it is never shown to a signer.
+  aml_case: "AML/CTF Customer Due Diligence",
+  eoi: "Expression of Interest",
+  introducer_nda: "Mutual Confidentiality Agreement",
+  introducer_agreement: "Introducer Referral Agreement",
+  introducer_schedule: "Commission Schedule",
+  referral_consent: "Referral Consent and Privacy Form",
+  preliminary_assessment: "Preliminary Assessment",
+};
+
+/** The lifecycle of a single signer's request. */
+export const SIGN_STATUSES = ["sent", "viewed", "signed", "declined", "expired"] as const;
+export type SignStatus = (typeof SIGN_STATUSES)[number];
+
+/** Human labels for the advisor-side status panel. */
+export const SIGN_STATUS_LABEL: Record<SignStatus, string> = {
+  sent: "Sent",
+  viewed: "Viewed",
+  signed: "Signed",
+  declined: "Declined",
+  expired: "Expired",
+};
+
+/** What a print document needs to render one signer's mark into its signature area. */
+export type SignatureMark = {
+  /** base64 PNG data URI of the captured signature (or a typed-name fallback). */
+  image: string;
+  name: string;
+  /** ISO or display date the signer completed. */
+  date: string;
+};
+
+/** A request row as far as the pure status logic is concerned. */
+export type SignerLike = {
+  signer_index: number;
+  status: string;
+  signature_image?: string | null;
+  signer_name?: string | null;
+  signed_at?: string | null;
+};
+
+/**
+ * True when a request is in a terminal, non-signable state. A GET/POST against a
+ * token in one of these states must be refused with a generic message.
+ */
+export function isTerminalStatus(status: string): boolean {
+  return status === "signed" || status === "declined" || status === "expired";
+}
+
+/** True when `expires_at` (ISO) is in the past relative to `now` (ms). */
+export function isExpired(expiresAt: string | null | undefined, now: number): boolean {
+  if (!expiresAt) return false;
+  const t = Date.parse(expiresAt);
+  return Number.isFinite(t) && t < now;
+}
+
+/**
+ * The status to SHOW for a request. Nothing ever writes "expired" to a row — the
+ * signing routes just refuse a link past its `expires_at` — so a lapsed request
+ * keeps its stored "sent"/"viewed" forever. Shown raw, a dead link reads as a
+ * client who is ignoring you, and nobody resends. Signed and declined are final
+ * and are never overridden by the date.
+ */
+export function displaySignStatus(
+  status: string,
+  expiresAt: string | null | undefined,
+  now: number,
+): string {
+  if ((status === "sent" || status === "viewed") && isExpired(expiresAt, now)) return "expired";
+  return status;
+}
+
+/**
+ * True when every signer request for a document has been signed — the trigger to
+ * lock the underlying document and record the `sign` audit. An empty list is not
+ * "all signed" (nothing was ever requested).
+ */
+export function allSigned(rows: SignerLike[]): boolean {
+  return rows.length > 0 && rows.every((r) => r.status === "signed");
+}
+
+/**
+ * Build the per-applicant signatures array a print document renders, from the
+ * signed request rows. Index is signer_index-1 (applicant 0/1); unsigned slots
+ * are null. Rows without a signature image are skipped. Out-of-range indices are
+ * ignored so a malformed row can't crash the render.
+ */
+export function buildSignaturesArray(rows: SignerLike[]): (SignatureMark | null)[] {
+  const out: (SignatureMark | null)[] = [];
+  for (const r of rows) {
+    if (r.status !== "signed" || !r.signature_image) continue;
+    const idx = r.signer_index - 1;
+    if (idx < 0 || idx > 8) continue;
+    out[idx] = {
+      image: r.signature_image,
+      name: (r.signer_name ?? "").trim(),
+      date: r.signed_at ? formatSignedDate(r.signed_at) : "",
+    };
+  }
+  return out;
+}
+
+/**
+ * "13 Jul 2026" from an ISO timestamp; passes non-parseable input through.
+ *
+ * Pinned to the business timezone. The signed PDF is rendered on the server
+ * (UTC on Netlify), so an unpinned formatter dated anything signed before 10am
+ * Brisbane as the previous day, on the one document where the date is evidence.
+ */
+export function formatSignedDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
+  });
+}

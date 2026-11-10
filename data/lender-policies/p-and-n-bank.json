@@ -1,0 +1,176 @@
+{
+  "id": "p-and-n-bank",
+  "name": "P&N Bank",
+  "legalName": "Police & Nurses Limited (trading as P&N Bank; BCU Bank is the other retail brand of the same entity)",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "240701",
+  "abn": "69 087 651 876",
+  "brokerSiteUrl": "https://www.pnbank.com.au/home-loans/broker/",
+  "policyDocUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly. P&N's product/policy detail for brokers sits behind the Broker Hub login at https://broker.pnbank.info/; the public site (TMDs, credit guide, rates) does not state an assessment buffer or floor rate."
+    },
+    "notes": {
+      "value": "No serviceability parameters (buffer, floor rate, HEM basis, DTI cap, rent shading) are published on P&N Bank's public website. Accredited brokers are directed to the Broker Hub (broker.pnbank.info) for product and policy information, which requires a login and is therefore out of scope for this record.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.pnbank.com.au/home-loans/broker/",
+      "sourceTitle": "Supporting WA brokers and their clients | P&N Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD states LVR \"Less than or equal to 95% (Lenders Mortgage Insurance may be required where applicable and as determined by P&N)\". The Basic Variable Home Loan - OO TMD (effective 12/03/2026) states the same 95% ceiling."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/investor-offset-home-loan-tmd/",
+      "sourceTitle": "Investor Offset Home Loan Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD states LVR \"Up to 90% (Lenders Mortgage Insurance may be required where applicable and as determined by P&N)\". The Investor Basic Home Loan - IO TMD (effective 13/11/2025) also caps at 90%."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2026-01-08",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/equity-access-tmd/",
+      "sourceTitle": "Equity Access Target Market Determination (effective 08/01/2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Equity Access is P&N's line-of-credit equity release product, capped at \"Up to 90% LVR\". This is the equity-release product ceiling, not necessarily a general cash-out policy limit on a term loan."
+    },
+    "notes": {
+      "value": "LVR bands on the owner-occupied variable products are priced in five tiers: <=60%, >60-70%, >70-80%, >80-90%, >90-95%. Investor variable products are tiered <=70%, <=80%, <=90%.",
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": ["Property used for predominantly residential purposes"],
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "TMD security requirement only. No published acceptable/unacceptable security schedule, minimum unit size, postcode category list or high-density policy on the public site."
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$20,000.00 minimum stated on every P&N home-loan TMD reviewed (owner-occupied, investor, bridging, Equity Access)."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$5,000,000.00 maximum stated on every P&N home-loan TMD reviewed."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination (effective 22/04/2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Loan term stated as \"5 - 30 years\"."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2025-11-13",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/investor-basic-home-loan-tmd-io/",
+      "sourceTitle": "Investor Basic Home Loan - IO Target Market Determination (effective 13/11/2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Interest only terms of 3 or 5 years, then principal and interest for the balance of the term.\""
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"100% offset available, with up to 3 offset accounts permitted to be linked to the home loan account.\" Available on both owner-occupied and investor variable products."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2024-04-19",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/bridging-loan-oo-tmd/",
+      "sourceTitle": "Bridging Loan Target Market Determination (effective 19/04/2024)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner-occupied bridging only; term 6 months (sale of existing property) or 12 months (construction), max 80% LVR, interest capitalised."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "P&N Bank is named on Housing Australia's participating-lender list (page carries no publication date; captured 2026-07-29). IMPORTANT FOR BROKERS: the P&N TMDs state \"Loans originated under the Australian Government 5% Deposit Scheme are distributed through approved internal P&N Bank Home Lenders only\" (Offset Variable Home Loan TMD, effective 22/04/2026) - i.e. the scheme is NOT available through the broker channel at P&N."
+    },
+    "notes": {
+      "value": "Broker-originated lending IS accepted: the TMDs list \"an accredited Mortgage Broker\" as an approved distribution channel, and P&N runs a public broker page plus an accredited-broker Broker Hub (broker.pnbank.info), NextGen and Simpology lodgement, and a broker support line (08 9219 7411).",
+      "asAt": "2026-04-22",
+      "sourceUrl": "https://www.pnbank.com.au/important-information/target-market-determinations/offset-variable-home-loan-tmd/",
+      "sourceTitle": "Offset Variable Home Loan Target Market Determination",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-04-22",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No public credit policy guide. All broker product/policy detail is behind the Broker Hub login (broker.pnbank.info), which is out of scope under the no-login source rule.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment are not published anywhere public.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, or residency/visa rules published.",
+    "No security policy detail: no minimum unit size, postcode category list, high-density or rural policy published.",
+    "Owner-occupied maximum interest-only term not captured (fixed-rate OO IO TMD exists but was not read); construction lending availability not confirmed from a public source.",
+    "Whether membership/eligibility is geographically restricted (P&N is WA-focused) is not stated as a lending restriction on the public site."
+  ]
+}

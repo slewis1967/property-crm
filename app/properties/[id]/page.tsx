@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "../../../utils/supabase";
 import AIPropertyMatches from "../../components/AIPropertyMatches";
+import GrossDeveloperFeeEditor from "./GrossDeveloperFeeEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +56,14 @@ export default async function PropertyDetailPage({
     mediaRows.find((m) => m.source_url)?.source_url ??
     null;
 
+  // Property financial overrides
+  const { data: fin } = await supabase
+    .from("property_financials")
+    .select("gross_developer_fee")
+    .eq("property_id", id)
+    .maybeSingle();
+  const grossDeveloperFee: number | null = fin?.gross_developer_fee ?? null;
+
   const price = property.total_package_price ?? property.house_price ?? 0;
   const address =
     property.street_address || property.estate_name || property.suburb || "(unknown address)";
@@ -79,6 +89,20 @@ export default async function PropertyDetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href={`/feasibility?address=${encodeURIComponent(
+              [address, property.suburb, property.state].filter(Boolean).join(", "),
+            )}&auto=1&property=${encodeURIComponent(String(property.id))}`}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0F4C5C] hover:bg-[#0B3D4A] transition"
+          >
+            🗺️ Planning Feasibility
+          </Link>
+          <Link
+            href={`/eoi?property=${encodeURIComponent(String(property.id))}`}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#0F4C5C] text-[#0F4C5C] hover:bg-[#0F4C5C]/5 transition"
+          >
+            📝 Create EOI
+          </Link>
           {property.status && (
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(property.status)}`}
@@ -205,6 +229,9 @@ export default async function PropertyDetailPage({
 
         {/* Right: financials + specs */}
         <div className="lg:col-span-2 space-y-5">
+          {/* CRM-only financials editor */}
+          <GrossDeveloperFeeEditor propertyId={String(property.id)} initialValue={grossDeveloperFee} />
+
           {/* Headline + price breakdown */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">
@@ -332,7 +359,7 @@ export default async function PropertyDetailPage({
   );
 }
 
-function Detail({ label, value }: { label: string; value: any }) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <p className="text-[11px] text-gray-400 uppercase tracking-wide font-medium">{label}</p>

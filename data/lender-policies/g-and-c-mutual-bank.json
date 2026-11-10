@@ -1,0 +1,45 @@
+{
+  "id": "g-and-c-mutual-bank",
+  "name": "G&C Mutual Bank",
+  "legalName": "Merged into Unity Bank Limited (ABN 72 087 650 637, AFSL/ACL 238311) on 7 March 2025; the G&C Mutual Bank brand has been retired",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": null,
+  "funder": "Unity Bank Limited",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "G&C Mutual Bank no longer exists as a separate lender. Unity Bank states: \"We are pleased to confirm that the official merger with G&C Mutual Bank took place on the 7th of March. This was the date that we became a combined legal entity, and the date that our banking systems integration took place\" and \"the Unity Bank Limited name will be retained\". The domain gcmutual.bank now 301-redirects to unity.bank. Any new lending should be assessed against the 'unity-bank' record, which itself appears not to have a mortgage broker channel.",
+      "asAt": "2025-03-07",
+      "sourceUrl": "https://www.unitybank.com.au/about-us/corporate-information/merger-of-unity-bank-and-gc-mutual-bank/",
+      "sourceTitle": "Unity Bank — Merger of Unity Bank and G&C Mutual Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Unity Bank page gives the merger day as \"the 7th of March\" without naming the year on-page. The year 2025 is taken from contemporaneous trade press (Mortgage Professional Australia, 'G&C Mutual and Unity Bank complete merger') and is consistent with Unity Bank's post-merger Target Market Determinations, which are effective 1 July 2025."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2025-03-07",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "This lender no longer exists — status is 'withdrawn' because the entity merged into Unity Bank Limited on 7 March 2025 and the brand has been retired. The record is kept only so the id resolves and nothing is matched to it.",
+    "No G&C Mutual Bank credit policy, LVR caps, loan limits or broker material remain accessible: gcmutual.bank redirects to unity.bank and the historical pages are gone.",
+    "No evidence was found that G&C Mutual Bank ever operated a public broker channel; trade coverage of the merger stated that neither Unity nor G&C sourced new business through mortgage brokers.",
+    "All policy fields are deliberately empty. Do not populate this record — populate 'unity-bank' instead."
+  ]
+}

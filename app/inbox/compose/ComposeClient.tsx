@@ -20,6 +20,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "../../../utils/supabase-browser";
 import { sanitizeEmailHtml } from "../../../utils/sanitize-email";
+import {
+  MAIL_IDENTITY_KEYS,
+  MAIL_IDENTITY_LABELS,
+  DEFAULT_IDENTITY_KEY,
+  isMailIdentityKey,
+  type MailIdentityKey,
+} from "../../../utils/mailIdentities";
 
 type DraftPayload = {
   id: string;
@@ -30,8 +37,16 @@ type DraftPayload = {
   body_html: string | null;
   reply_to_email_id: string | null;
   thread_id: string | null;
+  from_identity: string | null;
   updated_at: string;
 };
+
+// Wrap a rendered signature in a marker element so the composer can find and
+// swap it in place when the From identity changes (instead of stacking two).
+function wrapSignature(sigHtml: string): string {
+  if (!sigHtml) return "";
+  return `<div data-nk-signature="1">${sigHtml}</div>`;
+}
 
 type AttachmentChip = {
   id: string;
@@ -59,6 +74,7 @@ export default function ComposeClient({
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [subject, setSubject] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
+  const [fromIdentity, setFromIdentity] = useState<MailIdentityKey>(DEFAULT_IDENTITY_KEY);
 
   const [loading, setLoading] = useState(Boolean(draftId || replyToEmailId));
   const [sending, setSending] = useState(false);
@@ -75,11 +91,11 @@ export default function ComposeClient({
   // Snapshot the latest field values so the debounced save uses fresh data
   // without re-binding on every keystroke. Mutating a ref is cheaper than a
   // dep array that fires the effect on each change.
-  const latestRef = useRef({ to, cc, bcc, subject, bodyHtml });
+  const latestRef = useRef({ to, cc, bcc, subject, bodyHtml, fromIdentity });
 
   useEffect(() => {
-    latestRef.current = { to, cc, bcc, subject, bodyHtml };
-  }, [to, cc, bcc, subject, bodyHtml]);
+    latestRef.current = { to, cc, bcc, subject, bodyHtml, fromIdentity };
+  }, [to, cc, bcc, subject, bodyHtml, fromIdentity]);
 
   // ── Hydrate attachments whenever we have a draft id ────────────────────
   useEffect(() => {
@@ -128,6 +144,11 @@ export default function ComposeClient({
           );
           setSubject(data.draft.subject ?? "");
           setBodyHtml(data.draft.body_html ?? "");
+          setFromIdentity(
+            isMailIdentityKey(data.draft.from_identity)
+              ? data.draft.from_identity
+              : DEFAULT_IDENTITY_KEY,
+          );
           if (bodyRef.current) bodyRef.current.innerHTML = data.draft.body_html ?? "";
         } else if (replyToEmailId) {
           const res = await fetch(`/api/emails/${replyToEmailId}`);
@@ -153,7 +174,7 @@ export default function ComposeClient({
           // AND get persisted into the draft body for later send.
           const quoted =
             `<p><br></p>` +
-            (sigHtml || "") +
+            wrapSignature(sigHtml) +
             `<br><br><blockquote style="border-left:3px solid #ddd;padding-left:12px;margin-left:0;color:#666">` +
             `<p style="margin:0 0 6px 0;font-size:12px;color:#999">` +
             `On ${e.sent_at ? new Date(e.sent_at).toLocaleString() : "an earlier date"}, ` +
@@ -173,6 +194,7 @@ export default function ComposeClient({
               body_html: quoted,
               reply_to_email_id: replyToEmailId,
               thread_id: e.thread_id,
+              from_identity: DEFAULT_IDENTITY_KEY,
             }),
           });
           const draftData = await draftRes.json();
@@ -188,7 +210,7 @@ export default function ComposeClient({
           const sigData = await sigPromise;
           const sigHtml = (sigData && sigData.ok ? sigData.html : "") as string;
           if (sigHtml) {
-            const initial = `<p><br></p>${sigHtml}`;
+            const initial = `<p><br></p>${wrapSignature(sigHtml)}`;
             setBodyHtml(initial);
             if (bodyRef.current) bodyRef.current.innerHTML = initial;
             // Place caret at the top so first keystroke lands above the
@@ -224,6 +246,7 @@ export default function ComposeClient({
             bcc: snapshot.bcc,
             subject: snapshot.subject,
             body_html: snapshot.bodyHtml,
+            from_identity: snapshot.fromIdentity,
           }),
         });
       } else {
@@ -246,6 +269,7 @@ export default function ComposeClient({
             bcc: snapshot.bcc,
             subject: snapshot.subject,
             body_html: snapshot.bodyHtml,
+            from_identity: snapshot.fromIdentity,
           }),
         });
         const data = await res.json();
@@ -348,6 +372,40 @@ export default function ComposeClient({
     if (bodyRef.current) {
       setBodyHtml(bodyRef.current.innerHTML);
       markDirty();
+    }
+  }
+
+  // Replace the signature block in the body in place (found via its marker),
+  // so switching identity swaps the sig instead of appending a second one.
+  // Falls back to appending when the body has no marked signature yet (e.g. an
+  // old draft, or a body the user cleared).
+  function swapSignatureInBody(newSigHtml: string) {
+    const el = bodyRef.current;
+    if (!el) return;
+    let sigEl = el.querySelector<HTMLElement>("[data-nk-signature]");
+    if (!sigEl) {
+      sigEl = document.createElement("div");
+      sigEl.setAttribute("data-nk-signature", "1");
+      el.appendChild(sigEl);
+    }
+    sigEl.innerHTML = newSigHtml;
+    setBodyHtml(el.innerHTML);
+    markDirty();
+  }
+
+  // Change the sending identity: persist the choice and swap the body's
+  // signature to the selected identity's. On a signature fetch failure we keep
+  // the identity change (it still persists) and leave the old sig in place.
+  async function changeIdentity(next: MailIdentityKey) {
+    if (next === fromIdentity) return;
+    setFromIdentity(next);
+    markDirty();
+    try {
+      const res = await fetch(`/api/mail/signature?identity=${encodeURIComponent(next)}`);
+      const data = await res.json();
+      if (data?.ok) swapSignatureInBody(String(data.html ?? ""));
+    } catch {
+      // Network hiccup — identity still changed; signature stays as-is.
     }
   }
 
@@ -465,6 +523,23 @@ export default function ComposeClient({
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="flex items-center border-b border-gray-100 px-4">
+          <label htmlFor="from-identity" className="text-xs text-gray-400 uppercase font-semibold w-12">
+            From
+          </label>
+          <select
+            id="from-identity"
+            value={fromIdentity}
+            onChange={(e) => { void changeIdentity(e.target.value as MailIdentityKey); }}
+            className="flex-1 px-2 py-2.5 text-sm outline-none bg-transparent text-gray-900"
+          >
+            {MAIL_IDENTITY_KEYS.map((key) => (
+              <option key={key} value={key}>
+                {MAIL_IDENTITY_LABELS[key]}
+              </option>
+            ))}
+          </select>
+        </div>
         <RecipientRow
           label="To"
           value={to}

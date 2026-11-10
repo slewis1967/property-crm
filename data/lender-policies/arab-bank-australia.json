@@ -1,0 +1,192 @@
+{
+  "id": "arab-bank-australia",
+  "name": "Arab Bank Australia",
+  "legalName": "Arab Bank Australia Limited",
+  "tier": "foreign_bank",
+  "status": "research_only",
+  "acl": "234563",
+  "abn": "37 002 950 745",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Arab Bank Australia publishes no credit policy guide. The Target Market Determinations state only 'Applicant must meet the Bank's Credit criteria'."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. No rental-income treatment appears in any public ABAL document."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan | Owner Occupier and Investor, October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Maximum loan amount is 95% of the value of the property' and 'Mortgage insurance facility available allowing customers to borrow up to 95% of the property's value'. The same 95% appears in The Basics Home Loan TMD and the Essentials Home Loan TMD. Note the advertised special rates are capped at a 60% LVR."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan | Owner Occupier and Investor, October 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The Fixed Rate TMD covers both owner occupiers and investors and states a single 'Maximum loan amount is 95% of the value of the property'. It does not state a separate investor ceiling, so the 95% is read as applying to both."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan, October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Loan Mortgage Insurance (LMI) is required if amount borrowed is more than 80% of the value of the property'. Identical wording in The Basics and Essentials Home Loan TMDs."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not named in any public ABAL document."
+    }
+  },
+
+  "income": {},
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No credit-history policy is published. The TMDs say only 'Applicant must meet the Bank's Credit criteria' and 'All applications for loans are subject to Arab Bank Australia Limited's normal credit approval criteria'."
+    }
+  },
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan, October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum Loan amount - $50,000'. Same figure in The Basics and Essentials Home Loan TMDs."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No dollar maximum is published — the TMDs express the maximum only as 95% of property value."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan, October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Minimum 1-year term / Maximum 30-year term'. The Basics Home Loan TMD: 'Principal and Interest Loan Term - Greater than 2 years with a maximum of 30 years'; Essentials: 'Greater than 1 years with a maximum of 30 years'."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.arabbank.com.au/personal/home-loans",
+      "sourceTitle": "Arab Bank Australia — Home Loans product listing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The Essentials Home Loan carries a 100% offset account; the Essentials TMD describes an offset arrangement terminable on seven days' notice. The Basics Home Loan has redraw but no offset. Live page with no publication date — as-at is the date accessed."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/inline/ABAL%20TMD%20Template%20-%20The%20Basics%20Home%20Loan_0.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, The Basics Home Loan",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw available with a 'minimum redraw amount of $2,000'."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.arabbank.com.au/personal/home-loans",
+      "sourceTitle": "Arab Bank Australia — Home Loans product listing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "A 'Bridging Loan' variable-rate product is listed on the home-loans page."
+    },
+    "notes": {
+      "value": "Available to applicants over the age of 18 years, to new and existing customers, subject to successful completion of ABAL identification check requirements. Fees: application fee from $600, monthly service fee $8. Interest-only terms are available on the Fixed Rate product ('Principal and Interest Loan Term Or Interest Only Loan Term'). Advertised special rates are capped at 60% LVR; loans above that require a rate from a Relationship Manager.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.arabbank.com.au/sites/default/files/2025-10/ABAL%20TMD%20Template%20-%20Fixed%20Rate%20Owner%20Occupier%20and%20Investor%20Home%20Loan.pdf",
+      "sourceTitle": "Arab Bank Australia — Target Market Determination, Fixed Rate Home Loan, October 2025",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Arab Bank Australia publishes no residency, visa or non-resident lending policy. The only eligibility criteria in the TMDs are age 18+, the Bank's credit criteria, and completion of identification checks. Despite the foreign-bank tier, no foreign-income or foreign-currency policy is published at all."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-10-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "MOST IMPORTANT: Arab Bank Australia's home loans are NOT broker-distributed. Every home-loan TMD states 'This product cannot be distributed through third parties' and 'This product can be distributed: In branch.' — the Fixed Rate Home Loan (Oct 2025), The Basics Home Loan and the Essentials Home Loan all carry identical wording, and each adds 'This product is not distributed by third parties; therefore, no review trigger information reporting requirements are applicable to this product.' Status is therefore recorded as research_only, not active. It should not appear on a broker panel shortlist.",
+    "No broker/introducer site exists — there is no credit policy guide, policy-at-a-glance, LVR matrix or postcode list to research. Everything recorded here comes from the consumer product pages and the DDO Target Market Determinations.",
+    "No servicing policy at all is published: no assessment buffer, floor rate, DTI cap, HEM basis, credit-card assessment rate or rental shading.",
+    "No income, employment, credit-history or security policy is published.",
+    "No residency or non-resident policy is published, despite Arab Bank Australia being a foreign-owned bank — the residency section could not be prioritised as the brief intended because there is nothing public to read.",
+    "The Basics and Essentials Home Loan TMDs on the live site are dated 2023 (PDF creation March 2023 and September 2023); only the Fixed Rate TMD is current to October 2025. Facts here are anchored to the October 2025 document where possible."
+  ]
+}

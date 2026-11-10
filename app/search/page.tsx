@@ -2,10 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { errMessage } from "../../utils/errors";
 
 export const dynamic = "force-dynamic";
 
 type Result = { contact_id: string; name: string; rationale: string };
+
+type SearchFilters = {
+  state?: string | null;
+  buyer_type?: string | null;
+  temperature?: string | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  tags_any?: string[] | null;
+  tags_all?: string[] | null;
+  min_days_since_contact?: number | null;
+  max_days_since_contact?: number | null;
+  free_text?: string | null;
+};
 
 const EXAMPLE_QUERIES = [
   "FHB warm leads in QLD under $700k",
@@ -23,7 +37,7 @@ export default function SearchPage() {
     | {
         phase: "ready";
         results: Result[];
-        filters_applied: Record<string, any>;
+        filters_applied: SearchFilters;
         candidate_count: number;
       }
     | { phase: "error"; error: string }
@@ -47,8 +61,8 @@ export default function SearchPage() {
           candidate_count: json.candidate_count || 0,
         });
       else setState({ phase: "error", error: json.error || "Search failed" });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Search failed" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Search failed") });
     }
   };
 
@@ -148,7 +162,7 @@ export default function SearchPage() {
   );
 }
 
-function FilterChips({ filters }: { filters: Record<string, any> }) {
+function FilterChips({ filters }: { filters: SearchFilters }) {
   const chips: string[] = [];
   if (filters.state) chips.push(`state: ${filters.state}`);
   if (filters.buyer_type) chips.push(`type: ${filters.buyer_type}`);

@@ -1,0 +1,13 @@
+{
+  "name": "crm-help-videos",
+  "private": true,
+  "type": "module",
+  "description": "Records the How do I do this? walkthrough videos. Kept apart from the CRM's own dependencies so Playwright never ships with the app.",
+  "scripts": {
+    "record": "node record.mjs",
+    "manifest": "node manifest.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.56.0"
+  }
+}

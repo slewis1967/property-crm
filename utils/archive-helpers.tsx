@@ -1,11 +1,23 @@
 import { ReactNode } from "react";
+import { BUSINESS_TIME_ZONE } from "./datetime";
+
+/**
+ * These two are called from both server and client components, so they must
+ * name their timezone — otherwise the same row reads differently depending on
+ * where it was rendered. See utils/datetime.ts.
+ */
 
 /** Format a Date / ISO string / null for compact AU display. */
 export function fmtDate(d: string | Date | null | undefined): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;
   if (isNaN(date.valueOf())) return "—";
-  return date.toLocaleDateString("en-AU", { year: "2-digit", month: "short", day: "numeric" });
+  return date.toLocaleDateString("en-AU", {
+    year: "2-digit",
+    month: "short",
+    day: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
+  });
 }
 
 /** Format with date+time. */
@@ -19,6 +31,7 @@ export function fmtDateTime(d: string | Date | null | undefined): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: BUSINESS_TIME_ZONE,
   });
 }
 

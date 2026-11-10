@@ -1,0 +1,181 @@
+{
+  "id": "greater-bank",
+  "name": "Greater Bank",
+  "legalName": "Newcastle Greater Mutual Group Ltd (Greater Bank is a retail brand of NGM Group, formed 1 March 2023 by the merger of Greater Bank Limited and Newcastle Permanent Building Society Limited; both brands are retained)",
+  "tier": "mutual_bank",
+  "status": "research_only",
+  "acl": "238273",
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published, and Greater Bank has no broker channel to publish it to. Checked all home-loan TMDs, the legal/regulatory disclosures index and the full public sitemap."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published. Greater Bank's XML sitemap contains no broker/introducer page.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.greater.com.au/sitemap.xml",
+      "sourceTitle": "Greater Bank XML sitemap (retrieved 29 July 2026)",
+      "confidence": "medium",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Derived from the eligibility criterion \"Hold a deposit of at least 5% of the purchase price (plus costs) with principal and interest repayments\". Greater Bank does not state a maximum LVR figure directly. The same wording appears in the Standard Home Loan and Great Rate Home Loan variable TMDs."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"...and for deposits of less than 20%, pay Lenders Mortgage Insurance or have an acceptable guarantor.\" So LMI (or a guarantor) is required above 80% LVR."
+    },
+    "notes": {
+      "value": "Interest-only lending is capped at a lower LVR than principal and interest: the TMDs require a deposit of at least 5% with P&I repayments \"or at least 10% with interest only repayments\", i.e. an interest-only maximum LVR of about 90%.",
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"To choose a loan term of up to 30 years.\" Same in the Standard and Great Rate variable TMDs."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Interest Only for customers seeking to reduce their cash outflows by paying an interest-based repayment to minimise repayments (between 1 to 5 years).\" The TMD does not distinguish owner-occupied from investment interest-only terms."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Ultimate Home Loan only: \"To use their savings to reduce the interest they pay on the loan via the use of an unlimited number of 100% offset accounts\" (annual package fee applies). The Standard and Great Rate home loans are explicitly NOT suitable for customers who \"want to use an offset account to minimise the interest charged on their loan account\"."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Owner Occupiers seeking a loan to finance the purchase or construction of a property...\""
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"A home loan that can support a family pledge\", and deposits under 20% may either \"pay Lenders Mortgage Insurance or have an acceptable guarantor\". Greater Bank calls its guarantor structure a family pledge. No published detail on guarantor eligibility, security limits or release conditions."
+    },
+    "governmentSchemesSupported": {
+      "value": [],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "sourceTitle": "Home Guarantee Scheme Participating Lenders | Housing Australia",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Greater Bank is NOT named on Housing Australia's participating-lender list for the Australian Government 5% Deposit Scheme (sister brand Newcastle Permanent, same legal entity, IS named). The list carries no publication date; captured 2026-07-29. Greater Bank's own home-loan TMDs make no reference to any government guarantee scheme."
+    },
+    "notes": {
+      "value": "GREATER BANK DOES NOT ACCEPT BROKER-ORIGINATED LOANS. All three variable home-loan TMDs (Ultimate, Standard, Great Rate; each effective 29 August 2025) list the distribution channels as only: \"Greater Bank Lenders (in person or via phone)\", \"Greater Bank online channels (to apply online)\" and \"Conversion from an existing home loan product\" - and restrict distribution to \"Greater Bank's internally accredited lenders\". Mortgage brokers and aggregators are named nowhere. This contrasts directly with sister brand Newcastle Permanent (same legal entity), whose TMDs explicitly name mortgage brokers and list six approved aggregators. Greater Bank should not be surfaced as a broker-panel option.",
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "conditions": "Must be 18 years of age and over, and living in Australia."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "conditions": "Must be living in Australia."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "conditions": "TMD eligibility expressly includes \"a New Zealand citizen\" who is living in Australia."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "conditions": "Eligibility requires the borrower to \"Be living in Australia\"."
+        }
+      ],
+      "asAt": "2025-08-29",
+      "sourceUrl": "https://www.greater.com.au/siteassets/calculators-rate-and-support/documents/regulatory-disclosures/target-market-determinations/ultimate-home-loan-variable-rate-tmd.pdf",
+      "sourceTitle": "Ultimate Home Loan - Variable Rate Target Market Determination (effective 29 August 2025)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim eligibility criterion: \"Be living in Australia, either a citizen or permanent resident of Australia or a New Zealand citizen.\" Identical in the Standard and Great Rate variable TMDs. Temporary-visa holders are not addressed."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-08-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "GREATER BANK IS DIRECT-ONLY. No broker or aggregator distribution channel appears in any published TMD. Status is recorded as research_only rather than active for that reason - the bank is trading and lending normally, it just is not reachable through the broker channel. It is NOT withdrawn from the market.",
+    "Greater Bank and Newcastle Permanent are the SAME legal entity (Newcastle Greater Mutual Group Ltd, ACL 238273) but run separate products, separate TMDs and separate distribution models; the records are deliberately kept independent.",
+    "No maximum LVR figure is stated directly - the 95% owner-occupied figure is derived from the published minimum-deposit criterion (5% P&I / 10% interest only).",
+    "No investment-specific maximum LVR is published, although the TMDs cover investors.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy, employment tenure minimums, credit-history knock-outs, genuine-savings policy or LMI-waiver professions published.",
+    "No security policy at all: no acceptable/unacceptable property types, minimum unit size, postcode category list, high-density or rural policy.",
+    "Minimum and maximum loan amounts are not published in the TMDs.",
+    "No bridging product TMD is published on the Greater Bank legal page (Newcastle Permanent has one)."
+  ]
+}

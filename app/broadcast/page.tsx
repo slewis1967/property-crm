@@ -1,5 +1,6 @@
 import { fetchEligibleContacts, countOptedOut } from "../../utils/broadcast-audience";
 import BroadcastClient from "./BroadcastClient";
+import BroadcastHistory from "./BroadcastHistory";
 
 export const dynamic = "force-dynamic";
 
@@ -38,10 +39,13 @@ export default async function BroadcastPage() {
     .map(([tag, count]) => ({ tag, count }));
 
   return (
-    <BroadcastClient
-      totalEligible={eligible.length}
-      tags={sortedTags}
-      optedOutCount={optedOutCount}
-    />
+    <>
+      <BroadcastClient
+        totalEligible={eligible.length}
+        tags={sortedTags}
+        optedOutCount={optedOutCount}
+      />
+      <BroadcastHistory />
+    </>
   );
 }

@@ -1,0 +1,368 @@
+{
+  "id": "ubank",
+  "name": "Ubank",
+  "legalName": "Ubank, part of National Australia Bank Limited",
+  "tier": "neobank_digital",
+  "status": "active",
+  "acl": "230686",
+  "abn": "12 004 044 937",
+  "brokerSiteUrl": "https://broker.ubank.com.au/",
+  "policyDocUrl": null,
+  "funder": "National Australia Bank Limited",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/what-is-the-maximum-amount-i-can-borrow-from-ubank",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public Ubank page; the Ubank Broker Portal requires a login.",
+      "sourceTitle": "Ubank help centre - How much can I borrow from Ubank?",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/what-is-the-maximum-amount-i-can-borrow-from-ubank",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published publicly.",
+      "sourceTitle": "Ubank help centre - How much can I borrow from Ubank?",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/what-is-the-maximum-amount-i-can-borrow-from-ubank",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "Ubank help centre - How much can I borrow from Ubank?",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/whats-the-minimum-deposit-or-equity-i-need-for-a-ubank-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - What's the minimum deposit or equity I need for a Ubank home loan?",
+      "note": "'If you're getting an owner occupied home loan repaying principal and interest (P&I), you'll need to have a deposit that's at least 10% of your property value when purchasing or at least 15% equity when refinancing.' Interest-only loans require at least 20% deposit/equity (max 80% LVR). Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/whats-the-minimum-deposit-or-equity-i-need-for-a-ubank-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - What's the minimum deposit or equity I need for a Ubank home loan?",
+      "note": "'If you're getting an investment loan repaying P&I, you'll need to have a deposit that's at least 10% of your property value when purchasing or at least 20% equity when refinancing.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrRefinancePct": {
+      "value": 85,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/whats-the-minimum-deposit-or-equity-i-need-for-a-ubank-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - What's the minimum deposit or equity I need for a Ubank home loan?",
+      "note": "Owner occupied P&I refinance requires at least 15% equity (85% LVR); investment P&I refinance requires at least 20% equity (80% LVR). Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/home-loans/no-lmi",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank - Avoid LMI on home loans (No LMI with up to 90% LVR)",
+      "note": "'With Ubank, you can apply for an owner occupied or investment home loan repaying principal and interest (P&I) without paying LMI even if you have a deposit as low as 10% (for purchases) or for owner occupied home loans repaying P&I if you have equity as low as 15% (if refinancing).' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "'Owner occupied loans with a loan to value ratio (LVR) over 85%, and Investment loans with an LVR over 80%, are for new purchases only. Each application is limited to up to $2,000,000 when the LVR is over 85%, subject to credit criteria.'",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/home-loans/no-lmi",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank - Avoid LMI on home loans (No LMI with up to 90% LVR)",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Applicant must 'be employed on a permanent, casual or contract basis'."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Applicant must 'be employed on a permanent, casual or contract basis'."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Applicant must 'be employed on a permanent, casual or contract basis'."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Applicant must 'be employed on a permanent, casual or contract basis'."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'we don't lend to self-employed individuals'"
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'we don't lend to self-employed individuals'"
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'we don't lend to self-employed individuals'"
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Shading percentages, minimum history and evidence requirements per income type are not published. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "altDocAvailable": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Self-employed applicants are not lent to at all, so no alt-doc programme exists. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "employment": {
+    "notes": {
+      "value": "Each applicant must 'be employed on a permanent, casual or contract basis (we don't lend to self-employed individuals)'. No minimum tenure is published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "credit": {
+    "notes": {
+      "value": "Each applicant must 'have a good credit rating (don't worry, we'll run the report for you)'. No default, arrears or bankruptcy thresholds are published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 80000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/what-is-the-maximum-amount-i-can-borrow-from-ubank",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - How much can I borrow from Ubank?",
+      "note": "'Ubank offers home loans between $80,000 and $5,000,000.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/what-is-the-maximum-amount-i-can-borrow-from-ubank",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - How much can I borrow from Ubank?",
+      "note": "'Ubank offers home loans between $80,000 and $5,000,000. Each application is limited to up to $2,000,000 when the loan to value ratio (LVR) is over 85%.' Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/home-loans/no-lmi",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank - Avoid LMI on home loans (No LMI with up to 90% LVR)",
+      "note": "Offset accounts are available on the Flex variable and Flex fixed loans ($250 p.a. annual fee); the Neat variable loan has no offset and no annual fee. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/home-loans/no-lmi",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank - Avoid LMI on home loans (No LMI with up to 90% LVR)",
+      "note": "Redraw available on Neat and Flex (up to $20K during a fixed term). Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "medium",
+      "status": "not_found",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Ubank does not appear on the Housing Australia participating lender list as at 2026-07-29. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "'Our home loans can have a max of 2 borrowers.' Each applicant must be listed on the property title and must be 'applying either individually, or jointly with their spouse or de facto partner that they currently live with or intend to live with after settlement in the same household (you won't be able to apply with a sibling or parent)'. Minimum age 18.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must also live in Australia."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent resident of Australia; must also live in Australia."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizen; must also live in Australia."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not within the published eligibility list."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not within the published eligibility list."
+        },
+        {
+          "status": "temporary_visa_partner_309_820",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not within the published eligibility list."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Each applicant must 'live in Australia'."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not within the published eligibility list."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "The accepted statuses are stated verbatim: each applicant must 'be an Australian or New Zealand citizen, or a permanent resident of Australia' and 'live in Australia'. The declined statuses are the complement of that eligibility list rather than separate published exclusions, hence medium confidence. Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Each applicant must 'be 18 years old or over', 'be an Australian or New Zealand citizen, or a permanent resident of Australia' and 'live in Australia'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.ubank.com.au/help/current/home-loans/hl-eligibility/who-can-apply-for-a-home-loan",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Ubank help centre - Who can apply for a home loan?",
+      "note": "Live page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No public Ubank assessment buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis - broker.ubank.com.au requires a login.",
+    "No published employment tenure minimums, probation policy, income shading percentages or evidence requirements per income type.",
+    "No published credit-history thresholds (defaults, arrears, bankruptcy), security/postcode restrictions, minimum unit size or high-density policy.",
+    "Maximum loan term and interest-only maximum terms are not published.",
+    "Ubank's public site is served behind a WAF that blocks plain HTTP clients; the pages were read in a browser."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

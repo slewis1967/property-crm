@@ -1,0 +1,218 @@
+{
+  "id": "anz",
+  "name": "ANZ",
+  "legalName": "Australia and New Zealand Banking Group Limited",
+  "tier": "major_bank",
+  "status": "active",
+  "acl": "234527",
+  "abn": "11 005 357 522",
+  "brokerSiteUrl": "https://www.anz.com.au/promo/broker/",
+  "policyDocUrl": null,
+  "funder": null,
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.anz.com.au/promo/broker/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public ANZ page. The ANZ Residential Broker Portal and the Product and Policy Guide require accreditation and login.",
+      "sourceTitle": "ANZ Residential broker hub",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.anz.com.au/promo/broker/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly; broker portal login required.",
+      "sourceTitle": "ANZ Residential broker hub",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.anz.com.au/promo/broker/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published publicly.",
+      "sourceTitle": "ANZ Residential broker hub",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.anz.com.au/promo/broker/",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "ANZ Residential broker hub",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "Facts and figures table: Lenders' Mortgage Insurance 'Usually required if LVR is more than 80%'. The qualifier 'usually' is the lender's. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Accounting professionals holding current membership/certification of an eligible accounting institute (e.g. Chartered Accountants Australia and New Zealand, CPA recognised partnering professional bodies)",
+        "Lawyers and solicitors holding a current practising certificate (supervised legal practice conditions accepted)",
+        "Barristers",
+        "Judges and magistrates",
+        "Medical Practitioner (group one)",
+        "Dental Practitioner (group one)",
+        "Specialist (group one)",
+        "Physiotherapist (group two)",
+        "Chiropractor (group two)",
+        "Optometrist (group two)",
+        "Vet (group two)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/content/dam/anzcomau/documents/pdf/lmi-waier-fact-sheet.pdf",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ LMI Waiver Fact Sheet",
+      "note": "The fact sheet also names explicitly INELIGIBLE medical professions: Herbal Medicine Practitioner, Dental therapist, Dental hygienist, Dental prosthetist, Medical Radiation Practitioner, Nurse, Midwife, Occupational therapist, Osteopath, Oral health therapist, Pharmacist, Podiatrist, Psychologist, Radiographer. The fact sheet does not state the LVR the waiver reaches. PDF carries no publication date; retrieved 2026-07-29 from the ANZ residential broker hub.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.anz.com.au/content/dam/anzcomau/documents/pdf/lmi-waier-fact-sheet.pdf",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "The ANZ LMI Waiver Fact Sheet lists eligible professions but does not state the maximum LVR the waiver reaches.",
+      "sourceTitle": "ANZ LMI Waiver Fact Sheet",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "minLoanAmount": {
+      "value": 20000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "'Minimum new loan amount' in the variable home loan comparison table: ANZ Standard Variable $20,000; ANZ Simplicity PLUS $50,000. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "medium",
+      "status": "not_found",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "Facts and figures table: maximum loan amount is 'Subject to ANZ's credit assessment criteria' - no dollar cap is published. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "Facts and figures table: 'Maximum loan term 30 years'. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "Comparison table: 'Interest only payments for a home to live in' - ANZ Standard Variable 'Yes, up to five years'; ANZ Simplicity PLUS 'No'. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "Comparison table: 'Interest only payments for a residential investment property' - 'Yes, up to 10 years' for both ANZ Simplicity PLUS and ANZ Standard Variable. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "ANZ One offset account can be linked to ANZ Standard Variable (a $10 monthly servicing fee applies per offset account); ANZ Simplicity PLUS cannot link an offset. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.anz.com.au/personal/home-loans/anz-simplicity-plus/",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "ANZ Simplicity PLUS home loan (facts and figures + variable home loan comparison table)",
+      "note": "ANZ Redraw available on both ANZ Simplicity PLUS and ANZ Standard Variable. Live product page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme (Home Guarantee Scheme)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Listed as 'ANZ' on the Housing Australia participating lender list. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The ANZ Home Loan Product and Policy Guide is only distributed through the (login-gated) ANZ Residential Broker Portal; copies circulating on aggregator file stores were deliberately not used.",
+    "No ANZ-published assessment buffer, floor rate, DTI cap, rent shading, credit card assessment rate or HEM basis.",
+    "Maximum LVR for owner-occupied and investment lending could not be sourced from any public ANZ page - only the 'LMI usually required above 80% LVR' statement.",
+    "No published income-type table, employment tenure minimums, credit knock-outs, security/postcode restrictions or residency/visa rules.",
+    "The LMI waiver fact sheet does not state the LVR the waiver reaches, and carries no publication date.",
+    "Trade press reported an ANZ change to company-borrower lending (max 70% LVR) from January 2026; no ANZ-published source was found, so nothing was recorded."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

@@ -1,0 +1,192 @@
+{
+  "id": "teachers-mutual-bank",
+  "name": "Teachers Mutual Bank",
+  "legalName": "Teachers Mutual Bank Limited (TMBL) - one bank operating five brands: Teachers Mutual Bank, Australian Mutual Bank, UniBank, Firefighters Mutual Bank and Health Professionals Bank. Australian Mutual Bank Ltd merged into TMBL following member approval at Special General Meetings of both banks.",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "238981",
+  "abn": "30 087 650 459",
+  "brokerSiteUrl": "https://www.tmbank.com.au/broker",
+  "policyDocUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+  "panels": [
+    "AFG",
+    "Astute",
+    "CEG",
+    "Choice",
+    "Connective",
+    "FAST",
+    "Finsure",
+    "LMG",
+    "LoanKit",
+    "NMB",
+    "outsource",
+    "PLAN",
+    "SFG",
+    "YBR"
+  ],
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. The public broker page (tmbank.com.au/broker) is a marketing and BDM-contact page; no servicing calculator, policy guide or buffer figure is published on any no-login page. Checked the TMD library, the rates fragments and the sitemap."
+    },
+    "notes": {
+      "value": "No serviceability parameters are published. TMBL's public broker page directs brokers to their Broker Development Manager to \"shape scenarios, workshop deals and navigate policy\" - i.e. policy is delivered person-to-person, not published.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.tmbank.com.au/broker",
+      "sourceTitle": "Broker accreditation | Teachers Mutual Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No numeric maximum LVR is published. The rate tables' top LVR band is open-ended: \"90%+\" (https://www.tmbank.com.au/global-fragments/product-rates-and-fees/your-way-plus-variable). The TMDs say only that LMI and/or an acceptable guarantor may be required \"where determined by TMBL... based on the member's deposit size and security\"."
+    },
+    "notes": {
+      "value": "Published LVR pricing bands, identical for owner-occupied and investor and for both principal-and-interest and interest-only: Up to 60%, 60-70%, 70-80%, 80-90%, 90%+. The top band is open-ended so the actual ceiling is not disclosed.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.tmbank.com.au/global-fragments/product-rates-and-fees/your-way-plus-variable",
+      "sourceTitle": "Your Way Plus variable rate table | Teachers Mutual Bank",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential property for owner occupied purposes",
+        "Vacant residential land (not for investment purposes)",
+        "Residential construction",
+        "Residential investment property"
+      ],
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "From the TMD's \"Likely Needs\" list: purchase residential property for owner occupied purposes; purchase vacant residential land (NOT for investment purposes); refinance; renovate or improve; fund construction; unlock equity. The investor TMD covers investment property and construction. No acceptable/unacceptable security schedule, minimum unit size, postcode category list or high-density policy is published."
+    }
+  },
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"six months to 30 years loan term\". Same in the Your Way Plus Investor and Your Way Basic Variable TMDs."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Balances in eligible offset accounts (up to 8 per loan) are 100% offset against the loan when calculating interest, with no offset account servicing fee.\" Offset is a Your Way PLUS package feature, on both owner-occupied and investor; the basic Your Way loan is explicitly not for consumers who want an offset facility."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-home-loan-basic-variable.pdf",
+      "sourceTitle": "Your Way Home Loan (Owner Occupied) Basic Variable Rate Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD needs include \"fund construction on residential property used or to be used for owner occupied purposes\". The investor TMD includes \"ability to fund construction on a residential property\"."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "TMD eligibility contemplates \"(where required) a guarantor who supports the loan by providing additional security\", and the financial-situation criteria say the consumer \"will pay Lenders Mortgage Insurance and/or have an acceptable guarantor\" where TMBL determines it is required based on deposit size and security. No published guarantor eligibility or security-limit detail."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme (Australian Government 5% Deposit Scheme)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.tmbank.com.au/home-loans/australian-government-5-percent-deposit-scheme",
+      "sourceTitle": "5% Deposit Home Loan Scheme | Teachers Mutual Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Own product page: \"The Australian Government 5% Deposit Scheme helps first home buyers enter the property market sooner - without paying Lenders Mortgage Insurance (LMI)\", covering first home buyers with a minimum 5% deposit and single parents or legal guardians with a minimum 2% deposit. Teachers Mutual Bank is also named on Housing Australia's participating-lender list (https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders, no publication date, captured 2026-07-29). Page carries no effective date; retrieval date used."
+    },
+    "notes": {
+      "value": "MEMBERSHIP ELIGIBILITY IS A HARD KNOCK-OUT. To borrow, an applicant must be eligible for TMBL membership under the Teachers Mutual Bank brand: \"Be an Australian citizen or permanent resident aged 18 years or older\" AND be either \"Employed in, or retired from, the education sector\", \"Studying or have graduated from an Australian university in education\", or \"Immediate family of a Teachers Mutual Bank member\" (https://www.tmbank.com.au/experience-fragments/eligibility-criteria-loans). Broker-originated lending IS accepted: the TMDs list \"accredited brokers (excluding Australian Mutual Bank)\" as a distribution channel, and TMBL runs a broker accreditation programme with state-based Broker Development Managers. ONE accreditation covers four member-focused brands with, per the broker page, \"the same rates, policy and lending suite\" - so a client who does not qualify for Teachers Mutual Bank membership may still qualify under UniBank (university sector), Firefighters Mutual Bank or Health Professionals Bank. A distributor must hold an Australian Credit Licence or be a Credit Representative of a licensee, and must comply with its TMBL distribution agreement.",
+      "asAt": "2026-05-23",
+      "sourceUrl": "https://www.tmbank.com.au/content/dam/documents/collateral/your-way-plus-home-loan.pdf",
+      "sourceTitle": "Your Way Plus Home Loan (Owner Occupied) Target Market Determination (effective 23 May 2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "conditions": "Aged 18 or older AND must satisfy Teachers Mutual Bank membership eligibility: employed in or retired from the education sector; or studying/graduated from an Australian university in education; or immediate family of a Teachers Mutual Bank member."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "conditions": "Aged 18 or older AND must satisfy the same education-sector membership eligibility test."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "conditions": "Membership eligibility requires an Australian citizen or permanent resident."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "conditions": "Membership eligibility requires an Australian citizen or permanent resident, and applicants need an Australian residential address."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.tmbank.com.au/experience-fragments/eligibility-criteria-loans",
+      "sourceTitle": "Eligibility criteria - loans | Teachers Mutual Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Verbatim: \"Be an Australian citizen or permanent resident aged 18 years or older.\" NZ citizens on a subclass 444 visa are not addressed either way. Applicants also need \"An Australian residential address\". Page carries no effective date; retrieval date used."
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-05-23",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "MEMBERSHIP RESTRICTION: Teachers Mutual Bank lending is only available to people connected to the education sector (or their immediate family). This is a hard knock-out for matching and is recorded in product.notes and residency.rules. The sister brands under the same accreditation (UniBank, Firefighters Mutual Bank, Health Professionals Bank, Australian Mutual Bank) have their own membership bases and share the same rates and policy.",
+    "No numeric maximum LVR anywhere. The published rate bands top out at an open-ended \"90%+\".",
+    "No public credit policy guide, servicing calculator or policy-at-a-glance. The broker page is marketing plus BDM contacts; policy is explicitly routed through the BDM.",
+    "Servicing entirely unsourced: assessment buffer, floor rate, DTI cap, rent shading, HEM basis, credit-card and HECS treatment.",
+    "No income-type policy published (casual, self-employed, overtime, bonus, commission, Centrelink, rental).",
+    "No employment tenure minimums, credit-history knock-outs, genuine-savings policy or LMI-waiver professions published.",
+    "Minimum and maximum loan amounts are not published; maximum interest-only term is not published (the TMDs say only that interest-only is 'subject to approval' and reverts to principal and interest).",
+    "No security policy detail: no minimum unit size, postcode category list, high-density or rural policy.",
+    "The aggregator list in `panels` is reconstructed from the aggregator names each Broker Development Manager is listed as supporting on the public broker page; it is not published as a formal approved-aggregator schedule and may be incomplete."
+  ]
+}

@@ -1,0 +1,1069 @@
+{
+  "id": "amp-bank",
+  "name": "AMP Bank",
+  "legalName": "AMP Bank Limited",
+  "tier": "regional_bank",
+  "status": "active",
+  "acl": "234517",
+  "abn": "15 081 596 009",
+  "brokerSiteUrl": "https://distributor.amp.com.au/home-loans",
+  "policyDocUrl": "https://distributor.amp.com.au/policies",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability - Factored rate",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"All AMP Bank and other bank loan repayments are assessed using a margin of 3% above the actual loan interest rate with a minimum factored rate of 6.5% or the actual declared repayment (whichever is higher).\" The AMP Broker Hub policy page is a live, continuously updated page with no version number, so asAt is the date it was read."
+    },
+    "assessmentFloorRatePct": {
+      "value": 6.5,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability - Factored rate",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"minimum factored rate of 6.5%\". Recorded at medium confidence because the SAME page states a minimum factored rate of 6% in its 'Borrowers approaching retirement or borrowers already retired and/or aged 60+' entry, which otherwise repeats the factored-rate sentence verbatim - one of the two is likely stale. Confirm with a BDM. Note 6.5% is well above the ~5.3% floors used by Macquarie and Bendigo and will usually bind."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Rental",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% for residential investment across Zones 1-5 and high density apartments. Non-residential, commercial and industrial (investment and owner occupied): 65%. Serviced apartments and short-term letting (Airbnb, Stayz): 65% with 12 months' rental statements from the managing agent. CRITICAL SECOND CAP: \"The maximum gross rental return included in servicing must be less than or equal to 6%... This applies to all acceptable rental income regardless of whether we take that property as security or not.\" So a high-yield property is first capped at a 6% gross yield on value, THEN shaded to 80%."
+    },
+    "rentShadingBasis": {
+      "value": "Two-step. First the gross rental income is capped at a 6% gross yield of the property value (AMP's own worked example: a $250,000 property returning $26,000 is capped to $15,000 pa). Then the capped figure is shaded - 80% residential, 65% non-residential/commercial/industrial, 65% serviced apartments and short-term letting.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Rental",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Where multiple income sources are supplied and one is a lease agreement, the lease agreement supersedes all other evidence. Rental guarantees (e.g. for display homes) are not acceptable."
+    },
+    "existingCommitmentTreatment": {
+      "value": "greater_of",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability - External Debt",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The loan repayment amounts used for the surplus of external mortgages, personal loans, overdrafts, margin loans & lines of credit will be calculated by the higher of: the total LIMIT of the external home/investment/margin loan or line of credit factored at the loan assessment rate over a 30-year P&I term (interest-only period discounted); the total limit of an external personal loan or equipment finance factored at the loan assessment rate over a maximum 5-year P&I term; and the borrower's declared monthly repayment amounts.\" Note it is the LIMIT, not the balance. Foreign liabilities and expenses are included at 100%."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability - Credit cards",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"3.80% of the credit card limit is included in serviceability.\" Charge cards: the limit is set to the highest balance recorded in the most recent 3 months from bank statements, and to zero if there was no usage in that period."
+    },
+    "hecsTreatment": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "HECS/HELP is not addressed in the public AMP Bank Credit Policy Guide. Australian Taxation Office DEBTS are: include the agreed ATO repayment arrangement, or where none exists calculate monthly repayments on the full tax debt over a maximum 12 month period using a 12% p.a. assessment rate, or obtain confirmation the debt has been paid."
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability",
+      "confidence": "high",
+      "status": "verified",
+      "note": "HEM is referenced as the living-expense benchmark (\"If we have used HEM for living expenses, $7,500 can be added to gross salary for borrowers that receive a fully maintained company car as a condition of their employment\"). A non-loan-party spouse can be excluded from HEM only where they demonstrate an independent annual income of at least $45,000; dependants over 16 can be excluded with a signed self-declaration that they are self-supporting. Where an individual borrower has a spouse/partner who is not a co-borrower, the applicant type is still assessed as 'joint' for living expenses."
+    },
+    "dtiReferThreshold": {
+      "value": 6.0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability - Minimum Net Monthly Surplus",
+      "confidence": "high",
+      "status": "verified",
+      "note": "AMP publishes no hard DTI cap but does publish a DTI 6x gate combined with Net Monthly Surplus. Where DTI is 6x or more: an LVR above 80% is NOT acceptable at any NMS; an LVR of 80% or below is acceptable only where NMS exceeds $200. Separately, all loans with an LVR above 90% inclusive of capitalised LMI premium require a minimum NMS of $500 regardless of DTI - and that applies even where the BASE LVR is under 90% but capitalising the premium pushes the total above 90%."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub)",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No absolute DTI ceiling is published - the published constraint is the DTI 6x / NMS / LVR matrix recorded in dtiReferThreshold."
+    },
+    "negativeGearingAddBack": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Interest expense deductibility (previously known as Negative Gearing)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"interest expenses applicable to loans for residential or commercial investment purpose are to be calculated and this figure to be used to reduce the borrower's taxable income. The interest expense is to be included in serviceability as a non-taxable addback.\" NOT available for debt over vacant land, or for loans in the name of a company or trust."
+    },
+    "notes": {
+      "value": "Notional rent: \"If a borrower is said to reside rent free with family/friends an amount of $150 per week is to be included in the borrower's expenses\", applied per applicant living rent free, and also where declared rent or board is under $150 per week. Spousal/de facto borrowers in the same household attract a single notional rent apportioned between them. Common debt reducer: where rental income and a loan are shared with a non-borrowing party, AMP will include only the borrower's proportion provided the non-borrowing related party signs the Statutory Declaration for Non-Borrowing Related Party; if they refuse, 100% of the liability and 100% of the rental income are included with negative gearing applied on the ownership percentage. Apportionment uses the higher of actual ownership share or an equal share by number of borrowers. This does not apply to owner-occupied debt or investment debt held with a spouse/partner - there the spouse must be a servicing guarantor.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Serviceability",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Housing; LVRs with LMI",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR for purchase, increase or refinance of owner-occupied or investment housing/property debt is 90% (LMI inclusive) on I/O repayment terms and 95% (LMI Inclusive) on P&I repayment terms.\" The 95% is available in security Zones 1-4; Zone 5 (ultra-high risk) caps at 90% P&I / 80% I/O. Loan-size ceilings also apply per zone - see lvrBands."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Housing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Owner-occupied and investment share the same ceiling: 95% inclusive of LMI on P&I, 90% inclusive of LMI on interest only."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LVRs without LMI",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum 80% without LMI in Zones 1, 2, 3 and 4. In Zone 5 (ultra-high risk) \"Lenders Mortgage Insurance (LMI) is required on all loans secured by property in Zone 5 locations regardless of loan amount and LVR\" - there is no LMI-free lending in Zone 5 at all. With foreign income the no-LMI ceiling drops to 70% (Tier 1 currencies) or 50% (Tier 2)."
+    },
+    "maxLvrCashOutPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Cash Out Policy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Cash out up to $500,000 to 90% LVR (LMI exclusive on P&I terms, LMI inclusive on I/O terms) needs no documentary evidence of use of funds, provided negative gearing is not required to assist servicing. From $500,000 to $1,000,000 the same 90% applies but a Statutory Declaration plus supporting evidence is required. Above $1,000,000 is exception only. Where the base LVR exceeds 85%, the cash out component is limited to 20% of the security value."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Construction",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum LVR with LMI during construction and upon completion is 90%\" - but only 80% on completion if interest-only repayment terms are selected. Maximum construction loan amount with LMI by zone: Zones 1-2 $850,000 at up to 90%; Zone 3 $600,000 at up to 90%; Zone 4 $450,000 at up to 90%. Maximum initial drawdown of vacant land value without LMI is 80% in Zones 1-3, and in Zone 4 80% up to $500,000 or 75% up to $1 million; with LMI it is 90% on P&I terms."
+    },
+    "maxLvrRefinancePct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Housing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Refinance on a dollar for dollar basis is acceptable on both P&I repayment terms (max LVR for owner/occupied and investment purposes is 95% inclusive of LMI) and I/O repayment terms (max LVR 90% - including Master Limits).\" AMP will not refinance any loan that has been subject to poor repayment conduct."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LMI - Capitalisation of LMI Premium",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Allowed on loans <= $2.0 million. For full doc loans maximum LVR is 95% inclusive of LMI premium for owner occupied/personal purpose and investment property related purpose.\""
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LMI",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Generally yes - the 95%/90% ceilings are \"inclusive of LMI\". The exception is cash out on P&I terms, which is expressed as 90% \"LMI exclusive\" (LMI inclusive on I/O terms), so the treatment flips by scenario."
+    },
+    "lmiProvider": {
+      "value": ["Helia"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LMI - Providers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Single provider: Helia. \"AMP Bank does not charge the borrower/s more for LMI than the actual cost incurred for the policy and does not receive a commission for any LMI policy established with the loan.\" For insured loans settled after 20 April 2020 customers may be eligible for a partial premium refund if the loan is discharged within 0-24 months of settlement."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 95, "maxLoanAmount": 2000000, "qualifier": "Zone 1 (ultra-low risk) and Zone 2 (low risk), owner occupied/personal or investment, P&I, inclusive of LMI. 90% inclusive of LMI on interest only." },
+        { "maxLvrPct": 95, "maxLoanAmount": 1000000, "qualifier": "Zone 3 (medium risk), owner occupied/personal or investment, P&I, inclusive of LMI. 90% inclusive of LMI on interest only." },
+        { "maxLvrPct": 95, "maxLoanAmount": 750000, "qualifier": "Zone 4 (high risk), owner occupied/personal or investment, P&I, inclusive of LMI. 90% inclusive of LMI on interest only." },
+        { "maxLvrPct": 90, "maxLoanAmount": 400000, "qualifier": "Zone 5 (ultra-high risk), P&I, inclusive of LMI (80% on interest only). Case by case; LMI required regardless of LVR; no Zone 5 security accepted for bridging at any LVR." },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Zones 1-4 without LMI. Zone 5 has no LMI-free option at all." },
+        { "maxLvrPct": 90, "maxLoanAmount": 100000, "qualifier": "Business purpose lending in Zones 1-2: max $100,000 at 90% LVR plus capped LMI, principal and interest only. Business purpose is restricted to 10% of total customer exposure to AMP Bank up to a maximum of $100k." },
+        { "maxLvrPct": 70, "maxLoanAmount": null, "qualifier": "Applicants with foreign income in a Tier 1 currency (CAD, EUR, GBP, HKD, JPY, NZD, SGD, USD)" },
+        { "maxLvrPct": 50, "maxLoanAmount": null, "qualifier": "Applicants with foreign income in a Tier 2 currency (Chinese Yuan, to a maximum of USD$50,000 equivalent)" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Master limit facility - maximum LVR with LMI inclusive is 80%; expires after 10 years; line of credit must be the primary split; not allowed on construction or AMP SuperEdge loans" },
+        { "maxLvrPct": 80, "maxLoanAmount": null, "qualifier": "Discharged bankrupts, Part IX or Part X (minimum two years discharged/paid)" },
+        { "maxLvrPct": 50, "maxLoanAmount": 1000000, "qualifier": "Residential unit blocks on one title - maximum 4 units, 50% LVR up to $1 million" }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LVRs with LMI / LVRs without LMI",
+      "confidence": "high",
+      "status": "verified",
+      "note": "AMP's LVR matrix is driven by a five-zone postcode risk model published separately as the Security Property Location Guide (a public PDF - see security.postcodeListUrl). \"Loan amounts outside of the above parameters can be considered and will be subject to review/decision by the relevant mortgage insurer.\""
+    },
+    "notes": {
+      "value": "Owner-occupiers who seek 6-10 years of interest-only repayments on the predominant portion (more than 50% of total owner-occupied lending held) are subject to a maximum LVR of 70%.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Housing",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Two consecutive computer-generated payslips confirming at least 3 months YTD income with employer and employee names (emailed payslips acceptable if they show borrower name, employer name and ABN, and YTD income); most recent payslip less than 60 days old at submission. Where YTD is under 3 months, add the latest year's income statement, or latest tax return and ATO NOA, or the last payslip of last financial year showing at least 3 months YTD, or a signed and dated employment contract, or an employment letter dated within the last 60 days.",
+          "conditions": "Minimum 6 months with the current employer. If less than 6 months, full time/part time workers (INCLUDING those on probation) must demonstrate a minimum of 12 months' continuous employment within the same occupation type (e.g. sales) or industry (e.g. mining)."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per permanent full time.",
+          "conditions": "Same 6-month / 12-month-same-industry test as full time."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As per permanent PAYG.",
+          "conditions": "Accepted for full time/part time workers: \"If less than 6 months with current employer, full time/part time workers (including those on probation) must demonstrate a minimum of 12 months continuous employment within the same occupation type or industry.\" Probation is NOT a bar for permanent PAYG, but casual and PAYG contractor income under 6 months with the current employer is not accepted at all."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per PAYG payslip requirements, plus income tax return and NOA, income statement or bank statements to demonstrate consistency of earnings over the prior 12 months.",
+          "conditions": "\"For casual employees and PAYG contractors where the length of employment is less than 6 months, AMP Bank will not accept the income for servicing.\" At 6+ months with the current employer the applicant must ALSO have been in the same industry AND job role/type for at least 12 months continuous employment, held no more than two separate roles in the previous 12 months, and demonstrate consistency of earnings. \"Transient and/or seasonal casual workers that transition from role to role after only short periods of time remain an unacceptable borrower type.\" Casual income is calculated over a maximum 46-week year to allow for unpaid leave and public holidays; for casual teachers not on a fixed term contract, a maximum 40-week year applies to cater for unpaid school holidays."
+        },
+        {
+          "type": "payg_contractor_abn",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per casual, plus a copy of the full employment contract where a 52-week year is being used.",
+          "conditions": "Same rules as casual - under 6 months with the current employer the income is not accepted. Where the current contract entitles the applicant to paid leave and other permanent-employee entitlements, the analyst may assess on a full 52-week year subject to satisfactory employment history and prospects of extension; otherwise the 46-week casual calculation applies."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Consistency verified on payslips provided.",
+          "conditions": "\"A maximum of 80% overtime / commission income is acceptable for serviceability, subject to the consistency verified on payslips provided.\" Applicable to PAYG employees only."
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Current payslips plus prior year income statement to evidence consistency.",
+          "conditions": "100% of overtime. Essential services are \"classified as Police, Doctors/Nurses, Paramedic/Ambulance, Firefighters, Public Transport Operations (train/bus/ferry) and Power/Energy Technicians (for example: linesman but excluding electricians)\"."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Consistency verified on payslips.",
+          "conditions": "Grouped with overtime: maximum 80% acceptable for serviceability. PAYG employees only."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "The most recent company bonus letter (up to 12 months old) confirming the amount paid for the period; or a payslip evidencing the bonus payment (up to 12 months old); or the most recent completed financial year's tax return; or the most recent income statement with the bonus payment included.",
+          "conditions": "\"A maximum of 80% of bonus payments are acceptable for serviceability.\" PAYG employees only."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Payslips; lease or hire purchase payments must be included in the assessment.",
+          "conditions": "\"Vehicle allowance is acceptable for serviceability (lease or hire purchase payments must be included in assessment).\" Separately, where HEM is used for living expenses, $7,500 can be added to gross salary for a borrower with a fully maintained company car as a condition of employment, confirmed by employment contract or letter."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Individual (personal) AND company (business) tax returns for the most recent year, plus the latest notice of assessment for each income source. Latest year's tax returns must be provided for all applications received after 31 March.",
+          "conditions": "\"Minimum self-employed period 2 years.\" \"Income projections and cashflow forecasts or income from a business being purchased are not acceptable for serviceability assessment.\""
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed above; all directors and trustees must provide personal and business returns plus NOAs.",
+          "conditions": "Allowable add-backs to net profit: director's salary; interest charges on any loan being refinanced (or all interest charges where the full repayment for business-name debt is counted); superannuation payments above legislative requirements; non-recurring expenses; amortisation of goodwill; and 50% of depreciation (excluding short-term items such as computer equipment)."
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per self-employed above.",
+          "conditions": "\"Only the following distributions from a discretionary trust are allowed to be added back for serviceability: Trustees distribution (Individual or Company); Husband/Wife or defacto of the trustee; Dependent children of the trustee.\""
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Current lease or tenancy agreement; or estimate of rental from an AMP Bank valuation; or a written estimate from a licensed real estate agent (under 60 days old); or a current rental statement from a real estate agent (under 60 days old); or the most recent lodged individual tax returns with NOAs; or the contract of sale. A private lease with no agent additionally requires the last 6 months of bank statements evidencing rental income.",
+          "conditions": "80% for residential investment in Zones 1-5 and high density apartments, applied AFTER the 6% maximum gross rental yield cap. Where a lease agreement is among the evidence, it supersedes all other sources."
+        },
+        {
+          "type": "rental_commercial",
+          "accepted": true,
+          "shadingPct": 0.65,
+          "minHistoryMonths": null,
+          "evidence": "As per rental evidence requirements.",
+          "conditions": "65% for non-residential, commercial and industrial - investment AND owner occupied. Third party estimation (valuation report or agent appraisal) is not accepted for this category."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "A Centrelink statement dated within the last 60 days.",
+          "conditions": "Age pension is one of only three acceptable Centrelink payment types (with Family Tax Benefit Parts A and B). \"All other Centrelink pension types are not acceptable income types.\" Department of Veterans Affairs Service and Age pension, War Widower's pension and permanent disability payments are also acceptable, verified by a DVA statement within 30 days plus a bank statement within 30 days."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "A Centrelink statement dated within the last 60 days.",
+          "conditions": "Family Tax Benefit Parts A and B are acceptable \"only if the borrower can verify that it will be received for a minimum of 5 years. Therefore, Family Allowance will be allowable for all children who are under the age of 13 years.\""
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Unacceptable: \"Unemployment/sickness benefits.\" Also unacceptable: non-permanent pensions, worker's compensation, accommodation/student allowance, emergency benefits, scholarship income, higher duties payments and foster care payments."
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "The Centrelink Disability Pension is not acceptable. TPD payments through reputable insurers (not administered through Centrelink) representing a material portion of original earnings MAY be considered, subject to written verification of permanency, annual increases, expiry date (expected to be typical retirement age) and confirmation the payment is not conditional on regular medical check-ups. Certain DVA payments (Disability Compensation Payment under the VEA, Permanent Impairment Payment under the MRCA) may be treated as permanent; DVA Income Replacement Payments including Incapacity Payments and Special Rate Disability Payments must NOT be treated as permanent."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "A copy of the current year's Child Support Agency Notice of Assessment plus 6 months of bank statements.",
+          "conditions": "\"Acceptable for dependents under the age of 13 years, registered with Child Support Agency (CSA).\""
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 12,
+          "evidence": "Most recent tax returns.",
+          "conditions": "\"Maximum of 80% investment income is acceptable (including dividends from publicly traded companies). Minimum 1 year investment/interest evidenced from the most recent tax returns.\" Capital gains on the sale of assets are not acceptable income."
+        },
+        {
+          "type": "superannuation_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "A statement of holdings dated within the last 6 months, AND confirmation of the current balance dated within the last 30 days, AND bank account statements dated within the last 60 days showing the payment amount. Commonwealth Superannuation Corporation pension income: a CSC or equivalent scheme statement dated within the last 12 months.",
+          "conditions": "Superannuation and annuity income accepted on the above verification."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "A translated employment contract and the most recent 3 months of bank statements showing the salary credits. Conversion at RBA exchange rates on the day of the initial credit assessment.",
+          "conditions": "Maximum 80% of foreign income (salary, investment, rental) in a Tier 1 currency: CAD, EUR, GBP, HKD, JPY, NZD, SGD, USD. Maximum 50% for Tier 2 (Chinese Yuan, capped at USD$50,000 equivalent). LVR is capped at 70% for Tier 1 and 50% for Tier 2, and applications with foreign income are NOT accepted with LMI at all. Foreign self-employed income is not acceptable. All new-to-bank customers must be living and working in Australia."
+        },
+        {
+          "type": "boarder_income",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Not listed among acceptable income types. Note the converse rule: a borrower living rent free or paying under $150 per week board has a $150 per week notional rent expense applied."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income section",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Parental leave: 100% of base income including annual/long service leave, or the employer/Government funded parenting payment (whichever is lower), received during the leave period. Casual employees accepted where the government or employer payment covers the leave period with written employer confirmation of the return to work date. Savings may cover a gap of up to 12 months between settlement and the verified return to work date. Parental leave must not exceed 12 months. Guarantor income is not acceptable except for a spouse/partner complying with guarantor policy, or directors/trustees guaranteeing company/trust borrowings."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Self-employed",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum self-employed period 2 years.\" Only the most recent year's individual and business tax returns plus NOAs are required as evidence, which is lighter than the two years of financials many lenders demand."
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Self-employed",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The two-year requirement is for TRADING HISTORY, not documentation: \"All applicants (including directors and trustees) must provide Individual (personal) and Company (business) tax returns for the most recent year, and the latest notice of assessment for each income source.\" One year of financials is the standard requirement."
+    },
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub)",
+      "confidence": "low",
+      "status": "verified",
+      "note": "Low confidence and deliberately so. The policy guide references 'Low Doc Loans' several times as a product that exists (e.g. land loans are \"Not available for Low Doc Loans or debt consolidation\"; Easy Increases are not available for Low Doc Loans), but the guide's public sections do not set out any low-doc criteria, LVR or evidence standard. Treat as 'a low doc product is referenced' rather than as a researched offering."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Full time/part time workers, casual employees and PAYG contractors must demonstrate employment stability of a minimum of 6 months with current employer.\""
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only for full time and part time workers. \"If less than 6 months with current employer, full time/part time workers (including those on probation) must demonstrate a minimum of 12 months continuous employment within the same occupation type (e.g. sales) or industry (e.g. mining).\" This relief is expressly NOT available to casual employees or PAYG contractors."
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "12 months continuous employment in the same occupation type or industry."
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Explicitly accepted for permanent full time and part time workers - the parenthetical \"(including those on probation)\" appears in the 12-months-same-industry relief. AMP is materially more accommodating on probation than Bank Australia, which requires probation to be completed."
+    },
+    "probationConditions": {
+      "value": "A full time or part time worker on probation with under 6 months at the current employer is acceptable provided they demonstrate a minimum of 12 months' continuous employment within the same occupation type or industry. Casual employees and PAYG contractors with under 6 months at the current employer are not accepted at all.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Hard minimum - under 6 months with the current employer the casual income is not accepted for servicing. On top of that, at least 12 months in the same industry AND job role/type, no more than two separate roles in the previous 12 months, and evidenced consistency of earnings."
+    },
+    "minMonthsContract": {
+      "value": 6,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PAYG contractors are grouped with casual employees: minimum 6 months with the current employer, or the income is not accepted."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Self-employed",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Minimum self-employed period 2 years.\""
+    },
+    "notes": {
+      "value": "Borrowers working for family or family companies must supply the most recent personal tax returns and the latest year's ATO Notice of Assessment.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - PAYG Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "credit": {
+    "bankruptcyDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Credit check",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Borrowers who are discharged bankrupts, Part IX or Part X will be considered subject to: Minimum two years discharged from bankruptcy; Minimum two years since debt was fully paid for Part IX and Part X agreements; Maximum LVR 80%.\""
+    },
+    "partIxDischargedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Credit check",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Minimum two years since the debt was fully paid for Part IX and Part X agreements, maximum LVR 80%."
+    },
+    "maxDefaults": {
+      "value": 0,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Credit check",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "\"Must have a clean credit record, except\" the discharged bankruptcy / Part IX / Part X carve-out. No tolerance for listed defaults is published, and the Easy Increase rules confirm the stance: \"If any defaults have been lodged since the last full credit assessment, it does not qualify for Easy Increase.\" Recorded at medium confidence because 'clean credit record' is a standard rather than an explicit default count."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Credit check",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Follows from the 'clean credit record' requirement. Additional advances require an updated credit report \"clear of any adverse listings\"."
+    },
+    "minCreditScore": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No minimum credit score is published."
+    },
+    "maxArrears6Months": {
+      "value": null,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Additional advances / Refinance requirements",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No general arrears tolerance is published for new lending. Two related rules do exist: an additional advance requires \"no arrears in the prior three months\", an Easy Increase is unavailable where the loan has been in arrears or over limit for more than 30 consecutive days in the last 6 months, and \"The Bank will not refinance any loan, which has been subject to poor repayment conduct.\""
+    },
+    "notes": {
+      "value": "AMP Bank fully participates in Comprehensive (positive) Credit Reporting. A credit check is completed on all individuals, companies, directors and guarantors. If a credit check identifies that a borrower's company is under external administration or subject to a petition, the application will only be considered if the company is neither a borrower nor an income source and the credit issue is confirmed resolved. Where a credit check shows directorships, shareholdings or proprietorships of companies for which AMP holds no financials, an accountant's letter is required confirming the business is trading profitably (no losses over the last 2 financial years) or does not trade at all and has no liabilities - failing which the most recent tax returns for those companies are required. On refinances, where the current lender fully participates in CCR the bureau is used to verify conduct; otherwise six months' loan statements are required on all secured loans being refinanced, with the most recent under 30 days old.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Credit check / Refinance requirements",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential owner occupied or investment properties fully serviced by power, water/tank water, utilities and road access",
+        "Properties zoned residential or rural residential (other zonings acceptable where the valuer confirms current residential use with comments and photos and the zoning permits ongoing use)",
+        "Vacant residential land up to 2.02 hectares (standalone security only, no cross collateralisation)",
+        "Rural residential properties, provided they are not income producing",
+        "Residential unit blocks on separate titles (maximum 4 apartments per borrower in any one development)",
+        "Residential unit blocks on one title (maximum 4 units, 50% LVR up to $1 million)",
+        "Off the plan purchases (as per standard policy)",
+        "High density apartments - developments of more than 10 units in a postcode defined as high density",
+        "Torrens/Strata title; Community title (South Australia only); Crown Land or Crown Leasehold with a minimum duration of the approved loan term plus 15 years"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable security properties / Acceptable title",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum land area for a residential security is 40 hectares (100 acres); anything larger is unacceptable. Maximum total aggregate concentration of 25% in any one development up to a maximum of 10 units."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Units/apartments under 45m2 living area excluding balconies and car accommodation (40m2 for good quality properties in desirable, high demand capital city metropolitan locations)",
+        "Converted hotels/motels; converted churches/places of worship; churches/places of worship",
+        "Residential property with a commercial content, or used for a commercial purpose",
+        "Commercial, industrial and retail property",
+        "Relocatable, portable or modular homes (off-site prefabricated / manufactured homes)",
+        "Leasehold other than Crown Leasehold",
+        "Any property in excess of 50% per borrower in a completed development of 8 or fewer properties (duplexes acceptable), or more than 4 per borrower where the development has more than 8 properties",
+        "Boarding houses/hostels; Bed & Breakfast; brothels",
+        "Specialised student accommodation or university apartments",
+        "Any property subject to a rental guarantee (State and Federal Government properties acceptable)",
+        "Any property subject to a 'two tier' market",
+        "Home units attached to management rights of the complex",
+        "Any property in a flood zone greater than 1:100 year frequency, or where the known flood height is higher than the floor level",
+        "Any property on a contaminated site or under investigation for contamination",
+        "Any property directly affected by coastal erosion",
+        "Any property with a land area greater than 40 hectares (100 acres)",
+        "Any property used for farming, or with a water licence/allocation",
+        "Specialised or unique properties",
+        "Age-restricted / ability-restricted developments (e.g. occupancy restricted to over 55s)",
+        "Property with a capital value less than $60,000 (land and improvements)",
+        "Any property requiring development of more than two dwellings",
+        "Any property sharing a boundary with a petrol station, within 50 metres of an electrical substation, or whose boundary is within 50 metres of high voltage transmission lines",
+        "Properties with partly finished construction work",
+        "Serviced apartments; studio apartments/bedsitters",
+        "Any property on an island not accessible by road; landlocked properties",
+        "Any property with a 'lease for life' covenant on title",
+        "National Rental Assistance Scheme (NRAS) properties",
+        "Display homes subject to leaseback by the builder",
+        "Apartment/unit buildings impacted by banned (combustible) aluminium composite panelling"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The published list is prefaced \"incl. (but not limited to)\", so it is indicative rather than exhaustive."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 45,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Units/apartments less than 45m2 living area (excluding balconies and car accommodation)\" are unacceptable, \"(For good quality properties located in a desirable and high demand capital city metropolitan location, the minimum living area is 40m2)\". 45sqm is one of the highest minimums on the panel - most lenders sit at 40 or 50sqm with no metro concession."
+    },
+    "maxLandSizeHa": {
+      "value": 40,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable security properties",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum land area 40 hectares (100 acres)\" for a residential security. Vacant residential land is capped much lower at 2.02 hectares (5 acres) and must be a standalone security with no cross collateralisation."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable location / LVRs with LMI",
+      "confidence": "high",
+      "status": "verified",
+      "note": "AMP publishes a Security Property Location Guide mapping every postcode to one of five risk zones - Zone 1 (ultra-low risk), Zone 2 (low risk), Zone 3 (medium risk), Zone 4 (high risk), Zone 5 (ultra-high risk). The zone drives maximum LVR, maximum loan amount, construction loan size, land loan size and whether LMI is compulsory."
+    },
+    "postcodeListUrl": {
+      "value": "https://www.amp.com.au/content/dam/distributor/documents/forms/security-property-location-guide.pdf",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Broker Hub - Resources and tools, Security Property Location Guide",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Publicly downloadable, no login. \"Download the Security Property Location Guide to help locate which zone a postcode resides in.\""
+    },
+    "restrictedPostcodeMaxLvrPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), LVRs with LMI - Zone 5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Zone 5 (ultra-high risk): \"Maximum LVR 90% inclusive of LMI ... on P&I repayment terms, and maximum LVR 80% inclusive of LMI on I/O repayment terms, up to $400,000. Considered on case by case basis. LMI required regardless of LVR.\" Zone 4 (high risk) retains the full 95% P&I ceiling but caps the loan at $750,000."
+    },
+    "highDensityPolicy": {
+      "value": "High density = \"Unit developments with more than 10 units and located within a postcode defined as a high density location as per the Security Property Location Guide.\" Restrictions: maximum 95% LVR on P&I and 90% on I/O, inclusive of LMI, for owner occupied and investment purposes, but only for EXISTING apartments more than 6 months old; maximum 90% inclusive of LMI for all other high-density apartments; maximum 2 apartments per borrower in any one development; no rental guarantees; maximum total aggregate concentration of 25% in any one development up to a maximum of 10 units.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), High density apartments",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Note the 6-months-old test - a brand new high density apartment is capped at 90%, not 95%."
+    },
+    "highDensityMaxLvrPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), High density apartments",
+      "confidence": "high",
+      "status": "verified",
+      "note": "95% inclusive of LMI on P&I terms, for existing apartments more than 6 months old only; 90% on I/O terms; 90% for all other high density apartments."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable security properties",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rural residential accepted provided it \"Must not be income producing\", is zoned residential or rural residential, and is under 40 hectares. Any property used for farming, or holding a water licence/allocation, is unacceptable."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable title",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Acceptable titles are limited to Torrens/Strata, Community title (South Australia only), and Crown Land/Crown Leasehold. Company title is not listed as acceptable, and the guide's acceptable-title list is expressed as a closed set."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types / Acceptable title",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Leasehold other than Crown Leasehold\" is unacceptable. Crown Land or Crown Leasehold IS acceptable with a minimum duration of the approved loan term plus 15 years."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable title",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Torrens/Strata are the primary acceptable title types, subject to the 45sqm minimum living area and the high density rules."
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable security properties",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Listed under acceptable security properties as \"Off the plan 'purchases' - As per standard policy\". No off-the-plan-specific parameters are published, so the practical constraints are the standard ones (high density limits, 45sqm minimum, zone LVR caps, and the exclusion of properties with partly finished construction work)."
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Serviced apartments\" are an unacceptable SECURITY type. Serviced apartment and short-term letting INCOME from a property AMP does not hold as security is still assessable at 65%."
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Specialised student accommodation or university apartment\" is unacceptable."
+    },
+    "displayHomeLeasebackAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Display Homes (subject to leaseback by the builder)\" are unacceptable, and separately \"Rental guarantees (e.g. for display homes) are not acceptable\" as income."
+    },
+    "nrasAccepted": {
+      "value": false,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Unacceptable property types",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"National Rental Assistance Scheme (NRAS) properties\" are unacceptable."
+    },
+    "maxSecurities": {
+      "value": 4,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable security properties",
+      "confidence": "high",
+      "status": "verified",
+      "note": "A per-development concentration limit, not a per-facility one: maximum 4 apartments per borrower in any one development (2 for high density developments), with a maximum total aggregate concentration of 25% in any one development up to a maximum of 10 units. Unacceptable: more than 50% per borrower in a completed development of 8 or fewer properties, or more than 4 per borrower where the development has more than 8."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 40000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Full doc loan characteristics - Minimum loan amount",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"$40,000\"."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Full doc loan characteristics - Term",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum loan term 30 years for Housing/Investment/Personal purposes.\" Reduced to a maximum of 10 years on P&I where a borrower is already retired or aged 60+ and offers their owner-occupied home as security without a valid, verifiable exit strategy."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Full doc loan characteristics - Term",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum interest only term is 10 years.\" BUT owner-occupiers seeking 6-10 years of interest only on the predominant portion (more than 50% of total owner-occupied lending held) are capped at 70% LVR. \"the interest only term is deducted from the overall loan term for servicing purposes: If an overall 30 year loan term with 5 years interest only is selected, the P&I repayments are calculated over 25 years for servicing.\""
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Full doc loan characteristics - Term",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same 10-year maximum; the 70% LVR restriction on 6-10 year interest only is expressed for owner-occupied lending only."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Construction",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum construction loan amount with LMI: Zones 1-2 $850,000 at up to 90% LVR; Zone 3 $600,000; Zone 4 $450,000. Requires council approved plans and specifications, a fixed price building contract (variations require an increase and reassessment), the builder's licence, builder's all risk and indemnity insurance, and Homeowners Warranty Insurance."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose - Bridging Policy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "EXISTING CUSTOMERS ONLY, and only where a simultaneous settlement cannot be negotiated. The existing mortgage must have been with AMP Bank for more than six months with repayments maintained per contract. Where the existing home is not under unconditional exchange, servicing must be demonstrated on PEAK debt assuming the existing home is retained and becomes an investment property. Primary LMI not required. No Zone 5 (ultra-high risk) securities regardless of LVR."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), SMSF (Self-Managed Superannuation Fund)",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Residential SMSF lending under Limited Recourse Borrowing Arrangements. Corporate trustee only - no individual trustees, and no single company acting as both SMSF trustee and bare trustee. Minimum fund balance of $250,000 net assets at loan assessment. Liquidity test: the fund must hold liquid assets equal to at least 5% of the loan amount after settlement. Security must be a completed, established residential investment dwelling in postcode Zones 1 and 2 only (including high-density apartments), newly built property acceptable only after a certificate of occupancy issues. No leasing to related parties, no purchases through a unit trust or company, no multiple securities under one LRBA. Redraw, line of credit, loan term extension, increases and product switches are all not permitted. Guarantor income is not included in the SMSF servicing calculator - the fund must service on its own income and assets."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Purchase requirement - Funds to complete",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Property Purchase Base LVR > 85% with savings: Total funds to complete must include a minimum genuine contribution of 5% of purchase price.\" Owner occupied purchases only, and all funds to complete (deposit plus settlement disbursements minus the FHSSS) must be evident at the time of application. At a base LVR of 85% or below, no supporting evidence of savings is required at all."
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 85,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Purchase requirement",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Measured on BASE LVR. At or below 85% base LVR: \"No supporting evidence of savings required.\""
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Purchase requirement - Funds to complete",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unusually, gifts COUNT toward the 5% genuine contribution: the acceptable forms of savings list includes \"Gifted funds that are non-repayable\", alongside the First Home Owner Grant, the First Home Super Saver Scheme, inheritance, funds released from superannuation, tax refunds, employer bonuses, listed securities, equity in residential property, sale proceeds, the deposit already paid, and accelerated loan repayments. Funds cannot be borrowed (personal loans, credit cards or loans from family members) and must be held in the borrower's name."
+    },
+    "giftedDepositConditions": {
+      "value": "\"The AMP Gift Declaration Letter must be from the person(s) giving the gift.\" The gifted funds must be non-repayable and held in the borrower's name(s). Where base LVR exceeds 85%, all funds to complete the purchase (deposit plus settlement disbursements, less the FHSSS) must be evident at the time of application.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Purchase requirement",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Applicant type - Guarantors; Family guarantee",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Servicing guarantees ARE accepted from a spouse/partner not on title who receives no substantial benefit, and directors/trustees guarantee company/trust borrowings. BUT the standalone \"Family guarantee\" entry reads \"Currently not available for new business\" - while the guarantors entry cross-references a separate First Home Buyer Family Guarantee page. These two statements conflict on the public page; confirm the current position with a BDM before relying on a family/security guarantee structure."
+    },
+    "guarantorConditions": {
+      "value": "A guarantor must be the partner of the borrower (spouse, de facto), or a director/trustee for company/trust borrowings. Where individuals borrow and the security is owned by the company, guarantors/directors must be identical to the borrowers; where a company borrows and the security is not owned by the company, guarantors/directors must be identical to the title holders; where a trust borrows and the security is not owned by the trust/trustee, guarantors must be an adult beneficiary of the trust. For all new-to-bank business the guarantor must be living and working (where appropriate) in Australia. AMP requires independent legal advice and may require independent financial advice. Where a director's or trustee's income is included, a minimum surplus is required in the assessment.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Applicant type - Guarantors",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 50,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Exit strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Evidence of an exit strategy is required to confirm the debt can be repaid without hardship when the borrower is approaching retirement age (greater than or equal to 50 years old at the time of loan application).\" That is five years earlier than Macquarie or Bank Australia. A written exit strategy is a MANDATORY supporting document at lodgement. It does not apply where the loan purpose is an investment property and the borrower already has an owner-occupied property. All loans under this policy should be P&I, no interest only."
+    },
+    "maxAgeAtMaturity": {
+      "value": 70,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Exit strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"If no exit strategy has been provided then the loan term must not exceed the expected age of retirement. AMP Bank will deem a customer's retirement age to be 70 unless we are advised that a borrower is planning to retire prior to 70.\" So 70 is a maximum age at maturity only where no exit strategy is supplied. No exit strategy or term reduction is required where the loan services on other income (rental, annuities, investments) expected to continue for the full term. Where a valid exit strategy exists for a retired/60+ borrower, the term may extend to 30 years, but a minimum Net Monthly Surplus of $500 applies wherever the term exceeds 10 years, and the exit strategy must NOT include downsizing the principal place of residence regardless of LVR."
+    },
+    "notes": {
+      "value": "Debt consolidation is limited to a maximum of 5 debts (home loan plus 4 unsecured debts) subject to a maximum $50,000 of accumulated unsecured debt; loans that acquired an asset (e.g. a car loan) may be excluded from the $50,000 cap, but must be included if the original use of funds cannot be evidenced. Business purpose lending is restricted to 10% of total customer exposure to AMP Bank up to a maximum of $100k. Land loans: maximum $600,000 in Zones 1-2, $400,000 Zone 3, $200,000 Zone 4; maximum LVR 90% P&I / 80% I/O; land not to exceed 2.02 hectares; must be zoned residential, rural residential or rural, with all-weather road access and electricity connected; standalone security only; not available for low doc or debt consolidation. New-to-bank company or trust customers require a minimum aggregate customer exposure (inclusive of directors/trustees) of $2m.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Acceptable loan purpose / Land loan / Applicant type",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be over 18. \"All new to bank customers must be living and working in Australia.\""
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "\"Permanent residents or citizens of Australia or New Zealand.\" Must be living and working in Australia if new to bank."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand citizens and permanent residents are expressly acceptable, but \"New Zealand borrowers must be living and working in Australia.\" The subclass 444 visa is not named specifically."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The acceptable-individual test is a closed set - over 18 AND a permanent resident or citizen of Australia or New Zealand. Temporary visa holders do not meet it."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Same basis - not a permanent resident or citizen of Australia or New Zealand."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"All new to bank customers must be living and working in Australia. Lending to existing AMP Bank customers living and working overseas (ex-pats) may continue subject to current policy and procedure parameters.\" So expats are closed to new-to-bank business but existing AMP customers overseas may continue. Where foreign income is used, LVR is capped at 70% (Tier 1 currencies) or 50% (Tier 2) and LMI is not available at all."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not within the acceptable individual borrower definition."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Applicant type - Individual; Income - Foreign income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Company borrowers must be incorporated in Australia with all directors giving personal limited guarantees. Trusts must be unit or discretionary trusts formed in Australia, with the loan in the trustee's name in their capacity as trustee, and adult beneficiaries providing Consent & Indemnity."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Foreign income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "80% for Tier 1 currencies, 50% for Tier 2. Applies to salary, investment and rental foreign income. Foreign self-employed income is not acceptable. Conversion at RBA rates on the day of the initial credit assessment. All foreign LIABILITIES and expenses are included at 100%."
+    },
+    "acceptedForeignCurrencies": {
+      "value": ["CAD", "EUR", "GBP", "HKD", "JPY", "NZD", "SGD", "USD", "CNY"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://distributor.amp.com.au/policies",
+      "sourceTitle": "AMP Bank Credit Policy Guide (Broker Hub), Income - Foreign income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Tier 1 (80% of income, max 70% LVR): Canadian Dollar, Euro, British Pound, Hong Kong Dollar, Japanese Yen, New Zealand Dollar, Singapore Dollar, US Dollar. Tier 2 (50% of income, max 50% LVR): Chinese Yuan, to a maximum of USD$50,000 or equivalent. AMP writes the Yuan code as 'CYN' in its guide; the ISO code is CNY."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "The AMP Broker Hub policy page carries NO version number or effective date - it says only 'Policies are regularly updated. Always check this page for the latest version.' Every asAt is therefore the date the page was read (2026-07-29), not a document date.",
+    "The page contradicts itself on the assessment floor: 6.5% under 'Factored rate' and 6% under 'Borrowers approaching retirement... aged 60+'. The 6.5% figure is recorded; confirm with a BDM.",
+    "The page also contradicts itself on family guarantees: 'Family guarantee - Currently not available for new business' versus a cross-reference to a First Home Buyer Family Guarantee page.",
+    "No hard DTI cap is published - only the DTI 6x / Net Monthly Surplus / LVR matrix.",
+    "HECS/HELP treatment is not addressed anywhere in the public guide.",
+    "Offset and redraw product features are not covered by the policy guide (it is a credit policy, not a product guide) and were not sourced from the separate Loan products / Features pages.",
+    "Low Doc loans are referenced repeatedly as an excluded product category but no low-doc criteria, LVR or evidence standard is published, so altDocAvailable is recorded at low confidence.",
+    "The Security Property Location Guide (the postcode-to-Zone-1-to-5 mapping that drives nearly every LVR and loan-size cap) is a separate public PDF that was linked but not parsed in this pass - matching against AMP zone caps is not possible without it.",
+    "The serviced apartment / short-term rental shading row extracted ambiguously between the 'verified' and 'third party estimation' columns; 65% is recorded from the verified column.",
+    "Nothing on default tolerance thresholds, judgments, writs or credit score - only the blanket 'must have a clean credit record'."
+  ]
+}

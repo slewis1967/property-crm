@@ -4,6 +4,8 @@ import { aiCall } from "../../../../utils/ai";
 import { getCachedOrGenerate } from "../../../../utils/ai-cache";
 
 import { requireAuth } from "../../../../utils/cf-access";
+import { errMessage } from "../../../../utils/errors";
+import { BUSINESS_TIME_ZONE, formatDateTime } from "../../../../utils/datetime";
 export const dynamic = "force-dynamic";
 
 const SYSTEM = `You are the morning briefing for Sean — a property advisor who runs NextKey Property Strategists. He opens his War Room dashboard and needs to know in 15 seconds: what should I do today?
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
         .limit(8),
       supabase
         .from("property_leads")
-        .select("full_name,email,state,buyer_type,temperature,score,match_status,created_at")
+        .select("name,email,state,buyer_type,triage_score,match_status,status,created_at")
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
         .limit(10),
@@ -76,7 +78,7 @@ export async function POST(req: Request) {
       "",
       hotContacts && hotContacts.length > 0 ? "=== HOT CONTACTS (recent) ===" : "",
       ...((hotContacts ?? []).map(
-        (c: any) =>
+        (c: { name?: string | null; buyer_type?: string | null; preferred_state?: string | null; lead_score?: number | null; status?: string | null; updated_at?: string | null }) =>
           `- ${c.name || "(unnamed)"} · ${c.buyer_type || "?"} · ${c.preferred_state || "?"} · score ${c.lead_score ?? "?"} · status ${c.status ?? "?"} · last updated ${fmtDate(c.updated_at)}`,
       )),
       "",
@@ -84,22 +86,25 @@ export async function POST(req: Request) {
         ? "=== HOT CONTACTS NOT TOUCHED IN 30+ DAYS ==="
         : "",
       ...((staleHotContacts ?? []).map(
-        (c: any) =>
+        (c: { name?: string | null; buyer_type?: string | null; preferred_state?: string | null; updated_at?: string | null }) =>
           `- ${c.name || "(unnamed)"} · ${c.buyer_type || "?"} · ${c.preferred_state || "?"} · last touched ${fmtDate(c.updated_at)}`,
       )),
       "",
       recentLeads && recentLeads.length > 0 ? "=== NEW LEADS (last 7 days) ===" : "",
       ...((recentLeads ?? []).map(
-        (l: any) =>
-          `- ${l.full_name || "(unnamed)"} · ${l.buyer_type || "?"} · ${l.state || "?"} · temp ${l.temperature || "?"} · match ${l.match_status || "?"} · scored ${l.score ?? "?"} · received ${fmtDate(l.created_at)}`,
+        (l: { name?: string | null; buyer_type?: string | null; state?: string | null; triage_score?: number | null; match_status?: string | null; status?: string | null; created_at?: string | null }) => {
+          // property_leads has no temperature column — derive it from triage_score.
+          const temp = l.triage_score == null ? "?" : l.triage_score >= 50 ? "hot" : l.triage_score >= 35 ? "warm" : "cold";
+          return `- ${l.name || "(unnamed)"} · ${l.buyer_type || "?"} · ${l.state || "?"} · temp ${temp} · match ${l.match_status || "?"} · scored ${l.triage_score ?? "?"} · received ${fmtDate(l.created_at)}`;
+        },
       )),
       "",
       upcomingAppointments && upcomingAppointments.length > 0
         ? "=== UPCOMING APPOINTMENTS ==="
         : "",
       ...((upcomingAppointments ?? []).map(
-        (a: any) =>
-          `- ${a.event_title || "(untitled)"} · with ${a.contact_name || a.contact_email} · ${fmtDateTime(a.start_time)}`,
+        (a: { event_title?: string | null; contact_name?: string | null; contact_email?: string | null; start_time?: string | null }) =>
+          `- ${a.event_title || "(untitled)"} · with ${a.contact_name || a.contact_email} · ${formatDateTime(a.start_time)}`,
       )),
     ]
       .filter(Boolean)
@@ -137,29 +142,33 @@ export async function POST(req: Request) {
           }),
       });
       return NextResponse.json({ ok: true, text: result.text, cached: result.cached });
-    } catch (e: any) {
+    } catch (e) {
+      console.error("dashboard-brief: AI generation failed:", errMessage(e, "AI request failed"));
       return NextResponse.json(
-        { ok: false, error: e?.message ?? "AI request failed" },
+        { ok: false, error: "Today's brief isn't available right now — try again shortly." },
         { status: 500 },
       );
     }
-  } catch (e: any) {
+  } catch (e) {
+    console.error("dashboard-brief: failed to build brief:", errMessage(e, "Failed to build dashboard brief"));
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to build dashboard brief" },
+      { ok: false, error: "Today's brief isn't available right now — try again shortly." },
       { status: 500 },
     );
   }
 }
 
+// Pinned to the business timezone: this route runs on the server (UTC) and the
+// brief quotes these dates straight back to the operator, so an unpinned
+// formatter reports yesterday for anything touched after 2pm Brisbane.
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
   const d = new Date(s);
   if (isNaN(d.valueOf())) return "—";
-  return d.toLocaleDateString("en-AU", { year: "2-digit", month: "short", day: "numeric" });
-}
-function fmtDateTime(s: string | null | undefined) {
-  if (!s) return "—";
-  const d = new Date(s);
-  if (isNaN(d.valueOf())) return "—";
-  return d.toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
+  return d.toLocaleDateString("en-AU", {
+    year: "2-digit",
+    month: "short",
+    day: "numeric",
+    timeZone: BUSINESS_TIME_ZONE,
+  });
 }

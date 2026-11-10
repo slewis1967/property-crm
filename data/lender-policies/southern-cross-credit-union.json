@@ -1,0 +1,198 @@
+{
+  "id": "southern-cross-credit-union",
+  "name": "Southern Cross Credit Union (SCCU)",
+  "legalName": "Southern Cross Credit Union Ltd",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": null,
+  "abn": null,
+  "brokerSiteUrl": "https://www.sccu.com.au/members/sccu-broker-portal/",
+  "policyDocUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sccu.com.au/oo-home-loans/",
+      "sourceTitle": "SCCU — Owner Occupied Home Loans, Rates & Features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum LVR 95% with LMI. The professionals' section reads \"eligible applicants on the professionals list for loans with 80-95% LVR\", confirming the 95% ceiling. asAt is the retrieval date — the page carries no publication date (footer shows © 2026)."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sccu.com.au/oo-home-loans/",
+      "sourceTitle": "SCCU — Owner Occupied Home Loans, Rates & Features",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "LMI applies above 80% LVR except for eligible professionals (waived to 90%) or where an acceptable guarantor or the Australian Government 5% Deposit Scheme applies."
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Medical and health professionals registered with AHPRA",
+        "Legal professionals holding a current practising certificate",
+        "Finance professionals registered with eligible institutes"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sccu.com.au/oo-home-loans/",
+      "sourceTitle": "SCCU — Owner Occupied Home Loans, Rates & Features",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "SCCU publishes a 'professionals list' rather than naming individual occupations; the three categories above are the groupings shown on the page. The specific eligible occupations/institutes are not published. asAt is the retrieval date."
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.sccu.com.au/oo-home-loans/",
+      "sourceTitle": "SCCU — Owner Occupied Home Loans, Rates & Features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"these professionals will receive an LMI waiver for loans up to 90% LVR\". Eligible professionals also get a rate concession on 80–95% LVR loans."
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {
+    "notes": {
+      "value": "Must provide sufficient security in accordance with SCCU's credit assessment criteria — an acceptable residential mortgage, or a guarantor providing additional security. Building insurance is required with SCCU noted as an interested party for at least the building value. No property-type, unit-size, postcode, high-density, rural or land-size policy published.",
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 250000,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Under Financial Situation the TMD says the target market \"Can chose [sic] a loan amount over $250,000\". Read as the effective minimum for the Premium Variable Rate Home Loan; other SCCU loan products (line of credit, bridging, reverse mortgage) have their own TMDs and were not read."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"repayments that can vary over the life of the loan (loan terms up to 40 years)\". Confirmed on the owner-occupied product page (\"up to 40 years\"). A 40-year term is unusual and materially lifts servicing capacity."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"This home loan can be linked to up to 8 Easy Access accounts, the balance of which will reduce the loan balance on which interest is charged.\" It is a linked-account offset, not a single 100% offset sub-account."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw available on variable loans. On fixed-rate loans the product page limits redraw/additional repayments to $10,000 per year."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Permitted purposes include \"Building and construction finance\" and \"Purchase of land\"."
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "An acceptable guarantor is one of the three named alternatives to paying LMI (the others being LMI itself and the Australian Government 5% Deposit Scheme)."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Australian Government 5% Deposit Scheme"],
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Scheme loans are restricted to owner-occupier purposes, must be to buy or build a property the borrower will live in, and are offered on a principal-and-interest basis only outside of any construction period."
+    },
+    "notes": {
+      "value": "SCCU is a customer-owned credit union formed in 1966 in the Tweed Valley (formerly Tweed Byron Credit Union), based in Murwillumbah with branches across northern NSW. Broker-distributed: the TMD's Third Parties channel permits accredited brokers where a legal agreement is in place and the broker holds appropriate authorisations and industry memberships; SCCU runs a broker portal. Borrowers may switch between principal-and-interest and interest-only subject to approval. Product range also includes a line of credit, a bridging loan and a reverse mortgage, each with its own TMD.",
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Some third-party comparison sites state SCCU's advertised offers are not available on broker-introduced business — that could not be verified on any SCCU page and is NOT recorded as policy."
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Must be an individual aged 18 or over with an Australian residential address."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Permanent resident of Australia, with an Australian residential address."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "\"New Zealand citizens can be considered under a mortgage secured basis only, but must be residing in Australia and declaring income to the ATO.\""
+        }
+      ],
+      "asAt": "2026-03-02",
+      "sourceUrl": "https://www.sccu.com.au/premium-variable-rate-home-loan-tmd/",
+      "sourceTitle": "SCCU Premium Variable Rate Home Loan TMD v6.0, issued 2 March 2026 — Eligibility Criteria",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The TMD names only these three categories. It is silent on temporary work/student/partner visas, expats and non-residents — absence from the list is not recorded as a decline."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-03-02",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No servicing buffer, assessment floor rate, DTI cap, rent shading, HEM basis, credit-card assessment rate or commitment treatment published anywhere public.",
+    "No income-type policy: casual, contract, probation, overtime, bonus, commission, self-employed and Centrelink treatment are all unpublished.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published (defaults, arrears, bankruptcy, enquiries).",
+    "The 'professionals list' driving the 90% LMI waiver is referenced but the actual occupation/institute list is not published.",
+    "No maximum loan amount published; the $250,000 minimum is a Financial-Situation statement in a TMD rather than a stated product minimum.",
+    "No security policy — no minimum unit size, postcode restrictions, high-density, rural or land-size rules published.",
+    "No genuine savings or gifted deposit policy published.",
+    "ACL and ABN not captured from the pages inspected.",
+    "Broker channel is confirmed by the TMD, but whether SCCU's advertised rates/offers are available on broker-introduced business could not be confirmed."
+  ]
+}

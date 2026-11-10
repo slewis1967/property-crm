@@ -5,6 +5,19 @@ import { runPia, type PiaInputs } from "@/app/pia/_calc";
 import { estimateStampDuty, AU_STATES } from "@/utils/stamp-duty";
 import AISuburbBrief from "@/app/components/AISuburbBrief";
 import type { AssumptionSource } from "@/utils/deal-packet";
+import { errMessage } from "../../../utils/errors";
+
+type NewProperty = {
+  address?: string;
+  suburb?: string;
+  total_price: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  land_size_m2: number | null;
+  is_co_living: boolean;
+  room_rent?: number | null;
+  weekly_rent?: number | null;
+};
 
 /**
  * Per-property PIA assumptions editor + report generation.
@@ -128,8 +141,8 @@ export default function DealPacketClient({
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");
       window.location.reload();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
       setBusy(false);
     }
   }
@@ -166,7 +179,7 @@ export default function DealPacketClient({
     const inputs: PiaInputs = { ...p.pia };
     for (const k of Object.keys(p.pia)) {
       const v = Number(vals[p.index]?.[k]);
-      if (isFinite(v)) (inputs as any)[k] = v;
+      if (isFinite(v)) (inputs as unknown as Record<string, number>)[k] = v;
     }
     inputs.weeklyRent = weekly;
     inputs.purchasePrice = num(vals[p.index]?.purchasePrice ?? "") ?? p.pia.purchasePrice;
@@ -196,8 +209,8 @@ export default function DealPacketClient({
         const others = (s[p.index] ?? []).filter((x) => !(j.sources ?? []).some((n: AssumptionSource) => n.field === x.field));
         return { ...s, [p.index]: [...others, ...(j.sources ?? [])] };
       });
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
     } finally {
       setResearching((s) => ({ ...s, [p.index]: false }));
     }
@@ -211,7 +224,7 @@ export default function DealPacketClient({
         const inputs: Record<string, number> = {};
         for (const k of Object.keys(p.pia)) {
           const v = Number(vals[p.index]?.[k]);
-          inputs[k] = isFinite(v) ? v : (p.pia as any)[k];
+          inputs[k] = isFinite(v) ? v : (p.pia as unknown as Record<string, number>)[k];
         }
         const weekly = weeklyFor(p);
         if (weekly != null) inputs.weeklyRent = weekly;
@@ -239,8 +252,8 @@ export default function DealPacketClient({
       });
       if (!gr.ok) throw new Error((await gr.json()).error || "Failed to generate reports");
       window.location.reload();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(errMessage(e));
       setBusy(false);
     }
   }
@@ -456,7 +469,7 @@ function AddPropertyForm({
   onClose,
   busy,
 }: {
-  onAdd: (p: any) => void;
+  onAdd: (p: NewProperty) => void;
   onAddStock: (id: string) => void;
   onClose: () => void;
   busy: boolean;

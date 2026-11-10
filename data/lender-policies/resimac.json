@@ -1,0 +1,859 @@
+{
+  "id": "resimac",
+  "name": "Resimac",
+  "legalName": "Resimac Limited",
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "247829",
+  "abn": "55 095 034 003",
+  "brokerSiteUrl": "https://broker.resimac.com.au/",
+  "policyDocUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 2.0,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Group Ltd Broker Product Guide, 25 September 2025 — 'Serviceability' p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'The \"stressed assessment rate\" for all products is the higher of either the actual rate plus a 2.00% loading or a floor assessment rate of 5.75%.'"
+    },
+    "assessmentFloorRatePct": {
+      "value": 5.75,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Applies to all products."
+    },
+    "refinanceBufferPct": {
+      "value": 1.0,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Quote: 'For refinance and debt consolidation applications, a refinance buffer of 1% may apply. Conditions apply.' Confidence medium — 'may apply' and the conditions are not published."
+    },
+    "rentShadingPct": {
+      "value": 0.9,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Acceptable PAYG income table p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Rental income — Current — 90%' on both Prime and Specialist. Footnote 5: 'Airbnb accepted. 90% of income for serviceability with 12 months evidence.'"
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.038,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Existing credit card / store card / buy now pay later limits are assessed at 3.8% per month.' Note this covers BNPL limits as well as cards."
+    },
+    "bnplTreatment": {
+      "value": "Buy now pay later limits are assessed at 3.8% per month, on the same basis as credit card and store card limits.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "interestOnlyAssessment": {
+      "value": "Repayments on interest only portions are assessed over the remaining principal and interest term.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Serviceability ratio test: 'A minimum net surplus ratio of 1.00 times or greater, with an annual surplus of $200 is required.' Maximum aggregate loan exposure across the group is $5,000,000.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Serviceability p7, Maximum loan amounts p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Resimac announced that HEM living expenses apply from 18 February 2026 — that change post-dates this guide and its detail could not be read from a public, no-login page, so no hemBasis fact is recorded."
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime lending product matrix p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Flex and Prime Standard: maximum LVR 95% (with LMI). Prime Alt Doc: 90%. Specialist Clear: 90% (Alt Doc refinance 85%). Specialist Plus: 85%. Specialist Assist: 85%."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 90,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Prime - without LMI' loan amount matrix p5",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The 'Prime - without LMI' matrix runs to an 85% and 90% row (Category 1 only, $2.5m), and a lender's risk fee of 1.00% (80.01-85%) / 2.00% (85.01-90%) applies in place of LMI. The 'Prime - with LMI' matrix starts at 'Up to 95%'. Confidence medium because the guide does not state a maximum no-LMI LVR in words — it is read off the two matrices."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Fees and charges p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'LMI can be capitalised into the loan... Loan amount cannot exceed product maximum.' On Specialist, the Lenders Risk Fee and Lenders Settlement Fee can be capitalised but the final LVR and loan amount cannot exceed the product maximum."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product matrix p2, Fees and charges p6",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The LMI capitalisation row on the Prime matrix reads '(cannot exceed 95% LVR)' — the capitalised premium must sit inside the 95% ceiling, not on top of it."
+    },
+    "lmiProvider": {
+      "value": ["Helia"],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Prime - with LMI' p5",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Refer to the Helia Lenders Mortgage Insurance guidelines.' On the no-LMI and Specialist products Resimac charges its own Lenders Risk Fee instead: Prime Alt Doc 1.00% (80.01-85% LVR) / 2.00% (85.01-90%); Specialist Full Doc 0.75% / 1.00% / 1.25% / 1.50% and Specialist Alt Doc 1.00% / 1.25% / 1.50% / 2.00% across the <70 / 70.01-80 / 80.01-85 / 85.01-90 bands."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 65, "maxLoanAmount": 3500000, "qualifier": "Prime Flex & Standard and Prime Alt Doc, Category 1 location. Cat 2 $2.0m; Cat 3 $500k (Flex/Standard only)." },
+        { "maxLvrPct": 70, "maxLoanAmount": 3500000, "qualifier": "Prime, Category 1. Cat 2 $2.0m; Cat 3 $500k. Non-resident Cat 1 $750k at 70%." },
+        { "maxLvrPct": 75, "maxLoanAmount": 3500000, "qualifier": "Prime, Category 1. Cat 2 $2.0m; Category 3 not available." },
+        { "maxLvrPct": 80, "maxLoanAmount": 3500000, "qualifier": "Prime, Category 1. Cat 2 $2.0m; Category 3 not available." },
+        { "maxLvrPct": 85, "maxLoanAmount": 2500000, "qualifier": "Prime, Category 1 only. Alt Doc at this band attracts a risk fee. Categories 2 and 3 not available." },
+        { "maxLvrPct": 90, "maxLoanAmount": 2500000, "qualifier": "Prime, Category 1 only. Alt Doc at this band attracts a risk fee. Categories 2 and 3 not available." },
+        { "maxLvrPct": 95, "maxLoanAmount": 5000000, "qualifier": "Prime Flex & Standard WITH LMI only, Categories 1, 2 and 3. Amounts are for owner-occupied purposes; investment purpose loans may be lower — refer to the Helia LMI guidelines." }
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Prime & Specialist Maximum loan amounts' p5",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "PRIME tier only, Category 1 location, owner-occupied. The guide's own caveats: 'LVR restrictions apply in some locations and for some security types. Refer to the Acceptable Property Locations tool' and 'Loan amounts are for owner occupied purposes. Investment purpose loans may be lower.' Confidence medium because the source is a multi-column matrix whose alignment had to be reconstructed from the PDF text layer. The Specialist matrix (Clear/Plus/Assist by category) was NOT transcribed — see gaps."
+    },
+    "notes": {
+      "value": "Resimac assigns every location a Category (1, 2 or 3) which caps both LVR and loan amount. The category lookup is the 'Acceptable Property Locations' tool on resimac.com.au, which sits in a secure/broker area and so is not a citable public source.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp5, 8, 9",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Alt Doc is offered across Prime and all three Specialist tiers (Clear, Plus, Assist)."
+    },
+    "altDocEvidence": {
+      "value": "Prime Alt Doc: self-certified income declaration + 2 year ABN + ONE of an accountant's verification, 6 months BAS, or 3 months business bank statements. Specialist Clear: accountant's verification (where the accountant has acted for the applicant 12+ months), or 6 months BAS, or 3 months business bank statements. Specialist Plus: 6 months BAS, or 3 months business bank statements, or an accountant's verification (for 75% LVR and where the accountant has acted for the applicant 12+ months). Specialist Assist: 6 months BAS or 3 months business bank statements.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Income and assessment requirements' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Resimac adds: 'The level of income must support the borrower's asset and liability statement of position... Resimac will not consider Alt Doc loan applications where it is readily apparent the borrower is not declaring income for tax purposes.'"
+    },
+    "altDocMaxLvrPct": {
+      "value": 90,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product matrix p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Alt Doc 90% (no LMI available — 'N/A' in the LMI capitalisation row; a lender's risk fee applies above 80%). Specialist Clear Alt Doc refinance is capped at 85%."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Income and assessment requirements' p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Full Doc: 'Self-Employed - last 2 years full Business / Company and Personal Taxation returns (only 12 months for Clear). This must also be supported by the latest available Tax Assessment Notice. 150% year on year variance can be used.'"
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Only on Specialist Clear — 'only 12 months for Clear'. Prime Full Doc requires 2 years."
+    },
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Either 2 of the 3 most recent computer-generated payslips, or 3 months of statements from a financial institution showing regular salary credits with the name of the employer, as a minimum.",
+          "conditions": "'Full time employment' — minimum duration 6 months, allowance 100%, on both Prime and Specialist."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'Permanent part time (as primary income)' — minimum duration 6 months, allowance 100%, on both Prime and Specialist."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG; where overtime and/or commissions are included, the latest PAYG payment summary or tax assessment notice is also required.",
+          "conditions": "Casual is accepted at a 100% allowance on both Prime and Specialist. Minimum duration is read from the p7 income table as 6 months — see the note on the rules Fact about column alignment."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "As per full-time PAYG.",
+          "conditions": "'PAYG contract' — 100% allowance. On Specialist the allowance carries footnote 4: 'Based on 46 weeks of the year allowing for unpaid sick and annual leave.' Minimum duration is 6 months on Prime and 'Current' on Specialist per the p7 table."
+        },
+        {
+          "type": "second_job",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "6 months minimum duration, 100% allowance on both tiers. Footnote 6: 'Total combined hours worked capped at 60 hours per week.'"
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Latest PAYG payment summary (computer generated) or tax assessment notice in addition to payslips.",
+          "conditions": "Overtime is allowed at 100% on both Prime and Specialist. The minimum-duration cell could not be read unambiguously from the PDF's column layout, so no minHistoryMonths is recorded."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "Latest PAYG payment summary or tax assessment notice in addition to payslips.",
+          "conditions": "Prime: minimum 6 months, 100%. Specialist: minimum 12 months, 100%."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Latest PAYG payment summary or tax assessment notice in addition to payslips.",
+          "conditions": "'Bonuses (paid at least quarterly)' — Prime minimum 24 months at 100%; Specialist minimum 12 months at 100%. Bonuses paid less often than quarterly are not covered by this row."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 12,
+          "evidence": null,
+          "conditions": "'Shift allowance and penalties' — Prime minimum 12 months at 100%; Specialist minimum 6 months at 100%."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "Minimum duration 'Current', 100% allowance on both tiers. Separately, a fully maintained company car (net) is worth up to $4,000 added to income on both tiers."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": 0,
+          "evidence": "For Airbnb income, 12 months evidence.",
+          "conditions": "90% allowance on both Prime and Specialist. 'Airbnb accepted. 90% of income for serviceability with 12 months evidence.'"
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": 24,
+          "evidence": null,
+          "conditions": "Prime: minimum 24 months at an 80% allowance. Specialist: minimum 12 months at 100%. Confidence on the row-to-value mapping is medium — see the note on this rules Fact."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "'Family tax benefit A & B' — minimum duration 'Current', 100% on both tiers. Footnote 1: 'Accepted where the allowance is determined to be permanent and the child is under 14 years of age.'"
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "'Maintenance payments' — 80% allowance on Prime, 100% on Specialist. Footnote 1: accepted where the allowance is determined to be permanent and the child is under 14 years of age. The minimum-duration cell could not be read unambiguously."
+        },
+        {
+          "type": "government_age_pension",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "'Permanent pensions' — minimum duration 'Current', 100% on both tiers. Footnote 3 is a hard limit: 'Government assistant / welfare payments - this income will only be considered as a supplementary source of income.'"
+        },
+        {
+          "type": "government_disability_support",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 0,
+          "evidence": null,
+          "conditions": "Covered by the 'Permanent pensions' row, subject to the same footnote 3 restriction to supplementary income only."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "Full Doc: last 2 years full business/company and personal tax returns plus the latest tax assessment notice (12 months only for Specialist Clear); 150% year-on-year variance can be used. Alt Doc: self-certification plus accountant's verification, or 6 months BAS, or 3 months business bank statements.",
+          "conditions": "Prime Alt Doc: ABN registered 2 years, business continuously operated 2 years, and where gross turnover exceeds $75,000 a valid GST registration for at least 12 months. Specialist Alt Doc: ABN and business age 12 months (Clear) or 6 months (Plus and Assist), with GST registration for the same period where turnover exceeds $75,000. At least one borrower must be self-employed; PAYG borrowers are permitted as secondary borrowers."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "Proprietary companies limited by shares are acceptable, restricted to a single entity applicant. Maximum 4 shareholder directors per borrowing company, each holding at least 25% of issued capital. 'Only one applicant type (Individual, Company or Trust) per application.'"
+        },
+        {
+          "type": "self_employed_trust",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 24,
+          "evidence": "As per sole trader.",
+          "conditions": "Discretionary trusts only — 'no Unit or Hybrid Trusts' — restricted to a single entity applicant."
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.9,
+          "minHistoryMonths": null,
+          "evidence": "Income evidence must be translated into English by an authorised/approved translator and converted to Australian dollars at the current exchange rate.",
+          "conditions": "Non-resident (expat) lending only: 'A maximum of 90% of overseas income converted to Australian dollars may be used for serviceability purposes.' Where foreign income cannot be adequately verified, 80% of the gross market rental income for the security property must cover the proposed repayments at the default interest rate on a P&I basis over the remaining term. Non-resident self-employed, company or business borrowers are excluded."
+        }
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Acceptable PAYG income' table p7 and 'Income and assessment requirements' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Every allowance percentage above is quoted from Resimac's 'Allowance (%)' columns, which is high-confidence. The Fact as a whole is marked medium because the p7 table is a four-column layout (Prime min duration / Prime allowance / Specialist min duration / Specialist allowance) whose rows do not align cleanly in the PDF text layer; the minHistoryMonths values for bonus, dividends, maintenance and overtime in particular should be re-read against the visual PDF before being relied on. Where a cell could not be attributed with confidence, minHistoryMonths is left null rather than guessed."
+    }
+  },
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Acceptable PAYG income p7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Full time employment — Min. Duration 6' on both Prime and Specialist. Permanent part time is also 6 months."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product parameters p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Alt Doc: 'ABN must be registered for two (2) years' and 'the borrowers must have continually operated the same business for a minimum of 2 years'. Specialist: 12 months for Clear, 6 months for Plus and Assist."
+    },
+    "minMonthsGstRegistered": {
+      "value": 12,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product parameters p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime: 'Where the borrower has a business with gross turnover in excess of $75,000 there must be a valid GST registration in place for a minimum period of 12 months.' Specialist: 12 months (Clear), 6 months (Plus and Assist), on the same turnover trigger."
+    }
+  },
+  "credit": {
+    "maxDefaults": {
+      "value": 0,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product matrix p3 / 'Which Specialist loan is for me?' p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "This is the 'Number of credit events >$2k' row for SPECIALIST CLEAR: 0. Specialist Plus allows 1; Specialist Assist unlimited. Resimac defines a credit event as 'any single event that caused an adverse credit bureau listing or listings. A single credit event can consist of multiple bureau listings, provided the borrower can demonstrate that all listings were caused by that single event and the period over which the listings were reported does not exceed 6 months.' The Prime tier's credit-event tolerance is not published in this guide."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 2000,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p4 and Specialist product parameters p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Applicants with defaults, writs or summons under $2,000 accepted for Specialist Clear and Specialist Plus to 80% LVR.' Restated on p9 as: 'We'll consider applicants with defaults and judgements under $2,000.' The $2,000 threshold is also what defines a countable 'credit event >$2k'."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p4, p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Applicants with defaults, writs or summons paid over 12 months ago accepted.' Specialist tiers only."
+    },
+    "paidDefaultMinAgeMonths": {
+      "value": 12,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p4, p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Paid more than 12 months before application. Unpaid listings need to be more than 24 months old."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p4, p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Applicants with defaults, writs or summons listed over 24 months ago, paid or unpaid accepted.' Specialist tiers only."
+    },
+    "judgmentsAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product parameters p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Under $2,000 considered; paid more than 12 months ago considered; listed more than 2 years ago considered."
+    },
+    "writsAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product parameters p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Writs and summonses are treated on the same terms as defaults and judgements."
+    },
+    "bankruptcyDischargedMinYears": {
+      "value": 0,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product matrix p3, p4",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Specialist Clear requires only that the bankruptcy is 'Discharged' — no minimum time since discharge is stated. Remarkably, Specialist Plus and Assist accept a CURRENT (undischarged) bankruptcy: Plus 'Current but entered two or more years ago', Assist 'Current but entered less than two years ago'."
+    },
+    "maxArrears6Months": {
+      "value": 0,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product matrix p3, p4",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "MORTGAGE arrears, Specialist Clear: 'Less than 1'. Specialist Plus: 'Less than 3'. Specialist Assist: 'Unlimited'. The guide does not state the window these are measured over, so the 6-month field is used as the closest match — treat the window as unpublished. 'The definition of Mortgage Arrears is full payments missed / in arrears.'"
+    },
+    "notes": {
+      "value": "'If the applicant fits into more than one credit rating, the highest level is to apply.' First home buyers are restricted to Specialist Clear and Plus. Resimac's approved credit reference agency is Equifax; credit reports must be current and no older than 21 days at submission, and cannot be accessed without the applicant's written consent. Credit reports are required for individual applicants (consumer and commercial enquiries), company and company-trustee entities, and applicable guarantors.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product parameters p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Residential or rural residential properties up to ten hectares (25 acres)",
+        "Residential properties greater than 40sqm (exclusive of balconies and parking)",
+        "Vacant residential land in Category 1 localities only, as collateral security to a maximum 50% of total gross security value, max LVR 80% for residential allotments"
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist product parameters, 'Acceptable security properties' p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "This list is from the SPECIALIST product parameters. Vacant land must have kerbed and sealed road access and water, sewerage and power connected or running immediately up to the boundary. Note that on PRIME, vacant land as sole security is unacceptable."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Properties not zoned Residential or Rural Residential",
+        "Rural residential properties exceeding ten hectares (25 acres)",
+        "Construction loans / development or partially completed dwellings",
+        "Commercial or industrial properties",
+        "Rural zoned, or commercial/mixed use properties having residential units above commercial shops",
+        "Leasehold properties (excluding ACT Crown Land)",
+        "Properties situated in a commercial or business area, even if zoned Residential",
+        "Units under 30sqm living area on Prime; residential properties less than 40sqm on Specialist (excluding balconies and parking)",
+        "Developments converted from another usage (office block, hotel or motel conversion)",
+        "Holiday resorts",
+        "University campus style accommodation",
+        "Studio apartments or bed sitters with no separate bedroom; serviced apartments",
+        "Apartments/flats with shared toilet facilities",
+        "Units in retirement village complexes",
+        "Units or townhouse developments that have not been strata titled",
+        "Properties issued under Company Title",
+        "Properties with more than two residences on the same title",
+        "Mobile homes; owner builder, relocatable or kit homes; time share",
+        "Exhibition homes in display villages",
+        "Flood, land slip or other adversely affected areas (Specialist: less than 1:100 year flood is unacceptable)",
+        "Areas affected by high tension powerlines or motorways; mine subsidence",
+        "Contaminated or potentially contaminated sites",
+        "Security currently used for business purposes (unless minimal cost to reconvert)",
+        "Dilapidated or poorly maintained properties in need of major repairs",
+        "Resumption orders or properties adversely affected by a local government or state planning scheme",
+        "Heritage listing classification limiting future saleability; restrictive zoning or usage",
+        "Unique or specialised properties, or those with restrictive usage or appeal",
+        "A house with less than two bedrooms",
+        "Properties not connected to normal town services such as water and electricity",
+        "Income producing farms; income producing properties other than residential investment property",
+        "Vacant land as sole security (Prime)",
+        "Properties with less than 3 comparable sales, or an extended selling period",
+        "Security located on an island without a sealed road connection to the mainland",
+        "Residential improvement value less than 10% of the value of the property",
+        "Ownership of more than 4 or 25% of residential units in any single development, whichever is lower"
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Unacceptable security properties' pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Merged from the Prime (p8) and Specialist (p9) unacceptable-security lists; where the two differ the tier is named in the entry."
+    },
+    "minUnitFloorAreaSqm": {
+      "value": 30,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product parameters p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PRIME: 'Units under 30sqm in living area (whereby this area measurement excludes balconies, courtyards and car spaces)' are unacceptable. SPECIALIST is stricter: 'Residential properties less than 40sqm (exclusive of balconies and parking)' are unacceptable."
+    },
+    "maxLandSizeHa": {
+      "value": 10,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Rural residential properties exceeding ten hectares (25 acres)' are unacceptable security."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Acceptable property locations' pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Category 1/2/3 locations drive both max LVR and max loan amount. 'To view Resimac's Acceptable Property Locations go to www.resimac.com.au, select the Acceptable Property Locations tool and follow the prompts in the secure area.' The tool sits behind a login, so the category for a given postcode cannot be cited from a public source."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Accepted up to ten hectares (25 acres). Rural-ZONED property, and income-producing farms, are not accepted."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime unacceptable securities p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Properties issued under Company Title' listed as unacceptable security."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Leasehold properties (excluding ACT Crown Land)' are unacceptable — i.e. ACT Crown lease IS acceptable."
+    },
+    "strataAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime unacceptable securities p8",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Inferred from the decline of the opposite case: 'Units or townhouse developments that have not been strata titled' are unacceptable, so strata title is required rather than merely permitted."
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Specialist unacceptable securities p9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Studio and Serviced apartments' listed as unacceptable."
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime unacceptable securities p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'University campus style accommodation' listed as unacceptable."
+    },
+    "displayHomeLeasebackAccepted": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Exhibition homes in display villages' (Prime) / 'Exhibition homes' (Specialist) listed as unacceptable."
+    },
+    "maxSecurities": {
+      "value": 4,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Ownership of more than 4 or 25% of residential units in any single development, whichever is the lower' is unacceptable, as is 'Total exposure of more than 4 or 25% to Resimac Limited of residential units in any single development'. This is a per-development concentration cap."
+    },
+    "notes": {
+      "value": "Valuations must come from an approved Resimac panel valuer (a separate Specialist Lending panel applies to Specialist loans), be addressed to Resimac Limited, be extended for use by the security trustee (Perpetual Trustee Company Limited) and the mortgage insurer, and be no more than 90 days old at settlement. Partial discharge requires a written signed request and a formal credit assessment; if the remaining security valuation is more than 6 months old a revaluation is required, and if the remaining security has moved to a worse location category the LVR must be reduced to that category's maximum.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Valuation report / Partial discharge pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Standard, Prime Alt Doc and all Specialist tiers: $50k. Prime Flex is higher at $150k."
+    },
+    "maxLoanAmount": {
+      "value": 3500000,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$3.5m across Prime Flex, Standard and Alt Doc. Specialist Clear $2.5m, Specialist Plus $1.5m, Specialist Assist $1m. With LMI the Prime matrix reaches $5.0m at up to 95% LVR. Maximum aggregate loan exposure to the group is $5,000,000."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'15 - 30 years' on every product — note the MINIMUM term of 15 years, which is unusual and can knock out short-term requests."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Flex and Standard: '1 - 10 years (O/O max. 5 years & 80% LVR)'. So owner-occupied interest only is capped at 5 years AND 80% LVR. Prime Alt Doc: 1-5 years with O/O max 80% LVR. All Specialist tiers: 1-5 years, O/O max 80% LVR."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 10,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Product matrix p2",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Prime Flex and Standard allow interest only of 1-10 years; the 5-year cap is expressly an owner-occupied restriction. Prime Alt Doc and all Specialist tiers are 1-5 years."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Features pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Multiple Offsets available' on both Prime and Specialist."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Features pp2-3",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Redraw available' on both Prime and Specialist."
+    },
+    "constructionAvailable": {
+      "value": false,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Unacceptable security properties pp8-9",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Construction loans' (Prime) and 'Construction, development or partially completed dwellings' (Specialist) are listed as unacceptable security. Resimac is a knock-out for any construction scenario."
+    },
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Prime product parameters, Full Doc loan p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Quote: 'Where the LVR is >90%, the applicant(s) must demonstrate a deposit source of at least 5% of the proposed purchase price held in an account in the name of at least one applicant. Borrowed funds are not acceptable as a deposit source.'"
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Below 90% LVR no genuine-savings requirement is stated."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Funds to complete - all products' p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Gift from an immediate family member' is an acceptable source of funds to complete. Note this does NOT displace the >90% LVR requirement for 5% held in an applicant's own account."
+    },
+    "giftedDepositConditions": {
+      "value": "Acceptable funds to complete across all products: funds held or accumulated in bank accounts; First Home Owner Grant, First Home Saver Account or First Home Super Saver Scheme; equity in or proceeds from the sale of a residential property; shares; accelerated loan repayments; employer bonus; inheritance; sale of assets (boat, car etc.); funds held in a company or business name; and a gift from an immediate family member.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable sources of equity: a favourable purchase involving a government subsidy/equity scheme; vendor finance; developer cash backs or vendor-assisted deposits; rent-to-buy arrangements where rent is refunded on settlement; Bartercard/trade dollars."
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "First Home Owner Grant",
+        "First Home Saver Account",
+        "First Home Super Saver Scheme"
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — 'Funds to complete - all products' p8",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "These are named as acceptable sources of funds to complete, which is not quite the same as participating in the scheme as a panel lender. Importantly, the opposite is expressly declined: 'Favourable purchase involving some form of government subsidy / equity scheme' is an unacceptable source of equity. Resimac's participation (or not) in the Home Guarantee Scheme is not stated in this guide."
+    },
+    "notes": {
+      "value": "Only one applicant type (Individual, Company or Trust) per application — e.g. 'John Smith & Smith and Co Pty Limited would be an unacceptable loan structure'. Borrowers must be natural persons (PAYG, sole trader or partnership) who are Australian or NZ residents/citizens over 18. Fees: Prime lenders application/settlement fee $199 (Standard/Flex) or $599 (Alt Doc); Specialist $949; Prime Flex also carries a $299 annual fee. Legal fees are nil for standard loans (individual borrower, single security) but higher for non-standard loans (additional securities, companies, guarantees, trusts). Cash out: Prime without LMI unlimited to 80% LVR; Prime with LMI unlimited to 85% and restricted to 20% of security value from 85.01-90%; Alt Doc no limit to 80%; Specialist Clear and Plus unlimited to 80%; Specialist Assist and refinance of solicitor loans limited to $10,000 and 80% LVR; not available for non-residents.",
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — pp2-3, 6, 8, 9",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "'Natural person/s (either PAYG, Sole trader or Partnership) who are Australian or NZ residents/citizens over 18 years old.'"
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Australian residents are named as acceptable borrowers."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "New Zealand residents/citizens are expressly named alongside Australians as acceptable borrowers."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": 70,
+          "conditions": "This is Resimac's 'non-resident' category: 'A non-resident is deemed to be a citizen and/or permanent resident of Australia or New Zealand who resides and is employed in another country.' Investment properties only; maximum lending amount $750,000; maximum LVR 70%; country restrictions apply; must be a High Net Worth Borrower with net surplus assets greater than $500,000 (international assets permitted); non-resident self-employed, company or business borrowers are excluded; a certified passport copy is required (by an Australian Consular Officer if the applicant has not entered Australia); loan documents executed overseas must be witnessed by an Australian Consular Officer; an irrevocable undertaking to accept service at a physical Australian address (not a PO Box) is required; cash out is not available."
+        }
+      ],
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Borrowers / Non-resident loan conditions p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Temporary-visa holders and genuinely foreign (non-Australian/NZ) buyers are NOT addressed anywhere in this guide — no rule is recorded for them rather than inferring a decline."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.9,
+      "asAt": "2025-09-25",
+      "sourceUrl": "https://cdn.prod.website-files.com/691e099580b3d5209597570c/693766c095916dcf030eb307_RES_Product-Guide_Broker.pdf",
+      "sourceTitle": "Resimac Broker Product Guide 25 Sep 2025 — Non-resident loan conditions p8",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'A maximum of 90% of overseas income converted to Australian dollars may be used for serviceability purposes.'"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2025-09-25",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "PRIMARY DATE RISK: the most recent Resimac broker product guide findable on a public, no-login URL is dated 25 September 2025 — ten months old. Resimac's own Product & Policy Updates page could not be read (it renders empty to a fetcher), and a search result indicates 'HEM living expenses apply from 18 February 2026', which post-dates this guide. Treat the servicing figures as needing re-confirmation.",
+    "No published DTI cap. Resimac publishes a net surplus ratio test (1.00x plus $200 annual surplus) instead.",
+    "hemBasis not recorded. The Sept 2025 guide does not name a living-expense benchmark; a Feb 2026 update reportedly introduced HEM but the detail is not on a public page.",
+    "No investment-purpose max LVR. The guide says only 'Loan amounts are for owner occupied purposes. Investment purpose loans may be lower' and refers to the Helia LMI guidelines.",
+    "The Specialist loan-amount matrix (Clear/Plus/Assist by location category and LVR band, p5) was not transcribed — its column alignment could not be reconstructed reliably from the PDF text layer. Only the Prime bands are recorded in lvrBands.",
+    "Minimum-duration cells for overtime, maintenance payments, bonuses and dividends in the p7 income table are ambiguous in the extracted text; those specific numbers should be re-read from the visual PDF.",
+    "No published maximum applicant age at maturity, exit-strategy age, or maximum employment gap.",
+    "No published guarantor policy — guarantees are mentioned only in the legal-fee schedule as making a loan 'non-standard'.",
+    "No published minimum credit score, maximum enquiries, payday-lending policy or gambling policy.",
+    "Location Category 1/2/3 lists sit behind the broker login (Acceptable Property Locations tool), so a specific postcode's category cannot be sourced publicly.",
+    "SMSF lending is not covered in this guide; Resimac's SMSF offering (if any) was not researched.",
+    "Casual employment minimum tenure is recorded as 6 months at medium confidence — re-read the p7 table visually to confirm."
+  ]
+}

@@ -2,11 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
 
 import { requireAuth } from "../../../../utils/cf-access";
+
+type ContactInput = {
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  budget_max?: number | null;
+  timeframe?: string | null;
+  temperature?: string | null;
+  source?: string | null;
+  status?: string | null;
+};
+
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
   const body = await req.json();
-  const contacts: any[] = body.contacts;
+  const contacts: ContactInput[] = body.contacts;
   const defaultTags: string[] = Array.isArray(body.default_tags) ? body.default_tags : [];
   const defaultSource: string | null =
     typeof body.default_source === "string" && body.default_source.trim()
@@ -19,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const now = new Date().toISOString();
 
-  const toRecord = (b: any) => {
+  const toRecord = (b: ContactInput) => {
     const firstName = b.first_name?.trim() || "";
     const lastName = b.last_name?.trim() || "";
     const fullName =

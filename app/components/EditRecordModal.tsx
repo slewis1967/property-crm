@@ -8,6 +8,7 @@
  * parent can update its local state without a refetch.
  */
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 type FieldDef =
   | { key: string; label: string; type: "text" | "email" | "tel" | "number" | "date" }
@@ -134,24 +135,24 @@ export default function EditRecordModal({
   onSaved,
 }: {
   kind: RecordKind;
-  record: Record<string, any>;
+  record: Record<string, unknown>;
   patchUrl: string;
   onClose: () => void;
-  onSaved: (updated: Record<string, any>) => void;
+  onSaved: (updated: Record<string, unknown>) => void;
 }) {
   const fields = kind === "opportunity" ? OPP_FIELDS : CONTACT_FIELDS;
   const editableFields = fields.filter(isField);
 
   // Local form state — start from current record values
-  const initial: Record<string, any> = {};
+  const initial: Record<string, string | number> = {};
   for (const f of editableFields) {
-    initial[f.key] = record[f.key] ?? (f.type === "number" ? 0 : "");
+    initial[f.key] = (record[f.key] ?? (f.type === "number" ? 0 : "")) as string | number;
   }
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const set = (key: string, value: string | number) => setForm((f) => ({ ...f, [key]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,7 +161,7 @@ export default function EditRecordModal({
 
     // Only send fields that actually changed; skip empty strings if the
     // record was previously null so we don't write "" over null
-    const delta: Record<string, any> = {};
+    const delta: Record<string, unknown> = {};
     for (const f of editableFields) {
       const current = record[f.key];
       const next = form[f.key];
@@ -184,8 +185,8 @@ export default function EditRecordModal({
       if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
       onSaved({ ...record, ...delta });
       onClose();
-    } catch (e: any) {
-      setError(e.message || "Save failed");
+    } catch (e) {
+      setError(errMessage(e, "Save failed"));
       setSaving(false);
     }
   };

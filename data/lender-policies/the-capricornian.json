@@ -1,0 +1,188 @@
+{
+  "id": "the-capricornian",
+  "name": "The Capricornian",
+  "legalName": "The Capricornian Ltd trading as The Capricornian Bank",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "246780",
+  "abn": "54 087 650 940",
+  "brokerSiteUrl": "https://www.capricornian.com.au/broker",
+  "policyDocUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {},
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 97,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan amounts over $150,000 and up to 97% of the property value including Lenders Mortgage Insurance premium (Lenders Mortgage Insurance applicable over 80% LVR)\". i.e. 95% base LVR plus a capitalised LMI premium to a 97% hard ceiling — the home-loan comparison page states the maximum loan amount as \"95% of property value plus LMI\"."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Lenders Mortgage Insurance applicable over 80% LVR\"."
+    },
+    "lmiCapitalisable": {
+      "value": true,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 97% ceiling is expressly \"including Lenders Mortgage Insurance premium\", so the premium may be added on top of the base loan."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 97% figure is stated as inclusive of the LMI premium."
+    },
+    "notes": {
+      "value": "Maximum LVR by product (home loan comparison page): No Frills 95% + LMI; Premium Choice 95% + LMI; Variable Rate Offset (Country to Coast) 95% + LMI; Lifestyle 80%; Access Equity 80%.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.capricornian.com.au/loans/home-loans/home-loan-comparison/",
+      "sourceTitle": "The Capricornian — Home Loan Comparison",
+      "confidence": "high",
+      "status": "verified",
+      "note": "asAt is the retrieval date — the comparison page carries no publication date. The 95%+LMI figure is corroborated by the 19 February 2026 TMD."
+    }
+  },
+
+  "income": {},
+  "employment": {},
+  "credit": {},
+
+  "security": {
+    "maxLandSizeHa": {
+      "value": 8,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Listed under consumers for whom the product is clearly unsuitable: those who \"Need to purchase a property over eight (8) hectares\"."
+    },
+    "notes": {
+      "value": "Security property must be domiciled in Australia and the borrower must give a registered first mortgage over real property or other acceptable security. Properties over 8 hectares are outside the No Frills product's target market. The Capricornian also runs a dedicated Lifestyle Property loan for rural/lifestyle blocks and Rural & Regional home loans.",
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.capricornian.com.au/loans/home-loans/home-loan-comparison/",
+      "sourceTitle": "The Capricornian — Home Loan Comparison",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Minimum loan varies by product: Premium Choice $50,000; Lifestyle $50,000; No Frills $150,000; Variable Rate Offset (Country to Coast) $250,000; Access Equity (an equity line, 7-year term) $5,000. $50,000 is the lowest ordinary home-loan minimum. asAt is the retrieval date; the No Frills $150,000 minimum is independently confirmed by the 19 February 2026 TMD (\"Borrowers who require a loan less than $150,000\" are listed as unsuitable)."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan terms of up to 30 years\" — matches the comparison page for No Frills, Premium Choice, Lifestyle and Variable Rate Offset. Access Equity is 7 years."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.capricornian.com.au/loans/home-loans/home-loan-comparison/",
+      "sourceTitle": "The Capricornian — Home Loan Comparison",
+      "confidence": "high",
+      "status": "verified",
+      "note": "100% offset on Premium Choice, Lifestyle and Variable Rate Offset. NOT available on No Frills or Access Equity — the No Frills TMD expressly lists clients \"seeking to attach an offset facility\" as unsuitable. asAt is the retrieval date."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw of advance repayments; free online and mobile redraws (fee applies in branch). Not available on fixed-rate options; fixed loans permit up to $10,000 of additional repayments a year without penalty."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.capricornian.com.au/loans/home-loans/home-loan-comparison/",
+      "sourceTitle": "The Capricornian — Home Loan Comparison",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Construction available on No Frills, Premium Choice, Lifestyle and Variable Rate Offset; not on Access Equity. The No Frills TMD offers interest-only during construction at a 1% margin (0.50% margin for ordinary interest-only). asAt is the retrieval date."
+    },
+    "notes": {
+      "value": "The Capricornian is a member-owned Central Queensland bank founded in 1959, with eight branches across Rockhampton, Yeppoon, Emerald, Gladstone and surrounding towns. Broker-distributed: the TMD lists \"The Capricornian Broker Network relationships\" alongside branches, mobile lenders, call centre and online. Borrowers must be, or become, shareholding members of The Capricornian Bank — a mutual membership requirement that is an explicit target-market condition. No monthly loan fees on the home loan range; an establishment fee applies. Interest-only is available to approved applicants at a 0.50% margin (1% for construction). No penalty for extra repayments or early payout on variable products. The No Frills owner-occupied product is expressly NOT for investors — use the No Frills Investment or Premium Choice Investment products.",
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Target market is retail clients who \"are an Australian resident and whose potential security property is domiciled in Australia\", aged 18 or over."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Covered by the same \"Australian resident\" wording; the TMD does not distinguish citizens from permanent residents."
+        }
+      ],
+      "asAt": "2026-02-19",
+      "sourceUrl": "https://www.capricornian.com.au/app/uploads/2026/06/1-No-Frills-Owner-Occupied-Home-Loan-Variable-Clean.pdf",
+      "sourceTitle": "The Capricornian Bank Target Market Determination — No Frills Owner Occupied Variable Rate Home Loan, 19 February 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD says only \"Australian resident\"; it does not name visa subclasses, NZ citizens, expats or non-residents. Those are unresearched, not declined."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-02-19",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "No servicing buffer, assessment floor rate, DTI cap, rent shading, HEM basis, credit-card assessment rate or commitment treatment published.",
+    "No income-type policy at all — casual, contract, probation, overtime, bonus, commission, self-employed and Centrelink treatment are unpublished.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published (defaults, arrears, bankruptcy, enquiries, credit score).",
+    "No maximum loan amount published for any product.",
+    "No LMI provider named and no LMI waiver professions published.",
+    "No minimum unit floor area, high-density apartment, postcode-category or company-title policy published.",
+    "Lending area is not stated; as a Central Queensland mutual there may be a geographic restriction that is simply not published — the 'Rural & Regional Home Loans QLD' framing suggests a QLD focus.",
+    "Ten separate product TMDs are published (June 2026 uploads, dated February 2026); only the No Frills Owner Occupied Variable one was read in full. The investment and Premium Choice TMDs may carry different LVR/loan-size rules.",
+    "Government scheme participation (Home Guarantee Scheme / 5% Deposit Scheme) not established."
+  ]
+}

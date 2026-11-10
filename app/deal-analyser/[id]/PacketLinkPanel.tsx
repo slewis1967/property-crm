@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ClientHint } from "../../../utils/deal-packet";
+import { errMessage } from "../../../utils/errors";
 
 /**
  * Opportunity link + AI-applied changes for a deal packet.
@@ -92,11 +93,13 @@ export default function PacketLinkPanel({
     if (initialOpportunityId || !clientHint) return;
     const m = matchOpportunity(clientHint, opportunities);
     if (!m) return;
-    setSelected(m);
-    setAutoMatched(true);
+    queueMicrotask(() => {
+      setSelected(m);
+      setAutoMatched(true);
+    });
     attach({ opportunity_id: m.id })
       .then((j) => setLinkMsg(`Auto-attached from email${j.reports_updated ? ` · ${j.reports_updated} report(s) linked` : ""}`))
-      .catch((e) => setLinkMsg(e.message));
+      .catch((e) => setLinkMsg(errMessage(e)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -115,8 +118,8 @@ export default function PacketLinkPanel({
     try {
       const j = await attach({ opportunity_id: o?.id ?? null });
       setLinkMsg(o ? `Attached${j.reports_updated ? ` · ${j.reports_updated} report(s) linked` : ""}` : "Detached");
-    } catch (e: any) {
-      setLinkMsg(e.message);
+    } catch (e) {
+      setLinkMsg(errMessage(e));
     }
   }
 
@@ -134,8 +137,8 @@ export default function PacketLinkPanel({
       if (!res.ok) throw new Error(j.error || "Couldn't read that");
       setProposal({ edits: j.edits ?? [], extra_info: j.extra_info ?? "" });
       setCompliance({ violations: j.compliance?.violations ?? [], suggestion: j.compliance?.suggestion ?? "" });
-    } catch (e: any) {
-      setChangesMsg(e.message);
+    } catch (e) {
+      setChangesMsg(errMessage(e));
     } finally {
       setChangesBusy(false);
     }
@@ -171,8 +174,8 @@ export default function PacketLinkPanel({
       });
       if (!gr.ok) throw new Error((await gr.json()).error || "Failed to regenerate");
       window.location.reload();
-    } catch (e: any) {
-      setChangesMsg(e.message);
+    } catch (e) {
+      setChangesMsg(errMessage(e));
       setChangesBusy(false);
     }
   }

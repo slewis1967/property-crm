@@ -1,0 +1,372 @@
+{
+  "id": "bank-of-melbourne",
+  "name": "Bank of Melbourne",
+  "legalName": "Bank of Melbourne - A Division of Westpac Banking Corporation",
+  "tier": "major_bank",
+  "status": "active",
+  "acl": "233714",
+  "abn": "33 007 457 141",
+  "brokerSiteUrl": "https://www.bankofmelbourne.com.au/broker",
+  "policyDocUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+  "funder": "Westpac Banking Corporation",
+  "panels": null,
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published on any public Westpac Group broker page. The serviceability calculator and the full Credit Policy sit behind the BrokerHub login.",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly; BrokerHub login required.",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No DTI cap published on the public broker policy page.",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Rental income shading is not published publicly.",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Bridging ICAP finance: bridging interest capitalised loan - servicing is assessed on the end debt amount where applicable. Bridging facility can be in place for up to 12 months. Portability allows customers to switch securities with no changes to the loan details or loan serviceability assessment.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Stated as 'Max LVR 95% for Owner Occupier and 90% for Investor (inclusive of LMI) or 80% LVR without LMI' in the Construction section, and the Medico LMI waiver reaches 95% LVR. The page does not state a single general purchase ceiling. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "'Up to 90% LVR for Investment Property loans with Interest Only repayments (inclusive of LMI)'; Construction section also states 90% for Investor. NOTE: the equivalent February 2026 Westpac Group niche PDFs say 95% on the same line, so the live page and the PDF disagree - confirm with the BDM. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "'or 80% LVR without LMI' (Construction section). LMI waiver niches reach 90-95% without LMI for eligible professions. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "maxLvrConstructionPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Fixed price build contract: 'Max LVR 95% for Owner Occupier and 90% for Investor (inclusive of LMI) or 80% LVR without LMI'. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Maximum LVRs are stated as '(inclusive of LMI)'. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiWaiverProfessions": {
+      "value": [
+        "Dentists (95% LVR LMI waiver, no minimum income)",
+        "General Practitioners (95% LVR LMI waiver, no minimum income)",
+        "Hospital-employed Doctors (Intern, Resident, Registrar, Staff Specialist) (95% LVR LMI waiver, no minimum income)",
+        "Medical Specialists (95% LVR LMI waiver, no minimum income)",
+        "Audiologists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Chiropractors (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Midwives (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Occupational Therapists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Osteopaths (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Physiotherapists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Podiatrists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Psychologists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Radiographers (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Registered Nurses (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Sonographers (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Speech Pathologists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Optometrists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Pharmacists (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Veterinary Practitioners (90% LVR LMI waiver, minimum income $90,000 p.a.)",
+        "Accounting (90% LVR, no LMI - industry specialisation)",
+        "Legal (90% LVR, no LMI - industry specialisation)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Medico list has no minimum income requirement at 95% LVR; the 90% list requires a minimum income of $90,000 p.a. and cannot be used in conjunction with Fast Track. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "lmiWaiverMaxLvrPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "'LMI waiver up to 95% LVR (min 5% deposit) may also apply to listed medical practitioners'; 'LMI waiver up to 90% LVR (min 10% deposit) for registered nurses and registered midwives earning a minimum annual income of $90,000'. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Medico LMI waiver: max loan amount $5m ($7.5m total lending with LMI waiver). Professional qualifications are verified as part of the application.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Eligible Emergency Services frontline employed applicants could have their overtime and allowances assessed at 100% (conditions apply). Eligible professions include: Fire Officers or Firefighters; Police Officers; Ambulance Officers or Paramedics; Hospital employed Nurses, Doctors, Surgeons or Specialists."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Latest two years' individual ATO Notices of Assessment (Fast Track method)",
+          "conditions": "Fast Track method available for borrowing up to 80% LVR. Eligible Medico clients can still get LMI waivers up to 95%. For non-Fast Track applications the lender may accept a 1 Year Assessment or latest year income for servicing for those who meet the criteria. Source wording is 'self-employed clients' and does not distinguish trading structure."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Latest two years' individual ATO Notices of Assessment (Fast Track method)",
+          "conditions": "Fast Track method available for borrowing up to 80% LVR. Source wording is 'self-employed clients' and does not distinguish trading structure."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Fast Track method: latest two years' individual ATO Notices of Assessment, for borrowing up to 80% LVR. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "oneYearFinancialsAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "'For non-Fast Track applications, we may accept the use of 1 Year Assessment or latest year income for servicing for those who meet the criteria.' Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "employment": {},
+  "credit": {},
+  "security": {},
+  "product": {
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Construction available with variable or fixed rate loans, including Flexi First Home and Investment Loans; fixed price build contract. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Bridging ICAP (interest capitalised) finance; facility can be in place for up to 12 months. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "'For those who are currently renting, minimum of 3 months of continuous rental history can be used as proof of genuine savings.' A separate 6-month continuous rental history option applies where the loan is for an owner-occupied residence or established owner-occupied dwelling (or vacant land with a construction application), all tenants on the lease are borrowers, and the property is leased through a licensed property manager/agent (excludes family/private). Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Family Security Guarantee. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "guarantorConditions": {
+      "value": "Family Security Guarantee loans available for Owner Occupied and Investment purchases. No serviceability assessment required for the guarantors.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "governmentSchemesSupported": {
+      "value": [
+        "Australian Government 5% Deposit Scheme (Home Guarantee Scheme)"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://firsthomebuyers.gov.au/australian-government-5-percent-deposit-scheme/5-percent-participating-lenders",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Housing Australia - Australian Government 5% Deposit Scheme Participating Lenders",
+      "note": "Listed as 'Bank of Melbourne' on the Housing Australia participating lender list. Page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Cash out: for non-mortgage-insured loans, up to $250k for renovation purposes with no cash out limit for personal or investment purposes (conditions apply); for mortgage insured loans, up to $100k for renovation, personal or investment purposes.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Based on Bank of Melbourne's credit criteria, residential lending is not available for Non-Australian resident borrowers."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "medium",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "The page states only that residential lending is not available for non-Australian resident borrowers; it does not enumerate acceptable visa subclasses, so temporary-visa treatment is unknown. Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    },
+    "notes": {
+      "value": "Based on Bank of Melbourne's credit criteria, residential lending is not available for Non-Australian resident borrowers.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.bankofmelbourne.com.au/broker/policy",
+      "confidence": "high",
+      "status": "verified",
+      "sourceTitle": "Bank of Melbourne Broker - Policy",
+      "note": "Live broker policy page carries no publication date; retrieved 2026-07-29.",
+      "updatedBy": "research:claude-opus-5",
+      "updatedAt": "2026-07-29"
+    }
+  },
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Assessment buffer, assessment rate floor, DTI cap, rental shading, credit card assessment rate and HEM basis are not published on any public Westpac Group broker page - the serviceability calculator and full Credit Policy are behind the BrokerHub login.",
+    "General (non-construction) maximum LVR for owner-occupied and investment purchases is not stated as a single figure; the values recorded are read from the Construction and Investor sections.",
+    "The live policy page says 90% LVR for Investment Property Loans with Interest Only repayments while the February 2026 broker niche PDF says 95% on the same line - unresolved conflict.",
+    "No published employment tenure minimums (probation, casual, contract), credit-history knock-outs (defaults, bankruptcy, arrears), or security/postcode restrictions.",
+    "Minimum and maximum loan amounts, maximum loan term and interest-only maximum terms are not published on the broker policy page.",
+    "Temporary-visa and NZ-citizen treatment is not published; only 'not available for Non-Australian Resident borrowers' is stated."
+  ],
+  "reviewedBy": null,
+  "reviewedAt": null
+}

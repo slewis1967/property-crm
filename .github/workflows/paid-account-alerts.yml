@@ -1,0 +1,62 @@
+name: Paid account alerts (daily)
+
+# Checks the Paid Accounts register and emails a single digest when something
+# needs attention — a payment due or overdue, a trial about to convert, a card
+# expiring before the next charge, or a prepaid balance running dry.
+#
+# Separate from crm-sweeps.yml on purpose: this must land ONCE a day at a
+# predictable hour, and it must not queue behind the AI-heavy YLA/reminder
+# sweeps that share that workflow's timeout.
+#
+# Nothing is emailed unless PAID_ALERTS_ENABLED=true in the Netlify env — until
+# then every run is a dry run that records what it WOULD have sent (visible in
+# the panel's "last automated check" line). The digest is also self-throttling:
+# at most one real send per Brisbane day.
+#
+# The endpoint (/api/cron/run) is secret-authed (Authorization: Bearer
+# CRON_SECRET, a repo secret) and hit on the Netlify origin, which bypasses
+# Cloudflare Access — the proxy.ts cron exemption lets it through and the secret
+# is the real auth.
+
+on:
+  schedule:
+    # 21:00 UTC = 07:00 Australia/Brisbane (AEST, no DST) — in the inbox before
+    # the working day, early enough to actually pay something.
+    - cron: "0 21 * * *"
+  workflow_dispatch: {} # manual run from the Actions tab
+
+concurrency:
+  group: paid-account-alerts
+  cancel-in-progress: false
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger the paid-accounts check
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repo secret is not set"; exit 1
+          fi
+          echo "Firing /api/cron/run?job=accounts …"
+          code=$(curl -sS -m 60 -o /tmp/resp -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://crmnex.netlify.app/api/cron/run?job=accounts" || echo "000")
+          echo "HTTP $code"
+          head -c 800 /tmp/resp 2>/dev/null || true
+          echo
+          if [ "$code" = "000" ]; then
+            echo "::error::could not reach the CRM cron endpoint"; exit 1
+          fi
+          if [ "$code" = "401" ]; then
+            echo "::error::unauthorised — CRON_SECRET mismatch"; exit 1
+          fi
+          # This job is a single DB read plus at most one email, so unlike the
+          # client sweeps it should comfortably return 200 in time. A 5xx here is
+          # worth failing the run for.
+          if [ "$code" -ge 500 ]; then
+            echo "::error::CRM returned HTTP $code"; exit 1
+          fi

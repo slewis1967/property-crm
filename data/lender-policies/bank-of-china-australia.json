@@ -1,0 +1,253 @@
+{
+  "id": "bank-of-china-australia",
+  "name": "Bank of China (Australia)",
+  "legalName": "Bank of China (Australia) Limited",
+  "tier": "foreign_bank",
+  "status": "active",
+  "acl": "287322",
+  "abn": "28 110 077 622",
+  "brokerSiteUrl": "https://www.bankofchina.com/au/en/pbservice/pb2/201801/t20180131_11319422.html",
+  "policyDocUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Bank of China (Australia) publishes no credit policy guide, servicing calculator help or policy-at-a-glance. The Target Market Determinations refer only to 'the Bank's credit assessment and eligibility requirements'."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published, including in the Standard Variable Rate Investment Home Loan TMD."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 90,
+      "asAt": "2026-03-09",
+      "sourceUrl": "https://www.bankofchina.com/au/en/bocinfo/bi5/202603/t20260309_25653580.html",
+      "sourceTitle": "Bank of China (Australia) — Home Loan Interest Rate, Owner Occupied Property, effective from 9 March 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Read from the published rate table, which prices only two LVR bands: 'LVR <= 80%' and '80% < LVR <= 90%'. The Bank does not state a maximum LVR in policy language anywhere public; 90 is the top of the highest priced band, not a quoted cap."
+    },
+    "maxLvrInvestmentPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No investment LVR ceiling is stated. The investment rate schedule uses the same two bands (<=80% and 80-90%) but the Bank publishes no policy maximum."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — Target Market Determination, Standard Variable Rate Home Loan and Standard Variable Rate Investment Home Loan, effective 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'for customers where the value of their loan exceeds 80% of the value of the property over which the loan is secured, a requirement for the customer to pay the costs of the lender's mortgage insurance'. Same wording appears in the Discount, Discount Plus and Fixed Rate TMDs of the same date."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not named in any public document."
+    }
+  },
+
+  "income": {
+    "notes": {
+      "value": "The published rate schedules state 'Australian Income assessment applies' against every home loan product. The TMDs require customers to be 'meeting the Bank's credit assessment and eligibility requirements including having a regular income for the term of the loan'. No per-income-type shading, evidence or history rules are published.",
+      "asAt": "2026-03-09",
+      "sourceUrl": "https://www.bankofchina.com/au/en/bocinfo/bi5/202603/t20260309_25653580.html",
+      "sourceTitle": "Bank of China (Australia) — Home Loan Interest Rate, Owner Occupied Property, effective from 9 March 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The 'Australian Income assessment applies' note is significant for a bank often assumed to lend on Chinese income, but the Bank does not explain what it means or publish a foreign-income policy either way. Do not read it as either accepting or declining foreign income."
+    }
+  },
+
+  "employment": {},
+
+  "credit": {
+    "notes": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No credit-history policy is published. The Fixed Rate TMD lists as clearly unsuitable only those customers who 'do not meet the Bank's credit assessment and eligibility requirements'."
+    }
+  },
+
+  "security": {
+    "notes": {
+      "value": "The TMDs state only that 'the loan is secured against the property being financed' and that the products finance residential homes (owner occupied) or residential investment property. No acceptable/unacceptable security list, minimum unit size, postcode categories, high-density or rural policy is published.",
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 100000,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Product-specific, not one figure. Standard Variable Rate Home Loan / Investment Home Loan: 'the minimum loan amount is $100,000'. Fixed Rate Home Loans: $150,000. Discount Home Loans and Discount Plus Home Loans: $250,000 (each in its own TMD of 6 May 2026). NOTE a conflict: the 9 March 2026 rate schedule says 'We do not provide credit for an amount of less than $250,000 for Discount Investment Home Loan, $150,000 for Fixed Rate products and $100,000 for Discount Plus Investment Home Loan' — i.e. $100,000 for Discount Plus, where the Discount Plus TMD says $250,000. 100000 is recorded as the lowest minimum available across the range."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No maximum loan amount is published in any TMD or on the rate schedules."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'the maximum loan term is up to 30 years'. Identical across the Standard Variable, Discount, Discount Plus and Fixed Rate TMDs of 6 May 2026."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'interest only repayments at the beginning of the loan for periods of between 1 and 5 years'. For the owner-occupied product the interest-only target market is limited to persons undertaking construction or renovation, or who do not need and do not wish to repay principal during the interest only period. Switching into interest only is allowed only if the interest only option would end before the 5th anniversary of the loan."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Same 1-to-5-year interest-only window as the owner-occupied product."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799072757.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Discount Plus Home Loan and Discount Plus Investment Home Loan, effective 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Offset is available ONLY on the Discount Plus products ('each of which is provided with an optional Offset Account'; funds offset the loan balance for interest calculation, the account earns no interest, withdrawals on demand). The Standard Variable Rate, Discount and Fixed Rate TMDs all list customers who 'seek an offset account' / 'seek the ability to link their loan to an offset account' as clearly unsuitable for those products."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'the loan offers the ability to make early extra repayment and redraw repayments made'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'the ability to use the loan for construction or renovations during an interest only period'; 'Loans provided for construction or renovation purposes will be structured as interest only during the construction period'."
+    },
+    "notes": {
+      "value": "Product range: Standard Variable Rate Home Loan / Investment Home Loan, Discount Home Loan, Discount Plus Home Loan (offset), and Fixed Rate Home Loans for 1, 2, 3, 4 and 5 year terms. Repayment frequency monthly or fortnightly. Switching between principal-and-interest and interest-only is permitted without break costs. Fees include an annual service fee, a discharge service fee and third-party fees such as valuations.",
+      "asAt": "2026-05-06",
+      "sourceUrl": "https://pic.bankofchina.com/bocappd/australia/202605/P020260506500799380277.pdf",
+      "sourceTitle": "Bank of China (Australia) — TMD, Standard Variable Rate Home Loan and Investment Home Loan, 6 May 2026",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Bank of China (Australia) publishes no residency, citizenship, visa or non-resident lending policy. The only related public statement is 'Australian Income assessment applies' on the rate schedules. Third-party broker sites assert country-of-citizenship and foreign-income rules for this bank; none of it is sourced to the Bank and none of it has been recorded here."
+    },
+    "foreignIncomeShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "acceptedForeignCurrencies": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published."
+    },
+    "firbRequiredNote": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "FIRB is not mentioned in any public Bank of China (Australia) home loan document."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-05-06",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Confirmed broker-distributed: the TMD states the product 'can only be distributed by' branch employees of Bank of China Sydney Branch and 'the Bank's panel aggregators (and the accredited member brokers under these aggregators)'. The Bank does not, however, publish a broker/introducer site or any credit policy guide.",
+    "No servicing policy at all: no assessment buffer, floor rate, DTI cap, HEM basis, credit-card assessment rate or rental shading.",
+    "No income-type table, employment tenure, credit-history or security policy is published — everything available is DDO-mandated TMD content plus rate schedules.",
+    "The residency section — the priority for a foreign bank — is empty. Nothing about citizenship, visa subclasses, non-residents, expats, foreign currency income or FIRB is published. The only signal is the rate schedule's note 'Australian Income assessment applies', whose meaning the Bank does not explain.",
+    "Maximum LVR is inferred from the rate table's top band (80% < LVR <= 90%), not from a policy statement; confidence is medium and it may not be the true policy ceiling.",
+    "Minimum loan amounts conflict between the 6 May 2026 Discount Plus TMD ($250,000) and the 9 March 2026 rate schedule ($100,000 for Discount Plus Investment Home Loan). Needs confirmation.",
+    "The Bank's website is difficult to crawl — home loan TMD PDFs are only reachable through undated /bocinfo/bi3/202110/ landing pages, and the main 'Home Loan Products' page dates from 2018."
+  ]
+}

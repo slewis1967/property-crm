@@ -3,11 +3,31 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from 'next/link';
+import { errMessage } from "../../utils/errors";
 
 export const dynamic = "force-dynamic";
 
+type CompareProperty = {
+  id: string;
+  brochure_url?: string | null;
+  builder_name?: string | null;
+  suburb?: string | null;
+  state?: string | null;
+  status?: string | null;
+  total_package_price?: number | null;
+  house_price?: number | null;
+  street_address?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  car_spaces?: number | null;
+  land_size?: number | null;
+  house_size?: number | null;
+  property_type?: string | null;
+  description?: string | null;
+};
+
 export default function ComparePage() {
-  const [properties, setProperties] = useState<any[]>([]);
+  const [properties, setProperties] = useState<CompareProperty[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,8 +55,8 @@ export default function ComparePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
       setProperties(json.properties ?? []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errMessage(err));
       setProperties([]);
     } finally {
       setLoading(false);
@@ -46,7 +66,7 @@ export default function ComparePage() {
   // Load properties when component mounts or selected IDs change
   useEffect(() => {
     const ids = getSelectedIds();
-    fetchProperties(ids);
+    queueMicrotask(() => fetchProperties(ids));
   }, [getSelectedIds, fetchProperties]);
 
   // Clear comparison

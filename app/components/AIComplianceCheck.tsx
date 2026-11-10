@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 type Compliance = {
   severity: "clean" | "warn" | "block";
@@ -56,8 +57,8 @@ export default function AIComplianceCheck({
       } else {
         setState({ phase: "error", error: json.error || "Check failed" });
       }
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Check failed" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Check failed") });
     }
   };
 
@@ -114,7 +115,7 @@ export default function AIComplianceCheck({
         {violations.map((v, i) => (
           <li key={i}>
             <p className="font-medium">{v.type}</p>
-            {v.snippet && <p className="italic mt-0.5">"{v.snippet}"</p>}
+            {v.snippet && <p className="italic mt-0.5">&quot;{v.snippet}&quot;</p>}
             <p className="mt-0.5 opacity-80">{v.why}</p>
             {v.fix && <p className="mt-0.5 opacity-90">→ {v.fix}</p>}
           </li>

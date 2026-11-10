@@ -1,0 +1,321 @@
+{
+  "id": "bank-of-queensland",
+  "name": "Bank of Queensland",
+  "legalName": "Bank of Queensland Limited",
+  "tier": "regional_bank",
+  "status": "paused",
+  "acl": "244616",
+  "abn": "32 009 656 740",
+  "brokerSiteUrl": "https://www.boq.com.au/personal/home-loans/broker",
+  "policyDocUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "BOQ's credit policy sits behind the accredited-broker portal login: \"The broker portal is your one-stop broker shop. It has everything you need, including documents, forms, policy details with requirements...\". No buffer, floor, DTI, rental shading or HEM treatment is published publicly."
+    },
+    "assessmentFloorRatePct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published outside the broker portal."
+    },
+    "dtiCap": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published outside the broker portal."
+    },
+    "rentShadingPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published outside the broker portal."
+    },
+    "notes": {
+      "value": "IMPORTANT CHANNEL STATUS, not a servicing parameter: BOQ's broker hub states \"From 31 August 2024, Bank of Queensland will pause new home loan acquisitions via the Broker channel, with applications accepted until 30 August. Existing customers will continue to receive full support, including new lending. This change aligns with our ongoing efforts to strengthen and optimise the bank in response to market conditions.\" This notice was still live on the BOQ broker hub when checked on 2026-07-29. Do not shortlist BOQ for a new-to-bank broker-originated application; new lending to EXISTING BOQ customers remains available.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.boq.com.au/personal/home-loans/broker",
+      "sourceTitle": "BOQ Brokers Hub - Important update",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Owner-Occupier Principal & Interest 95% inclusive of LMI\" (purchase). Owner-occupier interest only 90% inclusive of LMI; refinances and vacant land 90% EXCLUSIVE of LMI. The simpler Economy Variable Rate Home Loan is capped at 90% overall."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Investor Principal & Interest 95% inclusive of LMI\" for purchase. Investor interest only is 90% exclusive of LMI, capped at 95%. Investor refinances and vacant land 90% exclusive of LMI."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Lenders Mortgage Insurance: Required where LVR is above 80%.\" Importantly: \"For certain security properties, LMI is required where the LVR is above 70%\" - so restricted security types drop the no-LMI ceiling to 70%. The property types that trigger the 70% rule are not published."
+    },
+    "maxLvrConstructionPct": {
+      "value": 90,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"90% for Construction (inclusive of LMI)\" for both owner occupier and investor, on the Clear Path Variable Home Loan. During construction only interest on the balance owing is payable, at the Clear Path Variable Interest Only rate. Construction is NOT available on the Economy Variable Rate Home Loan."
+    },
+    "maxLvrRefinancePct": {
+      "value": 90,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"90% for Refinances/Vacant Land (exclusive of LMI)\" for both owner occupier and investor - i.e. 5 percentage points below the 95% available on a purchase, and the LMI premium sits outside the 90%."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "It depends on the scenario, which is why this is medium confidence. Purchases and construction are \"inclusive of LMI\"; refinances, vacant land and investor interest-only are \"exclusive of LMI\" (investor IO being \"exclusive of LMI, capped at 95%\")."
+    },
+    "lmiProvider": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "BOQ does not name its LMI provider in public material."
+    },
+    "lvrBands": {
+      "value": [
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Owner Occupier purchase, principal & interest (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Owner Occupier construction (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Owner Occupier interest only (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Owner Occupier refinance or vacant land (exclusive of LMI)" },
+        { "maxLvrPct": 95, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Investor purchase, principal & interest (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Investor construction (inclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Investor interest only (exclusive of LMI, capped at 95%)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Clear Path Variable - Investor refinance or vacant land (exclusive of LMI)" },
+        { "maxLvrPct": 90, "maxLoanAmount": null, "qualifier": "Economy Variable Rate Home Loan - overall maximum for all purposes" }
+      ],
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet + Economy Variable Rate Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Neither product publishes a maximum loan amount per LVR band - both state \"no minimum or maximum loan amount\" - so maxLoanAmount is null throughout."
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [],
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No income-type rules are published publicly - BOQ's full credit policy is inside the accredited-broker portal."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly."
+    }
+  },
+
+  "credit": {
+    "notes": {
+      "value": "No credit-history rules (defaults, bankruptcy, arrears, credit score) are published publicly. They sit in the broker portal's policy documents.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.boq.com.au/personal/home-loans/broker",
+      "sourceTitle": "BOQ Brokers Hub",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": ["Residential property"],
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"You need a residential property as security for the loan.\" Vacant land is separately contemplated at 90% LVR exclusive of LMI."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No postcode list is published. The fact sheets do allude to restricted security types without naming them: \"For certain security properties, LMI is required where the LVR is above 70%.\""
+    },
+    "minUnitFloorAreaSqm": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published publicly."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": null,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "There is genuinely no minimum. Both fact sheets state \"no minimum or maximum loan amount\", and the Clear Path features table records \"Minimum Loan Amount: No minimum\" and \"Minimum Loan Term: No minimum\"."
+    },
+    "maxLoanAmount": {
+      "value": null,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "not_found",
+      "note": "\"Maximum Loan Amount: No maximum\" - no figure is published, so no cap can be recorded."
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan Term: 30 years\" on Clear Path; the Economy Variable Rate Home Loan term runs \"from one to 30 years\"."
+    },
+    "maxInterestOnlyYearsOwnerOcc": {
+      "value": 5,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Principal and Interest or Interest Only (up to 5 years maximum)\"; the narrative adds \"request interest only repayments for a term of one to five years\". Same on the Economy Variable Rate Home Loan."
+    },
+    "maxInterestOnlyYearsInvestment": {
+      "value": 5,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The 1-5 year interest-only term is not split by occupancy; the LVR available on investor interest only is 90% exclusive of LMI, capped at 95%."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Clear Path Variable only: \"100% Mortgage Offset - Yes, available when home loan is linked to a Mortgage Offset Account. Personal customers only (excludes companies and trusts). Only one mortgage offset account can be linked to a loan.\" Not available on the Economy Variable Rate Home Loan."
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Yes - minimum $100 redraw, no fees apply\", on both Clear Path and Economy."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Clear Path Variable only, at 90% LVR inclusive of LMI. \"If you need a construction loan to build a home, during the construction period, you will only need to pay the interest on the balance owing each month and the Clear Path Variable Interest Only rate will apply.\" The Economy Variable Rate Home Loan is \"not available for construction\"."
+    },
+    "smsfLendingAvailable": {
+      "value": false,
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path Variable Home Loan Fact Sheet, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The Clear Path Variable Rate Loan isn't available for business purposes or Self-Managed Superannuation Funds\"; the borrower types row reads \"Individuals, companies and trusts. Excludes Self-Managed Super Funds.\""
+    },
+    "notes": {
+      "value": "Borrower types: individuals, companies and trusts (excluding SMSFs) - companies and trusts are accepted for INVESTMENT property purchases, which is notable versus most of this tranche, though they cannot have the mortgage offset. Clear Path: no application fee, $10 per month, one free valuation, unlimited additional repayments, splits, loan switching with no fee, weekly/fortnightly/monthly repayments, six-monthly statements. Economy: $300 application fee, one free valuation, not available for construction, business purposes, SMSFs, or refinancing/restructuring existing BOQ loans.",
+      "asAt": "2025-05-01",
+      "sourceUrl": "https://www.boq.com.au/content/dam/boq/files/personal/home-loans/clear-path-variable-home-loan-overview.pdf",
+      "sourceTitle": "BOQ Clear Path + Economy Variable Rate Home Loan Fact Sheets, May 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [],
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "No residency or visa rules are published publicly - they sit in the broker portal policy documents."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2025-05-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "STATUS IS THE HEADLINE: BOQ paused new home loan acquisitions through the broker channel from 31 August 2024 and the notice is still live on the BOQ broker hub as at 2026-07-29. Existing BOQ customers continue to receive full support including new lending. Recorded as status 'paused' rather than 'withdrawn' because BOQ describes it as a pause and continues to lend to existing customers.",
+    "No servicing parameters at all (buffer, floor, DTI, rental shading, credit card assessment, HEM) - BOQ's policy documents are behind the broker portal login.",
+    "No income-type rules, employment tenure minimums, credit-history knock-outs or residency rules are public.",
+    "The security types for which LMI is required above 70% LVR (rather than 80%) are alluded to but never named.",
+    "No genuine savings rule, guarantor policy, government scheme participation or maximum age policy is public.",
+    "The product fact sheets used here are dated May 2025 - they predate nothing relevant to the pause, but they are over a year old and should be re-checked if BOQ reopens the channel.",
+    "ME Bank is a separate BOQ Group brand that IS still actively originating through brokers - see the me-bank record. Do not read BOQ's broker pause as applying to ME."
+  ]
+}

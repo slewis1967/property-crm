@@ -1,0 +1,895 @@
+{
+  "id": "community-first-bank",
+  "name": "Community First Bank",
+  "legalName": "Community First Credit Union Limited, operating as Community First Bank",
+  "tier": "mutual_bank",
+  "status": "active",
+  "acl": "231204",
+  "abn": "80 087 649 938",
+  "brokerSiteUrl": "https://communityfirst.com.au/broker-portal/broker-portal/",
+  "policyDocUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": 3.0,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Community First Bank Combined Credit Policy (Credit Underwriting Guidelines), April 2026 v1.0 — s2.6 Servicing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"An applications assessment rate will be the higher of the following: Housing Loans — Floor Rate 7.25%; Actual Rate + a 3% buffer\"."
+    },
+    "assessmentFloorRatePct": {
+      "value": 7.25,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Servicing, Floor Rate",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Community First Bank affordability assessment floor rate is 7.25%\"."
+    },
+    "rentShadingPct": {
+      "value": 0.8,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.3 Acceptable Income Verification",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rental income (long term, Australia only) assessed at 80%. Short-term rental also 80% where the property has been rented for a minimum of 12 months."
+    },
+    "creditCardAssessmentPct": {
+      "value": 0.0375,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Servicing, Assessment Rates",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Non-Community First Bank credit limits assessed at 3.75% per month of limit; Community First Bank's own credit limits at 3.2% per month."
+    },
+    "bnplTreatment": {
+      "value": "Buy Now Pay Later facility limit is assessed at a repayment of 10% per month of the facility limit. The facility limit is calculated as the balance outstanding plus available credit from the applicant's statement.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Servicing, BNPL facilities",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "hemBasis": {
+      "value": "hem",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.5 Living Expenses",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"In all applications the higher of the Declared Living Expenses or Community First Bank Household Expenditure Model (HEM) is to be used\"."
+    },
+    "hemLoadingPct": {
+      "value": 1.05,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.5 Living Expenses",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Community First Bank will include a 5% buffer to all HEM living expense model calculations\"."
+    },
+    "dtiCap": {
+      "value": 6.0,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Servicing, DTI",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Two-tier cap: \"All applications where the prevailing LVR is >70%, 6 times is the maximum DTI. All applications where the prevailing LVR is <70%, 8 times is the maximum DTI.\" The conservative (>70% LVR) figure is recorded here."
+    },
+    "notes": {
+      "value": "Minimum net surplus (ARA) of $1 per month is required for all applications; where ARA is under $200 and declared living expenses exceed HEM by less than $500, bank statements must be reviewed. An Investment Property Buffer of $600 per month is added to HEM for each investment property (not dwelling) held. Personal loans: fixed rate assessed at actual rate, variable at actual rate + 3% buffer.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Servicing",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.4 LVR Guidelines",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Maximum base LVR table tops out at 95% LVR, subject to a $1.5m property limit in capital city locations and $750,000 in regional locations. 95% is outside policy in 'other' (population under 15,000) locations."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s4.1 Variations, Partial Discharge",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Not stated as a headline rule; inferred from the explicit statement \"LMI to be obtained if new LVR is >80%\" and from the 80% band in the LVR guideline table. Family Pledge / Family Guarantee is the published route to avoid LMI above 80%."
+    },
+    "maxLvrCashOutPct": {
+      "value": 80,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.4 LVR Guidelines",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Cash Out loans — 80%\". Third-party broker guide separately states \"Equity Release (cash-out) up to 80% LVR where purpose is acceptable to CFB\"."
+    },
+    "notes": {
+      "value": "Maximum allowable LVR matrix is location-banded. Capital city locations: 70% LVR up to a $10m property limit, 80% LVR up to $5m, 95% LVR up to $1.5m. Regional locations (population 15,000+): 70% up to $3m, 80% up to $1.5m, 95% up to $750,000. Other locations (population under 15,000): outside policy at 80% and 95%, refer to Credit Services. Where a facility is secured by multiple security properties the maximum facility LVR is 80%. More than 2 dwellings on a single title: 80%. Bridging loans: 80%. Home Guarantee Scheme: scheme maximum LVRs apply. High density dwellings: LMI guidelines apply. Valuation type also caps LVR: AVM 80%, desktop 80%, Valuer General notice 80% of unimproved capital value, short-form valuation up to 98% subject to lending policy.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.4 LVR Guidelines and s3.1 Acceptable Valuations",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "income": {
+    "rules": {
+      "value": [
+        {
+          "type": "payg_permanent_full_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "2 most recent payslips, or 1 payslip and bank statements, or 1 payslip and latest payment summary or NOA",
+          "conditions": "Minimum 6 months of continuous employment or 12 months in the same industry. Any break greater than 4 weeks between employers must be explained to count as continuous employment."
+        },
+        {
+          "type": "payg_permanent_part_time",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": 6,
+          "evidence": "2 most recent payslips, or 1 payslip and bank statements, or 1 payslip and latest payment summary or NOA",
+          "conditions": "Minimum 6 months of continuous employment or 12 months in the same industry."
+        },
+        {
+          "type": "payg_casual",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 6,
+          "evidence": null,
+          "conditions": "Minimum 6 months of continuous employment or 12 months in the same industry. Shading percentage for casual income is not published."
+        },
+        {
+          "type": "payg_probation",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "\"Applicants on probation will be considered for new Community First Bank lending, subject to Unacceptable Borrowers requirements.\" Unacceptable borrowers include applicants on probation borrowing at an LVR in excess of 80%, and applicants on probation who have changed industries (regardless of LVR)."
+        },
+        {
+          "type": "payg_fixed_term_contract",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Minimum 6 months remaining on current contract, or 12 months in the same industry if PAYG. A contractor operating via an ABN may be assessed as a PAYG income earner if their employer makes tax and superannuation payments on their behalf; otherwise treated as self-employed."
+        },
+        {
+          "type": "overtime_other",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Applications before 1 October: 2 most recent YTD payslips plus confirmation of previous year's taxable income (30 June payslip) or NOA / PAYG payment summary. Applications on or after 1 October: annualised YTD from most recent YTD payslips.",
+          "conditions": null
+        },
+        {
+          "type": "overtime_essential_services",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "As for other overtime.",
+          "conditions": "100% for all 'front-line' workers: Police, Paramedics, Fire Fighters, Health Care workers (Doctors and Nurses), Correctional Service workers, Public Transport crews, Utilities workers (electricity, gas and water)."
+        },
+        {
+          "type": "bonus",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "2 most recent YTD payslips, or 1 YTD payslip and bank statements, or 1 YTD payslip and latest payment summary or NOA",
+          "conditions": "If paid periodically use the average of the last 12 months; if paid annually use the average of the last 2 years."
+        },
+        {
+          "type": "commission",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "2 most recent YTD payslips, or 1 YTD payslip and bank statements, or 1 YTD payslip and latest payment summary or NOA",
+          "conditions": "If paid periodically use the average of the last 12 months; if paid annually use the average of the last 2 years."
+        },
+        {
+          "type": "shift_allowance",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "2 most recent YTD payslips, or 1 YTD payslip and bank statements, or 1 YTD payslip and latest payment summary or NOA",
+          "conditions": "Allowances taken at 100% if a condition of employment (e.g. emergency services, airline staff, ADF personnel); 80% if not a condition of employment."
+        },
+        {
+          "type": "car_allowance",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": "Letter from employer or employment contract confirming approval for unrestricted private use of the vehicle",
+          "conditions": "A fully maintained company vehicle adds a flat $5,000 to the borrower's annual PAYG taxable income."
+        },
+        {
+          "type": "self_employed_sole_trader",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Last 2 years tax returns, copy of current tax portals or NOA, and confirmation of ABN registration.",
+          "conditions": "100% of company/business profits — the lesser of current year, or previous year plus 20%. Non-recurring income (capital gains, government grants) is deducted. Add-backs allowed for depreciation/amortisation, interest on debt being refinanced, interest or hire purchase/lease costs on facilities repaid or to be repaid within 6 months, and superannuation paid to company owners above the SG minimum. Most recent year tax returns required for all applications submitted after 31 March of the following year."
+        },
+        {
+          "type": "self_employed_company",
+          "accepted": true,
+          "shadingPct": null,
+          "minHistoryMonths": 24,
+          "evidence": "Last 2 years tax returns, current tax portals or NOA, and confirmation of ABN registration.",
+          "conditions": "As for sole trader. A self-employed applicant is defined as a borrower holding a controlling interest, or exerting board control over, the company from which they receive income; minority shareholders in a single company are not treated as self-employed."
+        },
+        {
+          "type": "rental_residential",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "2 most recent rental statements, or bank statements, or current lease agreement, or latest tax return and NOA, or valuation, or real estate agent's letter.",
+          "conditions": "Australia only. Short-term rental accepted at 80% where the property has been rented for a minimum of 12 months (verified by latest tax return and NOA). An Investment Property Buffer of $600 per month is added to HEM for each investment property."
+        },
+        {
+          "type": "dividends",
+          "accepted": true,
+          "shadingPct": 0.8,
+          "minHistoryMonths": null,
+          "evidence": "Latest tax return and corresponding NOA",
+          "conditions": null
+        },
+        {
+          "type": "foreign_income",
+          "accepted": true,
+          "shadingPct": 0.5,
+          "minHistoryMonths": null,
+          "evidence": "Last 2 years income tax returns and corresponding NOAs",
+          "conditions": "Overseas PAYG income is assessed at 50% using the rate of exchange at the point of application. Note separately that applicants who do not reside in Australia and/or are not Australian tax residents are unacceptable borrowers."
+        },
+        {
+          "type": "government_family_tax_benefit",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Current Centrelink Certificate of Entitlement plus bank statement",
+          "conditions": "100% accepted for each child aged 13 years or younger at the date of application."
+        },
+        {
+          "type": "government_carer_payment",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Current Centrelink Certificate of Entitlement plus bank statement",
+          "conditions": "Carers Allowance accepted at 100% for each child aged 13 years or younger at the date of application."
+        },
+        {
+          "type": "child_support_maintenance",
+          "accepted": true,
+          "shadingPct": 1,
+          "minHistoryMonths": null,
+          "evidence": "Letter from Child Support Agency confirming payment, or letter from the non-custodial parent confirming the arrangement plus evidence of payment history in bank statements.",
+          "conditions": "100% accepted for each child aged 13 years or younger at the date of application."
+        },
+        {
+          "type": "government_jobseeker",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Listed under Unacceptable Centrelink Income as \"Newstart Allowance\"."
+        },
+        {
+          "type": "government_parenting_payment",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "Listed under Unacceptable Centrelink Income as \"Single Parenting Payments\"."
+        },
+        {
+          "type": "boarder_income",
+          "accepted": false,
+          "shadingPct": null,
+          "minHistoryMonths": null,
+          "evidence": null,
+          "conditions": "\"Income from Boarders\" is listed as unacceptable income."
+        }
+      ],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment, s2.3 Acceptable Income Verification, s2.4 Unacceptable Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Other unacceptable income sources named in the policy but not mapped to an IncomeType: Sickness Benefits, Youth Allowance, NDIS payments, workers' compensation requiring periodic review, scholarship payments, gambling/wagering income, illegal income, loan proceeds including reverse mortgage and the Centrelink Home Equity Access Scheme. Acceptable Centrelink income generally is taken at 100% but must be ongoing for at least 5 years and is not accepted where the oldest borrower's age plus the loan term exceeds average Australian life expectancy (83)."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Self Employed — Minimum of 2 full financial years\"."
+    }
+  },
+
+  "employment": {
+    "minMonthsCurrentJob": {
+      "value": 6,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PAYG permanent full time and part time: \"Minimum 6 months of continuous employment or 12 months in the same industry\"."
+    },
+    "sameIndustryContinuityAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsSameIndustry": {
+      "value": 12,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "probationAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment, s1.2 Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "probationConditions": {
+      "value": "Applicants on probation are considered, but applicants on probation borrowing at an LVR in excess of 80%, and applicants on probation who have changed industries (regardless of LVR), are listed as unacceptable borrowers.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Unacceptable Borrowers (v)",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "minMonthsCasual": {
+      "value": 6,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Casual — Minimum 6 months of continuous employment or 12 months in the same industry\"."
+    },
+    "minContractRemainingMonths": {
+      "value": 6,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Contract — Minimum 6 months remaining on current contract or 12 months in the same industry if PAYG\"."
+    },
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Self Employed — Minimum of 2 full financial years\"."
+    },
+    "notes": {
+      "value": "Continuous employment: any break greater than 4 weeks between employers must be explained before the history is treated as continuous. Self-funded retirees: no set minimum. Where the proposed LVR exceeds 80%, minimum employment requirements must comply with LMI provider guidelines regardless of whether the application is assessed under LMI, Housing Guarantee Scheme or Community Advantage policies.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.2 Employment",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "credit": {
+    "minCreditScore": {
+      "value": 600,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Credit Reports / Account Conduct, MP46.15.1",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Exceptions: a long-term (2+ years) active member or a member with significant existing Community First borrowings; a joint borrower where the co-borrower scores at least 735; or a low score caused by a new credit file where the applicant is a direct relation of a long-term active member."
+    },
+    "defaultIgnoredUnderAmount": {
+      "value": 500,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Unacceptable / Adverse Findings",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Paid defaults over $500 are 'unacceptable' and declined outright; paid defaults under $500 are 'adverse' and may be considered under exceptional circumstances — they are not automatically disregarded."
+    },
+    "paidDefaultsAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Adverse Findings",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Only paid defaults under $500, paid more than 12 months ago, and not listed by Community First or Illawarra Credit Union. Such files are 'adverse' and may be considered under exceptional circumstances only."
+    },
+    "paidDefaultMinAgeMonths": {
+      "value": 12,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Unacceptable Findings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Defaults paid less than 12 months prior\" are unacceptable."
+    },
+    "unpaidDefaultsAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Unacceptable Findings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unpaid and settled defaults are unacceptable and \"will not be considered under any circumstances\"."
+    },
+    "judgmentsAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Unacceptable Findings",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "writsAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Unacceptable Findings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Court writs or summons are unacceptable; borrowers with an outstanding or unsatisfied judgement or writ are also listed as unacceptable borrowers."
+    },
+    "maxArrears12Months": {
+      "value": 0,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Unacceptable Borrowers (l)",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Applies to the applicant's Community First accounts specifically: \"Community First accounts must not currently be or have been 30+dpd in the last 12 months\". External arrears are handled through CCR review rather than a hard cap: any RHI 2 or greater, 3 or more RHI 1 in 24 months, any RHI within 6 months of the open date, RHI on more than one facility, or previous hardship assistance all require an acceptable explanation."
+    },
+    "gamblingPolicy": {
+      "value": "Bank statement review: large cash withdrawals at licensed premises or transfers to betting applications must be explained, as must dishonours or rejected direct debits, unarranged overdrawn/over-limit conduct, credit card late payments or over-limit, and 75% or more of income being withdrawn in cash. Income sourced from gambling or wagering is unacceptable income.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.8 Bank Statement Review, s2.4 Unacceptable Income",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "notes": {
+      "value": "Bankruptcy is a hard knock-out: \"Bankruptcy (regardless of status)\" is an unacceptable credit finding, and unacceptable borrowers include anyone with a declared discharged bankruptcy evidenced on a current credit report or who is currently an undischarged bankrupt. Also unacceptable: clear-outs, winding up or liquidation proceedings, current hardship assistance from an existing lender, prior bad debts over $50 written off with Community First and not repaid in full, and any significant adverse listing regardless of credit score. All credit enquiries in the past 12 months must be commented on in the submission notes.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Borrowers, s1.8 Credit Reports",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "security": {
+    "minUnitFloorAreaSqm": {
+      "value": 40,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "A unit or apartment \"less than 40sqm in living area, excluding balconies and car spaces\" is unacceptable."
+    },
+    "maxLandSizeHa": {
+      "value": 40,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Improved site with a land size larger than 40 hectares\" is unacceptable. Unimproved property (vacant land, no dwelling) is capped at 5 hectares."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Definition of Residential, Rural Residential and Rural properties",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Defined tiers: Residential up to 2.2ha/5 acres; Rural Residential over 2.2ha up to 10ha/25 acres; Rural over 10ha up to 40ha/100 acres. All must be connected (or connectable) to the national electricity grid, have direct vehicular access via a formed trafficable road, and be readily saleable. Property generating primary production income (a farm) is unacceptable."
+    },
+    "companyTitleAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Unacceptable titles: Purple Title (WA), Moiety Title (SA), Company Title, Company Stratum Title (Vic)."
+    },
+    "leaseholdAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Leasehold properties (other than a Perpetual Crown Lease in the ACT)\" are unacceptable."
+    },
+    "servicedApartmentAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "studentAccommodationAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "displayHomeLeasebackAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Display Homes (leased back to the builder)\" are unacceptable."
+    },
+    "nrasAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"NDIS and NRAS properties\" are unacceptable security."
+    },
+    "sdaNdisAccepted": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "highDensityPolicy": {
+      "value": "High density dwellings: \"LMI guidelines to apply\" for maximum LVR. A short-form valuation is required for high density dwellings regardless of LVR.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.4 LVR Guidelines, s3.1 Valuations",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "No storey count or development-percentage threshold is published."
+    },
+    "postcodeRestrictionsPublished": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Credit-Policy-Update-April-2026.pdf",
+      "sourceTitle": "Credit Policy Updates April 2026 — LVR Guidelines MP46.10",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The April 2026 update moved postcode classification to an internal SharePoint file (\"Post Code classification now available on the Credit Services intranet page\"). It is not published to brokers. Location is instead banded by census population: capital city, regional (15,000+), other (under 15,000)."
+    },
+    "unacceptablePropertyTypes": {
+      "value": [
+        "Property where a first registered mortgage cannot be obtained (excluding family guarantor properties)",
+        "Property not zoned for residential use",
+        "Property outside Australia, or on Australian islands not connected to the mainland (Tasmania, Scotland Island, Kangaroo Island and Stradbroke Island are excluded from this restriction and are acceptable)",
+        "Property requiring significant renovation, or uninhabitable at settlement",
+        "Small regional or remote locations without an active residential real estate market",
+        "Crown land (other than a Perpetual Crown Lease in the ACT)",
+        "Leasehold (other than a Perpetual Crown Lease in the ACT)",
+        "Purple Title (WA), Moiety Title (SA), Company Title, Company Stratum Title (Vic)",
+        "Improved site with land size larger than 40 hectares",
+        "Property subject to the Western Lands Act (NSW)",
+        "Units in hotel/motel, student accommodation, retirement or serviced apartment complexes",
+        "Studio or bedsitter apartments (no bedrooms)",
+        "Units under 40sqm living area excluding balconies and car spaces",
+        "Dual key apartments",
+        "Mobile home, caravan, kit or relocatable home",
+        "Boarding house or hostel, or property rented per room",
+        "Time-share property",
+        "Property generating primary production income (a farm)",
+        "Property with life tenancy on title",
+        "Property subject to mandatory rectification orders or built with unsafe materials such as combustible cladding",
+        "Unique properties with a limited resale market",
+        "Dwellings partially built at the time of application",
+        "Owner-builder or split-contract construction",
+        "Zoning detrimental to resale (e.g. over-55s)",
+        "Vacant land over 5 hectares, or vacant land where applicants do not intend to build within 12 months",
+        "Single-industry / single-entity towns (e.g. mining towns)",
+        "Property with restrictive covenants limiting value or resale",
+        "NDIS and NRAS properties",
+        "Landlocked or water-access-only properties",
+        "Property burdened with commercial infrastructure (telecommunications towers, billboards)",
+        "Commercial properties",
+        "Display homes leased back to the builder",
+        "Contaminated properties",
+        "Properties within 50 metres of high-tension power lines",
+        "More than 4 dwellings on a single title",
+        "Properties with more than one Risk Rating of 5 from the valuer, or deemed unsuitable by the valuer",
+        "Properties directly or indirectly impacted by Native Title",
+        "Properties in an area with a flood rating greater than 1% AEP (1-in-100-year)"
+      ],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.3 Securities, Unacceptable Securities",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Policy states that any proposed security not on the unacceptable list is deemed acceptable."
+    },
+    "notes": {
+      "value": "Valuations must be less than 90 days old at assessment and less than 6 months old at settlement, and remain valid for 12 months for future borrowings. A short-form valuation is mandatory where LVR exceeds 80%, for off-the-plan and favourable purchases, high density dwellings, extended settlement cycles and construction loans. Construction is limited to a maximum of 4 self-contained residential dwellings under a licensed builder's HIA fixed-price contract, starting within 6 months of approval; owner-builder, kit/relocatable, cost-to-complete and split-contract construction are all excluded.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s3 Valuations, s5 Construction Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "product": {
+    "genuineSavingsRequiredPct": {
+      "value": 0.05,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.7 Funds to Complete and Genuine Savings",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"A minimum of 5% genuine savings is required for all LMI applications where LVR is >90% or for any Housing Australia application, regardless of LVR (note 2% for Family Guarantee applications).\""
+    },
+    "genuineSavingsRequiredAboveLvrPct": {
+      "value": 90,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Also required regardless of LVR for any Housing Australia (Home Guarantee Scheme) application."
+    },
+    "rentalLedgerAsGenuineSavings": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.7",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Rental ledger is listed as acceptable evidence of genuine savings, alongside bank statements, available redraw or line of credit funds, sale of a property, share portfolio statements, gift and inheritance."
+    },
+    "giftedDepositAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.6 Gifts and Favourable Purchases",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "giftedDepositConditions": {
+      "value": "Written confirmation from the party making the gift that the amount is for the express purpose of purchasing the security property and is not repayable; the provider of the gift must be related to at least one of the borrowers; gifted funds must be available before any loan funds are accessed (e.g. construction loans). Gifts from builders or developers, cashbacks and government grants are unacceptable as genuine savings.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.6, s1.7",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorAccepted": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.5 Family Pledges",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "guarantorConditions": {
+      "value": "Family Pledge available from parents, grandparents, siblings, de facto partner or child. Guarantor must be at least 21. Purpose limited to purchase or construction of owner-occupied dwellings including off the plan — debt consolidation and equity release are unacceptable. Loan not to exceed 100% of the purchase price. Maximum guarantee limited to an amount not exceeding 20% of the purchase price. Fixed or variable P&I only (1 year interest-only allowed for construction). Guarantee limited to the minimum needed to eliminate LMI. Independent legal advice mandatory, 72-hour cooling off before settlement, and an exit strategy required where the guarantor offers their owner-occupied home. Second mortgage over the guarantor's security is acceptable. Term deposits held with Community First may also be taken as security up to 100% of value.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.5 Family Pledges, s2.7 Independent Legal and Financial Advice",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    },
+    "governmentSchemesSupported": {
+      "value": ["Home Guarantee Scheme / Housing Australia"],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.4 LVR Guidelines, s1.7",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Policy refers to \"Housing Guarantee Scheme — Scheme maximum LVR's apply based on location and Scheme policy\" and to \"any Housing Australia application\". State schemes are not named."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s5 Construction Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Not available on Easy Street loan products."
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.1 Purpose, s1.4 LVR Guidelines, s2.6 Servicing",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Bridging loans capped at 80% LVR. No affordability calculation is required where there is no end debt; a full assessment of the end debt is required where there is one."
+    },
+    "smsfLendingAvailable": {
+      "value": false,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Acceptable Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Self-Managed Super Funds (not currently open to new loans)\"."
+    },
+    "exitStrategyRequiredOverAge": {
+      "value": 50,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.6 Exit Strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Required for housing loan applications where the oldest applicant has had their 50th birthday at the date of application, where the loan is secured by the owner-occupied home, or is for an investment property that will be the applicant's only residential property. Acceptable strategies: downsizing, sale of an investment property, realisation of investments, or superannuation (supporting strategy only, with amortisation to retirement age)."
+    },
+    "notes": {
+      "value": "\"Community First does not apply a maximum age for borrowers for any loan product or purpose\" — an exit strategy is used instead from age 50. Unacceptable loan purposes include business/commercial purchases and developments, paying outstanding tax or statutory liabilities, refinancing debt-recovery/collections liabilities, second mortgages (other than guarantor second mortgages), refinancing partially complete dwellings, reverse mortgages, cash out above ALCO-approved limits, and construction or LVR over 80% using Easy Street loan products.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.1 Purpose, s2.6 Exit Strategy",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "australian_citizen",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Acceptable borrowers include Australian citizens over 18 years of age. Applicants must reside in Australia and be Australian tax residents."
+        },
+        {
+          "status": "permanent_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Acceptable borrowers include Australian permanent residency holders over 18 years of age."
+        },
+        {
+          "status": "nz_citizen_444",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "The policy lists \"Australian and New Zealand Citizens over 18 years of age\" as acceptable, but separately lists as unacceptable \"Overseas nationals without Australian citizenship or permanent residency (including New Zealand Citizens on Subclass 444 - Special Category Visas)\". A NZ citizen holding only a subclass 444 visa is therefore not acceptable; a NZ citizen who also holds Australian permanent residency is. Confirm with the lender."
+        },
+        {
+          "status": "temporary_visa_work",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Overseas nationals without Australian citizenship or permanent residency are unacceptable borrowers."
+        },
+        {
+          "status": "temporary_visa_student",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Overseas nationals without Australian citizenship or permanent residency are unacceptable borrowers."
+        },
+        {
+          "status": "temporary_visa_partner_309_820",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Not named separately; falls within \"overseas nationals without Australian citizenship or permanent residency\"."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "\"Applicants or Guarantors who do not reside in Australia and/or are not tax residents of Australia\" are unacceptable borrowers."
+        },
+        {
+          "status": "foreign_non_resident",
+          "accepted": false,
+          "maxLvrPct": null,
+          "conditions": "Unacceptable borrowers."
+        }
+      ],
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Borrowers",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The NZ-citizen position is internally inconsistent in the source document; recorded conservatively."
+    },
+    "foreignIncomeShadingPct": {
+      "value": 0.5,
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s2.3 Acceptable Income Verification",
+      "confidence": "high",
+      "status": "verified",
+      "note": "PAYG (Overseas) income assessed at \"50% using the rate of exchange at the point of application\", evidenced by the last 2 years' income tax returns and corresponding NOAs. Note this sits alongside a rule that non-resident applicants are unacceptable borrowers, so in practice it applies to Australian-resident applicants with overseas-sourced PAYG income."
+    },
+    "notes": {
+      "value": "Also unacceptable as borrowers: minors; companies with directors and trusts with trustees living and working outside Australia; body corporate entities; hybrid trusts; unincorporated and not-for-profit entities; unregistered companies or companies not registered for GST; company directors purchasing property from their own developments for investment; and 'borrowers of convenience' who receive no tangible benefit from the loan.",
+      "asAt": "2026-04-01",
+      "sourceUrl": "https://cms.communityfirst.com.au/wp-content/uploads/2026/05/Combined-Credit-Policy_April-2026_v1.0.pdf",
+      "sourceTitle": "Combined Credit Policy April 2026 v1.0 — s1.2 Borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": null
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-04-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Minimum and maximum loan amounts are not published in the credit policy or on the public broker portal.",
+    "Maximum loan term and maximum interest-only term are not published in the credit policy.",
+    "No separate maximum LVR for investment lending is published; the LVR guideline table does not distinguish owner-occupied from investment.",
+    "LMI provider(s) and any LMI waiver professions are not published.",
+    "The postcode/location classification list moved to an internal SharePoint file in the April 2026 update and is not available to brokers publicly; only the census-population banding (capital city / regional 15,000+ / other) is public.",
+    "No published reduced buffer for like-for-like refinance.",
+    "Negative gearing and depreciation add-back treatment is not stated.",
+    "Casual income shading percentage is not published (only the 6-month tenure requirement).",
+    "Maximum credit enquiries in 6 months is not published (enquiries in the last 12 months must simply be explained).",
+    "Broker accreditation criteria page exists at /broker-portal/broker-portal-accreditation-criteria but was not read in this pass.",
+    "Aggregator panel membership not published."
+  ]
+}

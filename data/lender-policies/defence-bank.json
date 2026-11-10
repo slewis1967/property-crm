@@ -1,0 +1,107 @@
+{
+  "id": "defence-bank",
+  "name": "Defence Bank",
+  "legalName": "Defence Bank Limited",
+  "tier": "mutual_bank",
+  "status": "research_only",
+  "acl": "234582",
+  "abn": "57 087 651 385",
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+  "panels": null,
+  "servicing": {},
+  "lvr": {
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank Target Market Determination — Ultimate Essentials Home Loan - Investor (product code 808), version 3, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Key attribute: 'Borrow you up to 95% of the value of your investment property'. This is the Ultimate Essentials Investor product; other Defence Bank products may differ."
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank TMD — Ultimate Essentials Home Loan - Investor, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Where your loan represents more than 80% of the value of the property being used as security you will need Lenders Mortgage Insurance.'"
+    }
+  },
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {
+    "notes": {
+      "value": "The borrower must be 'willing and able to offer a first or second registered mortgage over real property as security for the loan'.",
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank TMD — Ultimate Essentials Home Loan - Investor, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Second-mortgage security being contemplated is unusual and worth confirming."
+    }
+  },
+  "product": {
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank TMD — Ultimate Essentials Home Loan - Investor, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "'Flexible loan terms up to 30 years.'"
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank TMD — Ultimate Essentials Home Loan - Investor, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Redraw of repayments made in advance, online or in branch — 'not available during fixed interest rate periods'."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2025-10-01",
+      "sourceUrl": "https://www.defencebank.com.au/globalassets/documents/legal--compliance/target-market-determinations/home-loans/ultimate-essentials-home-loan---investor---tmd---20251001.pdf",
+      "sourceTitle": "Defence Bank TMD — Ultimate Essentials Home Loan - Investor, effective 1 October 2025",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Target market includes members seeking to 'purchase, construct or renovate an investment home', refinance an existing investment home loan, or top up an existing loan for any worthwhile investment purpose."
+    },
+    "governmentSchemesSupported": {
+      "value": ["Defence Home Ownership Assistance Scheme (DHOAS)"],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.defencebank.com.au/dhoas-home-loans",
+      "sourceTitle": "Defence Bank — DHOAS Home Loans",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Defence Bank is one of the three DHOAS-approved home loan providers and offers a range of DHOAS-compatible home loans for eligible serving and ex-serving ADF members. asAt is the date the page was read; the page carries no effective date. IMPORTANT for broker routing: Australian Military Bank's broker guide states AMB is 'the only one of the three approved providers to offer DHOAS home loans via intermediaries' — so a DHOAS client introduced by a broker cannot be placed with Defence Bank."
+    },
+    "notes": {
+      "value": "MEMBERSHIP IS BROAD, NOT DEFENCE-RESTRICTED. Defence Bank's join page states: 'You don't need to be in the army, navy or air force to join Defence Bank. If you are a supporter of those in the ADF and the Defence community, then you are invited to make us your bank.' The bank positions itself as serving ADF families while remaining 'competitive enough for all Australians who support the Defence community'. Its constitution makes a person eligible for membership if they have an affiliation with the defence of Australia or fall in a category determined by the board. So unlike the DHOAS subsidy itself, Defence Bank membership is not a hard occupational knock-out. The TMD's own target market simply requires members 'aged 18 years or more' who 'meet the credit assessment criteria for a home loan'.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.defencebank.com.au/join",
+      "sourceTitle": "Defence Bank — Join Defence Bank",
+      "confidence": "high",
+      "status": "verified",
+      "note": "asAt is the date the page was read; the page carries no effective date. DHOAS subsidy eligibility itself is administered by DVA and IS restricted to current and former ADF members — that is a separate test from bank membership."
+    }
+  },
+  "residency": {},
+  "version": 1,
+  "effectiveFrom": "2025-10-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "DIRECT-ONLY LENDER — DO NOT PUT ON A BROKER PANEL. The Ultimate Essentials Home Loan (Investor) TMD, version 3 effective 1 October 2025, lists the distribution channels as: Branches, Mobile lenders, Call Centre, Online. Mortgage brokers and third-party distributors are NOT listed, and the distribution conditions refer only to 'appropriately trained staff'. Defence Bank has no broker portal, broker accreditation page or broker policy document. Corroborating evidence: Australian Military Bank's own broker guide states AMB is 'the only one of the three approved providers to offer DHOAS home loans via intermediaries'. Status is therefore 'research_only'.",
+    "NO CREDIT POLICY PUBLISHED. There is no public servicing buffer, floor rate, DTI cap, rent shading, income-type shading, employment tenure, credit-history, security-type or residency policy — consistent with a lender that has no broker channel to publish one for.",
+    "Owner-occupied maximum LVR was not established. Only the Ultimate Essentials Investor TMD was read (95% investment); a corresponding owner-occupied TMD exists in the same TMD library and should be read next.",
+    "Minimum and maximum loan amounts, interest-only maximum periods, offset availability, genuine savings, guarantor policy and maximum age at maturity are not published in the TMD read.",
+    "Membership is open to supporters of the Defence community rather than restricted to serving/ex-serving ADF — this is the opposite of the usual assumption for an occupation mutual. The DHOAS subsidy itself remains restricted to eligible ADF members and is administered by DVA (dhoas.gov.au)."
+  ]
+}

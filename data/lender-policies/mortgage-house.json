@@ -1,0 +1,164 @@
+{
+  "id": "mortgage-house",
+  "name": "Mortgage House",
+  "legalName": null,
+  "tier": "non_bank",
+  "status": "active",
+  "acl": "393283",
+  "abn": "98 081 508 054",
+  "brokerSiteUrl": "https://www.mortgagehouse.com.au/for-brokers/",
+  "policyDocUrl": "https://www.mortgagehouse.com.au/design-and-distribution-obligations/",
+  "funder": null,
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked the full published TMD set (Platinum, Gold, Freedom, Solutions, Blended Plus, Executive, Home Loan Plus, Mere Doc variants) and the public product pages — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-freedom-full-doc/",
+      "sourceTitle": "Mortgage House Freedom Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan to Valuation Ratio (LVR): 95% including LMI\". Other products sit lower: Platinum, Gold and Platinum Mere Doc at 80% including LMI; Solutions at 85% variable / 80% fixed. The TMD states only a month, so asAt uses the first of that month."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 95,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-freedom-full-doc/",
+      "sourceTitle": "Mortgage House Freedom Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The TMD covers owner occupied and investment property under a single LVR attribute and does not split the cap by purpose."
+    },
+    "lmiInclusiveOfMaxLvr": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-freedom-full-doc/",
+      "sourceTitle": "Mortgage House Freedom Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Every Mortgage House TMD expresses its ceiling as \"X% including LMI\", i.e. the premium sits inside the maximum LVR."
+    },
+    "notes": {
+      "value": "Maximum LVR by product (all Version 4, July 2026, all stated 'including LMI'): Freedom Full Doc 95%; Solutions 85% variable / 80% fixed; Platinum Full Doc 80%; Platinum Mere Doc (lo doc) 80%; Gold Full Doc 80%.",
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/design-and-distribution-obligations/",
+      "sourceTitle": "Mortgage House — Design and Distribution Obligations (TMD index)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-platinum-mere-doc/",
+      "sourceTitle": "Mortgage House Platinum Mere Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Mortgage House publishes 'Mere Doc' (lo doc) TMDs for the Platinum, Freedom and Gold product families alongside their full-doc equivalents."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-platinum-mere-doc/",
+      "sourceTitle": "Mortgage House Platinum Mere Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum Loan to Valuation Ratio (LVR): 80% including LMI\" on the Platinum Mere Doc product."
+    }
+  },
+
+  "employment": {},
+
+  "credit": {},
+
+  "security": {},
+
+  "product": {
+    "minLoanAmount": {
+      "value": 50000,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-platinum-full-doc/",
+      "sourceTitle": "Mortgage House Platinum Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "$50,000 on Platinum, Gold, Solutions and Platinum Mere Doc. The Freedom Full Doc product has a higher $150,000 minimum."
+    },
+    "maxLoanAmount": {
+      "value": 3500000,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-gold-full-doc/",
+      "sourceTitle": "Mortgage House Gold (Full Doc) Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum loan amount $3,500,000 ($1,500,000 on loans to a SMSF)\". Platinum, Platinum Mere Doc and Freedom cap at $2,000,000; Solutions at $2,500,000."
+    },
+    "maxLoanTermYears": {
+      "value": 40,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-gold-full-doc/",
+      "sourceTitle": "Mortgage House Gold (Full Doc) Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Maximum loan term 30 years for all loan types and up to 40 years on principal and interest (except SMSF loans which are up to 30 years).\" Platinum, Freedom and Platinum Mere Doc cap at 30 years."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-platinum-full-doc/",
+      "sourceTitle": "Mortgage House Platinum Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Offset account is available\"."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-platinum-full-doc/",
+      "sourceTitle": "Mortgage House Platinum Full Doc Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The product finances \"the purchase, refinance or construction\" of owner occupied or investment property, with interest-only during construction and a construction administration fee."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-01",
+      "sourceUrl": "https://www.mortgagehouse.com.au/target-market-determination-chameleon-gold-full-doc/",
+      "sourceTitle": "Mortgage House Gold (Full Doc) Target Market Determination, Version 4 dated July 2026",
+      "confidence": "high",
+      "status": "verified",
+      "note": "SMSF loans capped at $1,500,000 and 30 years."
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-07-01",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "TMDs are dated by month only (\"Version 4 dated July 2026\"); asAt has been recorded as the first of that month.",
+    "No servicing parameters published at all — no buffer, floor rate, DTI cap, rent shading, credit-card assessment or HEM treatment.",
+    "No income-type table or shading percentages; the 'Mere Doc' income evidence requirements are not published.",
+    "No employment tenure minimums published.",
+    "No credit-history policy published, despite Mortgage House marketing a 'Bad Credit Home Loans' page and a near-prime 'Solutions' product — the actual default/bankruptcy/arrears thresholds are not public.",
+    "No security policy published — property types, minimum unit size, high density, rural, postcode categories.",
+    "No residency or visa policy published in any TMD read.",
+    "No genuine savings, gifted deposit, guarantor or family-pledge terms published, despite a Family Pledge product page existing.",
+    "Broker distribution confirmed from the TMD distribution table (\"Third party – Accredited mortgage brokers subject to Best Interests Duty\") and the public 'Become a Broker' page; the accreditation criteria themselves are not published."
+  ]
+}

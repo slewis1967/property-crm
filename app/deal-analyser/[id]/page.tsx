@@ -36,7 +36,11 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
   try {
     const res = await nexusApi("/api/leads", { cache: "no-store" });
     if (res.ok) {
-      const leads = ((await res.json()).leads ?? []) as any[];
+      const leads = ((await res.json()).leads ?? []) as Array<{
+        lead_id: string;
+        full_name?: string | null;
+        email?: string | null;
+      }>;
       opportunities = leads.map((l) => ({
         id: l.lead_id,
         label: l.full_name || l.email || l.lead_id,
@@ -75,7 +79,7 @@ export default async function DealPacketPage({ params }: { params: Promise<{ id:
     .eq("results->>deal_packet_id", dp.id)
     .order("generated_at", { ascending: false });
   const existingReports = (repRows ?? []).map((r) => {
-    const res = (r.results ?? {}) as any;
+    const res = (r.results ?? {}) as { kind?: string; suburb?: string | null; address?: string | null };
     return {
       id: r.id as string,
       kind: (res.kind as string) ?? "deal_analyser_pia",

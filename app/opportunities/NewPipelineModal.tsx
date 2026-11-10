@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 const COLORS = [
   { hex: "#3b82f6", cls: "bg-blue-500" },
@@ -59,8 +60,8 @@ export default function NewPipelineModal({ onClose, onCreated }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       onCreated(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errMessage(err));
       setSaving(false);
     }
   };

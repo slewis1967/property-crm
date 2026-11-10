@@ -1,0 +1,274 @@
+{
+  "id": "yard",
+  "name": "Yard",
+  "legalName": "Yard Financial Pty Ltd",
+  "tier": "neobank_digital",
+  "status": "active",
+  "acl": "509481",
+  "abn": null,
+  "brokerSiteUrl": null,
+  "policyDocUrl": "https://www.yard.com.au/pages/faq#target-market-determinations",
+  "funder": "Columbus Capital Pty Ltd (ACL 337303) trading as Origin Mortgage Management Services, with loans issued by Perpetual Corporate Trust Limited and related Origin entities",
+  "panels": null,
+
+  "servicing": {
+    "assessmentBufferPct": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Not published. Checked Yard's TMD library (Prime, SMSF, NDIS, Expat and the Well Nigh / Resimac / BC Securities white-label TMDs it hosts) and its public product and calculator pages — no buffer, floor rate, DTI cap or rent shading is stated."
+    }
+  },
+
+  "lvr": {
+    "maxLvrOwnerOccupiedPct": {
+      "value": 95,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Max LVR\" table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Product table: \"Max LVR — 95% for home owners / 90% for investors\". Page is undated; asAt is the date read."
+    },
+    "maxLvrInvestmentPct": {
+      "value": 90,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Max LVR\" table",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "maxLvrNoLmiPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Up to 95% LVR\" feature",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"The Yard Home Loan can have an LVR of up to 95%, but Lenders Mortgage Insurance (LMI) is needed if your LVR is greater than 80%.\""
+    }
+  },
+
+  "income": {
+    "altDocAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/alt-doc-home-loan",
+      "sourceTitle": "Yard — Low doc home loan for self-employed borrowers",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "altDocEvidence": {
+      "value": "A valid ABN active for at least 6 months, plus one or more of: an accountant's letter confirming income, Business Activity Statements (BAS), or personal/business bank statements.",
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/alt-doc-home-loan",
+      "sourceTitle": "Yard — Low doc home loan, \"What documents do I need for a Low Doc Home Loan?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Undated page; asAt is the date read."
+    },
+    "altDocMaxLvrPct": {
+      "value": 80,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/alt-doc-home-loan",
+      "sourceTitle": "Yard — Low doc home loan for self-employed borrowers",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Borrow up to 80% of your property's value\"."
+    },
+    "selfEmployedMinYears": {
+      "value": 2,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan FAQ \"Do you lend to self-employed applicants?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"For self-employed borrowers, we typically require 2 years of trading history under the same ABN. Applicants who have recently become self-employed and have traded under an ABN for at least 6 months can be considered under our specialist self-employed home loans.\""
+    },
+    "oneYearFinancialsAccepted": {
+      "value": null,
+      "asAt": null,
+      "sourceUrl": null,
+      "confidence": "low",
+      "status": "not_found",
+      "note": "Yard publishes a 6-month-ABN specialist pathway but does not state whether one year's financials is accepted on the full-doc product."
+    }
+  },
+
+  "employment": {
+    "minMonthsSelfEmployedAbn": {
+      "value": 24,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan FAQ \"Do you lend to self-employed applicants?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "Standard requirement is 2 years under the same ABN; 6 months is possible under the specialist self-employed product."
+    }
+  },
+
+  "credit": {},
+
+  "security": {
+    "acceptablePropertyTypes": {
+      "value": [
+        "Houses",
+        "Apartments",
+        "Townhouses",
+        "Rural residential",
+        "Hobby farms",
+        "Off-the-plan purchases",
+        "Vacant land"
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan FAQ \"What type of properties do you accept?\" and the \"Acceptable property\" table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "The FAQ lists houses/apartments/townhouses, rural residential and hobby farms, and off-the-plan; the product table separately lists established dwellings, apartments and vacant land. Other property types are referred to a Yard Loan Consultant."
+    },
+    "ruralResidentialAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan FAQ \"What type of properties do you accept?\"",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Rural residential and hobby farms\" are listed as accepted; no LVR cap for rural security is published."
+    },
+    "offThePlanAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan FAQ \"What type of properties do you accept?\"",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "sdaNdisAccepted": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/ndis-property-loan",
+      "sourceTitle": "Yard — NDIS property loan product page",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Yard publishes a dedicated NDIS property loan product and NDIS Variable/Fixed TMDs; the lending terms for it were not read."
+    }
+  },
+
+  "product": {
+    "minLoanAmount": {
+      "value": 150000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Loan size\" table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan size — $150,000 min / $5,000,000 max\". Page is undated; asAt is the date read."
+    },
+    "maxLoanAmount": {
+      "value": 5000000,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Loan size\" table",
+      "confidence": "high",
+      "status": "verified"
+    },
+    "maxLoanTermYears": {
+      "value": 30,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Loan term\" table",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Loan term — 2-30 years\"."
+    },
+    "offsetAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Optional 100% offset facility ... You can add up to 10 offset accounts per loan account.\""
+    },
+    "redrawAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan features",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Unlimited free redraw\" on the variable rate loan."
+    },
+    "constructionAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/construction-loan",
+      "sourceTitle": "Yard — Construction loan product page",
+      "confidence": "high",
+      "status": "verified",
+      "note": "\"Yard provides vacant land and construction loans, with funds released in progress payments to your builder throughout the build.\""
+    },
+    "bridgingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/bridging-loan",
+      "sourceTitle": "Yard — Short term bridging loans product page",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "Product page exists; terms not read."
+    },
+    "smsfLendingAvailable": {
+      "value": true,
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans/smsf-loan",
+      "sourceTitle": "Yard — SMSF loan product page (with SMSF Variable/Fixed TMDs dated 2026)",
+      "confidence": "high",
+      "status": "verified"
+    }
+  },
+
+  "residency": {
+    "rules": {
+      "value": [
+        {
+          "status": "foreign_non_resident",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "\"Non-residents\" is listed as an accepted borrower type on the Home Loan product page. Terms and LVR caps for non-resident lending are not published."
+        },
+        {
+          "status": "expat_citizen_overseas",
+          "accepted": true,
+          "maxLvrPct": null,
+          "conditions": "Yard publishes dedicated Expat Variable and Expat Fixed TMDs and an expat home loan guide; terms not published."
+        }
+      ],
+      "asAt": "2026-07-29",
+      "sourceUrl": "https://www.yard.com.au/loans",
+      "sourceTitle": "Yard — Home Loan product page, \"Borrower type\" table",
+      "confidence": "medium",
+      "status": "verified",
+      "note": "The product table lists borrower types as \"Salaried employees / Self-employed / Non-residents\". Citizen and permanent-resident acceptance is implicit but not separately stated, so no rule has been recorded for them. The Columbus-issued Prime TMD that Yard distributes requires an Australian citizen or permanent resident, which conflicts with the non-resident borrower type on Yard's own page — confirm with the lender before relying on it."
+    }
+  },
+
+  "version": 1,
+  "effectiveFrom": "2026-07-29",
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Most figures come from Yard's undated public product pages, so asAt is the date read (2026-07-29) rather than a stated policy effective date. Yard's own Prime TMDs are dated 13 February 2024 and contain no LVR or loan-amount figures at all.",
+    "No servicing parameters published at all.",
+    "No income-type table or shading percentages for overtime, bonus, commission, rental or Centrelink income.",
+    "No PAYG employment tenure minimums published (only the self-employed ABN rules).",
+    "No credit-history policy published (defaults, bankruptcy, arrears, enquiries).",
+    "No minimum unit size, high-density or postcode policy published.",
+    "No genuine savings, gifted deposit or guarantor policy published.",
+    "Residency: Yard's product page lists non-residents as an accepted borrower type while the Columbus Prime TMD it distributes requires Australian citizenship or permanent residency — the two are not reconciled publicly.",
+    "Broker distribution confirmed from the Prime TMD distribution table (\"Third party – Mortgage Managers and Accredited mortgage brokers subject to their Best Interests Duty\"); Yard publishes no broker accreditation page and also operates its own brokerage (Yard Broker Pty Ltd, CR 541605).",
+    "Yard's website terms restrict automated data collection; all facts here were read from ordinary public page loads and published PDFs."
+  ]
+}

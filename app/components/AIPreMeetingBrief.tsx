@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 export default function AIPreMeetingBrief({ appointmentId }: { appointmentId: string }) {
   const [open, setOpen] = useState(false);
@@ -22,8 +23,8 @@ export default function AIPreMeetingBrief({ appointmentId }: { appointmentId: st
       const json = await res.json();
       if (json.ok) setState({ phase: "ready", text: json.text, cached: !!json.cached });
       else setState({ phase: "error", error: json.error || "Unavailable" });
-    } catch (e: any) {
-      setState({ phase: "error", error: e?.message ?? "Unavailable" });
+    } catch (e) {
+      setState({ phase: "error", error: errMessage(e, "Unavailable") });
     }
   };
 

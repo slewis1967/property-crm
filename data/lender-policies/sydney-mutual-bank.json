@@ -1,0 +1,46 @@
+{
+  "id": "sydney-mutual-bank",
+  "name": "Sydney Mutual Bank",
+  "legalName": "Sydney Credit Union Ltd (trading as Sydney Mutual Bank)",
+  "tier": "mutual_bank",
+  "status": "withdrawn",
+  "acl": "238981",
+  "abn": "30 087 650 459",
+  "brokerSiteUrl": "https://australianmutual.bank/",
+  "policyDocUrl": null,
+  "funder": "Teachers Mutual Bank Limited",
+  "panels": null,
+
+  "servicing": {},
+  "lvr": {},
+  "income": {},
+  "employment": {},
+  "credit": {},
+  "security": {},
+
+  "product": {
+    "notes": {
+      "value": "BRAND RETIRED - DO NOT PLACE BUSINESS UNDER THIS NAME. Sydney Mutual Bank (formerly Sydney Credit Union) ceased to be a standalone brand when it merged with Endeavour Mutual Bank in 2019 to form AUSTRALIAN MUTUAL BANK. Australian Mutual Bank in turn \"became a division of Teachers Mutual Bank Limited\" on 1 MAY 2026, alongside Teachers Mutual Bank, Health Professionals Bank, Firefighters Mutual Bank and UniBank. The relevant licensed entity is now Teachers Mutual Bank Limited, ABN 30 087 650 459, AFSL and Australian Credit Licence 238981 - the ABN/ACL recorded on this record are TMBL's, not the historic Sydney Credit Union ones. The lineage traces to 1953, when the Motor Transport Employees Savings & Loans Co-op was established. For any live scenario, assess against Teachers Mutual Bank Limited's current third-party credit policy (see the health-professionals-bank / firefighters-mutual-bank records, which carry the same TMBL Home Loan Lending Reference Guide - 3rd Party Channel).",
+      "asAt": "2026-05-01",
+      "sourceUrl": "https://australianmutual.bank/about-us",
+      "sourceTitle": "Australian Mutual Bank - About us (bank history and TMBL division statement)",
+      "confidence": "high",
+      "status": "verified",
+      "updatedBy": "research:claude-opus-5"
+    }
+  },
+
+  "residency": {},
+
+  "version": 1,
+  "effectiveFrom": "2026-05-01",
+  "effectiveTo": null,
+  "researchedAt": "2026-07-29",
+  "researchedBy": "research:claude-opus-5",
+  "gaps": [
+    "Lender no longer exists under this name - merged into Australian Mutual Bank (2019), which became a division of Teachers Mutual Bank Limited on 1 May 2026. No Sydney Mutual Bank credit policy exists to research.",
+    "It was not established whether the Australian Mutual Bank brand itself will continue to be broker-distributed under TMBL accreditation, or whether it is being folded into the TMBL product set. Worth confirming with a TMBL BDM.",
+    "The historic Sydney Credit Union / Sydney Mutual Bank ABN and ACL were not captured; the ABN and ACL recorded here belong to the current licensee, Teachers Mutual Bank Limited.",
+    "This record is kept as a withdrawn marker so a stale 'Sydney Mutual Bank' reference resolves to 'brand retired, now TMBL' rather than to nothing."
+  ]
+}

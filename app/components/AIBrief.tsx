@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 export default function AIBrief({ contactId }: { contactId: string }) {
   const [state, setState] = useState<
@@ -20,8 +21,8 @@ export default function AIBrief({ contactId }: { contactId: string }) {
         const json = await res.json();
         if (json.ok) setState({ phase: "ready", text: json.text });
         else setState({ phase: "error", error: json.error || "AI brief unavailable" });
-      } catch (e: any) {
-        setState({ phase: "error", error: e?.message ?? "AI brief unavailable" });
+      } catch (e) {
+        setState({ phase: "error", error: errMessage(e, "AI brief unavailable") });
       }
     })();
   }, [contactId]);

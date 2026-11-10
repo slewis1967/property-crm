@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { errMessage } from "../../utils/errors";
 
 type Diag = { stuck: boolean; diagnosis: string; unblock: string } | null;
 
@@ -26,8 +27,8 @@ export default function AIOpportunityDiagnosis({
         const json = await res.json();
         if (json.ok) setState({ phase: "ready", diag: json.diagnosis });
         else setState({ phase: "error", error: json.error || "Unavailable" });
-      } catch (e: any) {
-        setState({ phase: "error", error: e?.message ?? "Unavailable" });
+      } catch (e) {
+        setState({ phase: "error", error: errMessage(e, "Unavailable") });
       }
     })();
   }, [opportunityId]);

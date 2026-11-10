@@ -5,7 +5,31 @@ import { stripHtml } from "../../../../utils/archive-helpers";
 
 import { requireAuth } from "../../../../utils/cf-access";
 import { applyAiRateLimit, aiExpensive } from "../../../../utils/ai-rate-limit";
+import { errMessage } from "../../../../utils/errors";
 export const dynamic = "force-dynamic";
+
+interface ContactRow {
+  ghl_contact_id?: string | null;
+  email?: string | null;
+  first_name?: string | null;
+  name?: string | null;
+  buyer_type?: string | null;
+  preferred_state?: string | null;
+  state?: string | null;
+  budget?: string | number | null;
+  finance_status?: string | null;
+  timeframe?: string | null;
+}
+interface ConversationRow {
+  type: string | null;
+  last_message_body: string | null;
+  last_message_type: string | null;
+  last_message_date: string | null;
+}
+interface NoteRow {
+  body: string | null;
+  date_added: string | null;
+}
 
 const SYSTEM = `You are drafting a reply on Sean's behalf. Sean is a property advisor at NextKey Property Strategists. He needs a reply he can send with one tap (or edit lightly first).
 
@@ -44,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     // Resolve contact
-    let contact: any;
+    let contact: ContactRow;
     const { data: liveContact } = await supabase
       .from("contacts")
       .select("*")
@@ -89,7 +113,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("last_message_date", { ascending: false, nullsFirst: false })
             .limit(6)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as ConversationRow[] }),
       ghlContactId
         ? supabase
             .from("ghl_archive_notes")
@@ -97,7 +121,7 @@ export async function POST(req: Request) {
             .eq("contact_id", ghlContactId)
             .order("date_added", { ascending: false, nullsFirst: false })
             .limit(3)
-        : Promise.resolve({ data: [] as any[] }),
+        : Promise.resolve({ data: [] as NoteRow[] }),
     ]);
 
     const firstName =
@@ -135,9 +159,9 @@ export async function POST(req: Request) {
       effort: "high",
     });
     return NextResponse.json(result);
-  } catch (e: any) {
+  } catch (e) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Failed to draft reply" },
+      { ok: false, error: errMessage(e, "Failed to draft reply") },
       { status: 500 },
     );
   }
