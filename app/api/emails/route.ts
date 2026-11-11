@@ -4,23 +4,20 @@
  *
  * POST /api/emails
  *   Body: { to, to_name?, subject, body_html, body_text?, cc?, bcc?,
- *           contact_id?, opportunity_id?, tags? }
+ *           contact_id?, opportunity_id?, tags?, from_identity? }
+ *   from_identity: "nextkey" (default) | "springboard" — the business
+ *   account it goes out from, see utils/send-accounts.ts.
  *   Sends via Brevo, logs the row, returns the saved row.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { sendBrevoEmail } from "../../../utils/brevo";
 import { requireAuth } from "../../../utils/cf-access";
-import { defaultSignature, getOwnSignatureFields } from "../../../utils/email-signature";
-import { personalSender } from "../../../utils/personal-sender";
-import { resolveSender } from "../../../utils/mail-owner";
-import { resolveIdentity } from "../../../utils/mailIdentities";
+import { DEFAULT_IDENTITY_KEY, isMailIdentityKey, resolveIdentity } from "../../../utils/mailIdentities";
+import { sendAccountsFor, type SendAccount } from "../../../utils/send-accounts";
 import { sharedMailboxFor } from "../../../utils/shared-mailboxes";
 
 export const dynamic = "force-dynamic";
-
-const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
-const SENDER_NAME = process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -119,31 +116,41 @@ export async function POST(req: Request) {
   // anyone signed in send as a colleague.
   const sentBy: string = auth;
 
-  // Resolve owner_user_email for the inbox routing. Outbound mail is owned
-  // by whoever sent it (CF-Access authenticated email). When that doesn't
-  // map to a registered alias — e.g. system-generated mail — leave it null
-  // and the message lives in the shared/system inbox view.
-  const ownerEmail = shared ? shared.address : await resolveSender(sentBy);
+  // Which business account it goes out from (the composer's From picker,
+  // utils/send-accounts.ts). Not chosen → the user's own NextKey account:
+  // their own nextkey.com.au address (Sean, 11 Nov 2026) and their own
+  // signature. Ignored when replying from a shared mailbox view.
+  let account: SendAccount | null = null;
+  if (!shared) {
+    const wanted = isMailIdentityKey(body.from_identity) ? body.from_identity : DEFAULT_IDENTITY_KEY;
+    account = (await sendAccountsFor(sentBy)).find((a) => a.key === wanted) ?? null;
+    if (!account) {
+      return NextResponse.json({ ok: false, error: "You can't send from that account" }, { status: 403 });
+    }
+  }
 
-  // A staff member's own send goes out FROM their own address (Sean, 11 Nov
-  // 2026), so the client sees who wrote and replies reach that person.
-  // Only for a registered CRM user on a Brevo-authenticated domain; anything
-  // else keeps the shared default sender.
-  const personal = shared || !ownerEmail
-    ? null
-    : personalSender(ownerEmail, (await getOwnSignatureFields(ownerEmail))?.name);
+  // Resolve owner_user_email for the inbox routing: the sender, or the shared
+  // mailbox the account belongs to so replies reach every member. Null when
+  // the sender isn't a registered alias (system mail → shared/system view).
+  const ownerEmail = shared ? shared.address : account!.owner;
+
   const sender = shared
     ? resolveIdentity(shared.identity)
-    : personal ?? { fromEmail: SENDER_EMAIL, fromName: SENDER_NAME };
+    : { fromEmail: account!.fromEmail, fromName: account!.fromName };
 
-  // Append the standard signature. Per-user resolution: whoever sent it
-  // (CF Access identity) gets their own sig. Falls back to the legacy
-  // shared sig if their per-user row is empty. Caller can opt out by
-  // passing `skip_signature: true` for system mail.
-  const sig = await defaultSignature(sentBy ?? undefined);
+  // Append the chosen account's signature. Replies from a shared mailbox view
+  // skip it (brand firewall), as does system mail with `skip_signature: true`.
   const skipSig = body.skip_signature === true || shared !== null;
-  const finalHtml = skipSig ? body_html : `${body_html}${sig.html}`;
-  const finalText = skipSig
+  const sig = shared ? null : account!.signature;
+  if (!skipSig && !sig) {
+    // Standing rule: an outward email carries the sender's signature; none on file → don't send.
+    return NextResponse.json(
+      { ok: false, error: `No signature on file for ${account!.label}. Set one up before sending from it.` },
+      { status: 400 },
+    );
+  }
+  const finalHtml = skipSig || !sig ? body_html : `${body_html}${sig.html}`;
+  const finalText = skipSig || !sig
     ? (body_text ?? null)
     : `${body_text ?? ""}${sig.text}`;
 
@@ -196,7 +203,8 @@ export async function POST(req: Request) {
     text: finalText ?? undefined,
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
     headers: replyHeaders,
-    ...(shared || personal ? { fromEmail: sender.fromEmail, fromName: sender.fromName } : {}),
+    fromEmail: sender.fromEmail,
+    fromName: sender.fromName,
   });
 
   // 3. Update row with outcome. Brevo's `messageId` IS the RFC822 Message-ID
