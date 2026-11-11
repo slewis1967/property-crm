@@ -114,10 +114,10 @@ export async function POST(req: Request) {
   if (body.mailbox && !shared) {
     return NextResponse.json({ ok: false, error: "No access to that mailbox" }, { status: 403 });
   }
-  const sentBy =
-    req.headers.get("x-user-email") ??
-    req.headers.get("cf-access-authenticated-user-email") ??
-    null;
+  // The verified identity from requireAuth, never a raw request header: mail
+  // now goes out FROM this address, so a client-set x-user-email would let
+  // anyone signed in send as a colleague.
+  const sentBy: string = auth;
 
   // Resolve owner_user_email for the inbox routing. Outbound mail is owned
   // by whoever sent it (CF-Access authenticated email). When that doesn't
