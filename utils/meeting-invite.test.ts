@@ -27,7 +27,7 @@ vi.mock("./brevo", () => ({
 }));
 
 import { sendMeetingInvite, meetingInviteHtml } from "./meeting-invite";
-import { formatAuPhone, renderSignature } from "./email-signature";
+import { formatAuPhone, renderSignature, SPRINGBOARD_EMAIL_LOGO_URL } from "./email-signature";
 import { buildIcs, DEFAULT_PRODID } from "./ics";
 
 const GLENN = {
@@ -85,7 +85,10 @@ describe("meeting invites follow the outward-email rule", () => {
     expect(html).toContain("springboardhomes.com.au");
     expect(html).toContain("0477 201 245");
     expect(html).not.toMatch(/nextkey/i);
-    expect(html).not.toContain("<img");
+    // The only image is the Springboard logo, from the Springboard site (never the NextKey logo).
+    const imgs = [...html.matchAll(/<img[^>]*src="([^"]+)"/g)].map((m) => m[1]);
+    expect(imgs).toEqual([SPRINGBOARD_EMAIL_LOGO_URL]);
+    expect(SPRINGBOARD_EMAIL_LOGO_URL).toMatch(/^https:\/\/springboardhomes\.com\.au\//);
   });
 
   it("refuses to send when the sender has no signature on file", async () => {

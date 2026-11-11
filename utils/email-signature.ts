@@ -176,7 +176,7 @@ export async function hostSignature(host: { email: string; brand: MailIdentityKe
   if (host.brand === "springboard") {
     const glenn = await getOwnSignatureFields(SPRINGBOARD_SIGNATORY_EMAIL);
     if (!glenn) return null;
-    return renderSignature({
+    return renderSpringboardSignature({
       name: glenn.name,
       title: "Springboard Homes",
       email: process.env.SPRINGBOARD_SENDER_EMAIL ?? "hello@springboardhomes.com.au",
@@ -226,6 +226,65 @@ export function renderSignature(f: SignatureFields): SignatureBlock {
   return { html, text };
 }
 
+/**
+ * The Springboard Homes logo for emails: served from the Springboard booking
+ * from springboardhomes.com.au so nothing in a Springboard email
+ * points at a NextKey address. 656x202 PNG, transparent background.
+ */
+export const SPRINGBOARD_EMAIL_LOGO_URL =
+  process.env.SPRINGBOARD_EMAIL_LOGO_URL ?? "https://springboardhomes.com.au/wp-content/uploads/2026/06/springboard-logo-v2.png";
+
+const SB_NAVY = "#020e40";
+const SB_AMBER = "#c7894e";
+
+/**
+ * The Springboard brand signature: logo on the left, an amber rule, then the
+ * signatory's name and contact lines in the brand navy. Table layout with
+ * inline styles so Gmail, Outlook and phone mail apps all keep it together.
+ * Plain brand only: no NextKey logo, title or disclaimer, and no finance or
+ * licensing claims (see springboardSignatureFields).
+ */
+export function renderSpringboardSignature(f: SignatureFields): SignatureBlock {
+  const phone = f.phone ? formatAuPhone(f.phone) : "";
+  const link = `color:${SB_NAVY};text-decoration:none;`;
+  const label = `color:${SB_AMBER};font-weight:700;padding-right:6px;`;
+  const row = (k: string, v: string) =>
+    `<tr><td style="${label}font-size:12px;">${k}</td><td style="font-size:13px;">${v}</td></tr>`;
+  const rows = [
+    phone ? row("P", `<a href="tel:${escapeHtml(phone.replace(/\s/g, ""))}" style="${link}">${escapeHtml(phone)}</a>`) : "",
+    row("E", `<a href="mailto:${escapeHtml(f.email)}" style="${link}">${escapeHtml(f.email)}</a>`),
+    f.web ? row("W", `<a href="https://${escapeHtml(f.web)}" style="${link}">${escapeHtml(f.web)}</a>`) : "",
+  ].join("");
+
+  const html = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;border-collapse:collapse;font-family:${EMAIL_FONT};color:${SB_NAVY};line-height:1.45;">
+  <tr>
+    <td style="padding:4px 18px 4px 0;vertical-align:middle;">
+      <a href="https://${escapeHtml(f.web || "springboardhomes.com.au")}" style="text-decoration:none;"><img src="${escapeHtml(SPRINGBOARD_EMAIL_LOGO_URL)}" alt="Springboard Homes" width="170" height="52" style="display:block;width:170px;height:52px;border:0;" /></a>
+    </td>
+    <td style="padding:2px 0 2px 18px;vertical-align:middle;border-left:3px solid ${SB_AMBER};">
+      <div style="font-size:16px;font-weight:700;color:${SB_NAVY};margin:0;">${escapeHtml(f.name)}</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${SB_AMBER};margin:2px 0 8px;">${escapeHtml(f.title || "Springboard Homes")}</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:${EMAIL_FONT};">${rows}</table>
+    </td>
+  </tr>
+</table>`.trim();
+
+  const text = [
+    "",
+    "—",
+    f.name,
+    f.title || "Springboard Homes",
+    phone ? `P ${phone}` : null,
+    `E ${f.email}`,
+    f.web ? `W ${f.web}` : null,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+
+  return { html, text };
+}
+
 /** Convenience: fetch + render in one call. */
 export async function defaultSignature(userEmail?: string): Promise<SignatureBlock> {
   const fields = await getSignatureFields(userEmail);
@@ -265,7 +324,7 @@ export async function signatureForIdentity(
   userEmail?: string,
 ): Promise<SignatureBlock> {
   if (identity === "springboard") {
-    return renderSignature(await springboardSignatureFields(userEmail));
+    return renderSpringboardSignature(await springboardSignatureFields(userEmail));
   }
   return defaultSignature(userEmail);
 }
