@@ -13,6 +13,7 @@ import AIQuickLog from "../../components/AIQuickLog";
 import AIDocumentExtract from "../../components/AIDocumentExtract";
 import AIPropertyPitch from "../../components/AIPropertyPitch";
 import EmailComposeModal from "../../components/EmailComposeModal";
+import { WorkPhoneCallButton, WorkPhoneSmsButton } from "../../components/WorkPhoneActions";
 import StartVideoCallButton from "../../components/StartVideoCallButton";
 import GuestLinkButton from "../../components/GuestLinkButton";
 import RequestDocumentsButton from "../../components/RequestDocumentsButton";
@@ -307,10 +308,12 @@ export default function ContactDetail({
             </button>
           )}
           {contact.phone && (
-            <a href={`tel:${contact.phone}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-              📱 Call
-            </a>
+            <WorkPhoneSmsButton
+              phone={contact.phone}
+              name={name}
+              contactId={contact.id}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+            />
           )}
           <StartVideoCallButton
             contactId={contact.id}
@@ -324,13 +327,16 @@ export default function ContactDetail({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
             📅 Schedule meeting
           </button>
-          {/* The other common case: called this contact back and want to send
-              a confirmation email rather than a video-meeting link. */}
-          <button
-            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-            📞 Phone call
-          </button>
+          {/* Rings the contact from Glenn's work phone (0477 201 245): the relay
+              makes the handset dial. Booking a phone meeting is still in
+              Schedule meeting (its Phone call option). */}
+          {contact.phone && (
+            <WorkPhoneCallButton
+              phone={contact.phone}
+              contactId={contact.id}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+            />
+          )}
           <GuestLinkButton
             contactId={contact.id}
             guestName={contact.name || undefined}

@@ -11,7 +11,8 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { sendBrevoEmail } from "../../../utils/brevo";
 import { requireAuth } from "../../../utils/cf-access";
-import { defaultSignature } from "../../../utils/email-signature";
+import { defaultSignature, getOwnSignatureFields } from "../../../utils/email-signature";
+import { personalSender } from "../../../utils/personal-sender";
 import { resolveSender } from "../../../utils/mail-owner";
 import { resolveIdentity } from "../../../utils/mailIdentities";
 import { sharedMailboxFor } from "../../../utils/shared-mailboxes";
@@ -113,14 +114,27 @@ export async function POST(req: Request) {
   if (body.mailbox && !shared) {
     return NextResponse.json({ ok: false, error: "No access to that mailbox" }, { status: 403 });
   }
-  const sender = shared
-    ? resolveIdentity(shared.identity)
-    : { fromEmail: SENDER_EMAIL, fromName: SENDER_NAME };
-
   const sentBy =
     req.headers.get("x-user-email") ??
     req.headers.get("cf-access-authenticated-user-email") ??
     null;
+
+  // Resolve owner_user_email for the inbox routing. Outbound mail is owned
+  // by whoever sent it (CF-Access authenticated email). When that doesn't
+  // map to a registered alias — e.g. system-generated mail — leave it null
+  // and the message lives in the shared/system inbox view.
+  const ownerEmail = shared ? shared.address : await resolveSender(sentBy);
+
+  // A staff member's own send goes out FROM their own address (Sean, 11 Nov
+  // 2026), so the client sees who wrote and replies reach that person.
+  // Only for a registered CRM user on a Brevo-authenticated domain; anything
+  // else keeps the shared default sender.
+  const personal = shared || !ownerEmail
+    ? null
+    : personalSender(ownerEmail, (await getOwnSignatureFields(ownerEmail))?.name);
+  const sender = shared
+    ? resolveIdentity(shared.identity)
+    : personal ?? { fromEmail: SENDER_EMAIL, fromName: SENDER_NAME };
 
   // Append the standard signature. Per-user resolution: whoever sent it
   // (CF Access identity) gets their own sig. Falls back to the legacy
@@ -132,12 +146,6 @@ export async function POST(req: Request) {
   const finalText = skipSig
     ? (body_text ?? null)
     : `${body_text ?? ""}${sig.text}`;
-
-  // Resolve owner_user_email for the inbox routing. Outbound mail is owned
-  // by whoever sent it (CF-Access authenticated email). When that doesn't
-  // map to a registered alias — e.g. system-generated mail — leave it null
-  // and the message lives in the shared/system inbox view.
-  const ownerEmail = shared ? shared.address : await resolveSender(sentBy);
 
   // 1. Insert as queued so we have an audit row even if Brevo errors.
   const { data: row, error: insertErr } = await supabase
@@ -188,7 +196,7 @@ export async function POST(req: Request) {
     text: finalText ?? undefined,
     tags: ["crm-outbound", ...(Array.isArray(tags) ? tags : [])],
     headers: replyHeaders,
-    ...(shared ? { fromEmail: sender.fromEmail, fromName: sender.fromName } : {}),
+    ...(shared || personal ? { fromEmail: sender.fromEmail, fromName: sender.fromName } : {}),
   });
 
   // 3. Update row with outcome. Brevo's `messageId` IS the RFC822 Message-ID
