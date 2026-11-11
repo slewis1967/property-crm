@@ -28,6 +28,15 @@ export type EmailComposeProps = {
   onSent?: (email: { id: string; to_email: string; subject: string }) => void;
 };
 
+/** One entry from GET /api/emails/sender. */
+type SendAccountView = {
+  key: string;
+  label: string;
+  from_email: string;
+  from_name: string;
+  signature_html: string | null;
+};
+
 export default function EmailComposeModal({
   open, onClose,
   defaultTo = "", defaultToName = "",
@@ -43,22 +52,23 @@ export default function EmailComposeModal({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
-  // The address this user's mail actually goes out from (their own NextKey
-  // address when they have one). Not needed for a shared mailbox.
-  const [ownFrom, setOwnFrom] = useState<string | null>(null);
+  // The business accounts this user can send from (NextKey as themselves,
+  // Springboard for its mailbox members), each with the signature it adds.
+  // Not used when replying from a shared mailbox view.
+  const [accounts, setAccounts] = useState<SendAccountView[]>([]);
+  const [fromKey, setFromKey] = useState<string>("nextkey");
   useEffect(() => {
     if (!open || mailbox) return;
     let cancelled = false;
     fetch("/api/emails/sender")
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        if (!cancelled && j?.ok && j.from_email) {
-          setOwnFrom(j.from_name ? `${j.from_name} <${j.from_email}>` : j.from_email);
-        }
+        if (!cancelled && j?.ok && Array.isArray(j.accounts)) setAccounts(j.accounts);
       })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [open, mailbox]);
+  const account = accounts.find((a) => a.key === fromKey) ?? accounts[0] ?? null;
 
   async function aiDraft() {
     if (!contactId) {
@@ -131,6 +141,7 @@ export default function EmailComposeModal({
           in_reply_to: inReplyTo ?? undefined,
           thread_id: threadId ?? undefined,
           mailbox: mailbox ?? undefined,
+          from_identity: mailbox ? undefined : (account?.key ?? fromKey),
         }),
       });
       const json = await res.json();
@@ -159,6 +170,24 @@ export default function EmailComposeModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
         </div>
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {!mailbox && (
+            <label className="block">
+              <span className="block text-xs text-gray-600 mb-1">From</span>
+              <select
+                value={account?.key ?? fromKey}
+                onChange={(e) => setFromKey(e.target.value)}
+                disabled={accounts.length === 0}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+              >
+                {accounts.length === 0 && <option>Loading…</option>}
+                {accounts.map((a) => (
+                  <option key={a.key} value={a.key}>
+                    {a.label}: {a.from_name} &lt;{a.from_email}&gt;
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <label className="block md:col-span-2">
               <span className="block text-xs text-gray-600 mb-1">To</span>
@@ -219,13 +248,29 @@ export default function EmailComposeModal({
                 : "Plain text. Paragraph breaks render as paragraphs. Your signature is auto-appended on send — no need to type it."}
             </span>
           </label>
+          {!mailbox && account && (
+            <div>
+              <span className="block text-xs text-gray-600 mb-1">Signature added on send</span>
+              {account.signature_html ? (
+                <div
+                  className="border border-gray-200 rounded-md px-3 py-1 bg-gray-50 text-sm"
+                  // Rendered server-side by renderSignature from the saved signature (escaped).
+                  dangerouslySetInnerHTML={{ __html: account.signature_html }}
+                />
+              ) : (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  No signature on file for this account, so it can&apos;t send yet.
+                </p>
+              )}
+            </div>
+          )}
           {error && (
             <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>
           )}
         </div>
         <div className="flex items-center justify-between gap-2 p-5 border-t border-gray-100">
           <p className="text-xs text-gray-400">
-            From: {fromLabel ?? ownFrom ?? "…"}
+            From: {fromLabel ?? (account ? `${account.from_name} <${account.from_email}>` : "…")}
           </p>
           <div className="flex gap-2">
             <button

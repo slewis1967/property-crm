@@ -1,26 +1,27 @@
 /**
- * GET /api/emails/sender — the From address the logged-in user's emails go
- * out from, so the composer can show it before they press Send. Mirrors the
- * personal-sender logic in POST /api/emails.
+ * GET /api/emails/sender: the business accounts the logged-in user can send
+ * from (utils/send-accounts.ts), each with its From line and the signature it
+ * appends, for the composer's From picker. POST /api/emails takes the chosen
+ * key as `from_identity`.
  */
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../utils/cf-access";
-import { getOwnSignatureFields } from "../../../../utils/email-signature";
-import { resolveSender } from "../../../../utils/mail-owner";
-import { personalSender } from "../../../../utils/personal-sender";
+import { sendAccountsFor } from "../../../../utils/send-accounts";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
-  const owner = await resolveSender(auth);
-  const personal = owner ? personalSender(owner, (await getOwnSignatureFields(owner))?.name) : null;
-  const fallback = process.env.BREVO_SENDER_EMAIL ?? "info@nextkey.com.au";
+  const accounts = await sendAccountsFor(auth);
   return NextResponse.json({
     ok: true,
-    from_email: personal?.fromEmail ?? fallback,
-    from_name: personal?.fromName ?? (process.env.BREVO_SENDER_NAME ?? "NextKey Property Strategists"),
-    personal: personal !== null,
+    accounts: accounts.map((a) => ({
+      key: a.key,
+      label: a.label,
+      from_email: a.fromEmail,
+      from_name: a.fromName,
+      signature_html: a.signature?.html ?? null,
+    })),
   });
 }
