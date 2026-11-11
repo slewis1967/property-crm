@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type EmailComposeProps = {
   open: boolean;
@@ -43,6 +43,22 @@ export default function EmailComposeModal({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
+  // The address this user's mail actually goes out from (their own NextKey
+  // address when they have one). Not needed for a shared mailbox.
+  const [ownFrom, setOwnFrom] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open || mailbox) return;
+    let cancelled = false;
+    fetch("/api/emails/sender")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!cancelled && j?.ok && j.from_email) {
+          setOwnFrom(j.from_name ? `${j.from_name} <${j.from_email}>` : j.from_email);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [open, mailbox]);
 
   async function aiDraft() {
     if (!contactId) {
@@ -209,7 +225,7 @@ export default function EmailComposeModal({
         </div>
         <div className="flex items-center justify-between gap-2 p-5 border-t border-gray-100">
           <p className="text-xs text-gray-400">
-            From: {fromLabel ?? process.env.NEXT_PUBLIC_BREVO_SENDER_EMAIL ?? "sean.l@nextkey.com.au"}
+            From: {fromLabel ?? ownFrom ?? "…"}
           </p>
           <div className="flex gap-2">
             <button

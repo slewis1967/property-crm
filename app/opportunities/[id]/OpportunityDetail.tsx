@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { stripHtml, splitGhlNoteBundle, fmtDateTime, truncate } from "../../../utils/archive-helpers";
 import AIOpportunityDiagnosis from "../../components/AIOpportunityDiagnosis";
 import EditRecordModal from "../../components/EditRecordModal";
+import EmailComposeModal from "../../components/EmailComposeModal";
+import { WorkPhoneCallButton, WorkPhoneSmsButton } from "../../components/WorkPhoneActions";
 import RequestDocumentsButton from "../../components/RequestDocumentsButton";
 import DocumentProgress from "../../components/DocumentProgress";
 import OpportunityAppointments from "./OpportunityAppointments";
@@ -140,6 +142,7 @@ export default function OpportunityDetail({
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduleKind, setScheduleKind] = useState<"video" | "phone">("video");
   const [showAddTask, setShowAddTask] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
   const [showBookingLinks, setShowBookingLinks] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const bookingLinkRef = useRef<HTMLDivElement>(null);
@@ -444,15 +447,17 @@ export default function OpportunityDetail({
           >
             📅 Schedule meeting
           </button>
-          {/* Sits next to Schedule meeting — the common case Glenn described is
-              calling a client back and wanting a confirmation email rather than
-              a video-meeting link. */}
-          <button
-            onClick={() => { setScheduleKind("phone"); setShowSchedule(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
-          >
-            📞 Phone call
-          </button>
+          {/* Rings the client from Glenn's work phone (0477 201 245): the relay
+              makes the handset dial. Booking a phone meeting is still in
+              Schedule meeting (its Phone call option). */}
+          {lead.phone && (
+            <WorkPhoneCallButton
+              phone={lead.phone}
+              contactId={lead.primary_contact_id}
+              opportunityId={lead.lead_id}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition disabled:opacity-50"
+            />
+          )}
           <button
             onClick={() => setShowAddTask(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
@@ -569,19 +574,35 @@ export default function OpportunityDetail({
           </div>
 
           {lead.email && (
-            <a href={`mailto:${lead.email}`}
+            <button
+              onClick={() => setShowEmail(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
               ✉️ Send Email
-            </a>
+            </button>
           )}
           {lead.phone && (
-            <a href={`tel:${lead.phone}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-              📱 Call
-            </a>
+            <WorkPhoneSmsButton
+              phone={lead.phone}
+              name={lead.full_name}
+              contactId={lead.primary_contact_id}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 transition"
+            />
           )}
         </div>
       </div>
+
+      {/* Sends through the CRM from the logged-in user's own address, with
+          their signature, and files it under this opportunity. */}
+      <EmailComposeModal
+        open={showEmail}
+        onClose={() => setShowEmail(false)}
+        defaultTo={lead.email ?? ""}
+        defaultToName={lead.full_name ?? ""}
+        contactId={lead.primary_contact_id}
+        opportunityId={lead.lead_id}
+        tags={["opportunity-detail"]}
+        onSent={() => { setShowEmail(false); router.refresh(); }}
+      />
 
       {showEdit && (
         <EditRecordModal

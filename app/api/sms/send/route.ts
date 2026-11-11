@@ -1,7 +1,10 @@
 /**
  * Single-SMS send endpoint.
  *
- * POST { contactId?, phone?, body, campaign? }
+ * POST { contactId?, phone?, body, campaign?, via? }
+ *
+ * via: "work_phone" forces the text out of Glenn's work mobile (0477 201 245)
+ * through the phone gateway, regardless of SMS_PROVIDER.
  *
  * Either contactId or phone must be provided. If contactId is given we look up
  * the contact's phone and convert to E.164. Body is sent as-is — caller is
@@ -53,7 +56,8 @@ async function handler(req: Request) {
       );
     }
 
-    const result = await sendSms({ contactId, phone, body: text, campaign });
+    const via = body.via === "work_phone" ? "work_phone" : undefined;
+    const result = await sendSms({ contactId, phone, body: text, campaign, via });
     if (!result.ok) {
       return NextResponse.json({ ok: false, error: result.error }, { status: 500 });
     }

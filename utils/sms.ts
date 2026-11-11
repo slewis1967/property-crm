@@ -55,8 +55,11 @@ export async function sendSms(opts: {
   phone: string; // E.164
   body: string;
   campaign?: string;
+  /** "work_phone" sends from Glenn's work mobile (0477 201 245) whatever
+   *  SMS_PROVIDER says — used by the one-off SMS button on client pages. */
+  via?: "work_phone";
 }): Promise<SmsResult> {
-  if (phoneGatewayEnabled()) return sendSmsViaPhone(opts);
+  if (opts.via === "work_phone" || phoneGatewayEnabled()) return sendSmsViaPhone(opts);
 
   const username = process.env.CLICKSEND_USERNAME;
   const apiKey = process.env.CLICKSEND_API_KEY;
