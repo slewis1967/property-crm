@@ -18,6 +18,7 @@ import { requireAuth } from "../../../../../utils/cf-access";
 import { sendBrevoEmail } from "../../../../../utils/brevo";
 import { runApplicationVerification } from "../../../../../utils/yla-verification-run";
 import { buildYlaInvite } from "../../../../../utils/yla-submit";
+import { fetchSubmissionNote } from "../../../../../utils/yla-submission-note";
 import { driveFolderIdFromUrl, shareFolderWithReader } from "../../../../../utils/google-drive";
 import {
   springboardSenderEmail,
@@ -90,6 +91,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     applicationId: run.applicationId,
     requestId: id,
     now,
+    note: await fetchSubmissionNote(run.siblingIds),
   });
 
   const dryRun = forceDry || !ylaAutoSubmitEnabled();
@@ -99,7 +101,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       dryRun: true,
       enabled: ylaAutoSubmitEnabled(),
       verification: run.result,
-      preview: { to: invite.to, subject: invite.subject, body_line: invite.bodyLine, event: invite.eventStart },
+      preview: { to: invite.to, subject: invite.subject, body_line: invite.bodyLine, event: invite.eventStart, text: invite.text },
     });
   }
 

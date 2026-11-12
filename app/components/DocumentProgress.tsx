@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { errMessage } from "../../utils/errors";
 import YlaCheckFailed, { issuesForApplicant, type VerificationIssue } from "./YlaCheckFailed";
+import SubmissionNote from "./SubmissionNote";
 
 /**
  * Document-collection progress for a record (opportunity or contact).
@@ -287,6 +288,9 @@ export default function DocumentProgress({
                     verifiedAt={r.verified_at ?? null}
                   />
                 )}
+
+                {/* One note per application, on the primary applicant's row. */}
+                {idx === 0 && <SubmissionNote requestId={r.id} />}
 
                 {r.detailError && (
                   <p className="mt-1 text-[11px] text-red-500">Couldn’t load status.</p>

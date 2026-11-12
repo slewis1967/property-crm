@@ -82,3 +82,35 @@ describe("who the invite comes from", () => {
     expect(ics).not.toContain("NextKey Property Strategists");
   });
 });
+
+describe("advisor note", () => {
+  const base = {
+    primaryApplicant: "Sonia Louise Crampton",
+    driveUrl: "https://drive.google.com/drive/folders/ABC",
+    clientRef: "NK-10019",
+    applicationId: null,
+    requestId: "req-1",
+    now: new Date("2026-11-12T05:00:00Z"),
+  };
+  const note = "The rental income declared is the projected rent.\n\nLine <two> & more";
+  const withNote = buildYlaInvite({ ...base, note });
+  const without = buildYlaInvite(base);
+
+  it("prints the note in the text and HTML email, escaped", () => {
+    expect(withNote.text).toContain("Advisor note:\nThe rental income declared is the projected rent.");
+    expect(withNote.html).toContain("Advisor note</p>");
+    expect(withNote.html).toContain("Line &lt;two&gt; &amp; more");
+    expect(withNote.html).not.toContain("<two>");
+  });
+
+  it("leaves the calendar invite in YLA's exact format", () => {
+    expect(withNote.ics).toBe(without.ics);
+    expect(withNote.ics).not.toContain("projected rent");
+  });
+
+  it("adds nothing when there is no note", () => {
+    expect(without.text).not.toContain("Advisor note");
+    expect(without.html).not.toContain("Advisor note");
+    expect(buildYlaInvite({ ...base, note: "   " }).text).toBe(without.text);
+  });
+});
