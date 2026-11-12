@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.97.0",
     "isomorphic-dompurify": "^3.12.0",
     "jose": "^6.2.3",
+    "jpeg-js": "^0.4.4",
     "jspdf": "^4.2.0",
     "leaflet": "^1.9.4",
     "livekit-client": "^2.20.1",
@@ -32,6 +33,7 @@
     "puppeteer-core": "^24.43.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "tesseract.js": "^5.1.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
