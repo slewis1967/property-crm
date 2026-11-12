@@ -13,6 +13,7 @@ import { exportToDrive } from "./google-drive";
 import { hasTfnBlocker } from "./yla-verification";
 import { DOCUMENT_REQUESTS_TABLE, docTableMissing } from "./document-requests-db";
 import { buildYlaPackageDocs } from "./yla-package";
+import { buildAdvisorNotesDoc } from "./yla-submission-note";
 
 const BUCKET = "client-documents";
 const SELECT =
@@ -185,6 +186,20 @@ export async function exportApplicationToDrive(id: string, opts?: { force?: bool
     return { ok: false, status: 409, error: `Not ready for YLA — ${packageDocs.missing.join("; ")}.` };
   }
   files.push(...packageDocs.docs.map((d) => ({ name: d.name, bytes: d.bytes, mime: d.mime })));
+
+  // The advisor's note to YLA, when there is one — e.g. that declared rental
+  // income is the projected rent of the property being bought. A note that
+  // fails to render must not hold up the package; the email carries it too.
+  try {
+    const notes = await buildAdvisorNotesDoc({
+      requestIds: siblings.map((s) => s.id),
+      primaryApplicant: primary.applicant_name,
+      clientRef: primary.client_ref,
+    });
+    if (notes) files.push(notes);
+  } catch {
+    /* the note still reaches YLA in the submission email */
+  }
   const surname = surnameOf(primary.applicant_name) || primary.applicant_name;
   const today = new Date().toISOString().slice(0, 10);
   const ref = primary.client_ref ? ` (${primary.client_ref})` : "";
