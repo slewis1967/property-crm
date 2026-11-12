@@ -55,6 +55,11 @@ export function buildYlaInvite(args: {
   now: Date;
   /** Bump per re-send of the same application so calendars accept the update. */
   sequence?: number;
+  /**
+   * The advisor's note to YLA (document_requests.submission_note). Email only:
+   * the calendar description stays in the exact shape YLA's process expects.
+   */
+  note?: string | null;
 }): YlaInvite {
   const surname = surnameOf(args.primaryApplicant) || args.primaryApplicant;
   const bodyLine = `${surname} - ${args.driveUrl} -`;
@@ -85,22 +90,34 @@ export function buildYlaInvite(args: {
   const ics = buildIcs(ev);
   const refLabel = args.clientRef ? ` (${args.clientRef})` : "";
   const subject = `${YLA_CALENDAR_TITLE} — ${surname}${refLabel}`;
+  const note = (args.note ?? "").trim();
   const text = [
     `New lead documents are ready for assessment.`,
     ``,
     bodyLine,
     ``,
+    ...(note ? [`Advisor note:`, note, ``] : []),
     `A calendar invite is attached (${YLA_CALENDAR_TITLE}).`,
   ].join("\n");
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:560px">
     <p>New lead documents are ready for assessment.</p>
     <p style="font-weight:bold">${escapeHtml(surname)}${refLabel} — <a href="${args.driveUrl}">Google Drive folder</a></p>
+    ${note ? `<div style="border-left:3px solid #0f766e;padding:4px 12px;margin:12px 0"><p style="margin:0 0 6px;font-weight:bold">Advisor note</p>${noteToHtml(note)}</div>` : ""}
     <p style="font-size:13px;color:#555">A calendar invite is attached (${escapeHtml(YLA_CALENDAR_TITLE)}). The Drive folder contains the applicant's Preliminary Assessment documents.</p>
   </div>`;
 
   return { to: YLA_INVITE_EMAIL, subject, html, text, ics, icsBase64: icsBase64(ev), eventStart: start, bodyLine };
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+/** A free-text note as HTML: paragraphs on blank lines, <br> within them. */
+export function noteToHtml(note: string): string {
+  return note
+    .trim()
+    .split(/\n\s*\n/)
+    .map((p) => `<p style="margin:0 0 8px">${escapeHtml(p.trim()).replace(/\n/g, "<br>")}</p>`)
+    .join("");
 }

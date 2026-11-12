@@ -34,6 +34,7 @@ import { predatesTfnRule, hasTfnBlocker } from "./yla-verification";
 import { redactApplicationTfns } from "./tfn-redact-store";
 import { exportApplicationToDrive } from "./yla-export";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
+import { fetchSubmissionNote } from "./yla-submission-note";
 import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
 import { driveFolderIdFromUrl, shareFolderWithReader } from "./google-drive";
 import { submitApplicationToBroker } from "./broker-submit";
@@ -395,6 +396,7 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
         applicationId: rep.application_id,
         requestId: rep.id,
         now,
+        note: await fetchSubmissionNote(ids),
       });
       const emailRes = await sendBrevoEmail({
         to: [{ email: invite.to, name: "Your Loan Assist" }],
