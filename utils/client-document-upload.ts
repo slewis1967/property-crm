@@ -16,6 +16,7 @@
 import { supabase } from "./supabase";
 import { DOC_BY_KEY, ylaFilename, surnameOf, maxSlotFor, YLA_MAX_BYTES } from "./yla-documents";
 import { redactStoredDocument } from "./tfn-redact-store";
+import { requestImageRedaction } from "./tfn-image-redact-trigger";
 
 export const CLIENT_DOCUMENTS_BUCKET = "client-documents";
 
@@ -173,11 +174,16 @@ export async function confirmClientDocumentUpload(args: {
   // reporting failure here would have the client re-upload the same file
   // forever. A document this cannot clean is caught by the gate instead.
   if (args.succeeded) {
+    let removed = 0;
     try {
-      await redactStoredDocument(String(documentId));
+      removed = (await redactStoredDocument(String(documentId)))?.removed ?? 0;
     } catch {
       /* gated downstream rather than blocking delivery */
     }
+    // Nothing in the text layer: the number may be in pixels (a scan or a
+    // screenshot). OCR is too slow for this request, so hand it to the
+    // background function, which only looks at ATO / super documents.
+    if (removed === 0) await requestImageRedaction([String(documentId)]);
   }
 
   return { ok: true, status: 200 };

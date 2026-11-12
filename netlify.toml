@@ -14,3 +14,10 @@
     "node_modules/@sparticuz/chromium/bin/**",
     "public/yla-logo.png",
   ]
+
+# OCR for TFNs in scanned documents (netlify/functions/tfn-image-redact-background.mts).
+# tesseract.js loads its WebAssembly core and worker script by path at runtime,
+# which the bundler cannot trace, so ship the packages whole.
+[functions."tfn-image-redact-background"]
+  node_bundler = "esbuild"
+  external_node_modules = ["tesseract.js", "tesseract.js-core"]

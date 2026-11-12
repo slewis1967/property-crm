@@ -33,6 +33,8 @@ import { runApplicationVerification } from "./yla-verification-run";
 import { predatesTfnRule, hasTfnBlocker } from "./yla-verification";
 import { redactApplicationTfns } from "./tfn-redact-store";
 import { exportApplicationToDrive } from "./yla-export";
+import { requestImageRedaction } from "./tfn-image-redact-trigger";
+import { TFN_DOC_TYPES, IMAGE_REDACT_GAVE_UP } from "./tfn-redact-image-store";
 import { buildYlaInvite, YLA_INVITE_EMAIL } from "./yla-submit";
 import { fetchSubmissionNote } from "./yla-submission-note";
 import { springboardSenderEmail, springboardSenderName, springboardReplyTo } from "./springboard-sender";
@@ -169,7 +171,15 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
       // where there is no text layer to search — would be re-checked, and
       // re-paid for, on every sweep forever.
       const cleaned = await redactApplicationTfns(ids);
-      if (cleaned.length === 0) continue;
+      if (cleaned.length === 0) {
+        // Not in a text layer, so it is in pixels. The background function
+        // OCRs the ATO / super documents and, if it removes the number, clears
+        // this verdict itself so the next sweep re-checks the set. Documents it
+        // has already given up on are noted and skipped, so this is not a
+        // two-hourly OCR bill for the same file.
+        await requestImageRedaction(await tfnCandidateDocs(ids));
+        continue;
+      }
       // Bank it. The documents have CHANGED, so the recorded verdict is now
       // about files that no longer exist — and the re-verification below is the
       // slow part, easily lost to the serverless ceiling. Losing it used to
@@ -425,4 +435,17 @@ export async function runYlaAutoSubmit(opts?: { dryRun?: boolean; now?: Date; li
   }
 
   return { ok: true, dryRun, enabled: ylaAutoSubmitEnabled(), scanned: groups.size, complete: completeCount, actions };
+}
+
+/** Live ATO / super documents of an application that OCR has not already given up on. */
+async function tfnCandidateDocs(requestIds: string[]): Promise<string[]> {
+  const { data } = await supabase
+    .from("client_documents")
+    .select("id,check_notes")
+    .in("request_id", requestIds)
+    .in("doc_type", TFN_DOC_TYPES)
+    .neq("status", "replaced");
+  return (data ?? [])
+    .filter((d) => !((d.check_notes as string | null) || "").includes(IMAGE_REDACT_GAVE_UP))
+    .map((d) => d.id as string);
 }
