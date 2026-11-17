@@ -14,6 +14,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { runPartnerFeasibilityJob } from "../../utils/partner-feasibility-job";
 import { supabase } from "../../utils/supabase";
+import { enforceKeyedRateLimit } from "../../utils/rate-limit";
 
 /** Durable trace in the append-only audit log: Netlify CLI shows no background-function logs. */
 async function trace(action: string, detail: Record<string, unknown>) {
@@ -34,12 +35,18 @@ function authorised(req: Request): boolean {
 
 const handler = async (req: Request) => {
   const ok = req.method === "POST" && authorised(req);
-  // First contact, before anything can fail: separates "never reached" from
-  // "reached but refused". Records only whether the secret matched.
-  await trace("feasibility_job_reached", { method: req.method, authorised: ok, has_bearer: /^Bearer\s/i.test(req.headers.get("authorization") || "") });
-  if (!ok) return new Response("Forbidden", { status: 403 });
+  if (!ok) {
+    // Refusals are recorded too (so "reached but refused" is visible), but
+    // capped: an unauthenticated caller must not be able to fill the
+    // permanent audit log. At most 5 per 10 minutes per instance.
+    if (!enforceKeyedRateLimit("partner-feasibility-refusal-trace", { windowMs: 10 * 60_000, max: 5 })) {
+      await trace("feasibility_job_refused", { method: req.method, has_bearer: /^Bearer\s/i.test(req.headers.get("authorization") || "") });
+    }
+    return new Response("Forbidden", { status: 403 });
+  }
   const body = (await req.json().catch(() => ({}))) as { reportId?: unknown };
   const id = typeof body.reportId === "string" ? body.reportId : "";
+  // First contact past the secret check: separates "never reached" from "ran".
   await trace("feasibility_job_invoked", { report_id: id });
   try {
     const r = await runPartnerFeasibilityJob(id);
