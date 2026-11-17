@@ -9,6 +9,7 @@ import {
   cleanAddress,
   monthlyAllowance,
   storableReport,
+  feasibilityView,
 } from "./partner-feasibility";
 import { feasibilitySystemPrompt } from "./planning-feasibility";
 import { PARTNER_FEATURES, TIER_DEFINITIONS } from "./partner";
@@ -72,5 +73,22 @@ describe("storableReport", () => {
   it("always returns an object", () => {
     expect(storableReport(null)).toEqual({});
     expect(storableReport([1, 2])).toEqual({});
+  });
+});
+
+describe("feasibilityView", () => {
+  const t0 = Date.parse("2026-11-17T05:00:00Z");
+  const row = (over: Record<string, unknown>) => ({ status: "pending", error: null, created_at: "2026-11-17T05:00:00Z", job_started_at: null, ...over }) as Parameters<typeof feasibilityView>[0];
+  it("ready and failed pass through", () => {
+    expect(feasibilityView(row({ status: "ready" }), t0).status).toBe("ready");
+    expect(feasibilityView(row({ status: "failed", error: "x" }), t0)).toMatchObject({ status: "failed", error: "x" });
+  });
+  it("asks again only when nobody started it for over a minute", () => {
+    expect(feasibilityView(row({}), t0 + 30_000).needsRetrigger).toBe(false);
+    expect(feasibilityView(row({}), t0 + 61_000).needsRetrigger).toBe(true);
+    expect(feasibilityView(row({ job_started_at: "2026-11-17T05:00:05Z" }), t0 + 61_000).needsRetrigger).toBe(false);
+  });
+  it("a job that died shows as failed after ten minutes, not 'being written' for ever", () => {
+    expect(feasibilityView(row({ job_started_at: "2026-11-17T05:00:05Z" }), t0 + 11 * 60_000).status).toBe("failed");
   });
 });

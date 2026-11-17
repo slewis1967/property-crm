@@ -6,6 +6,8 @@ import { supabase } from "../../../../utils/supabase";
 import { BUSINESS_TIME_ZONE } from "../../../../utils/datetime";
 import type { FeasibilityReport } from "../../../components/FeasibilityReportBody";
 import PartnerReport from "../PartnerReport";
+import ReportWaiting from "./ReportWaiting";
+import { feasibilityView } from "../../../../utils/partner-feasibility";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Feasibility report — Partner Portal" };
@@ -19,12 +21,27 @@ export default async function PartnerFeasibilityReportPage({ params }: { params:
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await supabase
     .from("partner_feasibility_reports")
-    .select("id,address,report,created_at,partner_users(full_name)")
+    .select("id,address,report,status,error,created_at,job_started_at,partner_users(full_name)")
     .eq("id", id)
     .eq("partner_id", identity.partnerId)
-    .eq("status", "ready")
     .maybeSingle();
   if (!data) notFound();
+
+  const view = feasibilityView(data);
+  if (view.status !== "ready" || !data.report) {
+    return (
+      <Frame identity={identity}>
+        <Link href="/partner/feasibility" className="text-sm text-gray-600 hover:text-gray-900">← All reports</Link>
+        <div className="mt-3 max-w-2xl">
+          {view.status === "failed" ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">{view.error}</div>
+          ) : (
+            <ReportWaiting id={data.id} address={data.address} />
+          )}
+        </div>
+      </Frame>
+    );
+  }
 
   const by = Array.isArray(data.partner_users) ? data.partner_users[0] : data.partner_users;
   const dateLabel = new Date(data.created_at).toLocaleDateString("en-AU", {

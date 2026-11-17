@@ -43,10 +43,11 @@ export default function FeasibilityTool({ accent, remaining }: { accent: string;
 
   async function generate(transcript: Msg[], prep: { location: unknown } | null) {
     setStage("working");
-    setStatus("Writing the report. This takes about a minute.");
+    setStatus("Starting the report…");
     const r = await call({ phase: "report", address, objective, messages: transcript, prepared: prep ?? undefined });
-    if (typeof r.id === "string") router.push(`/partner/feasibility/${r.id}`);
-    else throw new Error(typeof r.saveError === "string" ? r.saveError : "The report couldn't be saved.");
+    if (typeof r.id !== "string") throw new Error("Couldn't start the report. Please try again.");
+    // The report is written in the background; its page waits for it.
+    router.push(`/partner/feasibility/${r.id}`);
   }
 
   async function start(e: React.FormEvent) {

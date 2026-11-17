@@ -4,7 +4,7 @@ import Frame from "../Frame";
 import { has, requirePartnerPage } from "../session";
 import { feasibilityUsedThisMonth, listFeasibilityReports } from "../../../utils/partner-feasibility-db";
 import { formatDateTime } from "../../../utils/datetime";
-import { monthlyAllowance } from "../../../utils/partner-feasibility";
+import { feasibilityView, monthlyAllowance } from "../../../utils/partner-feasibility";
 import FeasibilityTool from "./FeasibilityTool";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,13 @@ export default async function PartnerFeasibilityPage() {
               {reports.map((r) => (
                 <li key={r.id} className="px-4 py-3 text-sm">
                   <Link href={`/partner/feasibility/${r.id}`} className="font-medium underline">{r.address}</Link>
-                  <div className="text-xs text-gray-500">{formatDateTime(r.created_at)}</div>
+                  <div className="text-xs text-gray-500">
+                    {formatDateTime(r.created_at)}
+                    {(() => {
+                      const v = feasibilityView(r);
+                      return v.status === "pending" ? " · being written" : v.status === "failed" ? " · failed" : "";
+                    })()}
+                  </div>
                 </li>
               ))}
             </ul>
