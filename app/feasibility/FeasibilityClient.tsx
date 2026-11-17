@@ -74,6 +74,7 @@ async function callApi(
     status?: string;
     questions?: Question[];
     report?: Report;
+    jobId?: string;
     location?: { lat: number; lng: number } | null;
     satellite?: string | null;
   };
@@ -90,6 +91,27 @@ async function callApi(
     throw new Error(json?.error || `Request failed (${res.status})`);
   }
   return json;
+}
+
+/**
+ * Poll a background report job until it is ready (or failed). Gives up after
+ * 12 minutes; the server marks a stuck job failed after 10.
+ */
+async function waitForReport(jobId: string): Promise<Report> {
+  const started = Date.now();
+  while (Date.now() - started < 12 * 60_000) {
+    await new Promise((r) => setTimeout(r, 4000));
+    let json: { status?: string; report?: Report; error?: string } = {};
+    try {
+      const res = await fetch(`/api/ai/planning-feasibility/jobs/${jobId}`, { cache: "no-store" });
+      json = await res.json();
+    } catch {
+      continue; // a dropped poll is not a failed report
+    }
+    if (json.status === "ready" && json.report) return json.report;
+    if (json.status === "failed") throw new Error(json.error || "Report generation failed");
+  }
+  throw new Error("The report is taking much longer than usual. Please try again.");
 }
 
 export default function FeasibilityClient({
@@ -247,12 +269,15 @@ export default function FeasibilityClient({
       // Two-step so each request stays under the serverless function cap: a fast
       // "prepare" (geocode + satellite, no model call), then the AI-only report.
       const prep = await callApi("prepare", msgs, address);
-      const json = await callApi("report", msgs, address, {
+      // The report is written by a background job (it takes longer than a
+      // request may run); this call only starts it, then we wait for it.
+      const started = await callApi("report", msgs, address, {
         location: prep.location,
         satellite: prep.satellite,
       });
-      if (!json.report) throw new Error("The report came back empty. Please try again.");
-      setReport(json.report);
+      const finished = started.jobId ? await waitForReport(started.jobId) : started.report;
+      if (!finished) throw new Error("The report came back empty. Please try again.");
+      setReport(finished);
       setStage("report");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Report generation failed");
