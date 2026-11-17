@@ -32,9 +32,9 @@ import {
   brisbaneMonthStart,
   cleanAddress,
   monthlyAllowance,
-  storableReport,
 } from "../../../../utils/partner-feasibility";
 import { feasibilityUsedThisMonth, listFeasibilityReports } from "../../../../utils/partner-feasibility-db";
+import { requestPartnerFeasibility } from "../../../../utils/partner-feasibility-job";
 import { logPartnerEvent, readJson, requireFeature, requirePartner } from "../_shared";
 
 export const runtime = "nodejs";
@@ -55,7 +55,7 @@ export async function GET() {
   ]);
   return NextResponse.json({
     ok: true,
-    reports: reports.map((r) => ({ id: r.id, address: r.address, title: r.title, createdAt: r.created_at })),
+    reports: reports.map((r) => ({ id: r.id, address: r.address, title: r.title, status: r.status, createdAt: r.created_at })),
     usage: { used, allowance: monthlyAllowance() },
   });
 }
@@ -101,7 +101,12 @@ export async function POST(req: Request) {
     return NextResponse.json(r.payload, { status: r.status });
   }
 
-  // ── report: claim the slot first ──
+  // ── report ──
+  // Refuse a malformed transcript here, before a slot is claimed, so the
+  // background job never has to.
+  if (messages[0]?.role !== "user" || messages[messages.length - 1]?.role !== "user") {
+    return NextResponse.json({ ok: false, error: "The conversation must start and end with your message." }, { status: 400 });
+  }
   const objective = typeof body.objective === "string" ? body.objective.slice(0, 2000) : null;
   const allowance = monthlyAllowance();
   const { data: slotId, error: claimErr } = await supabase.rpc("claim_partner_feasibility_slot", {
@@ -123,42 +128,26 @@ export async function POST(req: Request) {
     );
   }
 
-  const r = await runPlanningFeasibility({ phase, address, messages, prepared }, { audience: "neutral" });
-  if (r.status !== 200) {
-    // 400 = the engine refused the request before calling the model, so it
-    // cost nothing: release the slot. Any later failure (unparseable or empty
-    // report, model error) happened after a paid model call, so the slot stays
-    // claimed and counts. Releasing those would let a crafted transcript buy
-    // unlimited model runs by failing on purpose.
-    if (r.status === 400) {
-      await supabase.from("partner_feasibility_reports").delete().eq("id", slotId).eq("status", "pending");
-    }
-    return NextResponse.json(r.payload, { status: r.status });
-  }
-
-  const report = storableReport((r.payload as { report?: unknown }).report);
-  const { error: saveErr } = await supabase
+  // Hand the report to the background function: it takes 30-50s, longer than a
+  // request may run here. The page polls the row (GET /api/partner/feasibility/<id>).
+  const { error: storeErr } = await supabase
     .from("partner_feasibility_reports")
-    .update({
-      status: "ready",
-      title: typeof report.title === "string" ? report.title.slice(0, 200) : null,
-      report,
-    })
-    .eq("id", slotId)
-    .eq("partner_id", auth.partnerId);
+    .update({ request: { address, messages, prepared: prepared ?? null } })
+    .eq("id", slotId);
+  const handedOver = !storeErr && (await requestPartnerFeasibility(slotId));
+  if (!handedOver) {
+    // Nothing was run, so nothing is charged: release the slot.
+    await supabase.from("partner_feasibility_reports").delete().eq("id", slotId).eq("status", "pending").is("job_started_at", null);
+    console.error("[partner-feasibility] could not start the background job", storeErr?.message);
+    return NextResponse.json({ ok: false, error: "Couldn't start the report. Please try again." }, { status: 503 });
+  }
 
   await logPartnerEvent({
     partnerId: auth.partnerId,
     actorType: "partner",
     actor: auth.email,
-    action: "feasibility_report_generated",
-    detail: { report_id: slotId, address, saved: !saveErr },
+    action: "feasibility_report_requested",
+    detail: { report_id: slotId, address },
   });
-
-  if (saveErr) {
-    // The slot stays 'pending', so this report still counts toward the allowance.
-    console.error("[partner-feasibility] save failed", saveErr.message);
-    return NextResponse.json({ ok: true, report, id: null, saveError: "The report was written but couldn't be saved. Please contact NextKey." });
-  }
-  return NextResponse.json({ ok: true, report, id: slotId });
+  return NextResponse.json({ ok: true, id: slotId, status: "pending" }, { status: 202 });
 }

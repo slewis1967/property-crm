@@ -67,3 +67,27 @@ export function storableReport(report: unknown): Record<string, unknown> {
   const parsed = JSON.parse(json) as unknown;
   return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
 }
+
+/** A job that started but has not finished after this long has died. */
+export const FEASIBILITY_STALE_MS = 10 * 60_000;
+/** A claimed report nobody has started after this long lost its hand-over. */
+export const FEASIBILITY_RETRIGGER_MS = 60_000;
+
+/**
+ * What the partner is shown for a report row. A job that died mid-run would
+ * otherwise read "being written" for ever, so after FEASIBILITY_STALE_MS it
+ * shows as failed (the slot still counts: the model may have run).
+ */
+export function feasibilityView(
+  row: { status: string; error: string | null; created_at: string; job_started_at: string | null },
+  now: number = Date.now(),
+): { status: "pending" | "ready" | "failed"; error: string | null; needsRetrigger: boolean } {
+  if (row.status === "ready") return { status: "ready", error: null, needsRetrigger: false };
+  if (row.status === "failed") return { status: "failed", error: row.error ?? "The report couldn't be written.", needsRetrigger: false };
+  const started = row.job_started_at ? Date.parse(row.job_started_at) : null;
+  if (started !== null && now - started > FEASIBILITY_STALE_MS) {
+    return { status: "failed", error: "The report took too long and was stopped. Please contact NextKey.", needsRetrigger: false };
+  }
+  const claimedAgo = now - Date.parse(row.created_at);
+  return { status: "pending", error: null, needsRetrigger: started === null && claimedAgo > FEASIBILITY_RETRIGGER_MS };
+}
