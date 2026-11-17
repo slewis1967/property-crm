@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPublicSignRoute, isPublicGuestRoute, isLivekitWebhookRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute, isPublicIntroducerRoute } from "./proxy";
+import { isPublicSignRoute, isPublicGuestRoute, isLivekitWebhookRoute, isPublicBookingRoute, isPublicPortalRoute, isCronRoute, isPublicIntroducerRoute, isBackgroundFunctionRoute, BACKGROUND_FUNCTION_PATHS } from "./proxy";
 
 describe("isPublicGuestRoute", () => {
   it("exempts the guest-join page (bare + tokenised)", () => {
@@ -162,5 +162,24 @@ describe("isPublicPortalRoute", () => {
     expect(isPublicPortalRoute("/api/portalx/abc")).toBe(false);
     expect(isPublicPortalRoute("/api/portal")).toBe(false);
     expect(isPublicPortalRoute("/documents")).toBe(false);
+  });
+});
+
+describe("isBackgroundFunctionRoute (approved by Sean, 17 Nov 2026)", () => {
+  it("lets through exactly the three background functions the CRM triggers", () => {
+    expect([...BACKGROUND_FUNCTION_PATHS].sort()).toEqual([
+      "/.netlify/functions/feasibility-background",
+      "/.netlify/functions/partner-feasibility-background",
+      "/.netlify/functions/tfn-image-redact-background",
+    ]);
+    for (const p of BACKGROUND_FUNCTION_PATHS) expect(isBackgroundFunctionRoute(p)).toBe(true);
+  });
+  it("is never a prefix: other functions and look-alikes stay behind the gate", () => {
+    expect(isBackgroundFunctionRoute("/.netlify/functions/")).toBe(false);
+    expect(isBackgroundFunctionRoute("/.netlify/functions/yla-auto-submit")).toBe(false);
+    expect(isBackgroundFunctionRoute("/.netlify/functions/document-reminders")).toBe(false);
+    expect(isBackgroundFunctionRoute("/.netlify/functions/feasibility-background/x")).toBe(false);
+    expect(isBackgroundFunctionRoute("/.netlify/functions/feasibility-background-evil")).toBe(false);
+    expect(isBackgroundFunctionRoute("/api/feasibility-background")).toBe(false);
   });
 });

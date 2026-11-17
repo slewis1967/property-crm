@@ -13,11 +13,23 @@
  */
 export type TriggerResult = { ok: boolean; status: number | null; host: string | null; location: string | null };
 
+/**
+ * Where background functions are called. NOT the production hostname: that is
+ * behind Cloudflare Access, which answers the service token with a 302 to its
+ * login page for these paths (measured 17 Nov 2026), so no job ever ran. The
+ * site's own netlify.app address skips Cloudflare; proxy.ts lets exactly these
+ * function paths through (isBackgroundFunctionRoute) and each function checks
+ * the CRON_SECRET bearer. DEPLOY_URL would be ideal but is not set when the
+ * server runs (the 17 Nov trace showed the call going to URL instead).
+ * BACKGROUND_FUNCTION_ORIGIN overrides the default.
+ */
+export const DEFAULT_BACKGROUND_ORIGIN = "https://crmnex.netlify.app";
+
 export function backgroundFunctionUrl(path: string, override?: string): string {
   const explicit = (override || "").trim();
   if (explicit) return explicit;
-  const site = (process.env.DEPLOY_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || "").replace(/\/$/, "");
-  return site ? `${site}${path}` : "";
+  const origin = (process.env.BACKGROUND_FUNCTION_ORIGIN || DEFAULT_BACKGROUND_ORIGIN).replace(/\/$/, "");
+  return `${origin}${path}`;
 }
 
 export async function triggerBackgroundFunction(

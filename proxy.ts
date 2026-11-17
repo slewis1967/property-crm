@@ -346,6 +346,25 @@ export function isCronRoute(pathname: string): boolean {
   return pathname === "/api/cron" || pathname.startsWith("/api/cron/");
 }
 
+// Netlify BACKGROUND functions, called server-to-server by the CRM itself
+// (utils/background-trigger.ts). The production hostname sits behind
+// Cloudflare Access, which refuses the service token for these paths (302 to
+// the login page, measured 17 Nov 2026), so the trigger calls them on the
+// site's own *.netlify.app address instead, where this tunnel gate is the only
+// thing in front of them. Each function re-secures itself with the
+// CRON_SECRET bearer (constant-time compared) and does nothing without it,
+// exactly like isCronRoute. EXACT paths only: never a /.netlify/functions/
+// prefix, so no other function is exposed by this. Approved by Sean, 17 Nov 2026.
+export const BACKGROUND_FUNCTION_PATHS: ReadonlySet<string> = new Set([
+  "/.netlify/functions/partner-feasibility-background",
+  "/.netlify/functions/feasibility-background",
+  "/.netlify/functions/tfn-image-redact-background",
+]);
+
+export function isBackgroundFunctionRoute(pathname: string): boolean {
+  return BACKGROUND_FUNCTION_PATHS.has(pathname);
+}
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Trusted hosts for the Origin header on mutating /api/* calls. Production
@@ -503,7 +522,8 @@ export async function proxy(req: NextRequest) {
     isPublicIntroducerRoute(pathname) ||
     isPublicPartnerRoute(pathname) ||
     isPublicShortlistRoute(pathname) ||
-    isCronRoute(pathname);
+    isCronRoute(pathname) ||
+    isBackgroundFunctionRoute(pathname);
 
   if (isPublic) {
     // Tag trusted public routes for downstream server components/layouts.
