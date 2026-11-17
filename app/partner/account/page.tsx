@@ -1,6 +1,7 @@
 import Frame from "../Frame";
 import { requirePartnerPage } from "../session";
 import { PARTNER_FEATURES, PARTNER_TIERS, TIER_DEFINITIONS, type PartnerFeature } from "../../../utils/partner";
+import { ACCENT, BRAND, Icon, PageHeader, brandTint } from "../ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Plan — Partner Portal" };
@@ -17,47 +18,70 @@ export default async function PartnerAccountPage() {
 
   return (
     <Frame identity={identity}>
-      <h1 className="text-2xl font-semibold text-gray-900">Your plan</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        {identity.firmName} is on <strong>{TIER_DEFINITIONS[identity.tier].label}</strong>. To change plan or add your
-        own branding, contact your NextKey partner manager.
-      </p>
+      <PageHeader
+        eyebrow="Your plan"
+        title={`${TIER_DEFINITIONS[identity.tier].label} plan`}
+        icon="star"
+        subtitle={
+          <>
+            {identity.firmName} is on <strong className="text-slate-900">{TIER_DEFINITIONS[identity.tier].label}</strong>. To change
+            plan or add your own branding, contact your NextKey partner manager.
+          </>
+        }
+      />
 
-      <div className="mt-5 overflow-x-auto rounded-xl border border-gray-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-4 py-2">Feature</th>
-              {PARTNER_TIERS.map((t) => (
-                <th key={t} className="px-4 py-2 text-center" style={t === identity.tier ? { color: identity.branding.primaryColor } : undefined}>
-                  {TIER_DEFINITIONS[t].label}{t === identity.tier ? " (you)" : ""}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {features.map((f) => (
-              <tr key={f} className="border-t border-gray-100">
-                <td className="px-4 py-2">
-                  {PARTNER_FEATURES[f].label}
-                  {!PARTNER_FEATURES[f].built && <span className="ml-2 text-xs text-gray-500">coming soon</span>}
-                  {mine.has(f) && !TIER_DEFINITIONS[identity.tier].features.includes(f) && (
-                    <span className="ml-2 text-xs text-green-700">added for you</span>
-                  )}
-                </td>
-                {PARTNER_TIERS.map((t) => (
-                  <td key={t} className="px-4 py-2 text-center">{TIER_DEFINITIONS[t].features.includes(f) ? "✓" : ""}</td>
-                ))}
-              </tr>
-            ))}
-            <tr className="border-t border-gray-100">
-              <td className="px-4 py-2">Team logins</td>
-              {PARTNER_TIERS.map((t) => (
-                <td key={t} className="px-4 py-2 text-center">{TIER_DEFINITIONS[t].maxUsers ?? "Unlimited"}</td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+      <div className="grid gap-5 md:grid-cols-3">
+        {PARTNER_TIERS.map((t) => {
+          const def = TIER_DEFINITIONS[t];
+          const current = t === identity.tier;
+          return (
+            <div
+              key={t}
+              className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] ${
+                current ? "border-transparent ring-2 ring-[var(--brand)]" : "border-slate-200/80"
+              }`}
+            >
+              {current && (
+                <span className="absolute -top-3 left-6 rounded-full px-3 py-0.5 text-xs font-bold text-white shadow-sm" style={{ background: ACCENT }}>
+                  Your plan
+                </span>
+              )}
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: current ? BRAND : brandTint(9), color: current ? "white" : BRAND }}>
+                  <Icon name={t === "basic" ? "grid" : t === "professional" ? "chart" : "star"} className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="text-lg font-semibold text-slate-900">{def.label}</div>
+                  <div className="text-xs text-slate-500">
+                    {def.maxUsers ? `Up to ${def.maxUsers} team logins` : "Unlimited team logins"}
+                  </div>
+                </div>
+              </div>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {features.map((f) => {
+                  const included = def.features.includes(f);
+                  return (
+                    <li key={f} className={`flex items-start gap-2.5 ${included ? "text-slate-800" : "text-slate-400"}`}>
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${included ? "text-white" : "bg-slate-100 text-slate-300"}`}
+                        style={included ? { background: BRAND } : undefined}
+                      >
+                        {included ? <Icon name="check" className="h-3 w-3" strokeWidth={3} /> : <span className="h-0.5 w-2 rounded bg-slate-300" />}
+                      </span>
+                      <span>
+                        {PARTNER_FEATURES[f].label}
+                        {!PARTNER_FEATURES[f].built && <span className="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">Soon</span>}
+                        {current && mine.has(f) && !included && (
+                          <span className="ml-1.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">Added for you</span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </Frame>
   );

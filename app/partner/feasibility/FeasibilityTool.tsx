@@ -100,22 +100,22 @@ export default function FeasibilityTool({ accent, remaining }: { accent: string;
     }
   }
 
-  const field = "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
+  const field = "mt-1 w-full rounded-xl border border-slate-300 bg-white shadow-sm px-3 py-2 text-sm";
   const outOfReports = remaining !== null && remaining <= 0;
 
   if (stage === "working") {
-    return <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-700">{status}</div>;
+    return <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] p-6 text-sm text-slate-700">{status}</div>;
   }
 
   if (stage === "questions") {
     return (
-      <form onSubmit={answer} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
-        {understanding && <p className="text-sm text-gray-700">{understanding}</p>}
-        <p className="text-sm text-gray-600">A few questions so the report is accurate. Best guesses are filled in where we found them.</p>
+      <form onSubmit={answer} className="space-y-4 rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] p-5">
+        {understanding && <p className="text-sm text-slate-700">{understanding}</p>}
+        <p className="text-sm text-slate-600">A few questions so the report is accurate. Best guesses are filled in where we found them.</p>
         {questions.map((q) => (
-          <label key={q.id} className="block text-sm font-medium text-gray-700">
+          <label key={q.id} className="block text-sm font-medium text-slate-700">
             {q.label}
-            {q.why && <span className="block text-xs font-normal text-gray-500">{q.why}</span>}
+            {q.why && <span className="block text-xs font-normal text-slate-500">{q.why}</span>}
             <input className={field} value={answers[q.id] ?? ""} placeholder={q.placeholder} onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))} />
           </label>
         ))}
@@ -128,13 +128,13 @@ export default function FeasibilityTool({ accent, remaining }: { accent: string;
   }
 
   return (
-    <form onSubmit={start} className="space-y-3 rounded-xl border border-gray-200 bg-white p-5">
-      <label className="block text-sm font-medium text-gray-700">
+    <form onSubmit={start} className="space-y-3 rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] p-5">
+      <label className="block text-sm font-medium text-slate-700">
         Site address
         <input className={field} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 12 Example Street, Suburb QLD 4000" required />
       </label>
-      <label className="block text-sm font-medium text-gray-700">
-        What do you want to assess? <span className="font-normal text-gray-500">(optional)</span>
+      <label className="block text-sm font-medium text-slate-700">
+        What do you want to assess? <span className="font-normal text-slate-500">(optional)</span>
         <textarea className={field} rows={3} value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="e.g. Can this block be subdivided, or take a granny flat or a duplex?" />
       </label>
       {error && <p className="text-sm text-red-700">{error}</p>}
@@ -146,7 +146,7 @@ export default function FeasibilityTool({ accent, remaining }: { accent: string;
       >
         Start assessment
       </button>
-      {outOfReports && <p className="text-sm text-gray-600">You&apos;ve used this month&apos;s reports. Ask your NextKey contact if you need more.</p>}
+      {outOfReports && <p className="text-sm text-slate-600">You&apos;ve used this month&apos;s reports. Ask your NextKey contact if you need more.</p>}
     </form>
   );
 }

@@ -45,8 +45,8 @@ export default function ReportWaiting({ id, address }: { id: string; address: st
     return <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">{error}</div>;
   }
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-700">
-      <div className="font-semibold text-gray-900">Writing the report for {address}</div>
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] p-6 text-sm text-slate-700">
+      <div className="font-semibold text-slate-900">Writing the report for {address}</div>
       <p className="mt-1">This usually takes about a minute. You can leave this page; the report will be in your list when it&apos;s done.</p>
     </div>
   );

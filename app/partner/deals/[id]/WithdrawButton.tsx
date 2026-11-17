@@ -34,10 +34,10 @@ export default function WithdrawButton({ dealId }: { dealId: string }) {
           <button onClick={withdraw} disabled={busy} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {busy ? "Withdrawing…" : "Yes, withdraw"}
           </button>
-          <button onClick={() => setConfirming(false)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">Keep it</button>
+          <button onClick={() => setConfirming(false)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Keep it</button>
         </div>
       ) : (
-        <button onClick={() => setConfirming(true)} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700">
+        <button onClick={() => setConfirming(true)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700">
           Withdraw request
         </button>
       )}

@@ -15,7 +15,7 @@ export default async function NewPartnerClientPage({ searchParams }: { searchPar
 
   return (
     <Frame identity={identity}>
-      <h1 className="mb-4 text-2xl font-semibold text-gray-900">Add a client</h1>
+      <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">Add a client</h1>
       <ClientForm mode="create" next={safeNext} accent={identity.branding.accentColor} />
     </Frame>
   );
