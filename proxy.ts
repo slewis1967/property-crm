@@ -9,6 +9,7 @@ import {
   springboardBookRoute,
 } from "./utils/springboard-book-host";
 import { MARKETING_HOME, marketingMayAccess, roleForEmail, type CrmRole } from "./utils/roles";
+import { isExternalApiRoute } from "./utils/external-api";
 
 /**
  * Role gate (see utils/roles.ts). Runs after identity is established. Returns
@@ -490,6 +491,18 @@ export async function proxy(req: NextRequest) {
     const blocked = roleGate(req, devRole);
     if (blocked) return blocked;
     requestHeaders.set("x-crm-role", devRole);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // External read-only API (utils/external-api.ts): machine callers with no CF
+  // Access identity, re-secured by a hashed API key INSIDE each route. Read-only
+  // by construction: anything but GET/HEAD is refused here. Must mirror the CF
+  // Access bypass app (crm.nextkey.com.au/api/external/*) EXACTLY.
+  if (isExternalApiRoute(pathname)) {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      return NextResponse.json({ error: "Method not allowed" }, { status: 405, headers: { allow: "GET, HEAD" } });
+    }
+    requestHeaders.set("x-public-route", "1");
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 

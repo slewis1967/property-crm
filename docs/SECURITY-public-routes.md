@@ -11,6 +11,7 @@ Public route patterns (must match the proxy carve-outs exactly):
 - Introducer portal (public-facing): `/introducer`, `/introducer/*`, `/api/introducer/*`
 - Channel-partner portal (public-facing): `/partner`, `/partner/*`, `/api/partner/*` — note `"/partners".startsWith("/partner")` is true, so the carve-out matches `/partner` exactly plus `/partner/`; the staff side at `/admin/partners` must never match
 - Client property shortlist: `/shortlist`, `/shortlist/*`, `/api/shortlist/*` (token-scoped only) — `"/shortlists".startsWith("/shortlist")` is true, so it matches `/shortlist` exactly plus `/shortlist/`; the staff side at `/property-shortlists` + `/api/property-shortlists` must never match
+- External read-only API: `/api/external/*` — GET/HEAD only (anything else is a 405 in `proxy.ts`), re-secured by a hashed API key in each route (`EXTERNAL_API_KEYS`, see `utils/external-api.ts`). Payloads are field whitelists; notes, email content and video join links never leave
 
 How the signal works (non-forgeable):
 
