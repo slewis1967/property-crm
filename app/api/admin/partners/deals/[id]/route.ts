@@ -11,6 +11,7 @@
  *   { action: "fee_payment", funds_received_on, invoice_received_on, fee_paid_on, fee_paid_amount }
  *
  * STAFF (Cloudflare Access). Running a deal is operational, so any staff member
+ * (except fee_payment, which is super-admin only)
  * can do it; onboarding and pricing (tiers, white-label) stay super-admin.
  *
  * Every stage change is conditional on the stage we read (`.eq("stage", from)`),
@@ -25,6 +26,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { nexusApi } from "@/utils/nexus-api";
 import { requireStaff, readJson } from "../../../introducers/_shared";
+import { isSuperAdmin } from "../../../../../../utils/super-admin";
 import { logPartnerEvent } from "../../../../partner/_shared";
 import {
   canTransition,
@@ -324,7 +326,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // (the partner sees it in the portal; a "you've been paid" email is a
       // separate decision). The whole record is replaced, so clearing a field
       // is sending it empty. Conditional on the stage still being settled.
-      const parsed = parsePayUpdate(body, { settled: deal.stage === "settled", today: brisbaneToday() });
+      // Sean 17 Nov: recording a payment is super-admin only, and the amount is
+      // capped at the partner fee snapshotted on the deal.
+      if (!isSuperAdmin(auth)) {
+        return NextResponse.json({ ok: false, error: "Only a super admin can record a partner fee payment." }, { status: 403 });
+      }
+      const parsed = parsePayUpdate(body, {
+        settled: deal.stage === "settled",
+        today: brisbaneToday(),
+        maxAmount: deal.referral_fee_snapshot,
+      });
       if (!parsed.ok) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
       // Optimistic concurrency: the form sends the record it was opened with
       // (`expected`) and the write lands only if the row still holds exactly

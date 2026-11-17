@@ -238,11 +238,12 @@ function dateField(v: unknown, name: string, today: string): { ok: true; value: 
  *   - no future dates;
  *   - a paid date needs the fee-received and invoice dates, and can't precede
  *     either (clause 5.4: paid after the fee arrives, against an invoice);
- *   - a paid amount goes with a paid date, and is a positive dollar figure.
+ *   - a paid amount goes with a paid date, is a positive dollar figure, and is
+ *     no more than the deal's partner-fee snapshot when one is recorded.
  */
 export function parsePayUpdate(
   body: Record<string, unknown>,
-  opts: { settled: boolean; today: string },
+  opts: { settled: boolean; today: string; maxAmount?: number | null },
 ): { ok: true; update: PayUpdate } | { ok: false; error: string } {
   const funds = dateField(body.funds_received_on, "Fee received date", opts.today);
   if (!funds.ok) return funds;
@@ -259,6 +260,10 @@ export function parsePayUpdate(
       return { ok: false, error: "Amount paid must be a dollar amount above zero." };
     }
     amount = Math.round(n * 100) / 100;
+    // Sean 17 Nov: a paid amount can't exceed the partner fee recorded on the deal.
+    if (opts.maxAmount != null && amount > opts.maxAmount) {
+      return { ok: false, error: `Amount paid can't be more than the partner fee on this deal ($${opts.maxAmount.toLocaleString("en-AU")}).` };
+    }
   }
 
   const anySet = funds.value || invoice.value || paid.value || amount !== null;
