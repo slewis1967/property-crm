@@ -37,6 +37,7 @@ import {
   type PartnerFeature,
   type PartnerTier,
 } from "./partner";
+import { agreementIsCurrent } from "./partner-agreement-version";
 
 export const PARTNER_COOKIE = "__Host-nk_partner";
 /** Dev fallback: `__Host-` requires HTTPS, which local dev doesn't have. */
@@ -66,6 +67,16 @@ export type PartnerIdentity = {
   features: PartnerFeature[];
   /** NextKey's branding unless the firm holds white_label. */
   branding: PartnerBranding;
+  /**
+   * True once the firm has accepted the CURRENT partner agreement (in the
+   * portal, or recorded by staff). False keeps every portal page and API
+   * behind /partner/agreement — see requirePartnerPage / requirePartner.
+   */
+  agreementAccepted: boolean;
+  /** What the firm accepted, for the agreement page. */
+  agreementRef: string | null;
+  agreementSignedAt: string | null;
+  abn: string | null;
 };
 
 export type LoginChallenge = {
@@ -81,6 +92,9 @@ export type LoginChallenge = {
 
 type FirmRow = {
   firm_name?: string;
+  abn?: string | null;
+  agreement_ref?: string | null;
+  agreement_signed_at?: string | null;
   status?: string;
   tier?: string;
   feature_grants?: unknown;
@@ -305,7 +319,7 @@ async function finishLogin(
 
 const SESSION_SELECT =
   "id,partner_id,expires_at,revoked_at,last_seen_at," +
-  "partner_users(id,email,full_name,is_primary,status,partners(firm_name,status,tier,feature_grants,branding))";
+  "partner_users(id,email,full_name,is_primary,status,partners(firm_name,abn,status,tier,feature_grants,branding,agreement_ref,agreement_signed_at))";
 
 /**
  * Resolve a raw session token to an identity, or null. Re-checks user AND firm
@@ -370,6 +384,10 @@ export async function resolveSession(rawToken: string | null | undefined): Promi
     tier: normaliseTier(firm.tier),
     features: [...features],
     branding: resolveBranding(firmName, features, firm.branding),
+    agreementAccepted: agreementIsCurrent(firm.agreement_ref, firm.agreement_signed_at),
+    agreementRef: firm.agreement_ref ?? null,
+    agreementSignedAt: firm.agreement_signed_at ?? null,
+    abn: firm.abn ?? null,
   };
 }
 

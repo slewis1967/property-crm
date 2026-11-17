@@ -15,8 +15,21 @@ export async function currentPartner(): Promise<PartnerIdentity | null> {
   return resolveSession(jar.get(sessionCookieName())?.value ?? null);
 }
 
-/** The signed-in partner, or a redirect to sign-in. Never returns null. */
+/**
+ * The signed-in partner, or a redirect to sign-in. Never returns null.
+ *
+ * Also the agreement gate for every portal page: until the firm has accepted
+ * the current partner agreement, every page sends them to /partner/agreement.
+ * Gating here rather than per page means a page added later cannot forget it.
+ */
 export async function requirePartnerPage(): Promise<PartnerIdentity> {
+  const identity = await requireSignedInPartnerPage();
+  if (!identity.agreementAccepted) redirect("/partner/agreement");
+  return identity;
+}
+
+/** Signed in, agreement or not. Only the agreement page itself uses this. */
+export async function requireSignedInPartnerPage(): Promise<PartnerIdentity> {
   const identity = await currentPartner();
   if (!identity) redirect("/partner");
   return identity;
