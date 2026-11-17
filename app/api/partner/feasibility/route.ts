@@ -16,7 +16,8 @@
  *    pending + ready reports and inserts a 'pending' row only if there is room.
  *    Parallel requests cannot both take the last slot, and a report whose save
  *    later fails still counts (its row stays pending).
- *  - The slot is released (row deleted) only when the engine produced no report.
+ *  - The slot is released only when the engine refused the request before
+ *    calling the model (400). A failure after a model call still counts.
  *  - Every phase, including the geocode-only "prepare", is rate-limited per firm
  *    with a key that ignores the URL (enforceKeyedRateLimit). That limiter is
  *    in-memory, so it is a brake on loops, not the allowance.
@@ -124,8 +125,14 @@ export async function POST(req: Request) {
 
   const r = await runPlanningFeasibility({ phase, address, messages, prepared }, { audience: "neutral" });
   if (r.status !== 200) {
-    // Nothing was produced, so nothing is charged: release the slot.
-    await supabase.from("partner_feasibility_reports").delete().eq("id", slotId).eq("status", "pending");
+    // 400 = the engine refused the request before calling the model, so it
+    // cost nothing: release the slot. Any later failure (unparseable or empty
+    // report, model error) happened after a paid model call, so the slot stays
+    // claimed and counts. Releasing those would let a crafted transcript buy
+    // unlimited model runs by failing on purpose.
+    if (r.status === 400) {
+      await supabase.from("partner_feasibility_reports").delete().eq("id", slotId).eq("status", "pending");
+    }
     return NextResponse.json(r.payload, { status: r.status });
   }
 

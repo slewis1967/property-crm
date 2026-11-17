@@ -6,8 +6,9 @@
 -- which takes a per-firm advisory lock, counts this month's pending + ready
 -- rows, and inserts a 'pending' row only if under the allowance. The row is
 -- filled in ('ready') when the report arrives. It is deleted only when the
--- engine itself returns no report (nothing was produced, so nothing is
--- charged); a failed SAVE leaves it pending, which still counts.
+-- engine refused the request BEFORE calling the model (a 400: nothing was
+-- spent). A failure after a model call, or a failed SAVE, leaves it pending,
+-- which still counts, so failing on purpose cannot buy extra model runs.
 --
 -- Additive: one column, one relaxed NOT NULL, one function. Applies to a table
 -- created the same day (20261117b).
