@@ -25,9 +25,9 @@ export default async function PartnerClientPage({ params }: { params: Promise<{ 
 
   return (
     <Frame identity={identity}>
-      <Link href="/partner/clients" className="text-sm text-gray-600 hover:text-gray-900">← Clients</Link>
+      <Link href="/partner/clients" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900">← Clients</Link>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold text-gray-900">{client.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">{client.name}</h1>
         <div className="flex gap-2">
           {client.status === "active" && (
             <Link href="/partner/stock" className="rounded-lg px-3 py-2 text-sm font-semibold text-white" style={{ background: identity.branding.accentColor }}>
@@ -38,24 +38,24 @@ export default async function PartnerClientPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <h2 className="mb-2 mt-6 text-lg font-semibold text-gray-900">Deals</h2>
+      <h2 className="mb-2 mt-6 text-lg font-semibold text-slate-900">Deals</h2>
       {deals.length === 0 ? (
-        <p className="text-sm text-gray-600">No hold requests yet.</p>
+        <p className="text-sm text-slate-600">No hold requests yet.</p>
       ) : (
-        <ul className="mb-6 divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">
+        <ul className="mb-6 divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)]">
           {deals.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <Link href={`/partner/deals/${d.id}`} className="font-medium hover:underline">
                 {d.lotRef} · {[d.lot.suburb, d.lot.state].filter(Boolean).join(", ")}
               </Link>
-              <span className="text-gray-600">{d.stageLabel}</span>
+              <span className="text-slate-600">{d.stageLabel}</span>
               <span>{d.price ? formatAud(d.price) : ""}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="mb-2 mt-6 text-lg font-semibold text-gray-900">Details</h2>
+      <h2 className="mb-2 mt-6 text-lg font-semibold text-slate-900">Details</h2>
       <ClientForm mode="edit" client={client} accent={identity.branding.accentColor} />
     </Frame>
   );

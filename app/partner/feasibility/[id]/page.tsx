@@ -31,7 +31,7 @@ export default async function PartnerFeasibilityReportPage({ params }: { params:
   if (view.status !== "ready" || !data.report) {
     return (
       <Frame identity={identity}>
-        <Link href="/partner/feasibility" className="text-sm text-gray-600 hover:text-gray-900">← All reports</Link>
+        <Link href="/partner/feasibility" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900">← All reports</Link>
         <div className="mt-3 max-w-2xl">
           {view.status === "failed" ? (
             <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">{view.error}</div>
@@ -53,7 +53,7 @@ export default async function PartnerFeasibilityReportPage({ params }: { params:
 
   return (
     <Frame identity={identity}>
-      <Link href="/partner/feasibility" className="no-print text-sm text-gray-600 hover:text-gray-900">← All reports</Link>
+      <Link href="/partner/feasibility" className="no-print text-sm text-slate-600 hover:text-slate-900">← All reports</Link>
       <div className="mt-3">
         <PartnerReport
           report={data.report as FeasibilityReport}

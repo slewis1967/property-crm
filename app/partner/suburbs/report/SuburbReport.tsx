@@ -28,7 +28,7 @@ type LotLine = {
 function Narrative({ text, color }: { text: string; color: string }) {
   const blocks = text.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
   return (
-    <div className="space-y-3 text-[13.5px] leading-relaxed text-gray-800">
+    <div className="space-y-3 text-[13.5px] leading-relaxed text-slate-800">
       {blocks.map((block, i) => {
         const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
         const out: React.ReactNode[] = [];
@@ -122,7 +122,7 @@ export default function SuburbReport({
   const brandName = branding.whiteLabel ? branding.displayName : firmName;
 
   return (
-    <div className="min-h-screen bg-gray-100 print:bg-white">
+    <div className="min-h-screen bg-slate-100 print:bg-white">
       <style>{`
         @page { size: A4; margin: 14mm; }
         @media print {
@@ -134,7 +134,7 @@ export default function SuburbReport({
       `}</style>
 
       <div className="no-print mx-auto flex max-w-[210mm] flex-wrap items-center justify-between gap-2 px-4 pt-4">
-        <Link href="/partner/suburbs" className="text-sm text-gray-600 hover:text-gray-900">← All suburbs</Link>
+        <Link href="/partner/suburbs" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900">← All suburbs</Link>
         <button
           onClick={() => window.print()}
           disabled={loading}
@@ -145,7 +145,7 @@ export default function SuburbReport({
         </button>
       </div>
 
-      <article className="sheet mx-auto my-4 w-[210mm] max-w-full bg-white p-[14mm] text-gray-900 shadow">
+      <article className="sheet mx-auto my-4 w-[210mm] max-w-full bg-white p-[14mm] text-slate-900 shadow">
         <header className="flex items-center justify-between border-b-2 pb-3" style={{ borderColor: branding.primaryColor }}>
           {branding.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -153,7 +153,7 @@ export default function SuburbReport({
           ) : (
             <div className="text-xl font-bold" style={{ color: branding.primaryColor }}>{brandName}</div>
           )}
-          <div className="text-right text-xs text-gray-500">
+          <div className="text-right text-xs text-slate-500">
             <div>Suburb research</div>
             <div>{asAt}</div>
           </div>
@@ -168,16 +168,16 @@ export default function SuburbReport({
             { n: intel?.population ? intel.population.toLocaleString("en-AU") : "—", l: "Population" },
             { n: String(stats.available), l: "New homes available" },
           ].map((s) => (
-            <div key={s.l} className="rounded-md border border-gray-200 px-3 py-3 text-center">
+            <div key={s.l} className="rounded-md border border-slate-200 px-3 py-3 text-center">
               <div className="text-lg font-bold" style={{ color: branding.primaryColor }}>{s.n}</div>
-              <div className="text-[10px] uppercase tracking-wide text-gray-500">{s.l}</div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">{s.l}</div>
             </div>
           ))}
         </div>
 
         <section className="mt-6">
           {loading && (
-            <p className="no-print rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+            <p className="no-print rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
               Researching {place}. The first report for a suburb takes up to a minute; after that it opens straight away.
             </p>
           )}
@@ -188,7 +188,7 @@ export default function SuburbReport({
           )}
           {!loading && !error && narrative && <Narrative text={narrative} color={branding.primaryColor} />}
           {!loading && !error && !narrative && (
-            <p className="text-sm text-gray-600">The research for this suburb isn&apos;t available right now. Please try again later.</p>
+            <p className="text-sm text-slate-600">The research for this suburb isn&apos;t available right now. Please try again later.</p>
           )}
           {intel?.keyInfrastructure?.length ? (
             <div className="mt-4">
@@ -204,11 +204,11 @@ export default function SuburbReport({
             <table className="mt-2 w-full text-[13px]">
               <tbody>
                 {lots.map((l) => (
-                  <tr key={l.id} className="border-b border-gray-100">
+                  <tr key={l.id} className="border-b border-slate-100">
                     <td className="py-1.5 pr-2">
                       <Link href={`/partner/stock/${l.id}`} className="no-underline">{l.ref}</Link>
                     </td>
-                    <td className="py-1.5 pr-2 text-gray-600">
+                    <td className="py-1.5 pr-2 text-slate-600">
                       {[l.bedrooms && `${l.bedrooms} bed`, l.bathrooms && `${l.bathrooms} bath`, l.propertyType, l.landSizeSqm && `${Math.round(l.landSizeSqm)} m² land`].filter(Boolean).join(" · ")}
                     </td>
                     <td className="py-1.5 text-right font-medium">{l.price ? formatAud(l.price) : "Price on request"}</td>
@@ -217,13 +217,13 @@ export default function SuburbReport({
               </tbody>
             </table>
             {stats.available > lots.length && (
-              <p className="mt-1 text-[11px] text-gray-500">The {lots.length} lowest-priced of {stats.available} available.</p>
+              <p className="mt-1 text-[11px] text-slate-500">The {lots.length} lowest-priced of {stats.available} available.</p>
             )}
           </section>
         )}
 
-        <footer className="mt-8 border-t border-gray-200 pt-3 text-[10px] leading-relaxed text-gray-500">
-          <p className="mb-2 text-[11px] text-gray-700">Prepared by {preparedBy ? `${preparedBy}, ` : ""}{firmName} · {asAt}</p>
+        <footer className="mt-8 border-t border-slate-200 pt-3 text-[10px] leading-relaxed text-slate-500">
+          <p className="mb-2 text-[11px] text-slate-700">Prepared by {preparedBy ? `${preparedBy}, ` : ""}{firmName} · {asAt}</p>
           <p>{SUBURB_REPORT_DISCLAIMER}</p>
         </footer>
       </article>

@@ -61,11 +61,11 @@ export default function ClientForm({
     }
   }
 
-  const input = "mt-1 w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm text-gray-900";
-  const label = "block text-sm font-medium text-gray-700";
+  const input = "mt-1 w-full rounded-xl border border-slate-300 bg-white shadow-sm px-2.5 py-2 text-sm text-slate-900";
+  const label = "block text-sm font-medium text-slate-700";
 
   return (
-    <form onSubmit={submit} className="max-w-2xl rounded-xl border border-gray-200 bg-white p-5">
+    <form onSubmit={submit} className="max-w-2xl rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_16px_-8px_rgba(15,23,42,0.08)] p-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div><label className={label} htmlFor="fn">First name</label><input id="fn" required className={input} value={form.first_name} onChange={set("first_name")} /></div>
         <div><label className={label} htmlFor="ln">Last name</label><input id="ln" className={input} value={form.last_name} onChange={set("last_name")} /></div>
@@ -81,10 +81,10 @@ export default function ClientForm({
         <div><label className={label} htmlFor="bm">Budget (up to)</label><input id="bm" inputMode="numeric" className={input} value={form.budget_max} onChange={set("budget_max")} placeholder="750000" /></div>
       </div>
       <div className="mt-4"><label className={label} htmlFor="nt">Notes</label><textarea id="nt" rows={3} className={input} value={form.notes} onChange={set("notes")} maxLength={2000} /></div>
-      <p className="mt-2 text-xs text-gray-500">An email or a phone number is required.</p>
+      <p className="mt-2 text-xs text-slate-500">An email or a phone number is required.</p>
 
       {mode === "create" && (
-        <label className="mt-4 flex items-start gap-2 text-sm text-gray-700">
+        <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
           <input type="checkbox" className="mt-1" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           <span>My client has agreed to me passing their details to NextKey so it can arrange a property purchase with them.</span>
         </label>

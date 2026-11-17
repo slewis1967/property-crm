@@ -30,14 +30,14 @@ export default async function PartnerAgreementPage() {
 
     return (
       <Frame identity={identity}>
-        <h1 className="text-2xl font-semibold text-gray-900">Partner agreement</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">Partner agreement</h1>
         {data ? (
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-slate-600">
             Accepted for <strong>{data.entity_name}</strong> (ABN {formatAbn(data.abn)}) by {data.signer_name},{" "}
             {data.signer_title}, on {formatLongDateTime(data.accepted_at)}. Version {data.version}.
           </p>
         ) : (
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-slate-600">
             Your firm&apos;s signed agreement ({identity.agreementRef}
             {identity.agreementSignedAt ? `, ${formatLongDateTime(identity.agreementSignedAt)}` : ""}) is held by
             NextKey. Ask your NextKey contact for a copy.
@@ -58,8 +58,8 @@ export default async function PartnerAgreementPage() {
 
   return (
     <Frame identity={identity} locked>
-      <h1 className="text-2xl font-semibold text-gray-900">Before you start: the partner agreement</h1>
-      <p className="mt-1 max-w-3xl text-sm text-gray-600">
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">Before you start: the partner agreement</h1>
+      <p className="mt-1 max-w-3xl text-sm text-slate-600">
         {identity.firmName} needs to accept the NextKey Channel Partner Agreement ({PARTNER_AGREEMENT_VERSION}) before
         your team can use the portal. Please read it in full. It must be accepted by someone authorised to sign for
         your firm; once it is accepted, everyone on your team can use the portal.

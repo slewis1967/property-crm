@@ -18,14 +18,14 @@ export default function Frame({
 }) {
   const nav: NavItem[] = [];
   if (!locked) {
-    if (has(identity, "stock")) nav.push({ href: "/partner/stock", label: "Stock" });
-    if (has(identity, "clients")) nav.push({ href: "/partner/clients", label: "Clients" });
-    if (has(identity, "deals")) nav.push({ href: "/partner/deals", label: "Deals" });
-    if (has(identity, "suburb_reports")) nav.push({ href: "/partner/suburbs", label: "Suburbs" });
-    if (has(identity, "feasibility")) nav.push({ href: "/partner/feasibility", label: "Feasibility" });
-    nav.push({ href: "/partner/account", label: "Plan" });
+    if (has(identity, "stock")) nav.push({ href: "/partner/stock", label: "Stock", icon: "grid" });
+    if (has(identity, "clients")) nav.push({ href: "/partner/clients", label: "Clients", icon: "users" });
+    if (has(identity, "deals")) nav.push({ href: "/partner/deals", label: "Deals", icon: "handshake" });
+    if (has(identity, "suburb_reports")) nav.push({ href: "/partner/suburbs", label: "Suburbs", icon: "pin" });
+    if (has(identity, "feasibility")) nav.push({ href: "/partner/feasibility", label: "Feasibility", icon: "layers" });
+    nav.push({ href: "/partner/account", label: "Plan", icon: "star" });
   }
-  nav.push({ href: "/partner/agreement", label: "Agreement" });
+  nav.push({ href: "/partner/agreement", label: "Agreement", icon: "doc" });
 
   return (
     <PortalShell branding={identity.branding} firmName={identity.firmName} userName={identity.fullName} nav={nav}>
