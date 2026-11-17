@@ -87,23 +87,36 @@ export default function SuburbReport({
   const [intel, setIntel] = useState<Intel | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/partner/suburbs/report?suburb=${encodeURIComponent(suburb)}&state=${encodeURIComponent(state ?? "")}`);
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "Couldn't load the research.");
-      setIntel(json.intel ?? null);
-      setNarrative(json.narrative ?? null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't load the research.");
-    } finally {
-      setLoading(false);
-    }
+  const fetchReport = useCallback(async (): Promise<{ intel: Intel | null; narrative: string | null }> => {
+    const res = await fetch(`/api/partner/suburbs/report?suburb=${encodeURIComponent(suburb)}&state=${encodeURIComponent(state ?? "")}`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) throw new Error(json.error ?? "Couldn't load the research.");
+    return { intel: json.intel ?? null, narrative: json.narrative ?? null };
   }, [suburb, state]);
 
-  useEffect(() => { void load(); }, [load]);
+  const apply = useCallback((p: Promise<{ intel: Intel | null; narrative: string | null }>, alive: () => boolean) => {
+    p.then((r) => {
+      if (!alive()) return;
+      setIntel(r.intel);
+      setNarrative(r.narrative);
+      setError(null);
+    })
+      .catch((e: unknown) => alive() && setError(e instanceof Error ? e.message : "Couldn't load the research."))
+      .finally(() => alive() && setLoading(false));
+  }, []);
+
+  // First load: state only changes once the request settles.
+  useEffect(() => {
+    let alive = true;
+    apply(fetchReport(), () => alive);
+    return () => { alive = false; };
+  }, [apply, fetchReport]);
+
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    apply(fetchReport(), () => true);
+  };
 
   const place = `${suburb}${state ? `, ${state}` : ""}`;
   const brandName = branding.whiteLabel ? branding.displayName : firmName;
