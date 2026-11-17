@@ -88,6 +88,30 @@ export default async function PartnerLotPage({ params }: { params: Promise<{ id:
             </div>
           )}
 
+          {has(identity, "lot_sheets") ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm">
+              <div className="font-semibold text-gray-900">Client lot sheet</div>
+              <p className="mt-1 text-gray-600">A one-page summary to print or save as PDF for your client. No fee, builder or address on it.</p>
+              <form action={`/partner/stock/${lot.id}/sheet`} className="mt-3 space-y-2">
+                {clients.length > 0 && (
+                  <select name="client" className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm" defaultValue="">
+                    <option value="">Not for a particular client</option>
+                    {clients.filter((c) => c.status === "active").map(toClientView).map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                )}
+                <button type="submit" className="rounded-lg px-3 py-2 text-sm font-semibold text-white" style={{ background: identity.branding.accentColor }}>
+                  Open lot sheet
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-5 text-sm text-gray-600">
+              Client-ready lot sheets come with the Professional plan. <Link className="underline" href="/partner/account">See plans</Link>
+            </div>
+          )}
+
           {myDealsHere.length > 0 && (
             <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm">
               <div className="font-semibold text-gray-900">Your requests on this lot</div>

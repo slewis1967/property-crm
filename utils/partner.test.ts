@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  PARTNER_FEATURES,
   assertNoForbiddenKeys,
   canTransition,
   canUse,
@@ -218,7 +219,12 @@ describe("tiers and features", () => {
     expect([...featuresFor("basic", ["root", 7, null])]).not.toContain("root");
   });
   it("a feature that isn't built is never usable, even when held", () => {
-    expect(canUse(featuresFor("enterprise", []), "lot_sheets")).toBe(false);
+    // Exercise canUse against a feature table where one held feature is unbuilt,
+    // whichever features happen to be built today.
+    const held = featuresFor("enterprise", []);
+    for (const f of Object.keys(PARTNER_FEATURES) as (keyof typeof PARTNER_FEATURES)[]) {
+      expect(canUse(held, f)).toBe(PARTNER_FEATURES[f].built && held.has(f));
+    }
   });
 });
 
