@@ -22,6 +22,7 @@ export default async function PartnerFeasibilityReportPage({ params }: { params:
     .select("id,address,report,created_at,partner_users(full_name)")
     .eq("id", id)
     .eq("partner_id", identity.partnerId)
+    .eq("status", "ready")
     .maybeSingle();
   if (!data) notFound();
 

@@ -8,6 +8,7 @@ import {
   brisbaneMonthStart,
   cleanAddress,
   monthlyAllowance,
+  storableReport,
 } from "./partner-feasibility";
 import { feasibilitySystemPrompt } from "./planning-feasibility";
 import { PARTNER_FEATURES, TIER_DEFINITIONS } from "./partner";
@@ -59,5 +60,17 @@ describe("brand", () => {
     expect(PARTNER_FEATURES.feasibility.built).toBe(true);
     expect(TIER_DEFINITIONS.professional.features).not.toContain("feasibility");
     expect(TIER_DEFINITIONS.enterprise.features).toContain("feasibility");
+  });
+});
+
+describe("storableReport", () => {
+  it("strips NUL characters that would make the jsonb save fail", () => {
+    const r = storableReport({ title: "A\u0000B", sections: [{ heading: "x\u0000", blocks: [] }] });
+    expect(JSON.stringify(r)).not.toContain("\u0000");
+    expect(r.title).toBe("AB");
+  });
+  it("always returns an object", () => {
+    expect(storableReport(null)).toEqual({});
+    expect(storableReport([1, 2])).toEqual({});
   });
 });

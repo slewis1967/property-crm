@@ -10,36 +10,37 @@
  * (utils/planning-feasibility.ts) with audience "neutral", so the report names
  * no firm and goes out under the partner's brand.
  *
- * Cost control: each firm has a monthly allowance of generated reports
- * (utils/partner-feasibility.ts monthlyAllowance), checked BEFORE the report
- * call; the interview step is rate-limited per firm; and the transcript and
- * address are size-capped. A generated report is saved for the firm, which is
- * also what the allowance counts.
+ * COST CONTROL
+ *  - The monthly allowance is enforced in the database, BEFORE the model runs:
+ *    claim_partner_feasibility_slot takes a per-firm lock, counts this month's
+ *    pending + ready reports and inserts a 'pending' row only if there is room.
+ *    Parallel requests cannot both take the last slot, and a report whose save
+ *    later fails still counts (its row stays pending).
+ *  - The slot is released (row deleted) only when the engine produced no report.
+ *  - Every phase, including the geocode-only "prepare", is rate-limited per firm
+ *    with a key that ignores the URL (enforceKeyedRateLimit). That limiter is
+ *    in-memory, so it is a brake on loops, not the allowance.
+ *  - Address and transcript are size-capped.
  */
 import { NextResponse } from "next/server";
 import { supabase } from "../../../../utils/supabase";
-import { enforceRateLimit } from "../../../../utils/rate-limit";
+import { enforceKeyedRateLimit } from "../../../../utils/rate-limit";
 import { runPlanningFeasibility } from "../../../../utils/planning-feasibility";
 import {
   boundedTranscript,
   brisbaneMonthStart,
   cleanAddress,
   monthlyAllowance,
+  storableReport,
 } from "../../../../utils/partner-feasibility";
-import { logPartnerEvent, readJson, requireFeature, requirePartner, type PartnerIdentity } from "../_shared";
+import { feasibilityUsedThisMonth, listFeasibilityReports } from "../../../../utils/partner-feasibility-db";
+import { logPartnerEvent, readJson, requireFeature, requirePartner } from "../_shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-async function usedThisMonth(identity: PartnerIdentity): Promise<number | null> {
-  const { count, error } = await supabase
-    .from("partner_feasibility_reports")
-    .select("id", { count: "exact", head: true })
-    .eq("partner_id", identity.partnerId)
-    .gte("created_at", brisbaneMonthStart().toISOString());
-  return error ? null : (count ?? 0);
-}
+const PHASE_LIMITS = { prepare: 30, interview: 30, report: 15 } as const;
 
 export async function GET() {
   const auth = await requirePartner();
@@ -47,18 +48,13 @@ export async function GET() {
   const locked = requireFeature(auth, "feasibility");
   if (locked) return locked;
 
-  const [{ data }, used] = await Promise.all([
-    supabase
-      .from("partner_feasibility_reports")
-      .select("id,address,title,created_at")
-      .eq("partner_id", auth.partnerId)
-      .order("created_at", { ascending: false })
-      .limit(200),
-    usedThisMonth(auth),
+  const [reports, used] = await Promise.all([
+    listFeasibilityReports(auth.partnerId),
+    feasibilityUsedThisMonth(auth.partnerId),
   ]);
   return NextResponse.json({
     ok: true,
-    reports: (data ?? []).map((r) => ({ id: r.id, address: r.address, title: r.title, createdAt: r.created_at })),
+    reports: reports.map((r) => ({ id: r.id, address: r.address, title: r.title, createdAt: r.created_at })),
     usage: { used, allowance: monthlyAllowance() },
   });
 }
@@ -73,6 +69,13 @@ export async function POST(req: Request) {
   if (body instanceof NextResponse) return body;
 
   const phase = body.phase === "report" ? "report" : body.phase === "prepare" ? "prepare" : "interview";
+
+  const limited = enforceKeyedRateLimit(`partner-feasibility:${phase}:${auth.partnerId}`, {
+    windowMs: 60 * 60_000,
+    max: PHASE_LIMITS[phase],
+  });
+  if (limited) return limited;
+
   const address = cleanAddress(body.address);
   if (!address) return NextResponse.json({ ok: false, error: "Enter the full street address." }, { status: 400 });
 
@@ -85,63 +88,70 @@ export async function POST(req: Request) {
     return NextResponse.json(rest, { status: r.status });
   }
 
-  const limited = enforceRateLimit(req, {
-    windowMs: 60 * 60_000,
-    max: phase === "report" ? 15 : 30,
-    keyFn: () => `partner-feasibility-${phase}:${auth.partnerId}`,
-  });
-  if (limited) return limited;
-
   const messages = boundedTranscript(body.messages);
   if (!messages) return NextResponse.json({ ok: false, error: "That assessment is too long. Start a new one." }, { status: 400 });
-
-  if (phase === "report") {
-    const used = await usedThisMonth(auth);
-    const allowance = monthlyAllowance();
-    if (used === null) {
-      return NextResponse.json({ ok: false, error: "Couldn't check your plan allowance. Please try again." }, { status: 503 });
-    }
-    if (used >= allowance) {
-      return NextResponse.json(
-        { ok: false, error: `You've used all ${allowance} feasibility reports for this month. Ask your NextKey contact if you need more.`, code: "allowance_used" },
-        { status: 429 },
-      );
-    }
-  }
-
   const prepared =
     body.prepared && typeof body.prepared === "object"
       ? { location: (body.prepared as { location?: unknown }).location ?? null }
       : undefined;
-  const r = await runPlanningFeasibility({ phase, address, messages, prepared }, { audience: "neutral" });
-  if (phase !== "report" || r.status !== 200) return NextResponse.json(r.payload, { status: r.status });
 
-  const report = (r.payload as { report?: Record<string, unknown> }).report ?? {};
+  if (phase === "interview") {
+    const r = await runPlanningFeasibility({ phase, address, messages, prepared }, { audience: "neutral" });
+    return NextResponse.json(r.payload, { status: r.status });
+  }
+
+  // ── report: claim the slot first ──
   const objective = typeof body.objective === "string" ? body.objective.slice(0, 2000) : null;
-  const { data: saved, error } = await supabase
+  const allowance = monthlyAllowance();
+  const { data: slotId, error: claimErr } = await supabase.rpc("claim_partner_feasibility_slot", {
+    p_partner_id: auth.partnerId,
+    p_user_id: auth.userId,
+    p_address: address,
+    p_objective: objective,
+    p_allowance: allowance,
+    p_since: brisbaneMonthStart().toISOString(),
+  });
+  if (claimErr) {
+    console.error("[partner-feasibility] slot claim failed", claimErr.message);
+    return NextResponse.json({ ok: false, error: "Couldn't check your plan allowance. Please try again." }, { status: 503 });
+  }
+  if (!slotId) {
+    return NextResponse.json(
+      { ok: false, error: `You've used all ${allowance} feasibility reports for this month. Ask your NextKey contact if you need more.`, code: "allowance_used" },
+      { status: 429 },
+    );
+  }
+
+  const r = await runPlanningFeasibility({ phase, address, messages, prepared }, { audience: "neutral" });
+  if (r.status !== 200) {
+    // Nothing was produced, so nothing is charged: release the slot.
+    await supabase.from("partner_feasibility_reports").delete().eq("id", slotId).eq("status", "pending");
+    return NextResponse.json(r.payload, { status: r.status });
+  }
+
+  const report = storableReport((r.payload as { report?: unknown }).report);
+  const { error: saveErr } = await supabase
     .from("partner_feasibility_reports")
-    .insert({
-      partner_id: auth.partnerId,
-      created_by_user_id: auth.userId,
-      address,
-      objective,
+    .update({
+      status: "ready",
       title: typeof report.title === "string" ? report.title.slice(0, 200) : null,
       report,
     })
-    .select("id")
-    .single();
-  if (error || !saved) {
-    // The model ran and was paid for; hand the report back even if saving failed.
-    console.error("[partner-feasibility] save failed", error?.message);
-    return NextResponse.json({ ok: true, report, id: null, saveError: "The report couldn't be saved. Print it now." });
-  }
+    .eq("id", slotId)
+    .eq("partner_id", auth.partnerId);
 
   await logPartnerEvent({
     partnerId: auth.partnerId,
     actorType: "partner",
     actor: auth.email,
     action: "feasibility_report_generated",
-    detail: { report_id: saved.id, address },
+    detail: { report_id: slotId, address, saved: !saveErr },
   });
-  return NextResponse.json({ ok: true, report, id: saved.id });
+
+  if (saveErr) {
+    // The slot stays 'pending', so this report still counts toward the allowance.
+    console.error("[partner-feasibility] save failed", saveErr.message);
+    return NextResponse.json({ ok: true, report, id: null, saveError: "The report was written but couldn't be saved. Please contact NextKey." });
+  }
+  return NextResponse.json({ ok: true, report, id: slotId });
 }

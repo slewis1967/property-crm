@@ -85,3 +85,27 @@ export function enforceRateLimit(
   }
   return null;
 }
+
+/**
+ * Like enforceRateLimit, but the bucket is exactly `key`. enforceRateLimit
+ * appends the request URL (query string included), so a caller can open a
+ * fresh bucket by adding `?x=1`; for per-tenant cost limits (the partner
+ * portal's AI routes) use this, keyed on the tenant id and action only.
+ * Still in-memory and per-instance: a soft limit, not the allowance itself.
+ */
+export function enforceKeyedRateLimit(key: string, opts: { windowMs: number; max: number }): NextResponse | null {
+  const now = Date.now();
+  const k = `keyed:${key}`;
+  let bucket = STORE.get(k);
+  if (!bucket || bucket.resetAt < now) {
+    bucket = { count: 0, resetAt: now + opts.windowMs };
+    STORE.set(k, bucket);
+  }
+  bucket.count += 1;
+  if (bucket.count <= opts.max) return null;
+  const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
+  return NextResponse.json(
+    { ok: false, error: "Too many requests. Please wait a little and try again.", retry_after_seconds: retryAfter },
+    { status: 429, headers: { "Retry-After": String(retryAfter) } },
+  );
+}

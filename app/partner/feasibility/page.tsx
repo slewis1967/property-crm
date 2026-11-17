@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Frame from "../Frame";
 import { has, requirePartnerPage } from "../session";
-import { supabase } from "../../../utils/supabase";
+import { feasibilityUsedThisMonth, listFeasibilityReports } from "../../../utils/partner-feasibility-db";
 import { formatDateTime } from "../../../utils/datetime";
-import { brisbaneMonthStart, monthlyAllowance } from "../../../utils/partner-feasibility";
+import { monthlyAllowance } from "../../../utils/partner-feasibility";
 import FeasibilityTool from "./FeasibilityTool";
 
 export const dynamic = "force-dynamic";
@@ -14,15 +14,11 @@ export default async function PartnerFeasibilityPage() {
   const identity = await requirePartnerPage();
   if (!has(identity, "feasibility")) redirect("/partner/account");
 
-  const { data } = await supabase
-    .from("partner_feasibility_reports")
-    .select("id,address,title,created_at")
-    .eq("partner_id", identity.partnerId)
-    .order("created_at", { ascending: false })
-    .limit(200);
-  const reports = data ?? [];
-  const monthStart = brisbaneMonthStart().getTime();
-  const used = reports.filter((r) => new Date(r.created_at).getTime() >= monthStart).length;
+  const [reports, usedCount] = await Promise.all([
+    listFeasibilityReports(identity.partnerId),
+    feasibilityUsedThisMonth(identity.partnerId),
+  ]);
+  const used = usedCount ?? 0;
   const allowance = monthlyAllowance();
 
   return (

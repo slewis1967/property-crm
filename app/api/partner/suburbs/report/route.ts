@@ -13,7 +13,7 @@
  * suburb takes ~20–40s; repeat views are cached.
  */
 import { NextResponse } from "next/server";
-import { enforceRateLimit } from "../../../../../utils/rate-limit";
+import { enforceKeyedRateLimit } from "../../../../../utils/rate-limit";
 import { redactSupplierNames } from "../../../../../utils/partner";
 import { loadPartnerStock, supplierNames } from "../../../../../utils/partner-stock";
 import { OUR_BRAND_NAMES, findStockSuburb, stockSuburbs } from "../../../../../utils/partner-suburbs";
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   const locked = requireFeature(auth, "suburb_reports");
   if (locked) return locked;
 
-  const limited = enforceRateLimit(req, { windowMs: 60_000, max: 10, keyFn: () => `partner-suburb:${auth.partnerId}` });
+  const limited = enforceKeyedRateLimit(`partner-suburb:${auth.partnerId}`, { windowMs: 60_000, max: 10 });
   if (limited) return limited;
 
   const url = new URL(req.url);

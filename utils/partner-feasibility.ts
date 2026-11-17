@@ -54,3 +54,16 @@ export const PARTNER_FEASIBILITY_DISCLAIMER =
   "Preliminary desktop planning information only, prepared with AI-assisted research from public sources. " +
   "It is not legal, financial or certified town-planning advice. Every figure must be confirmed with the " +
   "Council, a licensed surveyor and a qualified town planner before anyone relies on it.";
+
+/**
+ * A report as returned by the model, made safe to store: a round trip through
+ * JSON with NUL characters removed (Postgres jsonb rejects \u0000, which would
+ * otherwise make the save fail).
+ */
+export function storableReport(report: unknown): Record<string, unknown> {
+  const json = JSON.stringify(report ?? {}, (_k, v: unknown) =>
+    typeof v === "string" ? v.replace(/\u0000/g, "") : v,
+  );
+  const parsed = JSON.parse(json) as unknown;
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
+}
