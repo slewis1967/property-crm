@@ -9,6 +9,7 @@
  * page polls GET /api/ai/planning-feasibility/jobs/<id>.
  */
 import { supabase } from "./supabase";
+import { backgroundFunctionUrl, triggerBackgroundFunction } from "./background-trigger";
 import { runPlanningFeasibility } from "./planning-feasibility";
 import { storableReport } from "./partner-feasibility";
 
@@ -65,30 +66,8 @@ export async function runStaffFeasibilityJob(jobId: string): Promise<{ outcome: 
   return { outcome: "ready" };
 }
 
-/**
- * Hand a job to the background function. Fire-and-forget, CRON_SECRET bearer,
- * via the deploy's own *.netlify.app address (DEPLOY_URL) so it does not pass
- * Cloudflare Access. Returns false if it could not be handed over.
- */
+/** Hand a job to the background function; true only on a real 202 (see utils/background-trigger.ts). */
 export async function requestStaffFeasibility(jobId: string): Promise<boolean> {
-  const site = (process.env.DEPLOY_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || "").replace(/\/$/, "");
-  const url = (process.env.STAFF_FEASIBILITY_FUNCTION_URL || "").trim() || (site ? `${site}${STAFF_FEASIBILITY_FUNCTION}` : "");
-  const secret = (process.env.CRON_SECRET || "").trim();
-  if (!url || !secret) return false;
-  const headers: Record<string, string> = { "Content-Type": "application/json", Authorization: `Bearer ${secret}` };
-  if (process.env.CF_ACCESS_CLIENT_ID && process.env.CF_ACCESS_CLIENT_SECRET) {
-    headers["CF-Access-Client-Id"] = process.env.CF_ACCESS_CLIENT_ID;
-    headers["CF-Access-Client-Secret"] = process.env.CF_ACCESS_CLIENT_SECRET;
-  }
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ jobId }),
-      signal: AbortSignal.timeout(5000),
-    });
-    return res.status === 202 || res.ok;
-  } catch {
-    return false;
-  }
+  const url = backgroundFunctionUrl(STAFF_FEASIBILITY_FUNCTION, process.env.STAFF_FEASIBILITY_FUNCTION_URL);
+  return (await triggerBackgroundFunction(url, { jobId: jobId }, "staff-feasibility")).ok;
 }
