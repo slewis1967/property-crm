@@ -10,6 +10,7 @@ import {
   parseAcceptance,
   renderAgreement,
   unfilledBlanks,
+  unwrapLines,
 } from "./partner-agreement";
 import { PARTNER_AGREEMENT_TEMPLATE } from "./partner-agreement-text";
 
@@ -131,5 +132,14 @@ describe("display helpers", () => {
       { text: "b", bold: true },
       { text: " c", bold: false },
     ]);
+  });
+});
+
+describe("unwrapLines", () => {
+  it("joins hard-wrapped continuation lines but keeps clause and list breaks", () => {
+    const src = "5.1 A fee is payable only if:\n    the buyer is introduced;\n(a) first item\n    continues here\n- a bullet\nA. Background\n   more";
+    expect(unwrapLines(src)).toBe(
+      "5.1 A fee is payable only if: the buyer is introduced;\n(a) first item continues here\n• a bullet\nA. Background more",
+    );
   });
 });

@@ -162,10 +162,27 @@ export function agreementBlocks(text: string): AgreementBlock[] {
       const [head, , ...body] = lines;
       blocks.push({ kind: "table", header: cells(head ?? ""), rows: body.map(cells) });
     } else {
-      blocks.push({ kind: "p", text: chunk });
+      blocks.push({ kind: "p", text: unwrapLines(chunk) });
     }
   }
   return blocks;
+}
+
+/**
+ * The source text is hard-wrapped at ~110 characters. A line that starts a new
+ * item (a clause number like "5.4", "(a)", "A.", "1." or a "- " bullet) keeps
+ * its line break; any other line is a continuation and joins the line above.
+ */
+const NEW_ITEM = /^(\d+(\.\d+)*\.?\s|\([a-z]\)\s|[A-Z]\.\s|- )/;
+export function unwrapLines(text: string): string {
+  const out: string[] = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (out.length === 0 || NEW_ITEM.test(line)) out.push(line.startsWith("- ") ? `• ${line.slice(2)}` : line);
+    else out[out.length - 1] += ` ${line}`;
+  }
+  return out.join("\n");
 }
 
 /** `**bold**` → alternating plain/bold segments. */
