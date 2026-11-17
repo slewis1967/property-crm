@@ -12,6 +12,7 @@ Public route patterns (must match the proxy carve-outs exactly):
 - Channel-partner portal (public-facing): `/partner`, `/partner/*`, `/api/partner/*` — note `"/partners".startsWith("/partner")` is true, so the carve-out matches `/partner` exactly plus `/partner/`; the staff side at `/admin/partners` must never match
 - Client property shortlist: `/shortlist`, `/shortlist/*`, `/api/shortlist/*` (token-scoped only) — `"/shortlists".startsWith("/shortlist")` is true, so it matches `/shortlist` exactly plus `/shortlist/`; the staff side at `/property-shortlists` + `/api/property-shortlists` must never match
 - Machine-to-machine (no page, secured inside by the `CRON_SECRET` bearer): `/api/cron`, `/api/cron/*` (`isCronRoute`), and exactly three Netlify background functions (`isBackgroundFunctionRoute`, approved by Sean 17 Nov 2026): `/.netlify/functions/partner-feasibility-background`, `/.netlify/functions/feasibility-background`, `/.netlify/functions/tfn-image-redact-background`. The CRM calls these on `crmnex.netlify.app` (utils/background-trigger.ts) because Cloudflare Access answers the service token on the production host with a 302 to its login page. Exact paths only — never a `/.netlify/functions/` prefix
+- External read-only API: `/api/external/*` — GET/HEAD only (anything else is a 405 in `proxy.ts`), re-secured by a hashed API key in each route (`EXTERNAL_API_KEYS`, see `utils/external-api.ts`). Payloads are field whitelists; notes, email content and video join links never leave
 
 How the signal works (non-forgeable):
 

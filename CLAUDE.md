@@ -485,6 +485,7 @@ Stored in `.env.local` at project root:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `PARTNER_NOTIFY_EMAILS` (optional — who hears about partner hold requests; default `sean.l@nextkey.com.au`)
 - `PARTNER_FEE_FLOOR` / `PARTNER_FEE_PERCENT` (optional — NextKey's share of a lot's gross developer fee; defaults $10,000 / 30%; the floor can't go below $10k)
+- `EXTERNAL_API_KEYS` (optional — `client:sha256hex` pairs for the read-only `/api/external/v1/*` API; unset = every call 401s. See `docs/EXTERNAL-API.md` and `utils/external-api.ts`. Raw keys never go in the repo or env, only their hashes)
 
 ## MARKETING SKILLS + AU COMPLIANCE GUARDRAILS
 `.claude/skills/` holds 10 curated marketing skills (copywriting,
