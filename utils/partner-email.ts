@@ -15,6 +15,7 @@ import { sendBrevoEmail } from "./brevo";
 import { resolveIdentity } from "./mailIdentities";
 import { portalBaseUrl } from "./introducer-email";
 import { NEXTKEY_BRANDING } from "./partner";
+import { getOwnSignatureFields, renderSignature } from "./email-signature";
 
 const NAVY = NEXTKEY_BRANDING.primaryColor;
 const AMBER = NEXTKEY_BRANDING.accentColor;
@@ -179,6 +180,21 @@ export async function sendHoldRequestNotice(opts: {
  * To the signatory, after their firm accepts the partner agreement in the
  * portal: what they signed, when, and where to read it again. Transactional.
  */
+/**
+ * Partner-facing mail that a person signs goes out as Glenn Mayes: from his
+ * own Brevo-validated address, with his saved CRM signature. Glenn is the only
+ * public contact (Sean's decision, 29 Oct 2026), and every outward email carries
+ * the signature of the person it is sent as.
+ */
+export const PARTNER_SIGNATORY_EMAIL = "glenn.m@nextkey.com.au";
+export const PARTNER_SIGNATORY_NAME = "Glenn Mayes";
+
+/**
+ * To the signatory, after their firm accepts the partner agreement in the
+ * portal: what they signed, when, and where to read it again. Transactional.
+ * Not sent at all if Glenn's signature is missing (standing rule: no
+ * signature on file means stop, not send unsigned).
+ */
 export async function sendAgreementAcceptedEmail(opts: {
   to: string;
   name: string;
@@ -187,17 +203,25 @@ export async function sendAgreementAcceptedEmail(opts: {
   version: string;
   acceptedAt: string;
 }) {
+  const fields = await getOwnSignatureFields(PARTNER_SIGNATORY_EMAIL);
+  if (!fields) {
+    console.error("[partner-email] no signature on file for", PARTNER_SIGNATORY_EMAIL, "- agreement email not sent");
+    return { ok: false as const, error: "No signature on file for the partner signatory" };
+  }
+  const signature = renderSignature(fields);
   const url = `${portalBaseUrl()}/partner/agreement`;
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name }],
-    ...sender(),
+    fromEmail: PARTNER_SIGNATORY_EMAIL,
+    fromName: PARTNER_SIGNATORY_NAME,
     subject: `Your NextKey partner agreement (${opts.version})`,
     html: shell(
       "Partner agreement accepted",
       `<p>${greeting(opts.name)}</p>
        <p>Thank you. You accepted the NextKey Channel Partner Agreement (${esc(opts.version)}) for <strong>${esc(opts.entityName)}</strong> on ${esc(opts.acceptedAt)}.</p>
        <p>Your team can now use the Partner Portal. You can read the agreement as accepted at any time from the portal.</p>
-       ${button(url, "View the agreement")}`,
+       ${button(url, "View the agreement")}
+       ${signature.html}`,
       "You are receiving this because you accepted the partner agreement for your firm.",
     ),
     tags: ["partner", "agreement"],
