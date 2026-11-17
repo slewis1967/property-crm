@@ -58,6 +58,11 @@ export async function GET(req: Request) {
     detail: { suburb: match.suburb, state: match.state, generated: Boolean(narrative) },
   });
 
+  // Every free-text field is scrubbed, not just the narrative: NEXUS's
+  // infrastructure list can name an estate as readily as the AI can.
+  const scrub = [...names, ...OUR_BRAND_NAMES];
+  const clean = (v: string | null) => redactSupplierNames(v, scrub);
+
   return NextResponse.json(
     {
       ok: true,
@@ -68,11 +73,11 @@ export async function GET(req: Request) {
             medianPrice: intel.median_price,
             priceGrowthPct: intel.price_growth_pct,
             population: intel.population,
-            keyInfrastructure: intel.key_infrastructure,
+            keyInfrastructure: intel.key_infrastructure.map((k) => clean(k) ?? "").filter(Boolean),
             lastUpdated: intel.last_updated,
           }
         : null,
-      narrative: redactSupplierNames(narrative, [...names, ...OUR_BRAND_NAMES]),
+      narrative: clean(narrative),
     },
     { headers: { "cache-control": "private, max-age=600" } },
   );
