@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import Frame from "../../Frame";
 import { has, requirePartnerPage } from "../../session";
 import { formatAud, partnerMayWithdraw } from "../../../../utils/partner";
-import { loadOwnDeal, toDealView } from "../../../api/partner/_shared";
+import { loadOwnDeal, loadOwnPayRecords, toDealView, toPayView } from "../../../api/partner/_shared";
+import { formatPayDate } from "../../../../utils/partner-pay";
 import { ACCENT, BRAND, Card, CardTitle, Icon, PageHeader, StagePill, accentTint } from "../../ui";
 import WithdrawButton from "./WithdrawButton";
 
@@ -25,7 +26,9 @@ export default async function PartnerDealPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const row = await loadOwnDeal(identity, id);
   if (!row) notFound();
-  const deal = toDealView(row, { showFees: has(identity, "referral_fee") });
+  const showFees = has(identity, "referral_fee");
+  const deal = toDealView(row, { showFees });
+  const pay = toPayView(row.stage, (await loadOwnPayRecords(identity, [row.id])).get(row.id), { showFees });
   const reached = STEPS.findIndex((s) => s.key === deal.stage);
   const lot = deal.lot as { suburb?: string; state?: string; propertyType?: string; bedrooms?: number };
   const place = [lot.suburb, lot.state].filter(Boolean).join(", ");
@@ -123,6 +126,29 @@ export default async function PartnerDealPage({ params }: { params: Promise<{ id
               (Brisbane time).
             </p>
           )}
+        </Card>
+
+        <Card className="text-sm md:col-span-2">
+          <CardTitle
+            icon="sparkle"
+            aside={<span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700">{pay.label}</span>}
+          >
+            When you get paid
+          </CardTitle>
+          <p className="text-slate-700">{pay.line}</p>
+          {(pay.fundsReceivedOn || pay.invoiceReceivedOn || pay.paidOn) && (
+            <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+              {pay.fundsReceivedOn && (<><dt className="text-slate-500">Developer&apos;s fee received</dt><dd className="font-medium">{formatPayDate(pay.fundsReceivedOn)}</dd></>)}
+              {pay.invoiceReceivedOn && (<><dt className="text-slate-500">Your tax invoice received</dt><dd className="font-medium">{formatPayDate(pay.invoiceReceivedOn)}</dd></>)}
+              {pay.expectedOn && pay.status === "invoiced" && (<><dt className="text-slate-500">Expected payment by</dt><dd className="font-medium">{formatPayDate(pay.expectedOn)}</dd></>)}
+              {pay.paidOn && (<><dt className="text-slate-500">Paid</dt><dd className="font-medium">{formatPayDate(pay.paidOn)}{pay.paidAmount !== null && ` · ${formatAud(pay.paidAmount)} ex GST`}</dd></>)}
+            </dl>
+          )}
+          <p className="mt-3 text-xs text-slate-500">
+            <Link className="underline" href="/partner/deals/statement">Fee statement</Link>
+            {" · "}
+            <Link className="underline" href="/partner/agreement">Your agreement, clause 5</Link>
+          </p>
         </Card>
 
         <Card className="text-sm">

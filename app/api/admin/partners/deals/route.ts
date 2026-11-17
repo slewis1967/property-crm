@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../../utils/supabase";
 import { requireStaff } from "../../introducers/_shared";
 import { partnerTablesMissing } from "../../../../../utils/partner";
+import { brisbaneToday, PAY_COLUMNS, payColumnsMissing, payOverdue, payRecordFromRow, type PayRecord } from "../../../../../utils/partner-pay";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +51,26 @@ export async function GET(req: Request) {
     for (const l of (lots ?? []) as Record<string, unknown>[]) suppliers.set(String(l.id), l);
   }
 
+  // Payment records (NOVA-011) in their own query, so the queue still loads
+  // before migrations/20261117e_partner_fee_payments.sql is applied.
+  const pay = new Map<string, PayRecord>();
+  let payMigrationMissing = false;
+  const settledIds = deals.filter((d) => d.stage === "settled").map((d) => String(d.id));
+  if (settledIds.length) {
+    const { data: payRows, error: payError } = await supabase
+      .from("partner_enquiries")
+      .select(`id,${PAY_COLUMNS}`)
+      .in("id", settledIds);
+    if (payColumnsMissing(payError)) payMigrationMissing = true;
+    else if (payError) console.error("[admin/partners] pay records read failed", payError.message);
+    for (const r of (payRows ?? []) as unknown as Record<string, unknown>[]) pay.set(String(r.id), payRecordFromRow(r));
+  }
+  const today = brisbaneToday();
+
   const now = Date.now();
   return NextResponse.json({
     ok: true,
+    pay_migration_missing: payMigrationMissing,
     deals: deals.map((d) => ({
       ...d,
       supplier: suppliers.get(String(d.property_id)) ?? null,
@@ -60,6 +78,9 @@ export async function GET(req: Request) {
       // release it), so the queue flags one that has run past its date.
       hold_expired:
         d.stage === "hold" && typeof d.hold_expires_at === "string" && Date.parse(d.hold_expires_at) < now,
+      payment: pay.get(String(d.id)) ?? null,
+      payment_overdue:
+        d.stage === "settled" && pay.has(String(d.id)) && payOverdue("settled", pay.get(String(d.id)) as PayRecord, today),
     })),
   });
 }
