@@ -13,16 +13,21 @@
  *     invoice). That wording is Springboard-facing and is NOT switched on: see
  *     INTRODUCER_PAY_WORDING_APPROVAL below.
  *
- * Expected pay date = the later of (fee received, tax invoice received) + 14
- * days. Clause 5.4 runs the 14 days from receipt of the fee "against a valid
- * tax invoice"; the introducer agreement runs them from the invoice once the
- * funds are in. Taking the later of the two honours both and never shows a
- * date earlier than the agreement allows.
+ * Expected pay date (once both the fee and the tax invoice are in):
+ *   - invoice on or before fee + 14 days  -> fee + 14 days (clause 5.4's own
+ *     deadline: 14 days after NextKey receives the fee);
+ *   - invoice later than that             -> invoice + 14 days.
+ * This is exactly what the compliance-reviewed "awaiting_invoice" line tells
+ * the partner, so the date shown later never contradicts what they were told.
+ * (Sean's note said "invoice + 14"; that would show a LATER date than clause
+ * 5.4 allows whenever the invoice arrives inside the window, so it is not used.)
  *
  * Dates are calendar days ("YYYY-MM-DD"), as staff enter them. No amount here
  * is ever the gross fee or NextKey's share: the only amounts are the partner's
  * own indicative fee (already on the deal) and what was actually paid to them.
  */
+
+import { columnMissing, type PgLikeError } from "./column-missing";
 
 export const PAY_WITHIN_DAYS = 14;
 
@@ -93,11 +98,11 @@ export function formatPayDate(isoDate: string): string {
   });
 }
 
-/** The later of the two receipt dates plus 14 days, once both are known. */
+/** See the header: fee + 14, or invoice + 14 when the invoice came after that. */
 export function expectedPayDate(rec: PayRecord): string | null {
   if (!rec.fundsReceivedOn || !rec.invoiceReceivedOn) return null;
-  const later = rec.fundsReceivedOn > rec.invoiceReceivedOn ? rec.fundsReceivedOn : rec.invoiceReceivedOn;
-  return addDays(later, PAY_WITHIN_DAYS);
+  const feeDeadline = addDays(rec.fundsReceivedOn, PAY_WITHIN_DAYS);
+  return rec.invoiceReceivedOn <= feeDeadline ? feeDeadline : addDays(rec.invoiceReceivedOn, PAY_WITHIN_DAYS);
 }
 
 export type StageKind = "open" | "settled" | "closed";
@@ -283,26 +288,63 @@ export function parsePayUpdate(
   };
 }
 
-/** DB row (snake_case, numeric may arrive as a string) → PayRecord. */
+/**
+ * The record a staff form was opened with, for the conditional write. Null
+ * unless all four keys are present and each is null or well formed.
+ */
+export function parseExpectedPay(v: unknown): PayUpdate | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  const d = (x: unknown) => (x === null ? null : isIsoDate(x) ? x : undefined);
+  const f = d(o.funds_received_on);
+  const i = d(o.invoice_received_on);
+  const p = d(o.fee_paid_on);
+  const raw = o.fee_paid_amount;
+  const a = raw === null ? null : typeof raw === "number" && Number.isFinite(raw) ? raw : undefined;
+  if (f === undefined || i === undefined || p === undefined || a === undefined) return null;
+  return { funds_received_on: f, invoice_received_on: i, fee_paid_on: p, fee_paid_amount: a };
+}
+
+/**
+ * DB row (snake_case, numeric may arrive as a string) to PayRecord. A value
+ * that is present but unreadable is logged, never silently read as "not yet":
+ * a paid deal must not quietly show as unpaid.
+ */
 export function payRecordFromRow(row: Record<string, unknown> | null | undefined): PayRecord {
   if (!row) return EMPTY_PAY_RECORD;
-  const date = (v: unknown) => (isIsoDate(v) ? v : null);
+  const date = (key: string) => {
+    const v = row[key];
+    if (v === null || v === undefined) return null;
+    if (isIsoDate(v)) return v;
+    console.error("[partner-pay] unreadable date in pay record", { id: row.id, key, value: String(v) });
+    return null;
+  };
   const amt = row.fee_paid_amount;
-  const n = amt === null || amt === undefined ? null : Number(amt);
+  let paidAmount: number | null = null;
+  if (amt !== null && amt !== undefined) {
+    const n = Number(amt);
+    if (Number.isFinite(n)) paidAmount = n;
+    else console.error("[partner-pay] unreadable amount in pay record", { id: row.id, value: String(amt) });
+  }
   return {
-    fundsReceivedOn: date(row.funds_received_on),
-    invoiceReceivedOn: date(row.invoice_received_on),
-    paidOn: date(row.fee_paid_on),
-    paidAmount: n !== null && Number.isFinite(n) ? n : null,
+    fundsReceivedOn: date("funds_received_on"),
+    invoiceReceivedOn: date("invoice_received_on"),
+    paidOn: date("fee_paid_on"),
+    paidAmount,
   };
 }
 
-export const PAY_COLUMNS = "funds_received_on,invoice_received_on,fee_paid_on,fee_paid_amount";
+export const PAY_COLUMN_NAMES = ["funds_received_on", "invoice_received_on", "fee_paid_on", "fee_paid_amount"] as const;
+export const PAY_COLUMNS = PAY_COLUMN_NAMES.join(",");
 
-/** True when the error is "these columns don't exist yet" (migration not applied). */
-export function payColumnsMissing(error: { code?: string; message?: string } | null | undefined): boolean {
-  if (!error) return false;
-  return error.code === "42703" || /column .* does not exist/i.test(error.message ?? "");
+/**
+ * True only when the error says one of THESE four columns is missing: the
+ * migration is not applied, or PostgREST's schema cache has not caught up.
+ * Covers PGRST204 on writes as well as 42703 on reads (utils/column-missing.ts);
+ * any other column error is a real fault and is not swallowed.
+ */
+export function payColumnsMissing(error: PgLikeError): boolean {
+  return columnMissing(error, PAY_COLUMN_NAMES);
 }
 
 // ── Monthly statement ────────────────────────────────────────────────────────

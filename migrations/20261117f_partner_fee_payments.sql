@@ -53,8 +53,9 @@ ALTER TABLE partner_enquiries ADD CONSTRAINT partner_enquiries_paid_amount_valid
 
 -- Introducers. Same four events. The introducer portal does not show these
 -- until the Springboard wording has YLA's written clause-7 approval
--- (INTRODUCER_PAY_WORDING_APPROVAL in utils/partner-pay.ts); the columns are
--- added now so one migration covers both and staff can start recording.
+-- (INTRODUCER_PAY_WORDING_APPROVAL in utils/partner-pay.ts). The columns are
+-- added now so one migration covers both; the staff write path for introducer
+-- dates is NOT built yet and comes with the switch-on.
 ALTER TABLE introducer_clients
   ADD COLUMN IF NOT EXISTS funds_received_on   date,
   ADD COLUMN IF NOT EXISTS invoice_received_on date,

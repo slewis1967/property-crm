@@ -36,7 +36,7 @@ import {
 import { loadPartnerLot, lotSupplierForStaff } from "../../../../../../utils/partner-stock";
 import { sendDealUpdateEmail } from "../../../../../../utils/partner-email";
 import { normaliseAuPhone } from "../../../../../../utils/introducer";
-import { brisbaneToday, parsePayUpdate, payColumnsMissing } from "../../../../../../utils/partner-pay";
+import { brisbaneToday, parseExpectedPay, parsePayUpdate, payColumnsMissing } from "../../../../../../utils/partner-pay";
 
 export const dynamic = "force-dynamic";
 
@@ -326,16 +326,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       // is sending it empty. Conditional on the stage still being settled.
       const parsed = parsePayUpdate(body, { settled: deal.stage === "settled", today: brisbaneToday() });
       if (!parsed.ok) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
-      const { data, error } = await supabase
+      // Optimistic concurrency: the form sends the record it was opened with
+      // (`expected`) and the write lands only if the row still holds exactly
+      // that, so two staff can't silently overwrite each other's dates.
+      const expected = parseExpectedPay(body.expected);
+      if (!expected) {
+        return NextResponse.json({ ok: false, error: "Refresh the page and try again." }, { status: 400 });
+      }
+      let q = supabase
         .from("partner_enquiries")
         .update({ ...parsed.update, updated_at: new Date().toISOString() })
         .eq("id", deal.id)
-        .eq("stage", deal.stage)
-        .select("id")
-        .maybeSingle();
+        .eq("stage", deal.stage);
+      for (const [col, val] of Object.entries(expected)) q = val === null ? q.is(col, null) : q.eq(col, val);
+      const { data, error } = await q.select("id").maybeSingle();
       if (payColumnsMissing(error)) {
         return NextResponse.json(
-          { ok: false, error: "Run migrations/20261117e_partner_fee_payments.sql in the Supabase SQL editor first." },
+          { ok: false, error: "Run migrations/20261117f_partner_fee_payments.sql in the Supabase SQL editor first." },
           { status: 503 },
         );
       }

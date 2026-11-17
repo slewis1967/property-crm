@@ -31,7 +31,7 @@ export default async function ReferralPage({ params }: { params: Promise<{ id: s
       <PortalHeader firmName={identity.firmName} userName={identity.fullName ?? identity.email} />
       <main className="mx-auto max-w-3xl px-4 py-7">
         <ReferralDetail id={id} />
-        {payTiming && <PayTiming stage={(record as { stage?: string | null }).stage ?? null} record={payRecord} />}
+        {payTiming && <PayTiming stage={(record as { stage?: string | null }).stage ?? null} status={record.status ?? null} record={payRecord} />}
       </main>
     </div>
   );

@@ -252,7 +252,7 @@ export function stageKind(stage: string): StageKind {
 /**
  * The staff-entered payment records for this firm's deals, by deal id. Read in
  * a separate query (not in DEAL_COLUMNS) so that before
- * migrations/20261117e_partner_fee_payments.sql is applied the deal pages keep
+ * migrations/20261117f_partner_fee_payments.sql is applied the deal pages keep
  * working and simply show the agreement's terms with no dates. Any other error
  * is logged loudly and also degrades to "no dates": the deal itself must
  * still render.
@@ -301,10 +301,15 @@ export function toPayView(stage: string, rec: PayRecord | undefined, opts: { sho
 export type PayView = ReturnType<typeof toPayView>;
 
 /** The Brisbane calendar day a settled deal was marked settled. */
-export function settledOnOf(row: Pick<DealRow, "stage_updated_at" | "updated_at">): string {
-  // stage_updated_at is NOT NULL in the schema; updated_at is the belt.
-  const d = new Date(row.stage_updated_at ?? row.updated_at);
-  return brisbaneToday(Number.isNaN(d.getTime()) ? new Date(row.updated_at) : d);
+export function settledOnOf(row: Pick<DealRow, "id" | "stage_updated_at" | "updated_at" | "created_at">): string {
+  // stage_updated_at is NOT NULL in the schema; the others are belts. The
+  // statement must render, so the last resort is today, logged.
+  for (const v of [row.stage_updated_at, row.updated_at, row.created_at]) {
+    const d = new Date(v);
+    if (v && !Number.isNaN(d.getTime())) return brisbaneToday(d);
+  }
+  console.error("[partner] settled deal has no readable date", { deal: row.id });
+  return brisbaneToday();
 }
 
 // ── Audit + plumbing ─────────────────────────────────────────────────────────

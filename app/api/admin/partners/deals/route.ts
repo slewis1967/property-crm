@@ -52,9 +52,10 @@ export async function GET(req: Request) {
   }
 
   // Payment records (NOVA-011) in their own query, so the queue still loads
-  // before migrations/20261117e_partner_fee_payments.sql is applied.
+  // before migrations/20261117f_partner_fee_payments.sql is applied.
   const pay = new Map<string, PayRecord>();
   let payMigrationMissing = false;
+  let payReadError: string | null = null;
   const settledIds = deals.filter((d) => d.stage === "settled").map((d) => String(d.id));
   if (settledIds.length) {
     const { data: payRows, error: payError } = await supabase
@@ -62,7 +63,10 @@ export async function GET(req: Request) {
       .select(`id,${PAY_COLUMNS}`)
       .in("id", settledIds);
     if (payColumnsMissing(payError)) payMigrationMissing = true;
-    else if (payError) console.error("[admin/partners] pay records read failed", payError.message);
+    else if (payError) {
+      console.error("[admin/partners] pay records read failed", payError.message);
+      payReadError = payError.message;
+    }
     for (const r of (payRows ?? []) as unknown as Record<string, unknown>[]) pay.set(String(r.id), payRecordFromRow(r));
   }
   const today = brisbaneToday();
@@ -71,6 +75,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     pay_migration_missing: payMigrationMissing,
+    pay_error: payReadError,
     deals: deals.map((d) => ({
       ...d,
       supplier: suppliers.get(String(d.property_id)) ?? null,
@@ -79,6 +84,9 @@ export async function GET(req: Request) {
       hold_expired:
         d.stage === "hold" && typeof d.hold_expires_at === "string" && Date.parse(d.hold_expires_at) < now,
       payment: pay.get(String(d.id)) ?? null,
+      // Staff must not edit a record that could not be read: a blank form
+      // would overwrite real dates on save.
+      payment_unavailable: d.stage === "settled" && (payMigrationMissing || payReadError !== null),
       payment_overdue:
         d.stage === "settled" && pay.has(String(d.id)) && payOverdue("settled", pay.get(String(d.id)) as PayRecord, today),
     })),
