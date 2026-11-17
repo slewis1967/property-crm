@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import Frame from "../Frame";
 import { has, requirePartnerPage } from "../session";
 import { CLOSED_STAGES, formatAud, isDealStage } from "../../../utils/partner";
-import { listOwnDeals, toDealView } from "../../api/partner/_shared";
-import { EmptyState, Icon, PageHeader, StagePill, StatTile, buttonPrimary, tableWrap, td, th, tr } from "../ui";
+import { listOwnDeals, loadOwnPayRecords, toDealView, toPayView } from "../../api/partner/_shared";
+import { formatPayDate, PARTNER_RESPONSE_STANDARD } from "../../../utils/partner-pay";
+import { EmptyState, Icon, PageHeader, StagePill, StatTile, buttonPrimary, buttonSecondary, tableWrap, td, th, tr } from "../ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Deals — Partner Portal" };
@@ -14,7 +15,12 @@ export default async function PartnerDealsPage() {
   if (!has(identity, "deals")) redirect("/partner/account");
 
   const showFees = has(identity, "referral_fee");
-  const deals = (await listOwnDeals(identity)).map((d) => toDealView(d, { showFees }));
+  const rows = await listOwnDeals(identity);
+  const payRecords = await loadOwnPayRecords(identity, rows.map((r) => r.id));
+  const deals = rows.map((d) => ({
+    ...toDealView(d, { showFees }),
+    pay: toPayView(d.stage, payRecords.get(d.id), { showFees }),
+  }));
   const open = deals.filter((d) => !(isDealStage(d.stage) && CLOSED_STAGES.has(d.stage)));
   const closed = deals.filter((d) => isDealStage(d.stage) && CLOSED_STAGES.has(d.stage));
   const settled = deals.filter((d) => d.stage === "settled");
@@ -30,6 +36,7 @@ export default async function PartnerDealsPage() {
             <th className={th}>Stage</th>
             <th className={`${th} text-right`}>Price</th>
             {showFees && <th className={`${th} text-right`}>Your fee</th>}
+            <th className={th}>Payment</th>
             <th className={th}>Updated</th>
           </tr>
         </thead>
@@ -53,6 +60,15 @@ export default async function PartnerDealsPage() {
               <td className={td}><StagePill stage={d.stage} label={d.stageLabel} /></td>
               <td className={`${td} text-right font-medium text-slate-900`}>{d.price ? formatAud(d.price) : "—"}</td>
               {showFees && <td className={`${td} text-right font-semibold`}>{d.referralFee ? formatAud(d.referralFee) : "—"}</td>}
+              <td className={`${td} text-slate-700`}>
+                {d.pay.label}
+                {d.pay.status === "invoiced" && d.pay.expectedOn && (
+                  <span className="block text-xs text-slate-500">by {formatPayDate(d.pay.expectedOn)}</span>
+                )}
+                {d.pay.status === "paid" && d.pay.paidOn && (
+                  <span className="block text-xs text-slate-500">{formatPayDate(d.pay.paidOn)}</span>
+                )}
+              </td>
               <td className={`${td} text-slate-500`}>
                 {new Date(d.updatedAt).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric" })}
               </td>
@@ -71,11 +87,17 @@ export default async function PartnerDealsPage() {
         icon="handshake"
         subtitle="Every hold you've requested for a client, from request to settlement."
         actions={
-          <Link href="/partner/stock" className={buttonPrimary}>
-            <Icon name="grid" /> Browse stock
-          </Link>
+          <>
+            <Link href="/partner/deals/statement" className={buttonSecondary}>
+              Fee statement
+            </Link>
+            <Link href="/partner/stock" className={buttonPrimary}>
+              <Icon name="grid" /> Browse stock
+            </Link>
+          </>
         }
       />
+      {!identity.branding.whiteLabel && <p className="mb-6 text-sm text-slate-600">{PARTNER_RESPONSE_STANDARD}</p>}
       {deals.length === 0 ? (
         <EmptyState icon="handshake" title="No deals yet">
           Open a lot in <Link className="font-semibold underline" href="/partner/stock">Stock</Link> and request a hold for a client.

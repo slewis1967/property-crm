@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { requireIntroducerPage } from "../../session";
 import PortalHeader from "../../PortalHeader";
 import ReferralDetail from "./ReferralDetail";
-import { loadOwnClient } from "../../../api/introducer/_shared";
+import { loadOwnClient, loadOwnPayRecord } from "../../../api/introducer/_shared";
+import PayTiming from "./PayTiming";
+import { introducerPayTimingEnabled } from "../../../../utils/partner-pay";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +22,16 @@ export default async function ReferralPage({ params }: { params: Promise<{ id: s
   // "this exists but isn't yours" is itself information.
   const record = await loadOwnClient(identity, id);
   if (!record) notFound();
+  // NOVA-011: off until the Springboard wording has clause-7 approval.
+  const payTiming = introducerPayTimingEnabled();
+  const payRecord = payTiming ? await loadOwnPayRecord(identity, id) : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <PortalHeader firmName={identity.firmName} userName={identity.fullName ?? identity.email} />
       <main className="mx-auto max-w-3xl px-4 py-7">
         <ReferralDetail id={id} />
+        {payTiming && <PayTiming stage={(record as { stage?: string | null }).stage ?? null} status={record.status ?? null} record={payRecord} />}
       </main>
     </div>
   );

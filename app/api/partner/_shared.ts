@@ -22,8 +22,19 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../utils/supabase";
 import { resolveSession, sessionCookieName, type PartnerIdentity } from "../../../utils/partner-auth";
 import {
+  brisbaneToday,
+  EMPTY_PAY_RECORD,
+  PAY_COLUMNS,
+  partnerPayLine,
+  payColumnsMissing,
+  payRecordFromRow,
+  type PayRecord,
+  type StageKind,
+} from "../../../utils/partner-pay";
+import {
   assertNoForbiddenKeys,
   canUse,
+  CLOSED_STAGES,
   DEAL_STAGE_LABELS,
   isDealStage,
   revealedForPortal,
@@ -228,6 +239,77 @@ export async function listOwnDeals(
   const { data, error } = await q.order("updated_at", { ascending: false }).limit(1000);
   if (error) return [];
   return (data ?? []) as unknown as DealRow[];
+}
+
+// ── Payment (NOVA-011) ───────────────────────────────────────────────────────
+
+/** A deal's stage as the pay rules see it. */
+export function stageKind(stage: string): StageKind {
+  if (stage === "settled") return "settled";
+  return isDealStage(stage) && CLOSED_STAGES.has(stage) ? "closed" : "open";
+}
+
+/**
+ * The staff-entered payment records for this firm's deals, by deal id. Read in
+ * a separate query (not in DEAL_COLUMNS) so that before
+ * migrations/20261117f_partner_fee_payments.sql is applied the deal pages keep
+ * working and simply show the agreement's terms with no dates. Any other error
+ * is logged loudly and also degrades to "no dates": the deal itself must
+ * still render.
+ */
+export async function loadOwnPayRecords(
+  identity: PartnerIdentity,
+  dealIds: string[],
+): Promise<Map<string, PayRecord>> {
+  const out = new Map<string, PayRecord>();
+  if (!dealIds.length) return out;
+  const { data, error } = await supabase
+    .from("partner_enquiries")
+    .select(`id,${PAY_COLUMNS}`)
+    .eq("partner_id", identity.partnerId)
+    .in("id", dealIds.slice(0, 1000));
+  if (error) {
+    if (!payColumnsMissing(error)) console.error("[partner] pay records read failed", error.message);
+    return out;
+  }
+  for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
+    out.set(String(row.id), payRecordFromRow(row));
+  }
+  return out;
+}
+
+/**
+ * What a partner sees about getting paid on one deal. The amount paid is the
+ * partner's own fee and goes only to a plan that shows fees; the dates and the
+ * wording go to every plan, because when they get paid is theirs to know.
+ */
+export function toPayView(stage: string, rec: PayRecord | undefined, opts: { showFees: boolean }) {
+  const r = rec ?? EMPTY_PAY_RECORD;
+  const pl = partnerPayLine(stageKind(stage), r);
+  return assertNoForbiddenKeys({
+    status: pl.status,
+    label: pl.label,
+    line: pl.line,
+    expectedOn: pl.expectedOn,
+    fundsReceivedOn: r.fundsReceivedOn,
+    invoiceReceivedOn: r.invoiceReceivedOn,
+    paidOn: r.paidOn,
+    paidAmount: opts.showFees ? r.paidAmount : null,
+  });
+}
+
+export type PayView = ReturnType<typeof toPayView>;
+
+/** The Brisbane calendar day a settled deal was marked settled. */
+export function settledOnOf(row: Pick<DealRow, "id" | "stage_updated_at" | "updated_at" | "created_at">): string {
+  // stage_updated_at is NOT NULL in the schema; the others are belts. The
+  // statement must render, so the last resort is today, logged.
+  for (const v of [row.stage_updated_at, row.updated_at, row.created_at]) {
+    const d = new Date(v);
+    if (v && !Number.isNaN(d.getTime())) return brisbaneToday(d);
+  }
+  console.error("[partner] settled deal has no readable date", { deal: row.id });
+  return brisbaneToday();
 }
 
 // ── Audit + plumbing ─────────────────────────────────────────────────────────

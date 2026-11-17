@@ -52,6 +52,11 @@ type Deal = {
   hold_expires_at: string | null;
   /** Computed server-side, so render stays pure. */
   hold_expired: boolean;
+  /** NOVA-011: staff-recorded payment events (settled deals; null before the migration). */
+  payment?: { fundsReceivedOn: string | null; invoiceReceivedOn: string | null; paidOn: string | null; paidAmount: number | null } | null;
+  payment_overdue?: boolean;
+  /** The pay record could not be read (migration missing or a read error): no editing. */
+  payment_unavailable?: boolean;
   decision_reason: string | null;
   opportunity_id: string | null;
   created_at: string;
@@ -236,7 +241,7 @@ export default function AdminPartners({
               <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">Nothing here.</div>
             ) : (
               <div className="space-y-3">
-                {deals.map((d) => <DealCard key={d.id} deal={d} act={act} />)}
+                {deals.map((d) => <DealCard key={d.id} deal={d} act={act} canRecordPayment={viewerIsSuperAdmin} />)}
               </div>
             )}
           </section>
@@ -256,8 +261,9 @@ export default function AdminPartners({
 
 type Act = (url: string, method: string, body: unknown, ok: string) => Promise<boolean>;
 
-function DealCard({ deal, act }: { deal: Deal; act: Act }) {
-  const [mode, setMode] = useState<null | "grant" | "decline" | "release" | "reveal" | "message" | "notes">(null);
+function DealCard({ deal, act, canRecordPayment }: { deal: Deal; act: Act; canRecordPayment: boolean }) {
+  const [mode, setMode] = useState<null | "grant" | "decline" | "release" | "reveal" | "message" | "notes" | "payment">(null);
+  const [payForm, setPayForm] = useState({ funds_received_on: "", invoice_received_on: "", fee_paid_on: "", fee_paid_amount: "" });
   const [text, setText] = useState("");
   const [reason, setReason] = useState("");
   const [holdUntil, setHoldUntil] = useState(() => new Date(Date.now() + 72 * 3_600_000).toISOString().slice(0, 10));
@@ -282,6 +288,16 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
       setText("");
       setReason("");
     }
+  };
+
+  const openPayment = () => {
+    setPayForm({
+      funds_received_on: deal.payment?.fundsReceivedOn ?? "",
+      invoice_received_on: deal.payment?.invoiceReceivedOn ?? "",
+      fee_paid_on: deal.payment?.paidOn ?? "",
+      fee_paid_amount: deal.payment?.paidAmount != null ? String(deal.payment.paidAmount) : "",
+    });
+    setMode("payment");
   };
 
   const openReveal = () => {
@@ -324,6 +340,21 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
           )}
         </div>
         {deal.hold_expires_at && <div><span className="text-gray-500">Hold until:</span> {new Date(deal.hold_expires_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}</div>}
+        {deal.stage === "settled" && (
+          <div>
+            <span className="text-gray-500">Partner payment:</span>{" "}
+            {deal.payment_unavailable
+              ? "payment record unavailable (migration 20261117f not applied, or a read error: see the server log)"
+              : deal.payment?.paidOn
+              ? `paid ${deal.payment.paidOn}${deal.payment.paidAmount != null ? ` (${formatAud(deal.payment.paidAmount)})` : ""}`
+              : deal.payment?.invoiceReceivedOn && deal.payment?.fundsReceivedOn
+                ? `invoiced ${deal.payment.invoiceReceivedOn}, fee in ${deal.payment.fundsReceivedOn}`
+                : deal.payment?.fundsReceivedOn
+                  ? `fee in ${deal.payment.fundsReceivedOn}, no invoice yet`
+                  : "awaiting developer's fee"}
+            {deal.payment_overdue && <span className="ml-1 font-medium text-red-700">· overdue (14 days passed)</span>}
+          </div>
+        )}
         <div><span className="text-gray-500">Details released:</span> {deal.revealed_at ? new Date(deal.revealed_at).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane" }) : "not yet"}</div>
       </div>
       {deal.partner_note && <p className="mt-2 rounded bg-gray-50 px-3 py-2 text-gray-700"><span className="font-medium">Partner note:</span> {deal.partner_note}</p>}
@@ -343,6 +374,7 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
         {["hold", "eoi", "unconditional", "settled"].includes(deal.stage) && (
           <button className={btn} onClick={openReveal}>{deal.revealed_at ? "Edit released details" : "Release lot details"}</button>
         )}
+        {deal.stage === "settled" && !deal.payment_unavailable && canRecordPayment && <button className={btn} onClick={openPayment}>Fee payment</button>}
         <button className={btn} onClick={() => { setText(""); setMode("message"); }}>Message partner</button>
         <button className={btn} onClick={() => { setText(deal.staff_notes ?? ""); setMode("notes"); }}>Internal notes</button>
       </div>
@@ -372,7 +404,25 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
               <p className="text-xs text-amber-800 sm:col-span-2">This shows the supplier to {firm}. Only release once the hold is confirmed and the partner agreement is signed.</p>
             </div>
           )}
-          {mode !== "reveal" && (
+          {mode === "payment" && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([
+                ["funds_received_on", "Developer's fee received (date)", "date"],
+                ["invoice_received_on", "Partner's tax invoice received (date)", "date"],
+                ["fee_paid_on", "Referral fee paid (date)", "date"],
+                ["fee_paid_amount", "Amount paid, ex GST ($)", "text"],
+              ] as const).map(([key, label, type]) => (
+                <label key={key} className="text-xs font-medium text-gray-600">
+                  {label}
+                  <input type={type} inputMode={type === "text" ? "decimal" : undefined} className={input} value={payForm[key]} onChange={(e) => setPayForm((f) => ({ ...f, [key]: e.target.value }))} />
+                </label>
+              ))}
+              <p className="text-xs text-gray-600 sm:col-span-2">
+                The partner sees these dates and, once both receipts are in, an expected pay date 14 days after the later one (clause 5.4). Clear a field to remove it. No email is sent.
+              </p>
+            </div>
+          )}
+          {mode !== "reveal" && mode !== "payment" && (
             <>
               <label className="block text-xs font-medium text-gray-600">
                 {mode === "notes" ? "Internal notes (never shown to the partner)" : mode === "message" ? "Message to partner" : "Message to partner (optional — a standard one is sent otherwise)"}
@@ -391,6 +441,20 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
                 if (mode === "reveal") void run({ action: "reveal", revealed: reveal }, "Lot details released to the partner.");
                 if (mode === "message") void run({ action: "message", message: text }, "Message sent.");
                 if (mode === "notes") void run({ action: "notes", staff_notes: text }, "Notes saved.");
+                if (mode === "payment")
+                  void run(
+                    {
+                      action: "fee_payment",
+                      ...payForm,
+                      expected: {
+                        funds_received_on: deal.payment?.fundsReceivedOn ?? null,
+                        invoice_received_on: deal.payment?.invoiceReceivedOn ?? null,
+                        fee_paid_on: deal.payment?.paidOn ?? null,
+                        fee_paid_amount: deal.payment?.paidAmount ?? null,
+                      },
+                    },
+                    "Payment record saved.",
+                  );
               }}
             >
               {busy ? "Working…" : "Confirm"}

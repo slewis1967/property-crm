@@ -8,8 +8,10 @@
  *   { action: "message", message }
  *   { action: "notes", staff_notes }
  *   { action: "create_opportunity" }
+ *   { action: "fee_payment", funds_received_on, invoice_received_on, fee_paid_on, fee_paid_amount }
  *
  * STAFF (Cloudflare Access). Running a deal is operational, so any staff member
+ * (except fee_payment, which is super-admin only)
  * can do it; onboarding and pricing (tiers, white-label) stay super-admin.
  *
  * Every stage change is conditional on the stage we read (`.eq("stage", from)`),
@@ -24,6 +26,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "../../../../../../utils/supabase";
 import { nexusApi } from "@/utils/nexus-api";
 import { requireStaff, readJson } from "../../../introducers/_shared";
+import { isSuperAdmin } from "../../../../../../utils/super-admin";
 import { logPartnerEvent } from "../../../../partner/_shared";
 import {
   canTransition,
@@ -35,6 +38,7 @@ import {
 import { loadPartnerLot, lotSupplierForStaff } from "../../../../../../utils/partner-stock";
 import { sendDealUpdateEmail } from "../../../../../../utils/partner-email";
 import { normaliseAuPhone } from "../../../../../../utils/introducer";
+import { brisbaneToday, parseExpectedPay, parsePayUpdate, payColumnsMissing } from "../../../../../../utils/partner-pay";
 
 export const dynamic = "force-dynamic";
 
@@ -315,6 +319,48 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (opp.error) return NextResponse.json({ ok: false, error: opp.error }, { status: 502 });
       await log("opportunity_created", { opportunity_id: opp.id });
       return NextResponse.json({ ok: true, opportunity_id: opp.id });
+    }
+
+    case "fee_payment": {
+      // NOVA-011. Records the events clause 5.4 names; no new terms, no email
+      // (the partner sees it in the portal; a "you've been paid" email is a
+      // separate decision). The whole record is replaced, so clearing a field
+      // is sending it empty. Conditional on the stage still being settled.
+      // Sean 17 Nov: recording a payment is super-admin only, and the amount is
+      // capped at the partner fee snapshotted on the deal.
+      if (!isSuperAdmin(auth)) {
+        return NextResponse.json({ ok: false, error: "Only a super admin can record a partner fee payment." }, { status: 403 });
+      }
+      const parsed = parsePayUpdate(body, {
+        settled: deal.stage === "settled",
+        today: brisbaneToday(),
+        maxAmount: deal.referral_fee_snapshot,
+      });
+      if (!parsed.ok) return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
+      // Optimistic concurrency: the form sends the record it was opened with
+      // (`expected`) and the write lands only if the row still holds exactly
+      // that, so two staff can't silently overwrite each other's dates.
+      const expected = parseExpectedPay(body.expected);
+      if (!expected) {
+        return NextResponse.json({ ok: false, error: "Refresh the page and try again." }, { status: 400 });
+      }
+      let q = supabase
+        .from("partner_enquiries")
+        .update({ ...parsed.update, updated_at: new Date().toISOString() })
+        .eq("id", deal.id)
+        .eq("stage", deal.stage);
+      for (const [col, val] of Object.entries(expected)) q = val === null ? q.is(col, null) : q.eq(col, val);
+      const { data, error } = await q.select("id").maybeSingle();
+      if (payColumnsMissing(error)) {
+        return NextResponse.json(
+          { ok: false, error: "Run migrations/20261117f_partner_fee_payments.sql in the Supabase SQL editor first." },
+          { status: 503 },
+        );
+      }
+      if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+      if (!data) return stale();
+      await log("fee_payment_recorded", { ...parsed.update });
+      return NextResponse.json({ ok: true, payment: parsed.update });
     }
 
     default:
