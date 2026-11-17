@@ -14,6 +14,7 @@ import {
   payOverdue,
   payRecordFromRow,
   payStatus,
+  parseExpectedPay,
   PARTNER_RESPONSE_STANDARD,
   type PayRecord,
 } from "./partner-pay";
@@ -42,11 +43,15 @@ describe("expected pay date (clause 5.4: 14 days, against an invoice)", () => {
     expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-01" }))).toBeNull();
     expect(expectedPayDate(rec({ invoiceReceivedOn: "2026-11-01" }))).toBeNull();
   });
-  it("runs 14 days from the invoice when it arrives after the fee", () => {
-    expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-05" }))).toBe("2026-11-19");
+  it("is fee + 14 when the invoice arrives inside that window (clause 5.4's own deadline)", () => {
+    expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-05" }))).toBe("2026-11-15");
+    expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-15" }))).toBe("2026-11-15");
   });
-  it("never runs from before the fee arrived, even if the invoice came first", () => {
+  it("is fee + 14 when the invoice came first", () => {
     expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-10", invoiceReceivedOn: "2026-11-02" }))).toBe("2026-11-24");
+  });
+  it("is invoice + 14 when the invoice arrives after the fee's 14 days", () => {
+    expect(expectedPayDate(rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-20" }))).toBe("2026-12-04");
   });
 });
 
@@ -63,8 +68,8 @@ describe("pay status", () => {
   });
   it("flags overdue for staff only once the expected date has passed", () => {
     const r = rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-02" });
-    expect(payOverdue("settled", r, "2026-11-16")).toBe(false);
-    expect(payOverdue("settled", r, "2026-11-17")).toBe(true);
+    expect(payOverdue("settled", r, "2026-11-15")).toBe(false);
+    expect(payOverdue("settled", r, "2026-11-16")).toBe(true);
     expect(payOverdue("settled", { ...r, paidOn: "2026-11-17" }, "2026-11-30")).toBe(false);
   });
 });
@@ -80,8 +85,8 @@ describe("partner wording restates the agreement and nothing more", () => {
   });
   it("gives the expected date once invoiced", () => {
     const l = partnerPayLine("settled", rec({ fundsReceivedOn: "2026-11-01", invoiceReceivedOn: "2026-11-05" }));
-    expect(l.expectedOn).toBe("2026-11-19");
-    expect(l.line).toBe("Tax invoice received 5 Nov 2026. Expected payment by 19 Nov 2026.");
+    expect(l.expectedOn).toBe("2026-11-15");
+    expect(l.line).toBe("Tax invoice received 5 Nov 2026. Expected payment by 15 Nov 2026.");
   });
   it("never names Springboard, and never mentions the gross fee or NextKey's share", () => {
     const all = (["open", "settled", "closed"] as const).flatMap((s) => [
@@ -155,6 +160,17 @@ describe("staff input", () => {
   });
 });
 
+describe("expected record for the conditional write", () => {
+  it("needs all four keys, each null or well formed", () => {
+    expect(parseExpectedPay({ funds_received_on: null, invoice_received_on: null, fee_paid_on: null, fee_paid_amount: null })).toEqual({
+      funds_received_on: null, invoice_received_on: null, fee_paid_on: null, fee_paid_amount: null,
+    });
+    expect(parseExpectedPay({ funds_received_on: "2026-11-01" })).toBeNull();
+    expect(parseExpectedPay({ funds_received_on: "x", invoice_received_on: null, fee_paid_on: null, fee_paid_amount: null })).toBeNull();
+    expect(parseExpectedPay(undefined)).toBeNull();
+  });
+});
+
 describe("row mapping and degrade", () => {
   it("maps a row and drops junk", () => {
     expect(
@@ -164,6 +180,10 @@ describe("row mapping and degrade", () => {
   });
   it("recognises 'migration not applied' and nothing else", () => {
     expect(payColumnsMissing({ code: "42703", message: "column partner_enquiries.funds_received_on does not exist" })).toBe(true);
+    expect(
+      payColumnsMissing({ code: "PGRST204", message: "Could not find the 'funds_received_on' column of 'partner_enquiries' in the schema cache" }),
+    ).toBe(true);
+    expect(payColumnsMissing({ code: "42703", message: "column partner_enquiries.partner_idx does not exist" })).toBe(false);
     expect(payColumnsMissing({ code: "42P01", message: "relation does not exist" })).toBe(false);
     expect(payColumnsMissing(null)).toBe(false);
   });

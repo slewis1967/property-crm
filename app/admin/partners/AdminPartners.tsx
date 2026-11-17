@@ -55,6 +55,8 @@ type Deal = {
   /** NOVA-011: staff-recorded payment events (settled deals; null before the migration). */
   payment?: { fundsReceivedOn: string | null; invoiceReceivedOn: string | null; paidOn: string | null; paidAmount: number | null } | null;
   payment_overdue?: boolean;
+  /** The pay record could not be read (migration missing or a read error): no editing. */
+  payment_unavailable?: boolean;
   decision_reason: string | null;
   opportunity_id: string | null;
   created_at: string;
@@ -341,7 +343,9 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
         {deal.stage === "settled" && (
           <div>
             <span className="text-gray-500">Partner payment:</span>{" "}
-            {deal.payment?.paidOn
+            {deal.payment_unavailable
+              ? "payment record unavailable (migration 20261117f not applied, or a read error: see the server log)"
+              : deal.payment?.paidOn
               ? `paid ${deal.payment.paidOn}${deal.payment.paidAmount != null ? ` (${formatAud(deal.payment.paidAmount)})` : ""}`
               : deal.payment?.invoiceReceivedOn && deal.payment?.fundsReceivedOn
                 ? `invoiced ${deal.payment.invoiceReceivedOn}, fee in ${deal.payment.fundsReceivedOn}`
@@ -370,7 +374,7 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
         {["hold", "eoi", "unconditional", "settled"].includes(deal.stage) && (
           <button className={btn} onClick={openReveal}>{deal.revealed_at ? "Edit released details" : "Release lot details"}</button>
         )}
-        {deal.stage === "settled" && <button className={btn} onClick={openPayment}>Fee payment</button>}
+        {deal.stage === "settled" && !deal.payment_unavailable && <button className={btn} onClick={openPayment}>Fee payment</button>}
         <button className={btn} onClick={() => { setText(""); setMode("message"); }}>Message partner</button>
         <button className={btn} onClick={() => { setText(deal.staff_notes ?? ""); setMode("notes"); }}>Internal notes</button>
       </div>
@@ -437,7 +441,20 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
                 if (mode === "reveal") void run({ action: "reveal", revealed: reveal }, "Lot details released to the partner.");
                 if (mode === "message") void run({ action: "message", message: text }, "Message sent.");
                 if (mode === "notes") void run({ action: "notes", staff_notes: text }, "Notes saved.");
-                if (mode === "payment") void run({ action: "fee_payment", ...payForm }, "Payment record saved.");
+                if (mode === "payment")
+                  void run(
+                    {
+                      action: "fee_payment",
+                      ...payForm,
+                      expected: {
+                        funds_received_on: deal.payment?.fundsReceivedOn ?? null,
+                        invoice_received_on: deal.payment?.invoiceReceivedOn ?? null,
+                        fee_paid_on: deal.payment?.paidOn ?? null,
+                        fee_paid_amount: deal.payment?.paidAmount ?? null,
+                      },
+                    },
+                    "Payment record saved.",
+                  );
               }}
             >
               {busy ? "Working…" : "Confirm"}

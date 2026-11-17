@@ -7,8 +7,9 @@ import { EMPTY_PAY_RECORD, introducerPayLine, type PayRecord, type StageKind } f
  * No amounts: introducer fees are free text on the application and are shown
  * in their agreement, not here.
  */
-export default function PayTiming({ stage, record }: { stage: string | null; record: PayRecord | null }) {
-  const kind: StageKind = stage === "settled" ? "settled" : stage === "not_proceeding" ? "closed" : "open";
+export default function PayTiming({ stage, status, record }: { stage: string | null; status: string | null; record: PayRecord | null }) {
+  const closed = stage === "not_proceeding" || status === "declined" || status === "withdrawn";
+  const kind: StageKind = stage === "settled" ? "settled" : closed ? "closed" : "open";
   const r = record ?? EMPTY_PAY_RECORD;
   const pl = introducerPayLine(kind, r);
   return (

@@ -32,7 +32,9 @@ export default async function PartnerStatementPage() {
           clientName: v.clientName,
           settledOn: settledOnOf(row),
           indicativeFee: v.referralFee,
-          pay: pay.get(row.id) ?? EMPTY_PAY_RECORD,
+          // Mask before computing, not only in the JSX: totals built from a
+          // hidden amount would leak through any future export or client child.
+          pay: { ...(pay.get(row.id) ?? EMPTY_PAY_RECORD), ...(showFees ? {} : { paidAmount: null }) },
         };
       }),
     ),
