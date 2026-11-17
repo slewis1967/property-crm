@@ -14,7 +14,24 @@
 import { timingSafeEqual } from "node:crypto";
 import { runPartnerFeasibilityJob } from "../../utils/partner-feasibility-job";
 import { supabase } from "../../utils/supabase";
-import { enforceKeyedRateLimit } from "../../utils/rate-limit";
+
+// NOTE: nothing here may import `next/*` (utils/rate-limit.ts does): a Netlify
+// background function is bundled on its own, without Next.js, and crashes on
+// load with "Cannot find module .../next/server" (17 Nov 2026). Guarded by
+// utils/netlify-functions-imports.test.ts.
+
+/** At most 5 refusal traces per 10 minutes per instance. */
+const REFUSAL_WINDOW_MS = 10 * 60_000;
+let refusalWindowStart = 0;
+let refusalCount = 0;
+function mayTraceRefusal(now = Date.now()): boolean {
+  if (now - refusalWindowStart > REFUSAL_WINDOW_MS) {
+    refusalWindowStart = now;
+    refusalCount = 0;
+  }
+  refusalCount += 1;
+  return refusalCount <= 5;
+}
 
 /** Durable trace in the append-only audit log: Netlify CLI shows no background-function logs. */
 async function trace(action: string, detail: Record<string, unknown>) {
@@ -39,7 +56,7 @@ const handler = async (req: Request) => {
     // Refusals are recorded too (so "reached but refused" is visible), but
     // capped: an unauthenticated caller must not be able to fill the
     // permanent audit log. At most 5 per 10 minutes per instance.
-    if (!enforceKeyedRateLimit("partner-feasibility-refusal-trace", { windowMs: 10 * 60_000, max: 5 })) {
+    if (mayTraceRefusal()) {
       await trace("feasibility_job_refused", { method: req.method, has_bearer: /^Bearer\s/i.test(req.headers.get("authorization") || "") });
     }
     return new Response("Forbidden", { status: 403 });
