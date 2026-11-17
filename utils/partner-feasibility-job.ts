@@ -89,5 +89,21 @@ export async function runPartnerFeasibilityJob(reportId: string): Promise<{ outc
 /** Hand a job to the background function; true only on a real 202 (see utils/background-trigger.ts). */
 export async function requestPartnerFeasibility(reportId: string): Promise<boolean> {
   const url = backgroundFunctionUrl(FEASIBILITY_FUNCTION, process.env.PARTNER_FEASIBILITY_FUNCTION_URL);
-  return (await triggerBackgroundFunction(url, { reportId: reportId }, "partner-feasibility")).ok;
+  const r = await triggerBackgroundFunction(url, { reportId: reportId }, "partner-feasibility");
+  // Durable record of every hand-over (host, status, where a redirect pointed;
+  // never the secret). The Netlify log stream proved unreliable for this.
+  let redirectedTo: string | null = null;
+  try {
+    redirectedTo = r.location ? new URL(r.location, url).host : null;
+  } catch {
+    redirectedTo = "unparseable";
+  }
+  const { error } = await supabase.from("partner_events").insert({
+    actor_type: "system",
+    actor: "feasibility-handover",
+    action: "feasibility_handover",
+    detail: { report_id: reportId, host: r.host, status: r.status, ok: r.ok, redirected_to: redirectedTo },
+  });
+  if (error) console.error("[partner-feasibility] handover trace failed", error.message);
+  return r.ok;
 }

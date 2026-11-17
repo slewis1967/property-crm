@@ -33,7 +33,11 @@ function authorised(req: Request): boolean {
 }
 
 const handler = async (req: Request) => {
-  if (req.method !== "POST" || !authorised(req)) return new Response("Forbidden", { status: 403 });
+  const ok = req.method === "POST" && authorised(req);
+  // First contact, before anything can fail: separates "never reached" from
+  // "reached but refused". Records only whether the secret matched.
+  await trace("feasibility_job_reached", { method: req.method, authorised: ok, has_bearer: /^Bearer\s/i.test(req.headers.get("authorization") || "") });
+  if (!ok) return new Response("Forbidden", { status: 403 });
   const body = (await req.json().catch(() => ({}))) as { reportId?: unknown };
   const id = typeof body.reportId === "string" ? body.reportId : "";
   await trace("feasibility_job_invoked", { report_id: id });
