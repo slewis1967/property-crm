@@ -16,6 +16,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { PartnerBranding } from "../../utils/partner";
+import { PARTNER_RESPONSE_STANDARD } from "../../utils/partner-pay";
 
 export type NavItem = { href: string; label: string };
 
@@ -98,6 +99,8 @@ export default function PortalShell({
         Prices, availability and rent estimates are supplied by developers, are indicative only and can change
         without notice. Confirm with us before quoting a client.{" "}
         Builder, estate and lot details are released once a hold is in place.
+        {/* NextKey's own promise: not shown under a partner's white-label brand. */}
+        {!branding.whiteLabel && <> {PARTNER_RESPONSE_STANDARD}</>}
       </footer>
     </div>
   );

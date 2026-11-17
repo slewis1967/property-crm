@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import Frame from "../../Frame";
 import { has, requirePartnerPage } from "../../session";
 import { formatAud, partnerMayWithdraw } from "../../../../utils/partner";
-import { loadOwnDeal, toDealView } from "../../../api/partner/_shared";
+import { loadOwnDeal, loadOwnPayRecords, toDealView, toPayView } from "../../../api/partner/_shared";
+import { formatPayDate } from "../../../../utils/partner-pay";
 import WithdrawButton from "./WithdrawButton";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,9 @@ export default async function PartnerDealPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const row = await loadOwnDeal(identity, id);
   if (!row) notFound();
-  const deal = toDealView(row, { showFees: has(identity, "referral_fee") });
+  const showFees = has(identity, "referral_fee");
+  const deal = toDealView(row, { showFees });
+  const pay = toPayView(row.stage, (await loadOwnPayRecords(identity, [row.id])).get(row.id), { showFees });
   const reached = STEPS.findIndex((s) => s.key === deal.stage);
   const lot = deal.lot as { suburb?: string; state?: string; propertyType?: string; bedrooms?: number };
 
@@ -91,6 +94,27 @@ export default async function PartnerDealPage({ params }: { params: Promise<{ id
               Hold until {new Date(deal.holdExpiresAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" })} (Brisbane time).
             </p>
           )}
+        </section>
+
+        <section className="rounded-xl border border-gray-200 bg-white p-5 text-sm md:col-span-2" aria-labelledby="pay-heading">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="pay-heading" className="font-semibold text-gray-900">When you get paid</h2>
+            <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium">{pay.label}</span>
+          </div>
+          <p className="mt-2 text-gray-700">{pay.line}</p>
+          {(pay.fundsReceivedOn || pay.invoiceReceivedOn || pay.paidOn) && (
+            <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+              {pay.fundsReceivedOn && (<><dt className="text-gray-500">Developer&apos;s fee received</dt><dd className="font-medium">{formatPayDate(pay.fundsReceivedOn)}</dd></>)}
+              {pay.invoiceReceivedOn && (<><dt className="text-gray-500">Your tax invoice received</dt><dd className="font-medium">{formatPayDate(pay.invoiceReceivedOn)}</dd></>)}
+              {pay.expectedOn && pay.status === "invoiced" && (<><dt className="text-gray-500">Expected payment by</dt><dd className="font-medium">{formatPayDate(pay.expectedOn)}</dd></>)}
+              {pay.paidOn && (<><dt className="text-gray-500">Paid</dt><dd className="font-medium">{formatPayDate(pay.paidOn)}{pay.paidAmount !== null && ` · ${formatAud(pay.paidAmount)} ex GST`}</dd></>)}
+            </dl>
+          )}
+          <p className="mt-3 text-xs text-gray-500">
+            <Link className="underline" href="/partner/deals/statement">Fee statement</Link>
+            {" · "}
+            <Link className="underline" href="/partner/agreement">Your agreement, clause 5</Link>
+          </p>
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-5 text-sm">

@@ -22,6 +22,7 @@ import {
 } from "../../../utils/introducer-auth";
 import type { ActiveGrant, OpenInfoRequest } from "../../../utils/introducer";
 import { columnMissing } from "../../../utils/column-missing";
+import { PAY_COLUMNS, payColumnsMissing, payRecordFromRow, type PayRecord } from "../../../utils/partner-pay";
 
 export type { IntroducerIdentity };
 
@@ -227,4 +228,25 @@ export async function readJson(req: Request): Promise<Record<string, unknown> | 
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
   }
+}
+
+/**
+ * NOVA-011: the staff-recorded payment events on one of this introducer's own
+ * referrals (same tenant filter as loadOwnClient). Separate query so a missing
+ * migration degrades to "no dates". Only read when the introducer pay panel is
+ * switched on (introducerPayTimingEnabled), which needs clause-7 approval.
+ */
+export async function loadOwnPayRecord(identity: IntroducerIdentity, clientId: string): Promise<PayRecord | null> {
+  if (!clientId || typeof clientId !== "string") return null;
+  const { data, error } = await supabase
+    .from("introducer_clients")
+    .select(PAY_COLUMNS)
+    .eq("id", clientId)
+    .eq("introducer_id", identity.introducerId)
+    .maybeSingle();
+  if (error) {
+    if (!payColumnsMissing(error)) console.error("[introducer] pay record read failed", error.message);
+    return null;
+  }
+  return data ? payRecordFromRow(data as unknown as Record<string, unknown>) : null;
 }
