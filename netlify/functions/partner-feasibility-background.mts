@@ -13,6 +13,15 @@
  */
 import { timingSafeEqual } from "node:crypto";
 import { runPartnerFeasibilityJob } from "../../utils/partner-feasibility-job";
+import { supabase } from "../../utils/supabase";
+
+/** Durable trace in the append-only audit log: Netlify CLI shows no background-function logs. */
+async function trace(action: string, detail: Record<string, unknown>) {
+  await supabase
+    .from("partner_events")
+    .insert({ actor_type: "system", actor: "partner-feasibility-background", action, detail })
+    .then(({ error }) => error && console.error("trace failed", error.message));
+}
 
 function authorised(req: Request): boolean {
   const secret = (process.env.CRON_SECRET || "").trim();
@@ -27,11 +36,15 @@ const handler = async (req: Request) => {
   if (req.method !== "POST" || !authorised(req)) return new Response("Forbidden", { status: 403 });
   const body = (await req.json().catch(() => ({}))) as { reportId?: unknown };
   const id = typeof body.reportId === "string" ? body.reportId : "";
+  await trace("feasibility_job_invoked", { report_id: id });
   try {
     const r = await runPartnerFeasibilityJob(id);
     console.log("partner-feasibility", JSON.stringify({ id, ...r }));
+    await trace("feasibility_job_finished", { report_id: id, outcome: r.outcome });
   } catch (e) {
-    console.error("partner-feasibility failed", id, e instanceof Error ? e.message : e);
+    const message = e instanceof Error ? e.message : String(e);
+    console.error("partner-feasibility failed", id, message);
+    await trace("feasibility_job_crashed", { report_id: id, error: message.slice(0, 300) });
   }
   return new Response(null, { status: 202 });
 };

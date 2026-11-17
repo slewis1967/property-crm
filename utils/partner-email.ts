@@ -9,13 +9,22 @@
  * are the partner's own staff, who know us as NextKey; white-label dresses the
  * portal screen they show their clients, not our mail to them. And the sender
  * has to be a Brevo-validated address, which a partner's domain is not.
- * Sender = the `nextkey` identity from utils/mailIdentities.ts.
+ *
+ * SENDER. Everything a partner receives comes from Glenn Mayes
+ * (glenn.m@nextkey.com.au) with his saved CRM signature (asGlenn). Invitations,
+ * deal updates and the agreement confirmation are not sent without his
+ * signature; a sign-in code still goes unsigned rather than lock someone out.
+ * Only the internal notices to us use the default `nextkey` identity.
  */
 import { sendBrevoEmail } from "./brevo";
 import { resolveIdentity } from "./mailIdentities";
 import { portalBaseUrl } from "./introducer-email";
 import { NEXTKEY_BRANDING } from "./partner";
 import { getOwnSignatureFields, renderSignature } from "./email-signature";
+
+/** Glenn Mayes: the sender and signatory of every partner-facing email. */
+export const PARTNER_SIGNATORY_EMAIL = "glenn.m@nextkey.com.au";
+export const PARTNER_SIGNATORY_NAME = "Glenn Mayes";
 
 const NAVY = NEXTKEY_BRANDING.primaryColor;
 const AMBER = NEXTKEY_BRANDING.accentColor;
@@ -59,6 +68,22 @@ function greeting(name: string | null): string {
   return name ? `Hi ${esc(name.split(" ")[0])},` : "Hi,";
 }
 
+/**
+ * Partner-facing mail goes out as Glenn Mayes: from his own Brevo-validated
+ * address, with his saved CRM signature. Glenn is the only public contact
+ * (Sean, 29 Oct 2026), and every outward email carries the signature of the
+ * person it is sent as (Sean, 17 Nov 2026: all partner emails as Glenn).
+ * Returns null when his signature is missing.
+ */
+async function asGlenn(): Promise<{ fromEmail: string; fromName: string; signatureHtml: string } | null> {
+  const fields = await getOwnSignatureFields(PARTNER_SIGNATORY_EMAIL);
+  if (!fields) {
+    console.error("[partner-email] no signature on file for", PARTNER_SIGNATORY_EMAIL);
+    return null;
+  }
+  return { fromEmail: PARTNER_SIGNATORY_EMAIL, fromName: PARTNER_SIGNATORY_NAME, signatureHtml: renderSignature(fields).html };
+}
+
 /** Sign-in email with both credentials; either works once. */
 export async function sendPartnerLoginEmail(opts: {
   to: string;
@@ -70,9 +95,13 @@ export async function sendPartnerLoginEmail(opts: {
   // Lands on a confirm page, not the redeeming API — see app/api/partner/verify.
   const url = `${portalBaseUrl()}/partner/verify?t=${encodeURIComponent(opts.linkToken)}`;
   const minutes = Math.max(1, Math.round((opts.expiresAt.getTime() - Date.now()) / 60_000));
+  // A sign-in code must never be blocked, so if Glenn's signature is missing
+  // this one still goes (from his address, unsigned) and the gap is logged.
+  const glenn = await asGlenn();
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
-    ...sender(),
+    fromEmail: PARTNER_SIGNATORY_EMAIL,
+    fromName: PARTNER_SIGNATORY_NAME,
     subject: `Your NextKey partner sign-in code: ${opts.code}`,
     html: shell(
       "Sign in to the Partner Portal",
@@ -81,7 +110,8 @@ export async function sendPartnerLoginEmail(opts: {
        ${button(url, "Sign in")}
        <p>Or enter this code on the sign-in page:</p>
        <p style="font-size:30px;letter-spacing:7px;font-weight:700;color:${NAVY};margin:8px 0 20px;">${opts.code}</p>
-       <p style="color:#6b7280;font-size:13px;">If you didn't ask to sign in, you can ignore this email — nobody can access your account without this code.</p>`,
+       <p style="color:#6b7280;font-size:13px;">If you didn't ask to sign in, you can ignore this email — nobody can access your account without this code.</p>
+       ${glenn?.signatureHtml ?? ""}`,
       "This is an automated sign-in email. Never forward it: anyone with this code can access your partner account.",
     ),
     tags: ["partner", "login"],
@@ -96,9 +126,12 @@ export async function sendPartnerInviteEmail(opts: {
   invitedBy: string;
 }) {
   const url = `${portalBaseUrl()}/partner`;
+  const glenn = await asGlenn();
+  if (!glenn) return { ok: false as const, error: "No signature on file for the partner signatory" };
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
-    ...sender(),
+    fromEmail: glenn.fromEmail,
+    fromName: glenn.fromName,
     subject: "Your NextKey Partner Portal access",
     html: shell(
       "Your partner access is ready",
@@ -106,8 +139,10 @@ export async function sendPartnerInviteEmail(opts: {
        <p>You now have access to the NextKey Partner Portal for <strong>${esc(opts.firmName)}</strong>. Browse our current stock, see your referral fee on every lot, register your clients and request holds.</p>
        ${button(url, "Open the portal")}
        <p>There is no password. Enter <strong>${esc(opts.to)}</strong> on the sign-in page and we'll email you a one-time code.</p>
-       <p style="color:#6b7280;font-size:13px;">Builder, estate and lot details are released by the NextKey team once a hold is in place for your client.</p>`,
-      `Access granted by ${esc(opts.invitedBy)}. Only enter a client's details where they have agreed to you passing them to NextKey.`,
+       <p style="color:#6b7280;font-size:13px;">Builder, estate and lot details are released by the NextKey team once a hold is in place for your client.</p>
+       ${glenn.signatureHtml}`,
+      // Not the staff member's address: Glenn is the only public contact.
+      "Only enter a client's details where they have agreed to you passing them to NextKey.",
     ),
     tags: ["partner", "invite"],
   });
@@ -124,15 +159,19 @@ export async function sendDealUpdateEmail(opts: {
   enquiryId: string;
 }) {
   const url = `${portalBaseUrl()}/partner/deals/${opts.enquiryId}`;
+  const glenn = await asGlenn();
+  if (!glenn) return { ok: false as const, error: "No signature on file for the partner signatory" };
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name ?? undefined }],
-    ...sender(),
+    fromEmail: glenn.fromEmail,
+    fromName: glenn.fromName,
     subject: `${opts.headline} — ${opts.lotRef} (${opts.clientName})`,
     html: shell(
       esc(opts.headline),
       `<p>${greeting(opts.name)}</p>
        <p>${esc(opts.body)}</p>
-       ${button(url, "View the deal")}`,
+       ${button(url, "View the deal")}
+       ${glenn.signatureHtml}`,
       "You are receiving this because you hold a NextKey Partner Portal login.",
     ),
     tags: ["partner", "deal-update"],
@@ -180,14 +219,6 @@ export async function sendHoldRequestNotice(opts: {
  * To the signatory, after their firm accepts the partner agreement in the
  * portal: what they signed, when, and where to read it again. Transactional.
  */
-/**
- * Partner-facing mail that a person signs goes out as Glenn Mayes: from his
- * own Brevo-validated address, with his saved CRM signature. Glenn is the only
- * public contact (Sean's decision, 29 Oct 2026), and every outward email carries
- * the signature of the person it is sent as.
- */
-export const PARTNER_SIGNATORY_EMAIL = "glenn.m@nextkey.com.au";
-export const PARTNER_SIGNATORY_NAME = "Glenn Mayes";
 
 /**
  * To the signatory, after their firm accepts the partner agreement in the
@@ -203,17 +234,13 @@ export async function sendAgreementAcceptedEmail(opts: {
   version: string;
   acceptedAt: string;
 }) {
-  const fields = await getOwnSignatureFields(PARTNER_SIGNATORY_EMAIL);
-  if (!fields) {
-    console.error("[partner-email] no signature on file for", PARTNER_SIGNATORY_EMAIL, "- agreement email not sent");
-    return { ok: false as const, error: "No signature on file for the partner signatory" };
-  }
-  const signature = renderSignature(fields);
+  const glenn = await asGlenn();
+  if (!glenn) return { ok: false as const, error: "No signature on file for the partner signatory" };
   const url = `${portalBaseUrl()}/partner/agreement`;
   return sendBrevoEmail({
     to: [{ email: opts.to, name: opts.name }],
-    fromEmail: PARTNER_SIGNATORY_EMAIL,
-    fromName: PARTNER_SIGNATORY_NAME,
+    fromEmail: glenn.fromEmail,
+    fromName: glenn.fromName,
     subject: `Your NextKey partner agreement (${opts.version})`,
     html: shell(
       "Partner agreement accepted",
@@ -221,7 +248,7 @@ export async function sendAgreementAcceptedEmail(opts: {
        <p>Thank you. You accepted the NextKey Channel Partner Agreement (${esc(opts.version)}) for <strong>${esc(opts.entityName)}</strong> on ${esc(opts.acceptedAt)}.</p>
        <p>Your team can now use the Partner Portal. You can read the agreement as accepted at any time from the portal.</p>
        ${button(url, "View the agreement")}
-       ${signature.html}`,
+       ${glenn.signatureHtml}`,
       "You are receiving this because you accepted the partner agreement for your firm.",
     ),
     tags: ["partner", "agreement"],

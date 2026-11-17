@@ -12,6 +12,7 @@
  *      that row is deleted and the slot released; any other failure counts.
  */
 import { supabase } from "./supabase";
+import { backgroundFunctionUrl, triggerBackgroundFunction } from "./background-trigger";
 import { runPlanningFeasibility } from "./planning-feasibility";
 import { storableReport } from "./partner-feasibility";
 
@@ -85,34 +86,8 @@ export async function runPartnerFeasibilityJob(reportId: string): Promise<{ outc
   return { outcome: "ready" };
 }
 
-/**
- * Ask the background function to write a report. Fire-and-forget, same
- * transport as utils/tfn-image-redact-trigger.ts (CRON_SECRET bearer, plus the
- * Cloudflare Access service token because the production host is behind
- * Access). Returns false if the request could not be handed over.
- */
+/** Hand a job to the background function; true only on a real 202 (see utils/background-trigger.ts). */
 export async function requestPartnerFeasibility(reportId: string): Promise<boolean> {
-  // DEPLOY_URL is this deploy's own *.netlify.app address: it reaches the
-  // function without passing Cloudflare Access, and runs the same code as the
-  // request that claimed the slot. The bearer secret is what guards it.
-  const site = (process.env.DEPLOY_URL || process.env.URL || process.env.DEPLOY_PRIME_URL || "").replace(/\/$/, "");
-  const url = (process.env.PARTNER_FEASIBILITY_FUNCTION_URL || "").trim() || (site ? `${site}${FEASIBILITY_FUNCTION}` : "");
-  const secret = (process.env.CRON_SECRET || "").trim();
-  if (!url || !secret) return false;
-  const headers: Record<string, string> = { "Content-Type": "application/json", Authorization: `Bearer ${secret}` };
-  if (process.env.CF_ACCESS_CLIENT_ID && process.env.CF_ACCESS_CLIENT_SECRET) {
-    headers["CF-Access-Client-Id"] = process.env.CF_ACCESS_CLIENT_ID;
-    headers["CF-Access-Client-Secret"] = process.env.CF_ACCESS_CLIENT_SECRET;
-  }
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ reportId }),
-      signal: AbortSignal.timeout(5000),
-    });
-    return res.status === 202 || res.ok;
-  } catch {
-    return false;
-  }
+  const url = backgroundFunctionUrl(FEASIBILITY_FUNCTION, process.env.PARTNER_FEASIBILITY_FUNCTION_URL);
+  return (await triggerBackgroundFunction(url, { reportId: reportId }, "partner-feasibility")).ok;
 }
