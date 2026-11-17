@@ -71,6 +71,15 @@ export default async function PartnerLotPage({ params }: { params: Promise<{ id:
               value={lot.rentWeekly && `${formatAud(lot.rentWeekly)} / week`}
             />
           </dl>
+          {has(identity, "suburb_reports") && lot.suburb && (
+            <Link
+              href={`/partner/suburbs/report?suburb=${encodeURIComponent(lot.suburb)}&state=${encodeURIComponent(lot.state ?? "")}`}
+              className="mt-4 inline-block text-sm font-medium underline"
+              style={{ color: identity.branding.primaryColor }}
+            >
+              Suburb research: {lot.suburb}
+            </Link>
+          )}
           <p className="mt-4 text-xs text-gray-500">
             Builder, estate, lot number and address are released once a hold is in place for your client.
             A rent estimate is the developer&apos;s figure, not a guarantee of rent.

@@ -21,6 +21,8 @@ export default function Frame({
     if (has(identity, "stock")) nav.push({ href: "/partner/stock", label: "Stock" });
     if (has(identity, "clients")) nav.push({ href: "/partner/clients", label: "Clients" });
     if (has(identity, "deals")) nav.push({ href: "/partner/deals", label: "Deals" });
+    if (has(identity, "suburb_reports")) nav.push({ href: "/partner/suburbs", label: "Suburbs" });
+    if (has(identity, "feasibility")) nav.push({ href: "/partner/feasibility", label: "Feasibility" });
     nav.push({ href: "/partner/account", label: "Plan" });
   }
   nav.push({ href: "/partner/agreement", label: "Agreement" });
