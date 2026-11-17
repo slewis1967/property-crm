@@ -32,12 +32,27 @@ import {
 
 export type { PartnerIdentity };
 
-/** Resolve the signed-in partner, or the 401 the caller should return. */
-export async function requirePartner(): Promise<PartnerIdentity | NextResponse> {
+/**
+ * Resolve the signed-in partner, or the 401/403 the caller should return.
+ *
+ * Every portal API is closed until the firm has accepted the current partner
+ * agreement (403 `agreement_required`), so the stock book, fees and client
+ * register cannot be reached by calling the API directly from a session that
+ * skipped the agreement page. Only the acceptance route opts out.
+ */
+export async function requirePartner(
+  opts: { allowWithoutAgreement?: boolean } = {},
+): Promise<PartnerIdentity | NextResponse> {
   const jar = await cookies();
   const identity = await resolveSession(jar.get(sessionCookieName())?.value ?? null);
   if (!identity) {
     return NextResponse.json({ ok: false, error: "Please sign in again.", code: "signed_out" }, { status: 401 });
+  }
+  if (!identity.agreementAccepted && !opts.allowWithoutAgreement) {
+    return NextResponse.json(
+      { ok: false, error: "Your firm needs to accept the partner agreement first.", code: "agreement_required" },
+      { status: 403 },
+    );
   }
   return identity;
 }

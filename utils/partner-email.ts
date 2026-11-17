@@ -32,7 +32,7 @@ function shell(title: string, bodyHtml: string, footerNote: string, strapline = 
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f6f8;">
   <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background:#f5f6f8;padding:24px 12px;">
     <tr><td align="center">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
         <tr><td style="background:${NAVY};padding:20px 28px;">
           <div style="color:#ffffff;font-size:17px;font-weight:600;letter-spacing:.2px;">NextKey</div>
           <div style="color:${AMBER};font-size:13px;margin-top:2px;">${strapline}</div>
@@ -170,6 +170,63 @@ export async function sendHoldRequestNotice(opts: {
        ${button(url, "Open partner requests")}`,
       "Internal notification — NextKey CRM.",
       "Partner requests",
+    ),
+    tags: ["partner", "internal"],
+  });
+}
+
+/**
+ * To the signatory, after their firm accepts the partner agreement in the
+ * portal: what they signed, when, and where to read it again. Transactional.
+ */
+export async function sendAgreementAcceptedEmail(opts: {
+  to: string;
+  name: string;
+  firmName: string;
+  entityName: string;
+  version: string;
+  acceptedAt: string;
+}) {
+  const url = `${portalBaseUrl()}/partner/agreement`;
+  return sendBrevoEmail({
+    to: [{ email: opts.to, name: opts.name }],
+    ...sender(),
+    subject: `Your NextKey partner agreement (${opts.version})`,
+    html: shell(
+      "Partner agreement accepted",
+      `<p>${greeting(opts.name)}</p>
+       <p>Thank you. You accepted the NextKey Channel Partner Agreement (${esc(opts.version)}) for <strong>${esc(opts.entityName)}</strong> on ${esc(opts.acceptedAt)}.</p>
+       <p>Your team can now use the Partner Portal. You can read the agreement as accepted at any time from the portal.</p>
+       ${button(url, "View the agreement")}`,
+      "You are receiving this because you accepted the partner agreement for your firm.",
+    ),
+    tags: ["partner", "agreement"],
+  });
+}
+
+/** Internal: a firm accepted the partner agreement in the portal. */
+export async function sendAgreementAcceptedNotice(opts: {
+  to: string[];
+  firmName: string;
+  entityName: string;
+  abn: string;
+  signer: string;
+  version: string;
+}) {
+  if (opts.to.length === 0) return { ok: false as const, error: "No recipients" };
+  return sendBrevoEmail({
+    to: opts.to.map((email) => ({ email })),
+    ...sender(),
+    subject: `Partner agreement accepted: ${opts.firmName}`,
+    html: shell(
+      "Partner agreement accepted",
+      `<p><strong>${esc(opts.firmName)}</strong> accepted the partner agreement ${esc(opts.version)} in the portal.</p>
+       <p style="margin:4px 0;">Entity: ${esc(opts.entityName)}, ABN ${esc(opts.abn)}</p>
+       <p style="margin:4px 0;">Signed by: ${esc(opts.signer)}</p>
+       <p style="color:#6b7280;font-size:13px;">The signed text and its hash are stored in partner_agreement_acceptances.</p>
+       ${button(`${portalBaseUrl()}/admin/partners`, "Open partners")}`,
+      "Internal notification — NextKey CRM.",
+      "Partner agreements",
     ),
     tags: ["partner", "internal"],
   });

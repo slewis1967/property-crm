@@ -28,9 +28,9 @@ export const PARTNER_FEATURES = {
   deals: { label: "Hold requests and deal tracking", built: true },
   referral_fee: { label: "Referral fee shown on every lot", built: true },
   white_label: { label: "Portal in your own branding", built: true },
-  lot_sheets: { label: "Client-ready lot sheets (PDF)", built: false },
-  suburb_reports: { label: "Suburb research reports", built: false },
-  feasibility: { label: "Planning feasibility reports", built: false },
+  lot_sheets: { label: "Client-ready lot sheets (PDF)", built: true },
+  suburb_reports: { label: "Suburb research reports", built: true },
+  feasibility: { label: "Planning feasibility reports", built: true },
 } as const;
 
 export type PartnerFeature = keyof typeof PARTNER_FEATURES;

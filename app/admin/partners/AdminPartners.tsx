@@ -24,6 +24,8 @@ import {
   type FeeRule,
   type PartnerFeature,
 } from "../../../utils/partner";
+import { PARTNER_AGREEMENT_VERSION, agreementIsCurrent } from "../../../utils/partner-agreement-version";
+import { formatDateTime } from "../../../utils/datetime";
 
 type Supplier = {
   builder_name: string | null;
@@ -436,7 +438,7 @@ function OnboardForm({ prospects, act }: { prospects: Prospect[]; act: Act }) {
         )}
         {([
           ["firm_name", "Firm name"], ["abn", "ABN"], ["contact_name", "Contact name"],
-          ["contact_email", "Contact email (their login)"], ["contact_phone", "Contact phone"], ["agreement_ref", "Agreement reference"],
+          ["contact_email", "Contact email (their login)"], ["contact_phone", "Contact phone"], ["agreement_ref", "Agreement ref (leave blank: they accept it at first login)"],
         ] as const).map(([k, label]) => (
           <label key={k} className="text-xs font-medium text-gray-600">
             {label}
@@ -507,7 +509,12 @@ function FirmCard({ firm, canEdit, act }: { firm: Firm; canEdit: boolean; act: A
             {" · "}{firm.counts.clients} clients · {firm.counts.open} open deals · {firm.counts.settled} settled
           </div>
           <div className="text-xs text-gray-500">
-            {firm.contact_name ?? "—"} · {firm.contact_email ?? "—"} · Agreement {firm.agreement_ref ?? "not recorded"}
+            {firm.contact_name ?? "—"} · {firm.contact_email ?? "—"} ·{" "}
+            {agreementIsCurrent(firm.agreement_ref, firm.agreement_signed_at)
+              ? `Agreement ${firm.agreement_ref} signed ${formatDateTime(firm.agreement_signed_at)}`
+              : firm.agreement_ref
+                ? `Agreement ${firm.agreement_ref} (not current: portal locked until they accept ${PARTNER_AGREEMENT_VERSION})`
+                : `Agreement not accepted yet (asked at first login)`}
           </div>
         </div>
         {canEdit && (

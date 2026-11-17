@@ -16,15 +16,30 @@ import type { SuburbIntel } from "./suburb-intel";
  */
 const MODEL = MODELS.fast;
 
-const SYSTEM = `You write a COMPREHENSIVE, client-facing suburb profile for a property investment
+const SYSTEM_NEXTKEY_HEAD = `You write a COMPREHENSIVE, client-facing suburb profile for a property investment
 report prepared by NextKey Property Strategists. The reader is a prospective investor client.
 
 HARD RULES:
 - Refer to the firm ONLY as "NextKey" or "NextKey Property Strategists". NEVER use a personal name.
-- General information only — not personal financial, credit or taxation advice.
+`;
+
+/**
+ * For channel partners' clients. The report goes out under the PARTNER's name
+ * (and, for a white-labelled firm, their brand only), so the profile must not
+ * name any firm at all, us included.
+ */
+const SYSTEM_NEUTRAL_HEAD = `You write a COMPREHENSIVE, client-facing suburb profile for a property investment
+report. The reader is a prospective investor client.
+
+HARD RULES:
+- Do NOT name or refer to any company, agency, adviser, builder, developer or estate, and NEVER use a
+  personal name. Write about the suburb only.
+`;
+
+const SYSTEM_BODY = `- General information only — not personal financial, credit or taxation advice.
 - Any price/growth figures are sourced, dated and PAST performance — never a forecast or guarantee.
   Do not write "guaranteed", "can't lose", or specific future-return promises (Australian Consumer
-  Law s.18/s.29). No credit or financial-planning advice (NextKey is not licensed for those).
+  Law s.18/s.29). No credit or financial-planning advice.
 - Be accurate and specific — use web search for current data (median price, recent growth, vacancy,
   population, infrastructure projects, employment, transport, schools, demographics, development).
 
@@ -39,6 +54,9 @@ STRUCTURE (use ** for bold headings; prose + short bullets):
 ~300–400 words. Professional, client-ready, plain text. No preamble, no closer, no disclaimer
 (the report adds its own).`;
 
+const SYSTEM = SYSTEM_NEXTKEY_HEAD + SYSTEM_BODY;
+const SYSTEM_NEUTRAL = SYSTEM_NEUTRAL_HEAD + SYSTEM_BODY;
+
 function weekBucket(): string {
   const d = new Date();
   const onejan = new Date(d.getFullYear(), 0, 1);
@@ -51,8 +69,11 @@ export async function getSuburbNarrative(args: {
   state: string | null;
   market?: MarketData | null;
   intel?: SuburbIntel | null;
+  /** "neutral" names no firm (partner portal). Default: NextKey-branded. */
+  audience?: "nextkey" | "neutral";
 }): Promise<string | null> {
   const { suburb, state, market, intel } = args;
+  const neutral = args.audience === "neutral";
   if (!suburb) return null;
 
   const grounding = [
@@ -72,7 +93,7 @@ export async function getSuburbNarrative(args: {
 
   try {
     const res = await getCachedOrGenerate({
-      kind: "suburb-narrative-client",
+      kind: neutral ? "suburb-narrative-neutral" : "suburb-narrative-client",
       refId: `${state ?? ""}:${suburb}`.toLowerCase(),
       fingerprintInput: { v: 2, suburb, state: state ?? null, week: weekBucket() },
       maxAgeMs: 7 * 24 * 60 * 60 * 1000,
@@ -82,8 +103,8 @@ export async function getSuburbNarrative(args: {
           maxTokens: 1800,
           web: true,
           thinking: false,
-          system: SYSTEM,
-          user: `Write the NextKey suburb profile for ${suburb}${state ? `, ${state}` : ""}.\n\nKnown data (verify/extend with web search):\n${grounding}`,
+          system: neutral ? SYSTEM_NEUTRAL : SYSTEM,
+          user: `Write the ${neutral ? "" : "NextKey "}suburb profile for ${suburb}${state ? `, ${state}` : ""}.\n\nKnown data (verify/extend with web search):\n${grounding}`,
         });
         // Strip any web-search preamble before the first ** heading, and stray --- rules.
         const firstHeading = text.indexOf("**");
