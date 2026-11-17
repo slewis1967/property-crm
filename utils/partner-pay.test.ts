@@ -216,3 +216,20 @@ describe("monthly statement", () => {
 it("response standard is the agreed sentence", () => {
   expect(PARTNER_RESPONSE_STANDARD).toBe("We aim to respond to every referral within 1 business day.");
 });
+
+describe("parsePayUpdate amount cap (Sean 17 Nov)", () => {
+  const today = "2026-11-17";
+  const paid = { funds_received_on: "2026-11-01", invoice_received_on: "2026-11-02", fee_paid_on: "2026-11-10" };
+  it("refuses an amount above the deal's partner fee", () => {
+    const r = parsePayUpdate({ ...paid, fee_paid_amount: 12000.01 }, { settled: true, today, maxAmount: 12000 });
+    expect(r.ok).toBe(false);
+  });
+  it("accepts an amount equal to the deal's partner fee", () => {
+    const r = parsePayUpdate({ ...paid, fee_paid_amount: "$12,000" }, { settled: true, today, maxAmount: 12000 });
+    expect(r.ok && r.update.fee_paid_amount).toBe(12000);
+  });
+  it("does not cap when no fee was snapshotted", () => {
+    const r = parsePayUpdate({ ...paid, fee_paid_amount: 15000 }, { settled: true, today, maxAmount: null });
+    expect(r.ok).toBe(true);
+  });
+});

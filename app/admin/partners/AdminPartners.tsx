@@ -241,7 +241,7 @@ export default function AdminPartners({
               <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">Nothing here.</div>
             ) : (
               <div className="space-y-3">
-                {deals.map((d) => <DealCard key={d.id} deal={d} act={act} />)}
+                {deals.map((d) => <DealCard key={d.id} deal={d} act={act} canRecordPayment={viewerIsSuperAdmin} />)}
               </div>
             )}
           </section>
@@ -261,7 +261,7 @@ export default function AdminPartners({
 
 type Act = (url: string, method: string, body: unknown, ok: string) => Promise<boolean>;
 
-function DealCard({ deal, act }: { deal: Deal; act: Act }) {
+function DealCard({ deal, act, canRecordPayment }: { deal: Deal; act: Act; canRecordPayment: boolean }) {
   const [mode, setMode] = useState<null | "grant" | "decline" | "release" | "reveal" | "message" | "notes" | "payment">(null);
   const [payForm, setPayForm] = useState({ funds_received_on: "", invoice_received_on: "", fee_paid_on: "", fee_paid_amount: "" });
   const [text, setText] = useState("");
@@ -374,7 +374,7 @@ function DealCard({ deal, act }: { deal: Deal; act: Act }) {
         {["hold", "eoi", "unconditional", "settled"].includes(deal.stage) && (
           <button className={btn} onClick={openReveal}>{deal.revealed_at ? "Edit released details" : "Release lot details"}</button>
         )}
-        {deal.stage === "settled" && !deal.payment_unavailable && <button className={btn} onClick={openPayment}>Fee payment</button>}
+        {deal.stage === "settled" && !deal.payment_unavailable && canRecordPayment && <button className={btn} onClick={openPayment}>Fee payment</button>}
         <button className={btn} onClick={() => { setText(""); setMode("message"); }}>Message partner</button>
         <button className={btn} onClick={() => { setText(deal.staff_notes ?? ""); setMode("notes"); }}>Internal notes</button>
       </div>
