@@ -25,7 +25,7 @@ export const accentTint = (pct: number) => `color-mix(in srgb, var(--accent) ${p
 type IconName =
   | "bed" | "bath" | "car" | "land" | "home" | "pin" | "study" | "arrow-left" | "arrow-right"
   | "search" | "users" | "handshake" | "chart" | "doc" | "layers" | "grid" | "check" | "star"
-  | "clock" | "message" | "printer" | "lock" | "sparkle" | "logout";
+  | "clock" | "message" | "printer" | "lock" | "sparkle" | "logout" | "map";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   bed: <><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7" /><path d="M3 15h18M3 18v2M21 18v2" /><path d="M7 9V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" /></>,
@@ -44,6 +44,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
   doc: <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" /></>,
   layers: <><path d="M12 3l9 5-9 5-9-5z" /><path d="M3 13l9 5 9-5" /></>,
   grid: <><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></>,
+  map: <><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></>,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
   clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,

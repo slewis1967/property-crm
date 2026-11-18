@@ -19,6 +19,7 @@ export default function Frame({
   const nav: NavItem[] = [];
   if (!locked) {
     if (has(identity, "stock")) nav.push({ href: "/partner/stock", label: "Stock", icon: "grid" });
+    if (has(identity, "stock")) nav.push({ href: "/partner/map", label: "Map", icon: "map" });
     if (has(identity, "clients")) nav.push({ href: "/partner/clients", label: "Clients", icon: "users" });
     if (has(identity, "deals")) nav.push({ href: "/partner/deals", label: "Deals", icon: "handshake" });
     if (has(identity, "suburb_reports")) nav.push({ href: "/partner/suburbs", label: "Suburbs", icon: "pin" });
