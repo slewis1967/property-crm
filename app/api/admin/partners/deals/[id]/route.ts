@@ -205,7 +205,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           ? new Date(body.hold_until).toISOString()
           : new Date(Date.now() + DEFAULT_HOLD_HOURS * 3_600_000).toISOString();
       // Re-snapshot the fee: the figure at grant is the one that binds.
-      const lot = await loadPartnerLot(deal.property_id, { showFees: true });
+      const lot = await loadPartnerLot(deal.property_id, { showFees: true, includeHidden: true });
       // If the stock row has gone (the aggregator owns its lifecycle), keep the
       // request-time figures rather than blanking them.
       const { data, error } = await moveStage(deal, "hold", {
