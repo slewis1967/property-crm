@@ -1,0 +1,248 @@
+/*
+ * Partner portal theme: dark mode, motion and the "eye candy" primitives.
+ *
+ * Dark mode works by re-pointing Tailwind v4's colour variables inside the
+ * portal root, so every existing page (written with slate-* utilities) flips
+ * without being rewritten. The slate scale is inverted, white surfaces become
+ * a deep navy-slate, and the pastel status tints become translucent. Brand
+ * colours are untouched: --brand / --accent still come from the firm's
+ * white-label settings, and --brand-ink is a readable version of --brand for
+ * text on dark backgrounds.
+ *
+ * Applies when the viewer's OS prefers dark (unless they chose light in the
+ * header toggle), or when they chose dark.
+ *
+ * All motion stops under prefers-reduced-motion.
+ */
+
+@property --pp-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.pp-root {
+  --pp-surface: #ffffff;
+  --pp-tint-base: #ffffff;
+  --pp-bg: #f8fafc;
+  --brand-ink: var(--brand);
+  --pp-glass: rgba(255, 255, 255, 0.72);
+  --pp-shadow: rgba(15, 23, 42, 0.08);
+  color-scheme: light;
+}
+
+/* ---- dark tokens (two selectors, same values) ---- */
+@media (prefers-color-scheme: dark) {
+  .pp-root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --pp-surface: #121a2e;
+    --pp-tint-base: #121a2e;
+    --pp-bg: #0a1020;
+    --brand-ink: color-mix(in srgb, var(--brand) 30%, #e2e8f0);
+    --pp-glass: rgba(18, 26, 46, 0.72);
+    --pp-shadow: rgba(0, 0, 0, 0.45);
+    --color-slate-50: #0a1020;
+    --color-slate-100: #172036;
+    --color-slate-200: #24304b;
+    --color-slate-300: #34425f;
+    --color-slate-400: #6b7a96;
+    --color-slate-500: #94a3b8;
+    --color-slate-600: #b4c0d3;
+    --color-slate-700: #cbd5e1;
+    --color-slate-800: #e2e8f0;
+    --color-slate-900: #f1f5f9;
+    --color-slate-950: #ffffff;
+    --color-emerald-50: rgba(16, 185, 129, 0.14);
+    --color-emerald-200: rgba(16, 185, 129, 0.35);
+    --color-emerald-700: #6ee7b7;
+    --color-emerald-800: #a7f3d0;
+    --color-amber-50: rgba(245, 158, 11, 0.14);
+    --color-amber-200: rgba(245, 158, 11, 0.35);
+    --color-amber-700: #fcd34d;
+    --color-amber-800: #fde68a;
+    --color-red-50: rgba(239, 68, 68, 0.14);
+    --color-red-200: rgba(239, 68, 68, 0.35);
+    --color-red-700: #fca5a5;
+    --color-red-800: #fecaca;
+    --color-sky-50: rgba(14, 165, 233, 0.14);
+    --color-sky-200: rgba(14, 165, 233, 0.35);
+    --color-sky-800: #bae6fd;
+    --color-violet-50: rgba(139, 92, 246, 0.16);
+    --color-violet-200: rgba(139, 92, 246, 0.38);
+    --color-violet-800: #ddd6fe;
+    --color-indigo-50: rgba(99, 102, 241, 0.16);
+    --color-indigo-200: rgba(99, 102, 241, 0.38);
+    --color-indigo-800: #c7d2fe;
+  }
+}
+.pp-root[data-theme="dark"] {
+  color-scheme: dark;
+  --pp-surface: #121a2e;
+  --pp-tint-base: #121a2e;
+  --pp-bg: #0a1020;
+  --brand-ink: color-mix(in srgb, var(--brand) 30%, #e2e8f0);
+  --pp-glass: rgba(18, 26, 46, 0.72);
+  --pp-shadow: rgba(0, 0, 0, 0.45);
+  --color-slate-50: #0a1020;
+  --color-slate-100: #172036;
+  --color-slate-200: #24304b;
+  --color-slate-300: #34425f;
+  --color-slate-400: #6b7a96;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #b4c0d3;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9;
+  --color-slate-950: #ffffff;
+  --color-emerald-50: rgba(16, 185, 129, 0.14);
+  --color-emerald-200: rgba(16, 185, 129, 0.35);
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-amber-50: rgba(245, 158, 11, 0.14);
+  --color-amber-200: rgba(245, 158, 11, 0.35);
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+  --color-red-50: rgba(239, 68, 68, 0.14);
+  --color-red-200: rgba(239, 68, 68, 0.35);
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+  --color-sky-50: rgba(14, 165, 233, 0.14);
+  --color-sky-200: rgba(14, 165, 233, 0.35);
+  --color-sky-800: #bae6fd;
+  --color-violet-50: rgba(139, 92, 246, 0.16);
+  --color-violet-200: rgba(139, 92, 246, 0.38);
+  --color-violet-800: #ddd6fe;
+  --color-indigo-50: rgba(99, 102, 241, 0.16);
+  --color-indigo-200: rgba(99, 102, 241, 0.38);
+  --color-indigo-800: #c7d2fe;
+}
+
+/* White surfaces follow the theme. text-white is deliberately untouched. */
+.pp-root .bg-white { background-color: var(--pp-surface); }
+.pp-root .bg-white\/70,
+.pp-root .bg-white\/80,
+.pp-root .bg-white\/90 { background-color: color-mix(in srgb, var(--pp-surface) 82%, transparent); }
+.pp-root .bg-white\/95 { background-color: color-mix(in srgb, var(--pp-surface) 95%, transparent); }
+.pp-root .hover\:bg-white:hover { background-color: var(--pp-surface); }
+.pp-root .pp-keep-light { --color-slate-900: #0f172a; --color-slate-800: #1e293b; --color-slate-700: #334155; --color-slate-600: #475569; --color-slate-500: #64748b; --color-slate-400: #94a3b8; --color-slate-200: #e2e8f0; --color-slate-100: #f1f5f9; }
+.pp-root .pp-keep-light .bg-white { background-color: #ffffff; }
+
+/* Form controls: native selects need their own background in dark. */
+.pp-root select option { background: var(--pp-surface); color: var(--color-slate-900); }
+
+/* ---------------------------------------------------------------- motion */
+
+@keyframes pp-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pp-mesh {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+  66% { transform: translate3d(-5%, 5%, 0) scale(0.96); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes pp-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes pp-spin { to { --pp-angle: 360deg; } }
+@keyframes pp-pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  70% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@keyframes pp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes pp-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes pp-blink { 50% { opacity: 0; } }
+
+.pp-page > * { animation: pp-fade-up 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pp-stagger > * { animation: pp-fade-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pp-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.pp-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.pp-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.pp-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.pp-stagger > *:nth-child(6) { animation-delay: 300ms; }
+.pp-stagger > *:nth-child(n + 7) { animation-delay: 340ms; }
+
+/* Animated mesh: absolutely positioned blobs inside an overflow-hidden hero. */
+.pp-mesh { position: absolute; inset: -20%; filter: blur(48px); opacity: 0.9; }
+.pp-mesh > span { position: absolute; border-radius: 9999px; animation: pp-mesh 18s ease-in-out infinite; }
+.pp-mesh > span:nth-child(2) { animation-duration: 22s; animation-direction: reverse; }
+.pp-mesh > span:nth-child(3) { animation-duration: 26s; animation-delay: -6s; }
+.pp-mesh > span:nth-child(4) { animation-duration: 30s; animation-delay: -12s; animation-direction: reverse; }
+
+/* Fine grid overlay for the hero. */
+.pp-grid-overlay {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at 70% 30%, black 20%, transparent 75%);
+}
+
+.pp-skeleton {
+  background: linear-gradient(90deg, var(--color-slate-100) 25%, var(--color-slate-200) 37%, var(--color-slate-100) 63%);
+  background-size: 400% 100%;
+  animation: pp-shimmer 1.4s ease infinite;
+}
+
+/* Text that shimmers while the AI writes. */
+.pp-ai-shimmer {
+  background: linear-gradient(90deg, var(--brand-ink), var(--accent), var(--brand-ink));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: pp-shimmer 2.2s linear infinite;
+}
+
+/* A rotating gradient border (Elite). Put on a relative, rounded element. */
+.pp-glow-border { position: relative; isolation: isolate; }
+.pp-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(from var(--pp-angle), var(--accent), #a855f7, var(--brand), #38bdf8, var(--accent));
+  animation: pp-spin 6s linear infinite;
+}
+
+.pp-pulse { animation: pp-pulse-ring 2.4s ease-out infinite; }
+.pp-float { animation: pp-float 5s ease-in-out infinite; }
+.pp-typing { animation: pp-type 1.2s steps(40, end) both; }
+.pp-caret::after { content: "▍"; margin-left: 2px; animation: pp-blink 1s step-end infinite; color: var(--accent); }
+
+/* Lift on hover for cards. */
+.pp-lift { transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s ease; }
+.pp-lift:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -16px var(--pp-shadow), 0 2px 6px var(--pp-shadow); }
+
+/* Glass panel used on gradients. */
+.pp-glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-root *,
+  .pp-root *::before,
+  .pp-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Theme toggle: show the moon in light mode, the sun in dark. */
+.pp-root .pp-theme-sun { display: none; }
+.pp-root[data-theme="dark"] .pp-theme-sun { display: block; }
+.pp-root[data-theme="dark"] .pp-theme-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  .pp-root:not([data-theme="light"]) .pp-theme-sun { display: block; }
+  .pp-root:not([data-theme="light"]) .pp-theme-moon { display: none; }
+}

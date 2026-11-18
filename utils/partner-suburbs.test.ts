@@ -7,7 +7,7 @@ function lot(over: Partial<PartnerLot>): PartnerLot {
     id: "x", ref: "NK-X", suburb: "Kialla", state: "VIC", propertyType: null, bedrooms: null, bathrooms: null,
     carSpaces: null, study: false, landSizeSqm: null, houseSizeSqm: null, frontageM: null, price: null,
     landPrice: null, buildPrice: null, contract: null, titled: null, completion: null, landRegistration: null,
-    rentWeekly: null, availability: "available", referralFee: null, updatedAt: null, ...over,
+    rentWeekly: null, availability: "available", referralFee: null, updatedAt: null, listedAt: null, ...over,
   };
 }
 

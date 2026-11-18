@@ -64,7 +64,7 @@ export default function LoginForm({ initialError }: { initialError: string | nul
     try {
       const { res, json } = await post("/api/partner/verify", { email, code });
       if (!res.ok) return setError(json.error ?? "That code isn't right.");
-      router.push(json.redirect ?? "/partner/stock");
+      router.push(json.redirect ?? "/partner/home");
       router.refresh();
     } catch {
       setError("We couldn't reach the server. Check your connection and try again.");

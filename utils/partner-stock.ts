@@ -23,7 +23,7 @@ const PARTNER_STOCK_COLUMNS =
   "id,suburb,state,property_type,bedrooms,bathrooms,car_spaces,study_room," +
   "land_size_sqm,land_size,house_size,frontage_m,total_package_price,house_price,land_price," +
   "build_price,contract_type,titled,completion_date,land_registration_date,expected_rent_weekly," +
-  "status,pipeline_status,updated_at";
+  "status,pipeline_status,updated_at,created_at";
 
 /**
  * Estates kept out of the partner portal entirely, matched case-insensitively on

@@ -8,7 +8,7 @@ import LoginForm from "./LoginForm";
 export const dynamic = "force-dynamic";
 
 export default async function PartnerLoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (await currentPartner()) redirect("/partner/stock");
+  if (await currentPartner()) redirect("/partner/home");
   const { error } = await searchParams;
   return <LoginForm initialError={error ?? null} />;
 }

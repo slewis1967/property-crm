@@ -26,6 +26,7 @@ const lot: PartnerLot = {
   availability: "available",
   referralFee: 28000,
   updatedAt: "2026-11-17T00:00:00Z",
+  listedAt: "2026-11-10T00:00:00Z",
 };
 
 describe("toSheetLot", () => {

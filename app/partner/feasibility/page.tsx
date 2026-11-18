@@ -5,7 +5,7 @@ import { has, requirePartnerPage } from "../session";
 import { feasibilityUsedThisMonth, listFeasibilityReports } from "../../../utils/partner-feasibility-db";
 import { formatDateTime } from "../../../utils/datetime";
 import { feasibilityView, monthlyAllowance } from "../../../utils/partner-feasibility";
-import { BRAND, Card, CardTitle, Icon, PageHeader, brandTint } from "../ui";
+import { BRAND, BRAND_INK, Card, CardTitle, Icon, PageHeader, brandTint } from "../ui";
 import FeasibilityTool from "./FeasibilityTool";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export default async function PartnerFeasibilityPage() {
                   return (
                     <li key={r.id}>
                       <Link href={`/partner/feasibility/${r.id}`} className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND }}>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND_INK }}>
                           <Icon name="doc" />
                         </span>
                         <span className="min-w-0 flex-1">

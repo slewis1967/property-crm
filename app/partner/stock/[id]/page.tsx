@@ -6,7 +6,7 @@ import { loadPartnerLot } from "../../../../utils/partner-stock";
 import { DEAL_STAGE_LABELS, formatAud, isDealStage } from "../../../../utils/partner";
 import { listOwnClients, listOwnDeals, toClientView } from "../../../api/partner/_shared";
 import { AvailabilityBadge } from "../StockBrowser";
-import { BRAND, Card, CardTitle, Icon, LotCover, StagePill, brandTint, buttonPrimary, inputClass } from "../../ui";
+import { BRAND, BRAND_INK, Card, CardTitle, Icon, LotCover, StagePill, brandTint, buttonPrimary, inputClass } from "../../ui";
 import RequestHold from "./RequestHold";
 
 export const dynamic = "force-dynamic";
@@ -115,7 +115,7 @@ export default async function PartnerLotPage({ params }: { params: Promise<{ id:
               <Link
                 href={`/partner/suburbs/report?suburb=${encodeURIComponent(lot.suburb)}&state=${encodeURIComponent(lot.state ?? "")}`}
                 className="mt-5 flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition hover:brightness-95"
-                style={{ background: brandTint(7), color: BRAND }}
+                style={{ background: brandTint(7), color: BRAND_INK }}
               >
                 <span className="flex items-center gap-2">
                   <Icon name="chart" /> Suburb research: {lot.suburb}

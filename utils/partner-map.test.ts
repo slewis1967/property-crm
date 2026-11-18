@@ -28,6 +28,7 @@ function lot(over: Partial<PartnerLot>): PartnerLot {
     availability: "available",
     referralFee: null,
     updatedAt: null,
+    listedAt: null,
     ...over,
   };
 }

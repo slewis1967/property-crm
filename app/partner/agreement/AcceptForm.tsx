@@ -38,7 +38,7 @@ export default function AcceptForm({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) return setError(json.error ?? "Couldn't record your acceptance.");
-      router.push("/partner/stock");
+      router.push("/partner/home");
       router.refresh();
     } catch {
       setError("We couldn't reach the server.");
