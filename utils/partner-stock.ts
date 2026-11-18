@@ -25,6 +25,29 @@ const PARTNER_STOCK_COLUMNS =
   "build_price,contract_type,titled,completion_date,land_registration_date,expected_rent_weekly," +
   "status,pipeline_status,updated_at";
 
+/**
+ * Estates kept out of the partner portal entirely, matched case-insensitively on
+ * global_stock_pool.estate_name. Staff screens are unaffected.
+ *
+ * - "The Grande" (Geocon, Canberra City): the Grande Introducer Agreement cl 7.1-7.2
+ *   bars portals and external marketing without the developer's written authority.
+ *   Hidden 18 Nov 2026 on Sean's instruction until Glenn has that authority in writing.
+ *   To release it, delete the entry.
+ */
+export const PARTNER_HIDDEN_ESTATES: readonly string[] = ["The Grande"];
+
+/** PostgREST `or` filter that keeps rows with no estate and drops the hidden ones. */
+export function hiddenEstateFilter(estates: readonly string[] = PARTNER_HIDDEN_ESTATES): string | null {
+  if (estates.length === 0) return null;
+  const quote = (s: string) => `"${s.replace(/["\\]/g, "")}"`;
+  return `estate_name.is.null,and(${estates.map((e) => `estate_name.not.ilike.${quote(e)}`).join(",")})`;
+}
+
+export function isHiddenEstate(estate: string | null | undefined, estates: readonly string[] = PARTNER_HIDDEN_ESTATES): boolean {
+  const e = estate?.trim().toLowerCase();
+  return !!e && estates.some((h) => h.toLowerCase() === e);
+}
+
 /** PostgREST caps any single response at 1,000 rows regardless of .limit(). */
 const PAGE = 1000;
 
@@ -162,14 +185,12 @@ export function applyStockFilters(lots: PartnerLot[], f: StockFilters): PartnerL
  */
 export async function loadPartnerStock(opts: { showFees: boolean }): Promise<PartnerLot[]> {
   const [rows, held, names, fees] = await Promise.all([
-    pageAll<StockRow>((from, to) =>
-      supabase
-        .from("global_stock_pool")
-        .select(PARTNER_STOCK_COLUMNS)
-        .eq("pipeline_status", "active")
-        .order("id")
-        .range(from, to) as unknown as PromiseLike<{ data: StockRow[] | null; error: { message: string } | null }>,
-    ),
+    pageAll<StockRow>((from, to) => {
+      let q = supabase.from("global_stock_pool").select(PARTNER_STOCK_COLUMNS).eq("pipeline_status", "active");
+      const hidden = hiddenEstateFilter();
+      if (hidden) q = q.or(hidden);
+      return q.order("id").range(from, to) as unknown as PromiseLike<{ data: StockRow[] | null; error: { message: string } | null }>;
+    }),
     heldPropertyIds(),
     supplierNames(),
     opts.showFees ? grossFees() : Promise.resolve(new Map<string, number>()),
@@ -185,22 +206,30 @@ export async function loadPartnerStock(opts: { showFees: boolean }): Promise<Par
   return assertNoForbiddenKeys(lots);
 }
 
-/** One masked lot, or null if it doesn't exist. Availability is on the lot. */
-export async function loadPartnerLot(id: string, opts: { showFees: boolean }): Promise<PartnerLot | null> {
+/**
+ * One masked lot, or null if it doesn't exist or its estate is hidden from
+ * partners. Availability is on the lot. `includeHidden` is for staff routes only.
+ */
+export async function loadPartnerLot(
+  id: string,
+  opts: { showFees: boolean; includeHidden?: boolean },
+): Promise<PartnerLot | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data, error } = await supabase
     .from("global_stock_pool")
-    .select(PARTNER_STOCK_COLUMNS)
+    .select(`${PARTNER_STOCK_COLUMNS},estate_name`)
     .eq("id", id)
     .maybeSingle();
   if (error || !data) return null;
+  const { estate_name, ...rest } = data as unknown as StockRow & { estate_name: string | null };
+  if (!opts.includeHidden && isHiddenEstate(estate_name)) return null;
 
   const [held, names, fees] = await Promise.all([
     heldPropertyIds(),
     supplierNames(),
     opts.showFees ? grossFees([id]) : Promise.resolve(new Map<string, number>()),
   ]);
-  const row = data as unknown as StockRow;
+  const row = rest as StockRow;
   return assertNoForbiddenKeys(
     toPartnerLot(row, {
       referralFee: opts.showFees ? referralFee(fees.get(id), feeRuleFromEnv()) : null,
