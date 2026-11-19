@@ -33,8 +33,11 @@ const PARTNER_STOCK_COLUMNS =
  *   bars portals and external marketing without the developer's written authority.
  *   Hidden 18 Nov 2026 on Sean's instruction until Glenn has that authority in writing.
  *   To release it, delete the entry.
+ * - "Gateway" (Geocon, Braddon ACT): no public prices. Hidden 19 Nov 2026 on Sean's
+ *   instruction until Glenn has Geocon's written OK to show it to partner firms.
+ *   To release it, delete the entry.
  */
-export const PARTNER_HIDDEN_ESTATES: readonly string[] = ["The Grande"];
+export const PARTNER_HIDDEN_ESTATES: readonly string[] = ["The Grande", "Gateway"];
 
 /** PostgREST `or` filter that keeps rows with no estate and drops the hidden ones. */
 export function hiddenEstateFilter(estates: readonly string[] = PARTNER_HIDDEN_ESTATES): string | null {
