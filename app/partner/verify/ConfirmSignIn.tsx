@@ -24,7 +24,7 @@ export default function ConfirmSignIn({ token }: { token: string }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) return setError(json.error ?? "That sign-in link is not valid. Please request a new one.");
-      router.replace(json.redirect ?? "/partner/stock");
+      router.replace(json.redirect ?? "/partner/home");
       router.refresh();
     } catch {
       setError("We couldn't reach the server. Check your connection and try again.");

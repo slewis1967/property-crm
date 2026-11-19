@@ -5,7 +5,7 @@ import { has, requirePartnerPage } from "../session";
 import { formatAud } from "../../../utils/partner";
 import { loadPartnerStock } from "../../../utils/partner-stock";
 import { stockSuburbs } from "../../../utils/partner-suburbs";
-import { BRAND, Card, EmptyState, Icon, PageHeader, brandTint, inputClass } from "../ui";
+import { BRAND_INK, Card, EmptyState, Icon, PageHeader, brandTint, inputClass } from "../ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Suburbs — Partner Portal" };
@@ -52,7 +52,7 @@ export default async function PartnerSuburbsPage({ searchParams }: { searchParam
               <Link key={`${s.suburb}|${s.state}`} href={href} className="group">
                 <Card className="h-full transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_32px_-12px_rgba(15,23,42,0.28)]" padded={false}>
                   <div className="flex items-start gap-3.5 p-5">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ background: brandTint(9), color: BRAND }}>
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ background: brandTint(9), color: BRAND_INK }}>
                       <Icon name="pin" className="h-5 w-5" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ export default async function PartnerSuburbsPage({ searchParams }: { searchParam
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm font-semibold" style={{ color: BRAND }}>
+                  <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm font-semibold" style={{ color: BRAND_INK }}>
                     Open report
                     <Icon name="arrow-right" className="h-4 w-4 transition group-hover:translate-x-0.5" />
                   </div>

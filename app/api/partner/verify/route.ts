@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     detail: { method, ip: clientIp(req) },
   });
 
-  const res = NextResponse.json({ ok: true, redirect: "/partner/stock" });
+  const res = NextResponse.json({ ok: true, redirect: "/partner/home" });
   res.cookies.set(sessionCookieName(), result.sessionToken, sessionCookieOptions(SESSION_MAX_AGE_SECONDS));
   return res;
 }

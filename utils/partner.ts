@@ -209,6 +209,8 @@ export type PartnerLot = {
   availability: LotAvailability;
   referralFee: number | null;
   updatedAt: string | null;
+  /** When the lot first reached our stock book (created_at). Drives "new this week". */
+  listedAt: string | null;
 };
 
 function num(v: unknown): number | null {
@@ -284,6 +286,7 @@ export function toPartnerLot(
     ),
     referralFee: opts.referralFee,
     updatedAt: typeof row.updated_at === "string" ? row.updated_at : null,
+    listedAt: typeof row.created_at === "string" ? row.created_at : null,
   };
 }
 

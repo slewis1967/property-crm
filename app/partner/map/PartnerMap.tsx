@@ -7,7 +7,7 @@ import { formatAud } from "../../../utils/partner";
 import type { PartnerMapCluster, PartnerMapLot } from "../../../utils/partner-map";
 import { PRICE_LEGEND } from "../../properties/map/bands";
 import { BASEMAPS, BASEMAP_ORDER, DEFAULT_BASEMAP, type BasemapId } from "../../properties/map/basemaps";
-import { BRAND, Card, EmptyState, Icon, brandTint, inputClass } from "../ui";
+import { BRAND_INK, Card, EmptyState, Icon, brandTint, inputClass } from "../ui";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), {
   ssr: false,
@@ -152,7 +152,7 @@ export default function PartnerMap({
                   <Link
                     href={`/partner/suburbs/report?suburb=${encodeURIComponent(selected.suburb)}&state=${encodeURIComponent(selected.state ?? "")}`}
                     className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
-                    style={{ color: BRAND }}
+                    style={{ color: BRAND_INK }}
                   >
                     Suburb research report <Icon name="arrow-right" className="h-4 w-4" />
                   </Link>
@@ -162,7 +162,7 @@ export default function PartnerMap({
                 {selected.lots.map((l) => (
                   <li key={l.id}>
                     <Link href={`/partner/stock/${l.id}`} className="group flex items-center gap-3 px-4 py-3 transition hover:bg-slate-50">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND }}>
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND_INK }}>
                         <Icon name="home" />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -196,7 +196,7 @@ export default function PartnerMap({
                   {visible.map((c) => (
                     <li key={c.key}>
                       <button type="button" onClick={() => setSelectedKey(c.key)} className="group flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND }}>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND_INK }}>
                           <Icon name="pin" />
                         </span>
                         <span className="min-w-0 flex-1">

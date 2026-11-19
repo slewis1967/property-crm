@@ -5,7 +5,7 @@ import { has, requirePartnerPage } from "../../session";
 import { formatAud, partnerMayWithdraw } from "../../../../utils/partner";
 import { loadOwnDeal, loadOwnPayRecords, toDealView, toPayView } from "../../../api/partner/_shared";
 import { formatPayDate } from "../../../../utils/partner-pay";
-import { ACCENT, BRAND, Card, CardTitle, Icon, PageHeader, StagePill, accentTint } from "../../ui";
+import { ACCENT, BRAND, BRAND_INK, Card, CardTitle, Icon, PageHeader, StagePill, accentTint } from "../../ui";
 import WithdrawButton from "./WithdrawButton";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export default async function PartnerDealPage({ params }: { params: Promise<{ id
                 {deal.clientName}
               </Link>
             </span>
-            <Link className="inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline" style={{ color: BRAND }} href={`/partner/stock/${deal.propertyId}`}>
+            <Link className="inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline" style={{ color: BRAND_INK }} href={`/partner/stock/${deal.propertyId}`}>
               View lot <Icon name="arrow-right" className="h-3.5 w-3.5" />
             </Link>
           </span>

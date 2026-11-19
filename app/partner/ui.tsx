@@ -16,16 +16,23 @@ import Link from "next/link";
 
 export const BRAND = "var(--brand)";
 export const ACCENT = "var(--accent)";
-/** A soft tint of the brand colour, for backgrounds. */
-export const brandTint = (pct: number) => `color-mix(in srgb, var(--brand) ${pct}%, white)`;
-export const accentTint = (pct: number) => `color-mix(in srgb, var(--accent) ${pct}%, white)`;
+/**
+ * The brand colour for TEXT and icons. Equal to --brand in light mode; in dark
+ * mode a lifted version, because a navy brand on a navy page is unreadable.
+ * (partner-theme.css)
+ */
+export const BRAND_INK = "var(--brand-ink)";
+/** A soft tint of the brand colour, for backgrounds. Mixes with the page surface, so it works in dark mode. */
+export const brandTint = (pct: number) => `color-mix(in srgb, var(--brand) ${pct}%, var(--pp-tint-base, white))`;
+export const accentTint = (pct: number) => `color-mix(in srgb, var(--accent) ${pct}%, var(--pp-tint-base, white))`;
 
 /* ------------------------------------------------------------------ icons */
 
 type IconName =
   | "bed" | "bath" | "car" | "land" | "home" | "pin" | "study" | "arrow-left" | "arrow-right"
   | "search" | "users" | "handshake" | "chart" | "doc" | "layers" | "grid" | "check" | "star"
-  | "clock" | "message" | "printer" | "lock" | "sparkle" | "logout" | "map";
+  | "clock" | "message" | "printer" | "lock" | "sparkle" | "logout" | "map"
+  | "sun" | "moon" | "bolt" | "send" | "mail" | "calendar" | "eye" | "globe" | "heart" | "wand" | "phone";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   bed: <><path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7" /><path d="M3 15h18M3 18v2M21 18v2" /><path d="M7 9V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" /></>,
@@ -53,6 +60,17 @@ const PATHS: Record<IconName, React.ReactNode> = {
   lock: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
   sparkle: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />,
   logout: <><path d="M15 4h4v16h-4" /><path d="M10 8l-4 4 4 4M6 12h10" /></>,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></>,
+  moon: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />,
+  bolt: <path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12z" />,
+  send: <><path d="M21 3 10 14" /><path d="M21 3l-7 18-4-7-7-4z" /></>,
+  mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6 8.5-6" /></>,
+  calendar: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
+  eye: <><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" /><circle cx="12" cy="12" r="3" /></>,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></>,
+  heart: <path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.2 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />,
+  wand: <><path d="m4 20 11-11" /><path d="m13 7 2-2 4 4-2 2z" /><path d="M6 3v3M4.5 4.5h3M19 14v3M17.5 15.5h3" /></>,
+  phone: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></>,
 };
 
 export function Icon({ name, className = "h-4 w-4", strokeWidth = 1.8 }: { name: IconName; className?: string; strokeWidth?: number }) {
@@ -124,7 +142,7 @@ export function CardTitle({ children, icon, aside }: { children: React.ReactNode
     <div className="mb-3 flex items-center justify-between gap-2">
       <h2 className="flex items-center gap-2 text-[0.95rem] font-semibold text-slate-900">
         {icon && (
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND }}>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: brandTint(9), color: BRAND_INK }}>
             <Icon name={icon} className="h-4 w-4" />
           </span>
         )}
@@ -136,7 +154,7 @@ export function CardTitle({ children, icon, aside }: { children: React.ReactNode
 }
 
 export function StatTile({ label, value, icon, hint, tone = "brand" }: { label: string; value: React.ReactNode; icon: IconName; hint?: string; tone?: "brand" | "accent" }) {
-  const color = tone === "brand" ? BRAND : ACCENT;
+  const color = tone === "brand" ? BRAND_INK : ACCENT;
   return (
     <Card className="flex items-center gap-4" padded={false}>
       <div className="flex w-full items-center gap-4 p-4 sm:p-5">
@@ -156,7 +174,7 @@ export function StatTile({ label, value, icon, hint, tone = "brand" }: { label: 
 export function EmptyState({ icon, title, children }: { icon: IconName; title: string; children?: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: brandTint(8), color: BRAND }}>
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: brandTint(8), color: BRAND_INK }}>
         <Icon name={icon} className="h-7 w-7" />
       </span>
       <div className="mt-4 font-semibold text-slate-900">{title}</div>
@@ -196,7 +214,13 @@ export function StagePill({ stage, label }: { stage: string; label: string }) {
 
 /** Initials for an avatar circle. */
 export function initials(name: string | null | undefined): string {
-  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  // "NextKey Demo Partner (internal)" -> "NP": bracketed asides and punctuation don't make initials.
+  const parts = (name ?? "")
+    .replace(/\([^)]*\)/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((p) => p.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter(Boolean);
   if (!parts.length) return "·";
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
@@ -283,9 +307,11 @@ export function LotCover({
 }) {
   const kind = coverKind(propertyType);
   const h = hash(seed);
-  const sunX = 170 + (h % 120);
-  const sunY = 18 + ((h >> 4) % 18);
+  const sunX = 196 + (h % 100);
+  const sunY = 16 + ((h >> 4) % 14);
   const angle = 120 + ((h >> 8) % 40);
+  const hill = 6 + (h % 8);
+  const gid = `lc${h % 100000}`;
   return (
     <div
       className={`relative overflow-hidden ${className}`}
@@ -293,15 +319,115 @@ export function LotCover({
         background: `linear-gradient(${angle}deg, color-mix(in srgb, var(--brand) 92%, black) 0%, var(--brand) 45%, color-mix(in srgb, var(--brand) 72%, white) 100%)`,
       }}
     >
-      <svg viewBox="0 0 320 100" preserveAspectRatio="xMaxYMax meet" className="absolute inset-0 h-full w-full" aria-hidden="true">
-        <circle cx={sunX} cy={sunY} r="11" fill="var(--accent)" opacity=".85" />
-        <circle cx={sunX} cy={sunY} r="22" fill="var(--accent)" opacity=".18" />
-        <path d={`M-900 100V${86 + (h % 6)}h900c60-${8 + (h % 8)} 120-${4 + (h % 6)} 180 2s100 0 140-8V100z`} fill="white" opacity=".07" />
-        <g transform="translate(176 22) scale(.7)" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity=".55">
+      <svg viewBox="0 0 320 100" preserveAspectRatio="xMaxYMax slice" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <defs>
+          <radialGradient id={`${gid}s`}>
+            <stop offset="0" stopColor="var(--accent)" stopOpacity=".55" />
+            <stop offset="1" stopColor="var(--accent)" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={`${gid}h`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor="white" stopOpacity=".16" />
+            <stop offset="1" stopColor="white" stopOpacity=".03" />
+          </linearGradient>
+        </defs>
+        {/* stars / sparkle dots */}
+        {[0, 1, 2, 3, 4].map((i) => (
+          <circle key={i} cx={30 + ((h >> (i + 2)) % 140) + i * 22} cy={8 + ((h >> (i + 5)) % 26)} r={i % 2 ? 0.8 : 1.1} fill="white" opacity=".35" />
+        ))}
+        <circle cx={sunX} cy={sunY} r="34" fill={`url(#${gid}s)`} />
+        <circle cx={sunX} cy={sunY} r="9" fill="var(--accent)" opacity=".95" />
+        {/* far and near hills */}
+        <path d={`M0 100V${78 + (h % 5)}c50-${hill} 90-${hill + 4} 150-2s110 ${hill} 170-${hill + 2}V100z`} fill={`url(#${gid}h)`} />
+        <path d={`M0 100V${90 - (h % 4)}c70-8 120 2 180-4s100-${hill} 140-2V100z`} fill="white" opacity=".08" />
+        {/* trees */}
+        <g fill="white" opacity=".18">
+          <path d={`M${150 + (h % 10)} 92l5-14 5 14z`} />
+          <path d={`M${292 - (h % 8)} 92l4-11 4 11z`} />
+        </g>
+        <g transform="translate(176 22) scale(.7)" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" opacity=".7">
           {DRAWINGS[kind]}
         </g>
+        {/* lit windows */}
+        {kind === "house" && (
+          <g fill="var(--accent)" opacity=".55">
+            <rect x={176 + 0.7 * 79} y={22 + 0.7 * 67} width="8" height="6" rx="1" />
+            <rect x={176 + 0.7 * 129} y={22 + 0.7 * 67} width="8" height="6" rx="1" />
+          </g>
+        )}
       </svg>
       {children && <div className="relative h-full">{children}</div>}
     </div>
   );
+}
+
+/* ------------------------------------------------------------ eye candy */
+
+/**
+ * A hero panel with a slowly drifting mesh gradient in the firm's colours and a
+ * fine grid. Server-safe: the motion is CSS (partner-theme.css) and stops under
+ * prefers-reduced-motion.
+ */
+export function MeshHero({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <section
+      className={`relative overflow-hidden rounded-3xl text-white shadow-[0_24px_60px_-24px_color-mix(in_srgb,var(--brand)_70%,transparent)] ${className}`}
+      style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--brand) 88%, black) 0%, var(--brand) 55%, color-mix(in srgb, var(--brand) 70%, #6d28d9) 100%)" }}
+    >
+      <div className="pp-mesh" aria-hidden="true">
+        <span style={{ left: "55%", top: "-10%", width: "45%", height: "70%", background: "var(--accent)", opacity: 0.55 }} />
+        <span style={{ left: "-5%", top: "40%", width: "40%", height: "70%", background: "#7c3aed", opacity: 0.45 }} />
+        <span style={{ left: "30%", top: "50%", width: "35%", height: "60%", background: "#0ea5e9", opacity: 0.35 }} />
+        <span style={{ left: "75%", top: "45%", width: "30%", height: "55%", background: "color-mix(in srgb, var(--brand) 40%, white)", opacity: 0.35 }} />
+      </div>
+      <div className="pp-grid-overlay absolute inset-0" aria-hidden="true" />
+      <div className="relative">{children}</div>
+    </section>
+  );
+}
+
+/** Small rounded label. */
+export function Chip({ children, tone = "slate", className = "" }: { children: React.ReactNode; tone?: "slate" | "brand" | "accent" | "ai" | "green" | "amber" | "glass"; className?: string }) {
+  const tones: Record<string, string> = {
+    slate: "bg-slate-100 text-slate-600",
+    brand: "text-[var(--brand-ink)] bg-[color-mix(in_srgb,var(--brand)_10%,var(--pp-tint-base))]",
+    accent: "text-[color-mix(in_srgb,var(--accent)_70%,black)] bg-[color-mix(in_srgb,var(--accent)_18%,var(--pp-tint-base))]",
+    ai: "text-white bg-[linear-gradient(90deg,var(--accent),#a855f7)]",
+    green: "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200",
+    amber: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200",
+    glass: "pp-glass text-white",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${tones[tone]} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+/** "Powered by Claude" quality badge (allowed wording; never "Claude credits"). */
+export function PoweredByClaude({ onDark = false }: { onDark?: boolean }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${onDark ? "pp-glass text-white/90" : "bg-slate-100 text-slate-600"}`}>
+      <Icon name="sparkle" className="h-3.5 w-3.5" />
+      Powered by Claude
+    </span>
+  );
+}
+
+/** The locked action under every draft: goes to the plans page, never a dead button. */
+export function ApproveWithElite({ className = "", label = "Approve & publish with Elite" }: { className?: string; label?: string }) {
+  return (
+    <Link
+      href="/partner/account#elite"
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 hover:shadow-md ${className}`}
+      style={{ background: "linear-gradient(90deg, color-mix(in srgb, var(--accent) 92%, black), #9333ea)" }}
+    >
+      <Icon name="lock" className="h-4 w-4" />
+      {label}
+    </Link>
+  );
+}
+
+/** Skeleton block for loading states. */
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`pp-skeleton rounded-lg ${className}`} aria-hidden="true" />;
 }
