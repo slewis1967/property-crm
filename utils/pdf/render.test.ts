@@ -76,3 +76,32 @@ describe("withLaunchRetry", () => {
     expect(wait).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * NK-10019, 19 Nov 2026: two renders started together on a cold instance; the
+ * second exec'd /tmp/chromium while the first was still unpacking it.
+ */
+describe("sharedExecutablePath", () => {
+  it("runs the extraction once for concurrent callers", async () => {
+    const { sharedExecutablePath, resetSharedExecutablePath } = await import("./render");
+    resetSharedExecutablePath();
+    let calls = 0;
+    let finish!: (p: string) => void;
+    const resolve = () => {
+      calls++;
+      return new Promise<string>((r) => (finish = r));
+    };
+    const a = sharedExecutablePath(resolve);
+    const b = sharedExecutablePath(resolve);
+    finish("/tmp/chromium");
+    expect(await Promise.all([a, b])).toEqual(["/tmp/chromium", "/tmp/chromium"]);
+    expect(calls).toBe(1);
+  });
+
+  it("extracts again after a failure instead of caching it", async () => {
+    const { sharedExecutablePath, resetSharedExecutablePath } = await import("./render");
+    resetSharedExecutablePath();
+    await expect(sharedExecutablePath(() => Promise.reject(new Error("boom")))).rejects.toThrow("boom");
+    expect(await sharedExecutablePath(() => Promise.resolve("/tmp/chromium"))).toBe("/tmp/chromium");
+  });
+});

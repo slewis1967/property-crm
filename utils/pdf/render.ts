@@ -74,6 +74,35 @@ function devExecutablePath(): string {
   );
 }
 
+/**
+ * One extraction per instance, shared by every concurrent caller.
+ *
+ * @sparticuz/chromium's executablePath() returns "/tmp/chromium" as soon as
+ * that file EXISTS, including while another call is still writing it. The YLA
+ * package renders the Needs Analysis and Credit Authorisation together, so on a
+ * cold instance the second render exec'd a half-written binary and failed with
+ * `spawn ETXTBSY`. The launch retry below waits about 1 s in total, far less
+ * than the unpack takes, so every cold run failed (NK-10019, three sweeps on
+ * 19 Nov 2026). Sharing the first call's promise makes the second render wait
+ * for a complete binary. A failure clears it, so the next call extracts afresh.
+ */
+let executablePathOnce: Promise<string> | null = null;
+
+export function sharedExecutablePath(resolve: () => Promise<string>): Promise<string> {
+  if (!executablePathOnce) {
+    executablePathOnce = resolve().catch((err) => {
+      executablePathOnce = null;
+      throw err;
+    });
+  }
+  return executablePathOnce;
+}
+
+/** Test hook: forget the shared extraction. */
+export function resetSharedExecutablePath(): void {
+  executablePathOnce = null;
+}
+
 /** puppeteer-core launch options for the current environment. */
 async function launchBrowser(): Promise<Browser> {
   if (isServerless()) {
@@ -82,7 +111,7 @@ async function launchBrowser(): Promise<Browser> {
     return puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath: await sharedExecutablePath(() => chromium.executablePath()),
       headless: true,
     });
   }
