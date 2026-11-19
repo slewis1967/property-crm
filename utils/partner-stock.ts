@@ -27,17 +27,16 @@ const PARTNER_STOCK_COLUMNS =
 
 /**
  * Estates kept out of the partner portal entirely, matched case-insensitively on
- * global_stock_pool.estate_name. Staff screens are unaffected.
+ * global_stock_pool.estate_name. Staff screens are unaffected. Add an estate here to
+ * hide it from every partner surface; delete the entry to release it.
  *
- * - "The Grande" (Geocon, Canberra City): the Grande Introducer Agreement cl 7.1-7.2
- *   bars portals and external marketing without the developer's written authority.
- *   Hidden 18 Nov 2026 on Sean's instruction until Glenn has that authority in writing.
- *   To release it, delete the entry.
- * - "Gateway" (Geocon, Braddon ACT): no public prices. Hidden 19 Nov 2026 on Sean's
- *   instruction until Glenn has Geocon's written OK to show it to partner firms.
- *   To release it, delete the entry.
+ * Empty since 20 Nov 2026: Geocon (Jack Ison, Head of Development) agreed in writing on
+ * 20 Nov 2026 that NextKey may list The Grande and Gateway on the portal, show prices
+ * including discounted prices, and let partner firms present them to their buyers
+ * (treated as consent under clause 17.1 of The Grande Introducer Agreement). Both had
+ * been hidden since 18 and 19 Nov 2026 pending that authority (Grande cl 7.1-7.2).
  */
-export const PARTNER_HIDDEN_ESTATES: readonly string[] = ["The Grande", "Gateway"];
+export const PARTNER_HIDDEN_ESTATES: readonly string[] = [];
 
 /** PostgREST `or` filter that keeps rows with no estate and drops the hidden ones. */
 export function hiddenEstateFilter(estates: readonly string[] = PARTNER_HIDDEN_ESTATES): string | null {
