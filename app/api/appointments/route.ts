@@ -282,6 +282,10 @@ export async function POST(req: NextRequest) {
   const smsWarnings: string[] = [];
   let smsCount = 0;
   let smsOk = 0;
+  // Counts only for the log line: the warnings name people (shown to the
+  // operator in the response), and the log must not carry contact details.
+  let smsOptedOut = 0;
+  const smsErrors: string[] = [];
   const clientOptedOutOfNotice = body.send_invite === false || body.invite_contact === false;
   if (!clientOptedOutOfNotice && process.env.MEETING_SMS_ENABLED === "true") {
     const contact = personal
@@ -296,6 +300,7 @@ export async function POST(req: NextRequest) {
     for (const r of recipients) {
       const label = r.name || r.email || r.phone;
       if (await isOptedOut(r.phone)) {
+        smsOptedOut++;
         smsWarnings.push(`${label} has opted out of SMS — email only.`);
         continue;
       }
@@ -313,7 +318,10 @@ export async function POST(req: NextRequest) {
         campaign: "meeting-confirmation",
       });
       if (res.ok) smsOk++;
-      else smsWarnings.push(`Text to ${label} could not be sent (${res.error}).`);
+      else {
+        smsErrors.push(res.error);
+        smsWarnings.push(`Text to ${label} could not be sent (${res.error}).`);
+      }
     }
     // Nobody to text at all: say so for a real client meeting, as before.
     if (!personal && recipients.length === 0) smsWarnings.push("No valid mobile on file — email only.");
@@ -375,7 +383,8 @@ export async function POST(req: NextRequest) {
     attendees: attendees.length,
     sms_sent: smsSent,
     sms_texts: `${smsOk}/${smsCount}`,
-    sms_warning: smsWarning,
+    sms_opted_out: smsOptedOut,
+    sms_errors: smsErrors,
   });
 
   return NextResponse.json({
