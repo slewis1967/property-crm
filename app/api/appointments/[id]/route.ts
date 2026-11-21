@@ -8,6 +8,14 @@ import { roomForContact, livekitConfigured } from "../../../../utils/livekit";
 import { signGuestToken } from "../../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../../utils/meeting-invite";
 import { log } from "../../../../utils/logger";
+import { sendSms, isOptedOut } from "../../../../utils/sms";
+import { meetingSmsBody } from "../../../../utils/meeting-sms";
+import {
+  emailRecipients,
+  readAppointmentPayload,
+  smsRecipients,
+  type AppointmentPayload,
+} from "../../../../utils/appointment-attendees";
 import {
   APPOINTMENT_READ_COLUMNS,
   APPOINTMENT_STATUS_CANCELLED,
@@ -20,11 +28,14 @@ import {
 /**
  * One diary entry: change it (PATCH) or cancel/delete it (DELETE).
  *
- * Attendee emails: when the meeting has a client attendee and `notify` is not
- * false, they get an updated or cancelled calendar invite under the SAME .ics
- * uid as the original, so their calendar moves or removes the entry instead of
- * adding a duplicate. Best-effort and reported, like the original invite: a
- * failed email never loses the change, but the UI is told so someone follows up.
+ * Attendee emails: when the meeting has attendees and `notify` is not false,
+ * every one of them gets an updated or cancelled calendar invite under the SAME
+ * .ics uid as the original, so their calendar moves or removes the entry instead
+ * of adding a duplicate. The attendee list comes from the row's raw_payload
+ * (CRM bookings since Nov 2026); older rows fall back to contact_email. When
+ * MEETING_SMS_ENABLED, everyone with a mobile also gets a text. Best-effort and
+ * reported, like the original invite: a failed email or text never loses the
+ * change, but the UI is told so someone follows up.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -43,12 +54,13 @@ type Row = {
   contact_id: string | null;
   contact_email: string | null;
   contact_name: string | null;
+  raw_payload?: unknown;
 };
 
 async function loadRow(id: string): Promise<Row | null> {
   const { data } = await supabase
     .from("appointments")
-    .select(APPOINTMENT_READ_COLUMNS)
+    .select(`${APPOINTMENT_READ_COLUMNS},raw_payload`)
     .eq("id", id)
     .maybeSingle();
   return (data as unknown as Row | null) ?? null;
@@ -64,33 +76,91 @@ function isGuestLink(loc: string | null): boolean {
   return !!loc && /^https?:\/\/[^/]+\/join\//.test(loc);
 }
 
-/** Email the attendee an update or cancellation. */
+/** Email (and text) every attendee an update or cancellation. */
 async function notifyAttendee(
   row: Row,
   kind: "update" | "cancel",
 ): Promise<{ sent: boolean; warning: string | null }> {
-  const to = row.contact_email ?? "";
-  if (!EMAIL_RE.test(to)) return { sent: false, warning: null };
+  const payload: AppointmentPayload | null = readAppointmentPayload(row.raw_payload);
+  const medium = payload?.meeting_kind ?? (row.location === "Phone call" ? "phone" : "video");
+  // Older rows (before the attendee list was stored) only know contact_email.
+  const attendees = payload?.attendees.length
+    ? payload.attendees
+    : EMAIL_RE.test(row.contact_email ?? "")
+      ? [{ email: row.contact_email!, name: row.contact_name, phone: null }]
+      : [];
+  const invitees = emailRecipients(attendees);
   const host = hostFor(row.host_email);
   const video = isGuestLink(row.location);
-  const res = await sendMeetingInvite({
-    to: { email: to, name: row.contact_name ?? undefined },
-    host,
-    title: row.event_title || "Meeting",
-    description: row.notes ?? undefined,
-    start: row.start_time,
-    end: row.end_time ?? new Date(Date.parse(row.start_time) + 3_600_000).toISOString(),
-    joinUrl: video ? row.location : null,
-    location: video ? null : row.location,
-    uid: appointmentIcsUid(row.id, host.brand),
-    sequence: nextIcsSequence(),
-    kind,
+  const uid = appointmentIcsUid(row.id, host.brand);
+  const sequence = nextIcsSequence();
+  const results = await Promise.all(
+    invitees.map((to) =>
+      sendMeetingInvite({
+        to,
+        host,
+        title: row.event_title || "Meeting",
+        description: row.notes ?? undefined,
+        start: row.start_time,
+        end: row.end_time ?? new Date(Date.parse(row.start_time) + 3_600_000).toISOString(),
+        joinUrl: video ? row.location : null,
+        location: video ? null : row.location,
+        uid,
+        sequence,
+        kind,
+        medium,
+        attendees: invitees,
+      }),
+    ),
+  );
+  const emailedOk = new Set<string>();
+  const failed: string[] = [];
+  results.forEach((r, i) => {
+    if (r.ok) emailedOk.add(invitees[i].email.toLowerCase());
+    else failed.push(`${invitees[i].email} (${r.error})`);
   });
-  if (res.ok) return { sent: true, warning: null };
+
+  const warnings: string[] = [];
   const what = kind === "cancel" ? "cancellation" : "update";
+  if (failed.length) {
+    warnings.push(`The change is saved, but the ${what} email failed for ${failed.join("; ")}. Let them know manually.`);
+  }
+
+  if (process.env.MEETING_SMS_ENABLED === "true") {
+    // Same people as the original booking: every attendee with a mobile,
+    // plus the client (their mobile on file).
+    let contactPhone: string | null = null;
+    if (row.contact_id) {
+      const { data } = await supabase.from("contacts").select("phone").eq("id", row.contact_id).maybeSingle();
+      contactPhone = (data as { phone?: string | null } | null)?.phone ?? null;
+    }
+    const recipients = smsRecipients(
+      attendees,
+      row.contact_id ? { email: row.contact_email, name: row.contact_name, phone: contactPhone } : null,
+    );
+    for (const r of recipients) {
+      if (await isOptedOut(r.phone)) continue;
+      const res = await sendSms({
+        contactId: r.isContact ? row.contact_id : null,
+        phone: r.phone,
+        body: meetingSmsBody({
+          firstName: r.name,
+          startISO: row.start_time,
+          hostName: host.displayName,
+          emailed: !!r.email && emailedOk.has(r.email.toLowerCase()),
+          medium,
+          address: medium === "inspection" ? row.location : null,
+          kind,
+        }),
+        campaign: `meeting-${kind}`,
+      });
+      if (!res.ok) warnings.push(`The ${what} text to ${r.name || r.phone} failed (${res.error}).`);
+    }
+  }
+
   return {
-    sent: false,
-    warning: `The change is saved, but the ${what} email to ${to} failed (${res.error}). Let them know manually.`,
+    sent: invitees.length > 0 && failed.length === 0,
+    warning: warnings.length ? warnings.join(" ") : null,
   };
 }
 

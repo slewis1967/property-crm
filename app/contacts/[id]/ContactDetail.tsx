@@ -407,6 +407,7 @@ export default function ContactDetail({
             lead_id: contact.id,
             full_name: contact.full_name || contact.name || null,
             email: contact.email || null,
+            phone: contact.phone || null,
             buyer_type: contact.buyer_type || null,
             state: null,
             budget: null,

@@ -175,3 +175,26 @@ describe(".ics PRODID", () => {
     expect(ics).not.toMatch(/nextkey/i);
   });
 });
+
+describe("on-site inspection invites", () => {
+  const host = { email: "glenn.m@nextkey.com.au", displayName: "Glenn Mayes", brand: "nextkey" as const };
+
+  it("says it's an inspection and shows the address with a map link", () => {
+    const html = meetingInviteHtml({
+      ...base,
+      host,
+      medium: "inspection",
+      location: "12 Example St, Palm Beach QLD 4221",
+    });
+    expect(html).toContain("You're booked in for an on-site inspection");
+    expect(html).toContain("<strong>Where:</strong> 12 Example St, Palm Beach QLD 4221");
+    expect(html).toContain("https://www.google.com/maps/search/?api=1&amp;query=12%20Example%20St");
+    expect(html).not.toMatch(/Join the video meeting/);
+  });
+
+  it("a cancelled inspection says so and drops the map link", () => {
+    const html = meetingInviteHtml({ ...base, host, medium: "inspection", location: "1 A St", kind: "cancel" });
+    expect(html).toContain("This on-site inspection has been cancelled");
+    expect(html).not.toContain("google.com/maps");
+  });
+});

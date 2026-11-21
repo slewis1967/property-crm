@@ -46,22 +46,37 @@ export function formatMeetingWhen(startISO: string): string {
  * an email that actually left.
  *
  * `medium` "phone" says "phone call" and never mentions a joining link: there
- * is none for a call.
+ * is none for a call. "inspection" names the on-site inspection and its
+ * address, so the attendee knows where to go without opening the email.
  */
 export function meetingSmsBody(opts: {
   firstName?: string | null;
   startISO: string;
   hostName: string;
   emailed: boolean;
-  medium?: "video" | "phone";
+  medium?: "video" | "phone" | "inspection";
+  /** Street address, for an on-site inspection. */
+  address?: string | null;
+  /** "update" when the time or details changed, "cancel" when withdrawn. */
+  kind?: "invite" | "update" | "cancel";
 }): string {
   const who = (opts.firstName || "").trim().split(/\s+/)[0] || "";
   const greeting = who ? `Hi ${who}, ` : "";
   const phone = opts.medium === "phone";
-  const what = phone ? "phone call" : "meeting";
-  const lead = `${greeting}your ${what} with ${opts.hostName} is confirmed for ${formatMeetingWhen(opts.startISO)}. `;
-  const email = opts.emailed
-    ? `We've emailed you the ${phone ? "details" : "joining link"} — ` +
+  const inspection = opts.medium === "inspection";
+  const what = phone ? "phone call" : inspection ? "on-site inspection" : "meeting";
+  const where = inspection && opts.address?.trim() ? ` at ${opts.address.trim()}` : "";
+  const when = formatMeetingWhen(opts.startISO);
+  const kind = opts.kind ?? "invite";
+  const lead =
+    kind === "cancel"
+      ? `${greeting}your ${what}${where} with ${opts.hostName} on ${when} has been cancelled. `
+      : kind === "update"
+        ? `${greeting}your ${what}${where} with ${opts.hostName} has changed. It is now ${when}. `
+        : `${greeting}your ${what}${where} with ${opts.hostName} is confirmed for ${when}. `;
+  const detail = phone || inspection ? "details" : "joining link";
+  const email = opts.emailed && kind !== "cancel"
+    ? `We've emailed you the ${kind === "update" ? "updated " : ""}${detail} — ` +
       `if it's not in your inbox, please check your spam or promotions folder. `
     : "";
   return `${lead}${email}Reply STOP to opt out.`;

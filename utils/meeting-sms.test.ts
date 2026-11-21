@@ -71,4 +71,25 @@ describe("meetingSmsBody", () => {
     const unsent = meetingSmsBody({ ...base, firstName: "Kim", medium: "phone", emailed: false });
     expect(unsent).not.toMatch(/emailed|link/i);
   });
+
+  it("an on-site inspection names the address and never mentions a joining link", () => {
+    const body = meetingSmsBody({
+      ...base,
+      firstName: "Kim",
+      medium: "inspection",
+      address: "12 Example St, Palm Beach",
+    });
+    expect(body).toContain("your on-site inspection at 12 Example St, Palm Beach with Springboard Homes");
+    expect(body).toContain("emailed you the details");
+    expect(body).not.toMatch(/joining link/i);
+  });
+
+  it("an update gives the new time, a cancellation never points at an email", () => {
+    const upd = meetingSmsBody({ ...base, firstName: "Kim", kind: "update" });
+    expect(upd).toContain("has changed. It is now Mon 27 Jul at 9am");
+    expect(upd).toContain("updated joining link");
+    const cancel = meetingSmsBody({ ...base, firstName: "Kim", kind: "cancel", medium: "inspection", address: "1 A St" });
+    expect(cancel).toContain("your on-site inspection at 1 A St with Springboard Homes on Mon 27 Jul at 9am has been cancelled");
+    expect(cancel).not.toMatch(/emailed/i);
+  });
 });
