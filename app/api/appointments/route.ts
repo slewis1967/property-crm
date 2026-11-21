@@ -8,11 +8,19 @@ import { signGuestToken } from "../../../utils/guest-token";
 import { sendMeetingInvite } from "../../../utils/meeting-invite";
 import { sendBrevoEmail } from "../../../utils/brevo";
 import { buildAppointmentRow, APPOINTMENT_READ_COLUMNS, appointmentIcsUid } from "../../../utils/appointments";
-import { sendSms, toE164AU, isOptedOut } from "../../../utils/sms";
+import { sendSms, isOptedOut } from "../../../utils/sms";
 import { meetingSmsBody } from "../../../utils/meeting-sms";
 import { bookingNotifyRecipients } from "../../../utils/scheduling-hosts";
 import { guestJoinOrigin } from "../../../utils/springboard-book-host";
 import { log } from "../../../utils/logger";
+import {
+  buildAppointmentPayload,
+  emailRecipients,
+  normaliseAttendees,
+  parseMeetingKind,
+  smsRecipients,
+  type StoredAttendee,
+} from "../../../utils/appointment-attendees";
 
 /**
  * Appointments API — the CRM's own calendar. No Google.
@@ -39,7 +47,8 @@ import { log } from "../../../utils/logger";
  * "add to my calendar" function Google used to provide.
  */
 
-type Attendee = { email: string; displayName?: string };
+/** One person invited. Email, mobile or both; the mobile gets the text. */
+type Attendee = { email?: string; displayName?: string; phone?: string };
 
 type Body = {
   // Linkage (CRM-side). Omit both for a diary entry with no client.
@@ -57,7 +66,9 @@ type Body = {
   notes?: string;           // legacy alias accepted for backward compat
   location?: string;        // physical location; ignored when a video link is minted
   timeZone?: string;        // IANA tz used to render the invite's human time
-  meeting_kind?: "video" | "phone"; // default "video" — "phone" skips the LiveKit link
+  // default "video". "phone" skips the LiveKit link. "inspection" is an
+  // on-site visit: no video link, and `location` (the address) is required.
+  meeting_kind?: "video" | "phone" | "inspection";
 
   // Host / attendees
   host_email?: string;      // meeting owner; defaults to current authenticated user
@@ -111,8 +122,11 @@ export async function POST(req: NextRequest) {
   const startISO = new Date(startMs).toISOString();
   const endISO = new Date(endMs).toISOString();
   const description = (body.description ?? body.notes ?? "").trim() || undefined;
-  const meetingKind: "video" | "phone" = body.meeting_kind === "phone" ? "phone" : "video";
+  const meetingKind = parseMeetingKind(body.meeting_kind);
   const location = body.location?.trim() || (meetingKind === "phone" ? "Phone call" : undefined);
+  if (meetingKind === "inspection" && !location) {
+    return NextResponse.json({ error: "An on-site inspection needs the property address" }, { status: 400 });
+  }
   const host_email = (body.host_email && EMAIL_RE.test(body.host_email)) ? body.host_email : currentUser;
   const knownHost = findHost(host_email);
   const host = knownHost ?? {
@@ -121,15 +135,19 @@ export async function POST(req: NextRequest) {
     brand: "nextkey" as const,
   };
 
-  // Resolve attendees: explicit override > invite_contact toggle > default invite the contact.
-  let attendees: Attendee[] | undefined;
+  // Resolve attendees: explicit list > invite_contact toggle > default invite the contact.
+  // An attendee needs an email or an AU mobile (or both): email gets the
+  // invite, mobile gets the text.
+  let attendees: StoredAttendee[] = [];
   if (body.attendees && Array.isArray(body.attendees)) {
-    attendees = body.attendees.filter((a) => a?.email && EMAIL_RE.test(a.email));
+    attendees = normaliseAttendees(body.attendees);
   } else if (!personal && body.invite_contact !== false) {
-    attendees = [{ email: body.contact_email!, displayName: body.contact_name }];
+    attendees = normaliseAttendees([
+      { email: body.contact_email, displayName: body.contact_name, phone: body.contact_phone },
+    ]);
   }
-  const hasAttendee = !!(attendees && attendees.length > 0);
-  const wantInvite = (body.send_invite ?? true) && hasAttendee;
+  const invitees = emailRecipients(attendees);
+  const wantInvite = (body.send_invite ?? true) && invitees.length > 0;
 
   // --- Step 1: self-hosted LiveKit video link for this meeting ---
   // Reuses the contact's room so scheduled meetings and ad-hoc "Video call"
@@ -138,7 +156,7 @@ export async function POST(req: NextRequest) {
   // meeting. Best-effort: if LiveKit isn't configured or signing fails, the
   // meeting is still booked, just without a video link.
   let videoLink: string | null = null;
-  if (!personal && meetingKind !== "phone" && livekitConfigured()) {
+  if (!personal && meetingKind === "video" && livekitConfigured()) {
     try {
       const room = roomForContact(body.contact_id!);
       const hoursUntilEnd = Math.ceil((endMs - Date.now()) / 3_600_000);
@@ -158,7 +176,8 @@ export async function POST(req: NextRequest) {
   // that shape so this can't drift into non-existent columns again.
   const { data: inserted, error: insertErr } = await supabase
     .from("appointments")
-    .insert(buildAppointmentRow({
+    .insert({
+      ...buildAppointmentRow({
       contactId: personal ? null : body.contact_id!,
       contactEmail: personal ? "" : body.contact_email!,
       contactName: body.contact_name ?? null,
@@ -169,7 +188,11 @@ export async function POST(req: NextRequest) {
       endISO,
       location: videoLink ?? location ?? null,
       notes: description ?? null,
-    }))
+      }),
+      // Meeting type + the full attendee list, so a later change or
+      // cancellation reaches everyone (see utils/appointment-attendees.ts).
+      raw_payload: buildAppointmentPayload(meetingKind, attendees),
+    })
     .select("id")
     .single();
 
@@ -184,6 +207,8 @@ export async function POST(req: NextRequest) {
   let inviteSent = false;
   let inviteWarning: string | null = null;
   let inviteErrors: string[] = [];
+  /** Emails whose invite actually went, so each text says the right thing. */
+  const emailedOk = new Set<string>();
   if (wantInvite) {
     // EVERY attendee gets an invite, not just the first. This used to send to
     // attendees[0] only, so a second applicant — or anyone else added to the
@@ -193,11 +218,11 @@ export async function POST(req: NextRequest) {
     // Brand-aware like the self-book route, so a later update/cancel
     // (app/api/appointments/[id]) rebuilds the same uid via appointmentIcsUid.
     const uid = appointmentIcsUid((inserted as unknown as { id: string }).id, host.brand);
-    const roster = attendees!.map((a) => ({ email: a.email, name: a.displayName }));
+    const roster = invitees;
     const results = await Promise.all(
-      attendees!.map((a) =>
+      invitees.map((a) =>
         sendMeetingInvite({
-          to: { email: a.email, name: a.displayName },
+          to: a,
           host,
           title,
           description,
@@ -216,8 +241,11 @@ export async function POST(req: NextRequest) {
     // of three bounced is how someone turns up to a meeting alone. Name whoever
     // missed out so the operator can follow up with that person specifically.
     const failed = results
-      .map((r, i) => (r.ok ? null : { email: attendees![i].email, error: r.error }))
+      .map((r, i) => (r.ok ? null : { email: invitees[i].email, error: r.error }))
       .filter((x): x is { email: string; error: string } => x !== null);
+    results.forEach((r, i) => {
+      if (r.ok) emailedOk.add(invitees[i].email.toLowerCase());
+    });
     inviteSent = failed.length === 0;
     inviteErrors = failed.map((f) => f.error);
     if (failed.length > 0) {
@@ -246,33 +274,59 @@ export async function POST(req: NextRequest) {
   // means the client hears nothing, so it stops the text as well as the email.
   // Before 10 Nov 2026 the text went regardless and claimed an email had been
   // sent; the wording now follows what the invite step actually did.
+  // Every attendee with a mobile gets a text, plus the main contact (their
+  // mobile on file covers them when the form left it blank). Each text only
+  // mentions an email if THAT person's invite actually went.
   let smsSent = false;
   let smsWarning: string | null = null;
+  const smsWarnings: string[] = [];
+  let smsCount = 0;
+  let smsOk = 0;
+  // Counts only for the log line: the warnings name people (shown to the
+  // operator in the response), and the log must not carry contact details.
+  let smsOptedOut = 0;
+  const smsErrors: string[] = [];
   const clientOptedOutOfNotice = body.send_invite === false || body.invite_contact === false;
-  if (!personal && !clientOptedOutOfNotice && process.env.MEETING_SMS_ENABLED === "true") {
-    const phone = toE164AU(await contactPhone(body.contact_id, body.contact_phone));
-    if (phone) {
-      if (await isOptedOut(phone)) {
-        smsWarning = "Attendee has opted out of SMS — email only.";
-      } else {
-        const res = await sendSms({
-          contactId: body.contact_id ?? null,
-          phone,
-          body: meetingSmsBody({
-            firstName: body.contact_name ?? null,
-            startISO,
-            hostName: host.displayName ?? "Springboard Homes",
-            emailed: inviteSent,
-            medium: meetingKind,
-          }),
-          campaign: "meeting-confirmation",
-        });
-        smsSent = res.ok;
-        if (!res.ok) smsWarning = `Confirmation SMS could not be sent (${res.error}).`;
+  if (!clientOptedOutOfNotice && process.env.MEETING_SMS_ENABLED === "true") {
+    const contact = personal
+      ? null
+      : {
+          email: body.contact_email ?? null,
+          name: body.contact_name ?? null,
+          phone: await contactPhone(body.contact_id, body.contact_phone),
+        };
+    const recipients = smsRecipients(attendees, contact);
+    smsCount = recipients.length;
+    for (const r of recipients) {
+      const label = r.name || r.email || r.phone;
+      if (await isOptedOut(r.phone)) {
+        smsOptedOut++;
+        smsWarnings.push(`${label} has opted out of SMS — email only.`);
+        continue;
       }
-    } else {
-      smsWarning = "No valid mobile on file — email only.";
+      const res = await sendSms({
+        contactId: r.isContact ? body.contact_id ?? null : null,
+        phone: r.phone,
+        body: meetingSmsBody({
+          firstName: r.name,
+          startISO,
+          hostName: host.displayName ?? "Springboard Homes",
+          emailed: !!r.email && emailedOk.has(r.email.toLowerCase()),
+          medium: meetingKind,
+          address: meetingKind === "inspection" ? location : null,
+        }),
+        campaign: "meeting-confirmation",
+      });
+      if (res.ok) smsOk++;
+      else {
+        smsErrors.push(res.error);
+        smsWarnings.push(`Text to ${label} could not be sent (${res.error}).`);
+      }
     }
+    // Nobody to text at all: say so for a real client meeting, as before.
+    if (!personal && recipients.length === 0) smsWarnings.push("No valid mobile on file — email only.");
+    smsSent = smsCount > 0 && smsOk === smsCount;
+    smsWarning = smsWarnings.length ? smsWarnings.join(" ") : null;
   }
 
   // --- Step 5: heads-up to the host, when someone else booked on their behalf ---
@@ -306,6 +360,7 @@ export async function POST(req: NextRequest) {
         html: `<p>${esc(currentUser)} booked a meeting for you.</p>
           <p><strong>When:</strong> ${esc(whenLabel)} (AEST)${personal ? "" : `<br>
           <strong>With:</strong> ${esc(body.contact_name || body.contact_email || "")}`}</p>
+          ${meetingKind === "inspection" && location ? `<p><strong>Where:</strong> ${esc(location)}</p>` : ""}
           ${videoLink ? `<p><a href="${esc(videoLink)}">Join the video meeting</a></p>` : ""}
           ${description ? `<p><strong>Notes:</strong> ${esc(description)}</p>` : ""}`,
         tags: ["appointment-host-notify"],
@@ -325,8 +380,11 @@ export async function POST(req: NextRequest) {
     invite_requested: wantInvite,
     invite_sent: inviteSent,
     invite_errors: inviteErrors,
+    attendees: attendees.length,
     sms_sent: smsSent,
-    sms_warning: smsWarning,
+    sms_texts: `${smsOk}/${smsCount}`,
+    sms_opted_out: smsOptedOut,
+    sms_errors: smsErrors,
   });
 
   return NextResponse.json({
@@ -336,6 +394,8 @@ export async function POST(req: NextRequest) {
     invite_sent: inviteSent,
     invite_warning: inviteWarning,
     sms_sent: smsSent,
+    sms_count: smsCount,
+    sms_ok: smsOk,
     sms_warning: smsWarning,
   });
 }

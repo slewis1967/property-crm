@@ -16,6 +16,7 @@ import { sendBrevoEmail, type BrevoSendResult } from "./brevo";
 import { DEFAULT_PRODID, icsBase64 } from "./ics";
 import type { Brand } from "./scheduling-hosts";
 import { EMAIL_FONT, hostSignature, type SignatureBlock } from "./email-signature";
+import { mapsLink } from "./appointment-attendees";
 
 /** Validated Brevo senders per brand (mirrors utils/signatures + brevo.ts). */
 const BRAND_SENDER: Record<Brand, { email: string; name: string }> = {
@@ -50,9 +51,10 @@ export interface MeetingInviteOpts {
    * confirmation — there's no join link to promote, so the copy shouldn't
    * imply one is coming. Defaults to "video" for backward compatibility.
    * Separate from `kind` (invite/update/cancel): a phone call can be updated
-   * or cancelled too.
+   * or cancelled too. "inspection" is an on-site visit: `location` is the
+   * street address, shown with a map link.
    */
-  medium?: "video" | "phone";
+  medium?: "video" | "phone" | "inspection";
   /**
    * Everyone invited, for the .ics ATTENDEE lines — so each recipient's
    * calendar shows the full participant list rather than just themselves.
@@ -125,10 +127,12 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
     : "";
   const greetingName = opts.to.name ? ` ${escapeHtml(opts.to.name.split(" ")[0])}` : "";
   const kind = opts.kind ?? "invite";
+  const noun = opts.medium === "inspection" ? "on-site inspection" : "meeting";
   const lede =
-    kind === "cancel" ? "This meeting has been cancelled"
-    : kind === "update" ? "This meeting has been updated — the details below replace the earlier invite"
+    kind === "cancel" ? `This ${noun} has been cancelled`
+    : kind === "update" ? `This ${noun} has been updated — the details below replace the earlier invite`
     : opts.medium === "phone" ? "Confirming our call"
+    : opts.medium === "inspection" ? "You're booked in for an on-site inspection"
     : "You've been invited to a meeting";
   const showJoin = !!opts.joinUrl && opts.kind !== "cancel";
   const joinBtn = showJoin
@@ -136,8 +140,11 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
          <a href="${escapeHtml(opts.joinUrl!)}" style="display:inline-block;background:${primary};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px;font-size:15px;">Join the video meeting</a>
        </td></tr>`
     : "";
+  const mapLink = opts.medium === "inspection" && opts.location && kind !== "cancel"
+    ? ` <a href="${escapeHtml(mapsLink(opts.location))}" style="color:${primary};">(map)</a>`
+    : "";
   const locationRow = !opts.joinUrl && opts.location
-    ? `<tr><td style="padding:2px 0;color:#374151;"><strong>Where:</strong> ${escapeHtml(opts.location)}</td></tr>`
+    ? `<tr><td style="padding:2px 0;color:#374151;"><strong>Where:</strong> ${escapeHtml(opts.location)}${mapLink}</td></tr>`
     : "";
   const descRow = opts.description
     ? `<tr><td style="padding:12px 0 0;color:#4b5563;white-space:pre-line;">${escapeHtml(opts.description)}</td></tr>`
@@ -163,8 +170,8 @@ export function meetingInviteHtml(opts: MeetingInviteOpts): string {
     ${opts.signature?.html ?? ""}
     <p style="color:#9ca3af;font-size:12px;margin:22px 0 0;border-top:1px solid #e5e7eb;padding-top:12px;">
       ${opts.kind === "cancel"
-        ? "A calendar file is attached — open it to remove this meeting from your calendar."
-        : "A calendar file is attached — open it to add this meeting to your calendar."}
+        ? `A calendar file is attached — open it to remove this ${noun} from your calendar.`
+        : `A calendar file is attached — open it to add this ${noun} to your calendar.`}
     </p>
   </div>`.trim();
 }
@@ -210,6 +217,7 @@ export async function sendMeetingInvite(opts: MeetingInviteOpts): Promise<BrevoS
     opts.kind === "cancel" ? `Cancelled: ${opts.title}`
     : opts.kind === "update" ? `Updated: ${opts.title}`
     : opts.medium === "phone" ? `Confirming: ${opts.title}`
+    : opts.medium === "inspection" ? `Inspection booked: ${opts.title}`
     : `Invitation: ${opts.title}`;
 
   return sendBrevoEmail({
