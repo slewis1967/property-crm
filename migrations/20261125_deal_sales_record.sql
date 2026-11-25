@@ -1,32 +1,13 @@
--- Deals become the full sale record (the developer-portal model: Geocon et al.)
---
--- partner_enquiries was a partner's hold on a lot. It now also carries
--- NextKey's own direct sales (no partner), and everything a developer's sales
--- portal tracks: contract stages, exchange / cooling-off / settlement dates,
--- the two-part deposit, solicitor and broker, conditions, files and payments.
---
--- Stages: one added, 'contract_issued', between 'eoi' and 'unconditional'.
--- 'unconditional' is shown as "Exchanged" — exchange and going unconditional
--- are the same moment for our stock. Existing rows are untouched.
---
--- Keep ACTIVE_HOLD_STAGES / DEAL_STAGES in utils/partner.ts in step with the
--- CHECK and the two partial unique indexes below.
---
--- Idempotent. Run in the Supabase SQL editor.
-
 BEGIN;
 
--- 1. Direct sales: no partner, no partner client, maybe no stock row --------
 ALTER TABLE partner_enquiries ALTER COLUMN partner_id  DROP NOT NULL;
 ALTER TABLE partner_enquiries ALTER COLUMN client_id   DROP NOT NULL;
 ALTER TABLE partner_enquiries ALTER COLUMN property_id DROP NOT NULL;
 
--- A partner deal still needs its partner and client; a direct one needs neither.
 ALTER TABLE partner_enquiries DROP CONSTRAINT IF EXISTS partner_enquiries_partner_or_direct;
 ALTER TABLE partner_enquiries ADD CONSTRAINT partner_enquiries_partner_or_direct
   CHECK ((partner_id IS NULL AND client_id IS NULL) OR (partner_id IS NOT NULL AND client_id IS NOT NULL));
 
--- 2. Stages --------------------------------------------------------------------
 ALTER TABLE partner_enquiries DROP CONSTRAINT IF EXISTS partner_enquiries_stage_check;
 ALTER TABLE partner_enquiries ADD CONSTRAINT partner_enquiries_stage_check
   CHECK (stage IN ('requested','hold','eoi','contract_issued','unconditional','settled',
@@ -42,15 +23,14 @@ CREATE UNIQUE INDEX partner_enquiries_one_open_per_client_lot
   ON partner_enquiries (partner_id, client_id, property_id)
   WHERE stage IN ('requested','hold','eoi','contract_issued','unconditional');
 
--- 3. The sale record ----------------------------------------------------------
 ALTER TABLE partner_enquiries
-  ADD COLUMN IF NOT EXISTS sale_ref                      text,          -- e.g. GRD-T2-311
-  ADD COLUMN IF NOT EXISTS project_name                  text,          -- e.g. The Grande
-  ADD COLUMN IF NOT EXISTS developer_name                text,          -- e.g. Geocon
+  ADD COLUMN IF NOT EXISTS sale_ref                      text,
+  ADD COLUMN IF NOT EXISTS project_name                  text,
+  ADD COLUMN IF NOT EXISTS developer_name                text,
   ADD COLUMN IF NOT EXISTS unit_no                       text,
   ADD COLUMN IF NOT EXISTS colour_selection              text,
-  ADD COLUMN IF NOT EXISTS sale_owner                    text,          -- staff email
-  ADD COLUMN IF NOT EXISTS contact_id                    text,          -- soft FK -> contacts.id (direct sales)
+  ADD COLUMN IF NOT EXISTS sale_owner                    text,
+  ADD COLUMN IF NOT EXISTS contact_id                    text,
   ADD COLUMN IF NOT EXISTS buyer_names                   text,
   ADD COLUMN IF NOT EXISTS buyer_email                   text,
   ADD COLUMN IF NOT EXISTS buyer_phone                   text,
@@ -60,9 +40,9 @@ ALTER TABLE partner_enquiries
   ADD COLUMN IF NOT EXISTS guarantor                     text,
   ADD COLUMN IF NOT EXISTS firb_required                 boolean,
   ADD COLUMN IF NOT EXISTS lead_source                   text,
-  ADD COLUMN IF NOT EXISTS conditions                    text,          -- terms / special conditions
+  ADD COLUMN IF NOT EXISTS conditions                    text,
   ADD COLUMN IF NOT EXISTS clause_amendments             text,
-  ADD COLUMN IF NOT EXISTS sale_price                    numeric(12,2), -- contract price (price_snapshot stays the partner-view figure)
+  ADD COLUMN IF NOT EXISTS sale_price                    numeric(12,2),
   ADD COLUMN IF NOT EXISTS anticipated_exchange_date     date,
   ADD COLUMN IF NOT EXISTS exchange_date                 date,
   ADD COLUMN IF NOT EXISTS cooling_off_waived            boolean NOT NULL DEFAULT false,
@@ -75,10 +55,9 @@ ALTER TABLE partner_enquiries
   ADD COLUMN IF NOT EXISTS deposit_balance_due_date      date,
   ADD COLUMN IF NOT EXISTS deposit_returned              boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS lost_reason                   text,
-  -- The developer's own record of this sale, for status sync (phase 2).
-  ADD COLUMN IF NOT EXISTS external_source               text,          -- e.g. 'geocon'
+  ADD COLUMN IF NOT EXISTS external_source               text,
   ADD COLUMN IF NOT EXISTS external_url                  text,
-  ADD COLUMN IF NOT EXISTS external_stage                text,          -- their stage label, verbatim
+  ADD COLUMN IF NOT EXISTS external_stage                text,
   ADD COLUMN IF NOT EXISTS external_synced_at            timestamptz;
 
 CREATE INDEX IF NOT EXISTS partner_enquiries_direct_idx
@@ -86,7 +65,6 @@ CREATE INDEX IF NOT EXISTS partner_enquiries_direct_idx
 CREATE UNIQUE INDEX IF NOT EXISTS partner_enquiries_external_url_key
   ON partner_enquiries (external_url) WHERE external_url IS NOT NULL;
 
--- 4. Payments ledger (deposit instalments and anything else received) --------
 CREATE TABLE IF NOT EXISTS deal_payments (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id      uuid NOT NULL REFERENCES partner_enquiries(id) ON DELETE CASCADE,
@@ -102,7 +80,6 @@ CREATE TABLE IF NOT EXISTS deal_payments (
 );
 CREATE INDEX IF NOT EXISTS deal_payments_deal_idx ON deal_payments (deal_id, received_on);
 
--- 5. Files (sales advice, buyer ID, contract) --------------------------------
 CREATE TABLE IF NOT EXISTS deal_files (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   deal_id       uuid NOT NULL REFERENCES partner_enquiries(id) ON DELETE CASCADE,
@@ -118,11 +95,9 @@ CREATE TABLE IF NOT EXISTS deal_files (
 );
 CREATE INDEX IF NOT EXISTS deal_files_deal_idx ON deal_files (deal_id, created_at DESC);
 
--- Service-role only, like the rest of the partner tables.
 ALTER TABLE deal_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deal_files    ENABLE ROW LEVEL SECURITY;
 
--- Private bucket; the browser uploads straight to it with a signed URL.
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('deal-files', 'deal-files', false, 52428800)
 ON CONFLICT (id) DO NOTHING;
