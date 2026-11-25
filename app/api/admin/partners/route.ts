@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     const bucket = (id: string) => (counts[id] ??= { clients: 0, open: 0, settled: 0 });
     for (const c of (clientRows ?? []) as { partner_id: string }[]) bucket(c.partner_id).clients += 1;
     for (const d of (dealRows ?? []) as { partner_id: string; stage: string }[]) {
-      if (["requested", "hold", "eoi", "unconditional"].includes(d.stage)) bucket(d.partner_id).open += 1;
+      if (["requested", "hold", "eoi", "contract_issued", "unconditional"].includes(d.stage)) bucket(d.partner_id).open += 1;
       if (d.stage === "settled") bucket(d.partner_id).settled += 1;
     }
   }

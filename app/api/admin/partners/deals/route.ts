@@ -13,7 +13,7 @@ import { brisbaneToday, PAY_COLUMNS, payColumnsMissing, payOverdue, payRecordFro
 
 export const dynamic = "force-dynamic";
 
-const OPEN = ["requested", "hold", "eoi", "unconditional"];
+const OPEN = ["requested", "hold", "eoi", "contract_issued", "unconditional"];
 
 export async function GET(req: Request) {
   const auth = await requireStaff(req);
@@ -28,6 +28,8 @@ export async function GET(req: Request) {
         "decided_by,decision_reason,opportunity_id,created_at,updated_at," +
         "partners(firm_name),partner_clients(first_name,last_name,email,phone),partner_users(email,full_name)",
     );
+  // Direct sales (no partner) live in the same table; they belong to /sales.
+  q = q.not("partner_id", "is", null);
   if (stage === "open") q = q.in("stage", OPEN);
   else if (stage !== "all") q = q.eq("stage", stage);
 

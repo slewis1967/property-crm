@@ -2,7 +2,7 @@
  * POST /api/admin/partners/deals/<id>
  *   { action: "grant_hold", hold_until?, message? }
  *   { action: "decline", reason, message? }
- *   { action: "advance", to: "eoi" | "unconditional" | "settled", message? }
+ *   { action: "advance", to: "eoi" | "contract_issued" | "unconditional" | "settled", message? }
  *   { action: "release", reason, message? }
  *   { action: "reveal", revealed?: {builder_name, estate_name, lot_number, street_address} }
  *   { action: "message", message }
@@ -72,6 +72,8 @@ async function loadDeal(id: string): Promise<Deal | null> {
         "partners(firm_name,contact_email,contact_name),partner_clients(first_name,last_name,email,phone,state)",
     )
     .eq("id", id)
+    // Direct sales share the table but have no partner to act for; /api/sales owns them.
+    .not("partner_id", "is", null)
     .maybeSingle();
   return (data as unknown as Deal) ?? null;
 }
@@ -261,7 +263,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     case "advance": {
       const to = body.to;
-      if (!isDealStage(to) || !["eoi", "unconditional", "settled"].includes(to) || !canTransition(deal.stage, to)) {
+      if (!isDealStage(to) || !["eoi", "contract_issued", "unconditional", "settled"].includes(to) || !canTransition(deal.stage, to)) {
         return NextResponse.json({ ok: false, error: `Can't move a ${deal.stage} deal to ${String(to)}.` }, { status: 409 });
       }
       const { data, error } = await moveStage(deal, to, message ? { message_to_partner: message } : {});

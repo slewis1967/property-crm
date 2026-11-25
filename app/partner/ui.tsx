@@ -203,6 +203,7 @@ const STAGE_TONES: Record<string, string> = {
   requested: "bg-sky-50 text-sky-800 ring-sky-200",
   hold: "bg-amber-50 text-amber-800 ring-amber-200",
   eoi: "bg-violet-50 text-violet-800 ring-violet-200",
+  contract_issued: "bg-sky-50 text-sky-800 ring-sky-200",
   unconditional: "bg-indigo-50 text-indigo-800 ring-indigo-200",
   settled: "bg-emerald-50 text-emerald-800 ring-emerald-200",
 };
