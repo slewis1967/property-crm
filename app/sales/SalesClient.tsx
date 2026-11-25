@@ -178,7 +178,7 @@ export default function SalesClient() {
                 <div className={r.next_step?.overdue ? "font-medium text-red-700" : "text-blue-700"}>{r.next_step?.label ?? "—"}</div>
                 {r.deposit.totalRequired > 0 && (
                   <div className="text-xs text-gray-500">
-                    Deposit {aud(r.deposit.totalReceived)} of {aud(r.deposit.totalRequired)}
+                    Deposit {r.deposit.totalReceived ? aud(r.deposit.totalReceived) : "$0"} of {aud(r.deposit.totalRequired)}
                   </div>
                 )}
               </div>

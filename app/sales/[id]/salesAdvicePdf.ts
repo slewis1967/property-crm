@@ -50,7 +50,8 @@ export function buildSalesAdvicePdf(sale: Sale, deposit: DepositPosition): Blob 
         doc.setTextColor(120, 120, 120);
         doc.text(label, x, y);
         doc.setTextColor(20, 20, 20);
-        doc.text(doc.splitTextToSize(value, 50)[0], x + 36, y);
+        // Labels run to ~40mm ("Settlement (anticipated)"); values start clear of them.
+        doc.text(doc.splitTextToSize(value, 40)[0], x + 44, y);
       }
     }
   };
