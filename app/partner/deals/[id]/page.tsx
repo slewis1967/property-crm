@@ -15,7 +15,8 @@ const STEPS = [
   { key: "requested", label: "Requested" },
   { key: "hold", label: "On hold" },
   { key: "eoi", label: "EOI signed" },
-  { key: "unconditional", label: "Unconditional" },
+  { key: "contract_issued", label: "Contract issued" },
+  { key: "unconditional", label: "Exchanged" },
   { key: "settled", label: "Settled" },
 ];
 

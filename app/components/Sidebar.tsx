@@ -58,6 +58,7 @@ const GROUPS: Group[] = [
     icon: "💼",
     items: [
       { href: "/opportunities", icon: "🗂️", label: "Opportunities" },
+      { href: "/sales", icon: "🏷️", label: "Sales" },
       { href: "/deal-analyser", icon: "📑", label: "Deal Analyser", badge: "dealPackets" },
       { href: "/leads", icon: "🔥", label: "Lead Intake" },
       // Staff side of the introducer portal. Lives at /admin/introducers, NOT

@@ -146,7 +146,7 @@ export function referralFee(gross: unknown, rule: FeeRule = DEFAULT_FEE_RULE): n
 export type LotAvailability = "available" | "on_hold" | "unavailable";
 
 /** Deal stages that tie a lot up. Keep in step with the partial unique index. */
-export const ACTIVE_HOLD_STAGES = ["hold", "eoi", "unconditional"] as const;
+export const ACTIVE_HOLD_STAGES = ["hold", "eoi", "contract_issued", "unconditional"] as const;
 
 /**
  * global_stock_pool.status is free text from builders' stocklists ("Completed
@@ -368,7 +368,7 @@ export function revealedForPortal(revealed: unknown): { label: string; value: st
 // ── Deal stages ──────────────────────────────────────────────────────────────
 
 export const DEAL_STAGES = [
-  "requested", "hold", "eoi", "unconditional", "settled", "declined", "released", "withdrawn",
+  "requested", "hold", "eoi", "contract_issued", "unconditional", "settled", "declined", "released", "withdrawn",
 ] as const;
 export type DealStage = (typeof DEAL_STAGES)[number];
 
@@ -376,7 +376,8 @@ export const DEAL_STAGE_LABELS: Record<DealStage, string> = {
   requested: "Hold requested",
   hold: "On hold for your client",
   eoi: "EOI signed",
-  unconditional: "Unconditional",
+  contract_issued: "Contract issued",
+  unconditional: "Exchanged",
   settled: "Settled",
   declined: "Not available",
   released: "Hold released",
@@ -397,7 +398,8 @@ export const CLOSED_STAGES: ReadonlySet<DealStage> = new Set(["settled", "declin
 export const STAFF_TRANSITIONS: Record<DealStage, readonly DealStage[]> = {
   requested: ["hold", "declined"],
   hold: ["eoi", "released"],
-  eoi: ["unconditional", "released"],
+  eoi: ["contract_issued", "unconditional", "released"],
+  contract_issued: ["unconditional", "released"],
   unconditional: ["settled", "released"],
   settled: [],
   declined: [],

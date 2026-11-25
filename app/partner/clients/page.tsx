@@ -17,7 +17,7 @@ export default async function PartnerClientsPage() {
   const clients = rows.map(toClientView);
   const openByClient = new Map<string, number>();
   for (const d of deals) {
-    if (["requested", "hold", "eoi", "unconditional"].includes(d.stage)) {
+    if (["requested", "hold", "eoi", "contract_issued", "unconditional"].includes(d.stage)) {
       openByClient.set(d.client_id, (openByClient.get(d.client_id) ?? 0) + 1);
     }
   }

@@ -36,7 +36,7 @@ export type Insight = {
 };
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-const HOLD_STAGES = new Set(["requested", "hold", "eoi", "unconditional"]);
+const HOLD_STAGES = new Set(["requested", "hold", "eoi", "contract_issued", "unconditional"]);
 
 export function isNewThisWeek(lot: Pick<PartnerLot, "listedAt">, now: Date): boolean {
   if (!lot.listedAt) return false;

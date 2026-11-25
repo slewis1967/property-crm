@@ -92,7 +92,8 @@ const STAFF_STAGE_LABELS: Record<DealStage, string> = {
   requested: "Hold requested",
   hold: "On hold",
   eoi: "EOI signed",
-  unconditional: "Unconditional",
+  contract_issued: "Contract issued",
+  unconditional: "Exchanged",
   settled: "Settled",
   declined: "Declined",
   released: "Released",
@@ -335,7 +336,7 @@ function DealCard({ deal, act, canRecordPayment }: { deal: Deal; act: Act; canRe
         <div><span className="text-gray-500">Price:</span> {formatAud(deal.price_snapshot)} · <span className="text-gray-500">Partner fee:</span> {formatAud(deal.referral_fee_snapshot)}</div>
         <div>
           <span className="text-gray-500">NEXUS:</span> {deal.opportunity_id ?? "no opportunity"}
-          {!deal.opportunity_id && ["hold", "eoi", "unconditional", "settled"].includes(deal.stage) && (
+          {!deal.opportunity_id && ["hold", "eoi", "contract_issued", "unconditional", "settled"].includes(deal.stage) && (
             <button className={`${btn} ml-2`} disabled={busy} onClick={() => run({ action: "create_opportunity" }, "Opportunity created.")}>Create</button>
           )}
         </div>
@@ -365,13 +366,13 @@ function DealCard({ deal, act, canRecordPayment }: { deal: Deal; act: Act; canRe
       <div className="mt-3 flex flex-wrap gap-2">
         {next.includes("hold") && <button className={btnPrimary} onClick={() => setMode("grant")}>Grant hold</button>}
         {next.includes("declined") && <button className={btn} onClick={() => setMode("decline")}>Decline</button>}
-        {next.filter((n) => ["eoi", "unconditional", "settled"].includes(n)).map((n) => (
+        {next.filter((n) => ["eoi", "contract_issued", "unconditional", "settled"].includes(n)).map((n) => (
           <button key={n} className={btnPrimary} disabled={busy} onClick={() => run({ action: "advance", to: n }, `Moved to ${STAFF_STAGE_LABELS[n]}.`)}>
             Mark: {STAFF_STAGE_LABELS[n]}
           </button>
         ))}
         {next.includes("released") && <button className={btn} onClick={() => setMode("release")}>Release hold</button>}
-        {["hold", "eoi", "unconditional", "settled"].includes(deal.stage) && (
+        {["hold", "eoi", "contract_issued", "unconditional", "settled"].includes(deal.stage) && (
           <button className={btn} onClick={openReveal}>{deal.revealed_at ? "Edit released details" : "Release lot details"}</button>
         )}
         {deal.stage === "settled" && !deal.payment_unavailable && canRecordPayment && <button className={btn} onClick={openPayment}>Fee payment</button>}
